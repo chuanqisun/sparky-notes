@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "Your Figma widget",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "watch": "npm run build -- --watch",
-    "dev": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build -- --watch"
   },
   "author": "",
   "license": "",
@@ -13,7 +12,6 @@
     "@figma/plugin-typings": "*",
     "@figma/widget-typings": "*",
     "@types/node": "^16.11.47",
-    "esbuild": "^0.14.53",
-    "typescript": "*"
+    "esbuild": "^0.14.53"
   }
 }

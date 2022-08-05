@@ -1,19 +1,19 @@
 // This widget will open an Iframe window with buttons to show a toast message and close the window.
 
-const { widget } = figma
-const { useEffect, Text } = widget
+const { widget } = figma;
+const { useEffect, Text } = widget;
 
 function Widget() {
   useEffect(() => {
     figma.ui.onmessage = (msg) => {
-      if (msg.type === 'showToast') {
-        figma.notify('Hello widget')
+      if (msg.type === "showToast") {
+        figma.notify("Hello widget");
       }
-      if (msg.type === 'close') {
-        figma.closePlugin()
+      if (msg.type === "close") {
+        figma.closePlugin();
       }
-    }
-  })
+    };
+  });
 
   return (
     <Text
@@ -24,13 +24,13 @@ function Widget() {
         // "figma.closePlugin()" will terminate the code.
         () =>
           new Promise((resolve) => {
-            figma.showUI(__html__)
+            figma.showUI(__html__);
           })
       }
     >
       Open IFrame
     </Text>
-  )
+  );
 }
 
-widget.register(Widget)
+widget.register(Widget);

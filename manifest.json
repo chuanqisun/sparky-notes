@@ -2,7 +2,7 @@
   "name": "HITS Assistant",
   "id": "1137434697958861539",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "dist/main.js",
   "editorType": ["figma", "figjam"],
   "containsWidget": true,
   "widgetApi": "1.0.0",
