@@ -1,16 +1,19 @@
 {
-  "name": "HITS-Assistant",
+  "name": "hits-assistant",
   "version": "1.0.0",
   "description": "Your Figma widget",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "watch": "npm run build -- --watch"
+    "watch": "npm run build -- --watch",
+    "dev": "node scripts/build.mjs"
   },
   "author": "",
   "license": "",
   "devDependencies": {
     "@figma/plugin-typings": "*",
     "@figma/widget-typings": "*",
+    "@types/node": "^16.11.47",
+    "esbuild": "^0.14.53",
     "typescript": "*"
   }
 }
