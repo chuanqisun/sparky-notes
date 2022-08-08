@@ -1,20 +1,23 @@
 {
-  "name": "hits-assistant",
+  "name": "hits-assistant-for-figma",
   "version": "1.0.0",
-  "description": "Your Figma widget",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "dev": "npm run build -- --watch"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hits-open/hits-assistant-for-figma.git"
+  },
+  "keywords": [],
   "author": "",
-  "license": "",
-  "devDependencies": {
-    "@figma/plugin-typings": "*",
-    "@figma/widget-typings": "*",
-    "@types/node": "^16.11.47",
-    "esbuild": "^0.14.53"
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hits-open/hits-assistant-for-figma/issues"
   },
-  "dependencies": {
-    "@azure/msal-node": "^1.12.1"
-  }
+  "homepage": "https://github.com/hits-open/hits-assistant-for-figma#readme",
+  "workspaces": [
+    "apps/*"
+  ]
 }
