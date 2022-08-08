@@ -29,9 +29,7 @@ export async function handleDevicecode(req, res) {
 
   const { user_code, device_code, expires_in = 900, interval = 5 } = data;
 
-  console.log(`[devicecode] Start polling every ${interval}s, timeout in ${expires_in}s`);
-
-  poll({ device_code })
+  poll({ device_code, intervalMs: interval * 1000, timeoutMs: expires_in * 1000 })
     .then((authResult) => {
       const now = Date.now();
 
@@ -68,15 +66,17 @@ export async function handleToken(req, res) {
   const data = inMemTokenStore.get(device_code);
 
   if (!data) {
-    res.writeHead(404, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Request-Method": "POST" });
-    res.end(JSON.stringify({ message: "device_code not found" }));
+    res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Request-Method": "POST" });
+    res.end(JSON.stringify(null));
   } else {
     res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Request-Method": "POST" });
     return res.end(JSON.stringify(data));
   }
 }
 
-async function poll({ device_code }) {
+async function poll({ device_code, intervalMs, timeoutMs }) {
+  console.log(`[devicecode] Start polling every ${intervalMs}ms, timeout in ${timeoutMs}ms`);
+
   const pollData = new URLSearchParams({
     grant_type: "urn:ietf:params:oauth:grant-type:device_code",
     code: device_code,
@@ -100,12 +100,12 @@ async function poll({ device_code }) {
         clearTimeout(timeout);
         resolve(pollResponse.data);
       } catch {}
-    }, 5000);
+    }, intervalMs);
 
     const timeout = setTimeout(() => {
       clearInterval(poller);
       reject("Timeout");
-    }, 120000); // 2 min
+    }, timeoutMs);
   });
 
   return authResult;

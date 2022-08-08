@@ -44,33 +44,42 @@ async function main() {
   };
 
   document.getElementById("sign-in")!.onclick = async () => {
-    const { user_code, device_code, expires_in, interval, message } = await fetch("http://localhost:5000/api/devicecode").then((res) => res.json());
+    const { user_code, device_code, expires_in, message, interval } = await fetch("http://localhost:5000/api/devicecode").then((res) => res.json());
     console.log(message);
-    const pollResult = await poll({ device_code });
+    const pollResult = await poll({ device_code, timeoutMs: expires_in * 1000, intervalMs: interval * 1000 });
     console.log(pollResult);
   };
 }
 
 main();
 
-async function poll({ device_code }) {
+async function poll({ device_code, intervalMs, timeoutMs }) {
+  console.log(`[devicecode] Start polling every ${intervalMs}ms, timeout in ${timeoutMs}ms`);
+
   const authResult = await new Promise((resolve, reject) => {
     const poller = setInterval(async () => {
-      try {
-        const pollResponse = await fetch(`http://localhost:5000/api/token`, {
-          method: "post",
-          body: JSON.stringify({ device_code }),
-        });
-        clearInterval(poller);
-        clearTimeout(timeout);
-        resolve(pollResponse.json());
-      } catch {}
-    }, 5000);
+      const pollResponse = await fetch(`http://localhost:5000/api/token`, {
+        method: "post",
+        body: JSON.stringify({ device_code }),
+      });
+
+      const result = await pollResponse.json();
+
+      if (result === null) {
+        console.log("Retry");
+        return;
+      }
+
+      clearInterval(poller);
+      clearTimeout(timeout);
+      resolve(result);
+      console.log("Success");
+    }, intervalMs);
 
     const timeout = setTimeout(() => {
       clearInterval(poller);
       reject("Timeout");
-    }, 120000); // 2 min
+    }, timeoutMs);
   });
 
   return authResult;
