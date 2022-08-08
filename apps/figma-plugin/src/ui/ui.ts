@@ -1,16 +1,3 @@
-import msal from "@azure/msal-node";
-
-const msalConfig = {
-  auth: {
-    clientId: "325dce49-3946-473a-9427-cd186fa462c2",
-    authority: `https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/`,
-  },
-};
-
-const pca = new msal.PublicClientApplication(msalConfig);
-
-console.log(pca);
-
 async function main() {
   const tokenInput = document.querySelector(`input[name="token"]`) as HTMLInputElement;
   const searchButton = document.getElementById("search") as HTMLButtonElement;
@@ -56,8 +43,25 @@ async function main() {
     parent.postMessage({ pluginMessage: { type: "selectItem", id, title } }, "*");
   };
 
-  document.getElementById("sign-in")!.onclick = () => {
-    console.log("sign in");
+  document.getElementById("sign-in")!.onclick = async () => {
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+    var urlencoded = new URLSearchParams();
+    urlencoded.append("client_id", "325dce49-3946-473a-9427-cd186fa462c2");
+    urlencoded.append("scope", "user.read");
+
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: urlencoded,
+      redirect: "follow",
+    } as any;
+
+    fetch("https://login.microsoftonline.com/organizations/oauth2/v2.0/devicecode", requestOptions)
+      .then((response) => response.text())
+      .then((result) => console.log(result))
+      .catch((error) => console.log("error", error));
   };
 }
 
