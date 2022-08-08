@@ -44,11 +44,11 @@ function Widget() {
           // "figma.closePlugin()" will terminate the code.
           () =>
             new Promise((resolve) => {
-              figma.showUI(`<script>window.location.href="https://hits.microsoft.com"</script>`);
+              figma.showUI(`<script>window.location.href="http://localhost:8080/auth/index.html"</script>`);
             })
         }
       >
-        Show HITS
+        Sign in
       </Text>
     </AutoLayout>
   );

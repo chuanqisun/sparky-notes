@@ -1,0 +1,5 @@
+- Auth
+  - Try device code flow with MSAL node.js SDK: https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-acquire-token-device-code-flow?tabs=nodejs
+  - Explore Azure SAML SSO (ref Kelly Gorr)
+  - Prasanna Gunuru explored plugin auth
+  - Eugene Gavriloff did SSO for content reel
