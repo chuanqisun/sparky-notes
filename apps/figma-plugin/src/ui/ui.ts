@@ -44,25 +44,34 @@ async function main() {
   };
 
   document.getElementById("sign-in")!.onclick = async () => {
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-
-    var urlencoded = new URLSearchParams();
-    urlencoded.append("client_id", "325dce49-3946-473a-9427-cd186fa462c2");
-    urlencoded.append("scope", "user.read");
-
-    var requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: urlencoded,
-      redirect: "follow",
-    } as any;
-
-    fetch("https://login.microsoftonline.com/organizations/oauth2/v2.0/devicecode", requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.log("error", error));
+    const { user_code, device_code, expires_in, interval, message } = await fetch("http://localhost:5000/api/devicecode").then((res) => res.json());
+    console.log(message);
+    const pollResult = await poll({ device_code });
+    console.log(pollResult);
   };
 }
 
 main();
+
+async function poll({ device_code }) {
+  const authResult = await new Promise((resolve, reject) => {
+    const poller = setInterval(async () => {
+      try {
+        const pollResponse = await fetch(`http://localhost:5000/api/token`, {
+          method: "post",
+          body: JSON.stringify({ device_code }),
+        });
+        clearInterval(poller);
+        clearTimeout(timeout);
+        resolve(pollResponse.json());
+      } catch {}
+    }, 5000);
+
+    const timeout = setTimeout(() => {
+      clearInterval(poller);
+      reject("Timeout");
+    }, 120000); // 2 min
+  });
+
+  return authResult;
+}
