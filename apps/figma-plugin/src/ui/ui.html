@@ -3,11 +3,15 @@
   <title>HITS Assistant</title>
 </head>
 <body>
+  <p class="pre-auth">Authenticating...</p>
+
   <button id="sign-in" class="signed-out">Sign in</button>
   <button id="sign-out" class="signed-in">Sign out</button>
 
-  <input name="authCode" hidden type="text" readonly />
-  <button id="verifyUrl" hidden></button>
+  <div class="signed-out">
+    <input name="authCode" hidden type="text" readonly />
+    <button id="verifyUrl" hidden></button>
+  </div>
 
   <div class="signed-in">
     <input name="query" type="text" /><button id="search">Search</button>
@@ -17,6 +21,10 @@
   <!-- BUILD_OUTPUT -->
 
   <style>
+    body:where(.signed-in, .signed-out) .pre-auth {
+      display: none;
+    }
+
     body:not(.signed-in) .signed-in {
       display: none;
     }
