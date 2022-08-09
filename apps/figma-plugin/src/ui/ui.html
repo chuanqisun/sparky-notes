@@ -1,16 +1,28 @@
-<div>
-  <input name="token" type="password" />
-  <input name="query" type="text" /><button id="search">Search</button>
-</div>
+<!DOCTYPE html>
+<head>
+  <title>HITS Assistant</title>
+</head>
+<body>
+  <button id="sign-in" class="signed-out">Sign in</button>
+  <button id="sign-out" class="signed-in">Sign out</button>
 
-<button id="sign-in">Sign in</button>
-<button id="sign-out">Sign out</button>
+  <input name="authCode" hidden type="text" readonly />
+  <button id="verifyUrl" hidden></button>
 
-<input name="authCode" type="text" readonly />
-<button id="verifyUrl" hidden></button>
+  <div class="signed-in">
+    <input name="query" type="text" /><button id="search">Search</button>
+    <ul id="results"></ul>
+  </div>
 
-<textarea name="token"></textarea>
+  <!-- BUILD_OUTPUT -->
 
-<ul id="results"></ul>
+  <style>
+    body:not(.signed-in) .signed-in {
+      display: none;
+    }
 
-<!-- BUILD_OUTPUT -->
+    body:not(.signed-out) .signed-out {
+      display: none;
+    }
+  </style>
+</body>

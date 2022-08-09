@@ -1,59 +1,52 @@
 import { AuthService } from "./api/auth";
+import { graphql, GraphqlInput } from "./api/graphql";
+import { SEARCH_QUERY } from "./graphql";
 
 async function main() {
-  const tokenInput = document.querySelector(`input[name="token"]`) as HTMLInputElement;
   const searchButton = document.getElementById("search") as HTMLButtonElement;
   const signInButton = document.getElementById("sign-in") as HTMLButtonElement;
   const signOutButton = document.getElementById("sign-out") as HTMLButtonElement;
   const authCodeInput = document.querySelector(`input[name="authCode"]`) as HTMLInputElement;
   const verifyButton = document.getElementById("verifyUrl") as HTMLButtonElement;
+  const searchResultContainer = document.getElementById("results") as HTMLElement;
+
+  let boundGraphql: <T = any>(input: GraphqlInput) => T = () => {
+    throw new Error("Authentication required");
+  };
 
   const authService = new AuthService({
     onTokenChange: (token) => {
       if (token) {
-        (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(token);
-        tokenInput!.value = token.access_token;
+        boundGraphql = graphql.bind(null, token.access_token);
+        document.body.classList.add("signed-in");
+        document.body.classList.remove("signed-out");
       } else {
-        (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = "";
-        tokenInput!.value = "";
+        boundGraphql = () => {
+          throw new Error("Authenication required");
+        };
+        document.body.classList.remove("signed-in");
+        document.body.classList.add("signed-out");
       }
     },
   });
 
-  const query = `query Search($args: SearchArgs!) {
-    search(args: $args) {
-      organicResults {
-        id
-        title
-      }
-    }
-  }`;
-
   searchButton.onclick = async () => {
-    const data = await fetch("https://hits-figma-proxy.azurewebsites.net/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "hits-api-authorization": `Bearer ${tokenInput.value}`,
-      },
-      body: JSON.stringify({
-        query,
-        variables: {
-          args: {
-            query: "Keyboard",
-            filters: {},
-          },
+    const data = await boundGraphql({
+      query: SEARCH_QUERY,
+      variables: {
+        args: {
+          query: "Keyboard",
+          filters: {},
         },
-      }),
-    }).then((r) => r.json());
+      },
+    });
 
-    document.getElementById("results")!.innerHTML = (data as any).data.search.organicResults
+    searchResultContainer.innerHTML = (data as any).data.search.organicResults
       .map((result) => `<li><button data-id="${result.id}" data-title="${result.title}">${result.id} - ${result.title}</button></li>`)
       .join("");
   };
 
-  document.getElementById("results")!.onclick = (e) => {
+  searchResultContainer.onclick = (e) => {
     const item = (e.target as HTMLElement).closest("[data-id]")!;
     const id = item.getAttribute("data-id");
     const title = item.getAttribute("data-title");
@@ -63,8 +56,9 @@ async function main() {
   signInButton!.onclick = async () => {
     const { user_code, verification_uri } = await authService.signIn();
 
+    authCodeInput.hidden = false;
     authCodeInput.value = user_code;
-    verifyButton.textContent = "Sign in";
+    verifyButton.textContent = "Sign in with One-time code";
     verifyButton.hidden = false;
     verifyButton.onclick = () => window.open(verification_uri);
   };
