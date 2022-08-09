@@ -1,3 +1,5 @@
+let accessToken: string | null = null;
+
 async function main() {
   const tokenInput = document.querySelector(`input[name="token"]`) as HTMLInputElement;
   const searchButton = document.getElementById("search") as HTMLButtonElement;
@@ -12,12 +14,11 @@ async function main() {
   }`;
 
   searchButton.onclick = async () => {
-    const data = await fetch("https://hits-uat.microsoft.com/graphql", {
+    const data = await fetch("https://hits.microsoft.com/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "hits-api-base-url": "https://hitsstage-api-uat.azurewebsites.net/api/",
         "hits-api-authorization": `Bearer ${tokenInput.value}`,
       },
       body: JSON.stringify({
@@ -44,10 +45,22 @@ async function main() {
   };
 
   document.getElementById("sign-in")!.onclick = async () => {
-    const { user_code, device_code, expires_in, message, interval } = await fetch("http://localhost:5000/api/devicecode").then((res) => res.json());
+    const { user_code, verification_uri, device_code, expires_in, message, interval } = await fetch("http://localhost:5000/api/devicecode").then((res) =>
+      res.json()
+    );
     console.log(message);
+
+    document.querySelector<HTMLInputElement>(`input[name="authCode"]`)!.value = user_code;
+    (document.getElementById("verifyUrl") as HTMLButtonElement).textContent = "Sign in";
+    (document.getElementById("verifyUrl") as HTMLButtonElement).hidden = false;
+    (document.getElementById("verifyUrl") as HTMLButtonElement).onclick = () => window.open(verification_uri);
+
     const pollResult = await poll({ device_code, timeoutMs: expires_in * 1000, intervalMs: interval * 1000 });
     console.log(pollResult);
+
+    (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(pollResult);
+    accessToken = pollResult.access_token;
+    tokenInput!.value = accessToken as string;
   };
 }
 
@@ -56,7 +69,7 @@ main();
 async function poll({ device_code, intervalMs, timeoutMs }) {
   console.log(`[devicecode] Start polling every ${intervalMs}ms, timeout in ${timeoutMs}ms`);
 
-  const authResult = await new Promise((resolve, reject) => {
+  const authResult = await new Promise<any>((resolve, reject) => {
     const poller = setInterval(async () => {
       const pollResponse = await fetch(`http://localhost:5000/api/token`, {
         method: "post",
