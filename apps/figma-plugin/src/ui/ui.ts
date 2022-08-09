@@ -1,3 +1,5 @@
+import { getDeviceCode, getToken } from "./api/auth";
+
 let accessToken: string | null = null;
 
 async function main() {
@@ -14,8 +16,7 @@ async function main() {
   }`;
 
   searchButton.onclick = async () => {
-    const data = await fetch("http://localhost:5000/api/graphql", {
-      // const data = await fetch("https://hits.microsoft.com/graphql", {
+    const data = await fetch("http://localhost:5000/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,17 +47,14 @@ async function main() {
   };
 
   document.getElementById("sign-in")!.onclick = async () => {
-    const { user_code, verification_uri, device_code, expires_in, message, interval } = await fetch("http://localhost:5000/api/devicecode").then((res) =>
-      res.json()
-    );
-    console.log(message);
+    const { user_code, verification_uri, message, interval, expires_in, device_code } = await getDeviceCode();
 
     document.querySelector<HTMLInputElement>(`input[name="authCode"]`)!.value = user_code;
     (document.getElementById("verifyUrl") as HTMLButtonElement).textContent = "Sign in";
     (document.getElementById("verifyUrl") as HTMLButtonElement).hidden = false;
     (document.getElementById("verifyUrl") as HTMLButtonElement).onclick = () => window.open(verification_uri);
 
-    const pollResult = await poll({ device_code, timeoutMs: expires_in * 1000, intervalMs: interval * 1000 });
+    const pollResult = await getToken({ device_code, timeoutMs: expires_in * 1000, intervalMs: interval * 1000 });
     console.log(pollResult);
 
     (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(pollResult);
@@ -66,35 +64,3 @@ async function main() {
 }
 
 main();
-
-async function poll({ device_code, intervalMs, timeoutMs }) {
-  console.log(`[devicecode] Start polling every ${intervalMs}ms, timeout in ${timeoutMs}ms`);
-
-  const authResult = await new Promise<any>((resolve, reject) => {
-    const poller = setInterval(async () => {
-      const pollResponse = await fetch(`http://localhost:5000/api/token`, {
-        method: "post",
-        body: JSON.stringify({ device_code }),
-      });
-
-      const result = await pollResponse.json();
-
-      if (result === null) {
-        console.log("Retry");
-        return;
-      }
-
-      clearInterval(poller);
-      clearTimeout(timeout);
-      resolve(result);
-      console.log("Success");
-    }, intervalMs);
-
-    const timeout = setTimeout(() => {
-      clearInterval(poller);
-      reject("Timeout");
-    }, timeoutMs);
-  });
-
-  return authResult;
-}
