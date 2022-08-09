@@ -30,7 +30,7 @@ export async function handleDevicecode(req, res) {
   const { user_code, device_code, expires_in = 900, interval = 5 } = data;
 
   poll({ device_code, intervalMs: interval * 1000, timeoutMs: expires_in * 1000 })
-    .then((authResult) => {
+    .then((tokenResult) => {
       const now = Date.now();
 
       // clean up tokens that will expire soon
@@ -41,8 +41,8 @@ export async function handleDevicecode(req, res) {
       });
 
       const autResultWithExpiry = {
-        ...authResult,
-        expires_at: authResult.expires_in * 1000 + now,
+        ...tokenResult,
+        expires_at: tokenResult.expires_in * 1000 + now,
       };
 
       // set new token
@@ -74,6 +74,42 @@ export async function handleToken(req, res) {
   }
 }
 
+export async function handleTokenRefresh(req, res) {
+  const body = await getPostData(req);
+
+  const { refresh_token: old_refresh_token } = JSON.parse(body);
+
+  const refreshData = {
+    client_id: AAD_CLIENT_ID,
+    scope: `${HITS_API_RESOURCE_ID}/.default offline_access`,
+    old_refresh_token,
+    grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+  };
+  const refreshConfig = {
+    method: "post",
+    url: `https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token`,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    data: refreshData,
+  };
+
+  const { tokenResult } = await axios(refreshConfig);
+
+  inMemTokenStore.forEach((token, key) => {
+    if (token.expires_at + 60 * 1000 < now) {
+      inMemTokenStore.delete(key);
+    }
+  });
+
+  const now = Date.now();
+  const tokenResultWithExpiry = {
+    ...tokenResult,
+    expires_at: tokenResult.expires_in * 1000 + now,
+  };
+
+  res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Request-Method": "POST" });
+  return res.end(JSON.stringify(tokenResultWithExpiry));
+}
+
 async function poll({ device_code, intervalMs, timeoutMs }) {
   console.log(`[devicecode] Start polling every ${intervalMs}ms, timeout in ${timeoutMs}ms`);
 
@@ -85,10 +121,7 @@ async function poll({ device_code, intervalMs, timeoutMs }) {
   const pollConfig = {
     method: "post",
     url: `https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token`,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Access-Control-Allow-Origin": "*",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     data: pollData,
   };
 

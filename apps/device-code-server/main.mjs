@@ -1,5 +1,5 @@
 import http from "http";
-import { handleDevicecode, handleToken } from "./controllers/auth.mjs";
+import { handleDevicecode, handleToken, handleTokenRefresh } from "./controllers/auth.mjs";
 import { handleGraphql } from "./controllers/graphql.mjs";
 
 const server = http.createServer((req, res) => {
@@ -7,6 +7,8 @@ const server = http.createServer((req, res) => {
     handleGraphql(req, res);
   } else if (req.url === "/api/devicecode" && req.method === "GET") {
     handleDevicecode(req, res);
+  } else if (req.url === "/api/tokenrefresh" && req.method === "POST") {
+    handleTokenRefresh(req, res);
   } else if (req.url === "/api/token" && req.method === "POST") {
     handleToken(req, res);
   } else if (req.method === "OPTIONS") {
