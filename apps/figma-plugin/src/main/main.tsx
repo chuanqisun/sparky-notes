@@ -14,7 +14,11 @@ function Widget() {
         figma.notify(`${title} added to canvas`);
         setContent(title);
       } else if (msg.type === "setToken") {
-        await figma.clientStorage.setAsync("token", msg.token);
+        if (msg.token) {
+          await figma.clientStorage.setAsync("token", msg.token);
+        } else {
+          await figma.clientStorage.deleteAsync("token");
+        }
       } else if (msg.type === "getToken") {
         const token = await figma.clientStorage.getAsync("token");
         figma.ui.postMessage({ type: "storedToken", token });

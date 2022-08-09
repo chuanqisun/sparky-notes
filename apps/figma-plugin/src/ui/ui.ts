@@ -4,6 +4,7 @@ async function main() {
   const tokenInput = document.querySelector(`input[name="token"]`) as HTMLInputElement;
   const searchButton = document.getElementById("search") as HTMLButtonElement;
   const signInButton = document.getElementById("sign-in") as HTMLButtonElement;
+  const signOutButton = document.getElementById("sign-out") as HTMLButtonElement;
   const authCodeInput = document.querySelector(`input[name="authCode"]`) as HTMLInputElement;
   const verifyButton = document.getElementById("verifyUrl") as HTMLButtonElement;
 
@@ -12,6 +13,9 @@ async function main() {
       if (token) {
         (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(token);
         tokenInput!.value = token.access_token;
+      } else {
+        (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = "";
+        tokenInput!.value = "";
       }
     },
   });
@@ -63,6 +67,10 @@ async function main() {
     verifyButton.textContent = "Sign in";
     verifyButton.hidden = false;
     verifyButton.onclick = () => window.open(verification_uri);
+  };
+
+  signOutButton!.onclick = async () => {
+    await authService.signOut();
   };
 }
 

@@ -2,6 +2,9 @@ const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 const API_BASE_URL = "http://localhost:5000";
 
+export interface AuthServiceConfig {
+  onTokenChange: (token: TokenSummary | null) => any;
+}
 export interface DeviceCodeSummary {
   device_code: string;
   expires_in: number;
@@ -9,6 +12,38 @@ export interface DeviceCodeSummary {
   message: string;
   user_code: string;
   verification_uri: string;
+}
+
+export class AuthService {
+  constructor(private config: AuthServiceConfig) {
+    observeTokenChange(config.onTokenChange);
+  }
+
+  async signIn(): Promise<DeviceCodeSummary> {
+    const deviceCodeSummary = await getDeviceCode();
+
+    // background task
+    getTokenByPolling({
+      device_code: deviceCodeSummary.device_code,
+      timeoutMs: deviceCodeSummary.expires_in * 1000,
+      intervalMs: deviceCodeSummary.interval * 1000,
+    })
+      .then((tokenSummary) => {
+        setStoreToken(tokenSummary);
+        this.config.onTokenChange(tokenSummary);
+      })
+      .catch((e) => {
+        console.error("Token polling failed", e);
+        this.config.onTokenChange(null);
+      });
+
+    return deviceCodeSummary;
+  }
+
+  async signOut(): Promise<void> {
+    await setStoreToken(null);
+    this.config.onTokenChange(null);
+  }
 }
 
 export async function getDeviceCode(): Promise<DeviceCodeSummary> {
@@ -35,7 +70,6 @@ export interface GetTokenInput {
 }
 
 export interface TokenSummary {
-  device_code: string;
   access_token: string;
   expires_in: number;
   expires_at: number;
@@ -75,13 +109,38 @@ export async function getTokenByPolling({ device_code, intervalMs, timeoutMs }: 
 
   return {
     ...tokenResult,
-    device_code,
     expires_at: Date.now() + tokenResult.expires_in * 1000,
   };
 }
 
+export async function observeTokenChange(onTokenChange?: (token: TokenSummary | null) => any) {
+  const task = async () => {
+    const storedToken = await getStoreToken();
+
+    if (!storedToken) {
+      onTokenChange?.(null);
+      return;
+    }
+
+    if (storedToken.expires_at < Date.now() + 60 * 1000) {
+      // less than 1 minute left, consider as expired
+      onTokenChange?.(null);
+    }
+
+    try {
+      const newToken = await getTokenByRefresh(storedToken);
+      setStoreToken(newToken);
+      onTokenChange?.(newToken);
+    } catch {
+      onTokenChange?.(null);
+    }
+  };
+
+  setInterval(task, 10000);
+  task();
+}
+
 export interface GetTokenByRefreshInput {
-  device_code: string;
   refresh_token: string;
 }
 export async function getTokenByRefresh({ refresh_token }: GetTokenByRefreshInput): Promise<TokenSummary> {
@@ -118,78 +177,6 @@ export async function getStoreToken() {
   });
 }
 
-export async function setStoreToken(token: TokenSummary) {
+export async function setStoreToken(token: TokenSummary | null) {
   parent.postMessage({ pluginMessage: { type: "setToken", token } }, "https://www.figma.com");
-}
-
-export async function observeTokenChange(onTokenChange?: (token: TokenSummary | null) => any) {
-  const task = async () => {
-    const storedToken = await getStoreToken();
-
-    if (!storedToken) {
-      onTokenChange?.(null);
-      return;
-    }
-
-    if (storedToken.expires_at < Date.now() + 60 * 1000) {
-      // less than 1 minute left, consider as expired
-      onTokenChange?.(null);
-    }
-
-    try {
-      const newToken = await getTokenByRefresh(storedToken);
-      setStoreToken(newToken);
-      onTokenChange?.(newToken);
-    } catch {
-      onTokenChange?.(null);
-    }
-  };
-
-  setInterval(task, 10000);
-  task();
-}
-
-export async function signIn(onDeviceCode: (deviceCode: DeviceCodeSummary) => any) {
-  const deviceCode = await getDeviceCode();
-
-  onDeviceCode(deviceCode);
-
-  const tokenSummary = await getTokenByPolling({
-    device_code: deviceCode.device_code,
-    timeoutMs: deviceCode.expires_in * 1000,
-    intervalMs: deviceCode.interval * 1000,
-  });
-
-  setStoreToken(tokenSummary);
-}
-
-export interface AuthServiceConfig {
-  onTokenChange: (token: TokenSummary | null) => any;
-}
-
-export class AuthService {
-  constructor(private config: AuthServiceConfig) {
-    observeTokenChange(config.onTokenChange);
-  }
-
-  async signIn() {
-    const deviceCodeSummary = await getDeviceCode();
-
-    // background task
-    getTokenByPolling({
-      device_code: deviceCodeSummary.device_code,
-      timeoutMs: deviceCodeSummary.expires_in * 1000,
-      intervalMs: deviceCodeSummary.interval * 1000,
-    })
-      .then((tokenSummary) => {
-        setStoreToken(tokenSummary);
-        this.config.onTokenChange(tokenSummary);
-      })
-      .catch((e) => {
-        console.error("Token polling failed", e);
-        this.config.onTokenChange(null);
-      });
-
-    return deviceCodeSummary;
-  }
 }
