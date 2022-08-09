@@ -8,9 +8,12 @@
   <button id="sign-in" class="signed-out">Sign in</button>
   <button id="sign-out" class="signed-in">Sign out</button>
 
-  <div class="signed-out">
-    <input name="authCode" hidden type="text" readonly />
-    <button id="verifyUrl" hidden></button>
+  <div class="signed-out" id="one-time-code-prompt" hidden>
+    <button id="verifyUrl"></button>
+    <div>
+      <label for="authCode">One-time code</label><br />
+      <input name="authCode" type="text" readonly />
+    </div>
   </div>
 
   <div class="signed-in">

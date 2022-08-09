@@ -9,6 +9,7 @@ async function main() {
   const authCodeInput = document.querySelector(`input[name="authCode"]`) as HTMLInputElement;
   const verifyButton = document.getElementById("verifyUrl") as HTMLButtonElement;
   const searchResultContainer = document.getElementById("results") as HTMLElement;
+  const oneTimeCodePrompt = document.getElementById("one-time-code-prompt") as HTMLElement;
 
   let boundGraphql: <T = any>(input: GraphqlInput) => T = () => {
     throw new Error("Authentication required");
@@ -56,14 +57,14 @@ async function main() {
   signInButton!.onclick = async () => {
     const { user_code, verification_uri } = await authService.signIn();
 
-    authCodeInput.hidden = false;
+    oneTimeCodePrompt.hidden = false;
     authCodeInput.value = user_code;
     verifyButton.textContent = "Sign in with One-time code";
-    verifyButton.hidden = false;
     verifyButton.onclick = () => window.open(verification_uri);
   };
 
   signOutButton!.onclick = async () => {
+    oneTimeCodePrompt.hidden = true;
     await authService.signOut();
   };
 }
