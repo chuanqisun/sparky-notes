@@ -14,7 +14,8 @@ async function main() {
   }`;
 
   searchButton.onclick = async () => {
-    const data = await fetch("https://hits.microsoft.com/graphql", {
+    const data = await fetch("http://localhost:5000/api/graphql", {
+      // const data = await fetch("https://hits.microsoft.com/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
