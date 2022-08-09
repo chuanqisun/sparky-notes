@@ -34,19 +34,15 @@ export interface GetTokenInput {
   timeoutMs: number;
 }
 
-export interface GetTokenOutput {
+export interface TokenSummary {
+  device_code: string;
   access_token: string;
   expires_in: number;
+  expires_at: number;
   refresh_token: string;
 }
 
-export async function getToken({ device_code, intervalMs, timeoutMs }: GetTokenInput): Promise<GetTokenOutput> {
-  const data = await poll({ device_code, intervalMs, timeoutMs });
-
-  return data;
-}
-
-async function poll({ device_code, intervalMs, timeoutMs }) {
+export async function getTokenByPolling({ device_code, intervalMs, timeoutMs }: GetTokenInput): Promise<TokenSummary> {
   console.log(`[auth] Start polling every ${intervalMs}ms, timeout in ${timeoutMs}ms`);
 
   const pollData = new URLSearchParams({
@@ -61,7 +57,7 @@ async function poll({ device_code, intervalMs, timeoutMs }) {
     body: pollData,
   };
 
-  const authResult = await new Promise<GetTokenOutput>((resolve, reject) => {
+  const tokenResult = await new Promise<TokenSummary>((resolve, reject) => {
     const poller = setInterval(async () => {
       const pollResponse = await fetch(`${API_BASE_URL}/token`, pollConfig).then((res) => res.json());
       if (pollResponse.error === "authorization_pending") return;
@@ -77,5 +73,36 @@ async function poll({ device_code, intervalMs, timeoutMs }) {
     }, timeoutMs);
   });
 
-  return authResult;
+  return {
+    ...tokenResult,
+    device_code,
+    expires_at: Date.now() + tokenResult.expires_in * 1000,
+  };
+}
+
+export interface GetTokenByRefreshInput {
+  device_code: string;
+  refresh_token: string;
+}
+export async function getTokenByRefresh({ refresh_token, device_code }: GetTokenByRefreshInput): Promise<TokenSummary> {
+  const refreshData = new URLSearchParams({
+    grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+    refresh_token,
+    device_code,
+    client_id: AAD_CLIENT_ID,
+  });
+  const refreshConfig = {
+    method: "post",
+    url: `${API_BASE_URL}/token`,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: refreshData,
+  };
+
+  const tokenResult = await fetch(`${API_BASE_URL}/token`, refreshConfig).then((res) => res.json());
+
+  return {
+    ...tokenResult,
+    device_code,
+    expires_at: Date.now() + tokenResult.expires_in * 1000,
+  };
 }

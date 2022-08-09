@@ -1,6 +1,4 @@
-import { getDeviceCode, getToken } from "./api/auth";
-
-let accessToken: string | null = null;
+import { getDeviceCode, getTokenByPolling, getTokenByRefresh, TokenSummary } from "./api/auth";
 
 async function main() {
   const tokenInput = document.querySelector(`input[name="token"]`) as HTMLInputElement;
@@ -54,13 +52,47 @@ async function main() {
     (document.getElementById("verifyUrl") as HTMLButtonElement).hidden = false;
     (document.getElementById("verifyUrl") as HTMLButtonElement).onclick = () => window.open(verification_uri);
 
-    const pollResult = await getToken({ device_code, timeoutMs: expires_in * 1000, intervalMs: interval * 1000 });
-    console.log(pollResult);
+    const tokenSummary = await getTokenByPolling({ device_code, timeoutMs: expires_in * 1000, intervalMs: interval * 1000 });
+    console.log(tokenSummary);
 
-    (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(pollResult);
-    accessToken = pollResult.access_token;
-    tokenInput!.value = accessToken as string;
+    (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(tokenSummary);
+    tokenInput!.value = tokenSummary.access_token;
+
+    parent.postMessage({ pluginMessage: { type: "setToken", token: tokenSummary } }, "https://www.figma.com");
+  };
+
+  document.getElementById("auto-sign-in")!.onclick = async () => {
+    window.onmessage = (event) => {
+      switch (event.data?.pluginMessage?.type) {
+        case "storedToken":
+          const tokenSummary = event.data.pluginMessage.token as TokenSummary;
+
+          if (tokenSummary.expires_at - 1000 * 60 > Date.now()) {
+            console.log("UI received token", tokenSummary);
+
+            (document.querySelector(`textarea[name="token"]`) as HTMLTextAreaElement).value = JSON.stringify(tokenSummary);
+            tokenInput!.value = tokenSummary.access_token;
+
+            autoRefreshToken(tokenSummary);
+          } else {
+            console.log("UI received expired token", tokenSummary);
+          }
+
+          break;
+      }
+    };
+    parent.postMessage({ pluginMessage: { type: "getToken" } }, "https://www.figma.com");
   };
 }
 
 main();
+
+export async function autoRefreshToken({ refresh_token, device_code }) {
+  let latestRefreshToken = refresh_token;
+  setInterval(async () => {
+    const newTokenSummary = await getTokenByRefresh({ refresh_token: latestRefreshToken, device_code });
+    latestRefreshToken = newTokenSummary.refresh_token;
+    console.log(newTokenSummary);
+    parent.postMessage({ pluginMessage: { type: "setToken", token: newTokenSummary } }, "https://www.figma.com");
+  }, 5000);
+}

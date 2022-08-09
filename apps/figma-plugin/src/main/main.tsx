@@ -7,12 +7,17 @@ function Widget() {
   const [content, setContent] = useSyncedState<null | string>("cardContent", null);
 
   useEffect(() => {
-    figma.ui.onmessage = (msg) => {
+    figma.ui.onmessage = async (msg) => {
       if (msg.type === "selectItem") {
         const { id, title } = msg;
 
         figma.notify(`${title} added to canvas`);
         setContent(title);
+      } else if (msg.type === "setToken") {
+        await figma.clientStorage.setAsync("token", msg.token);
+      } else if (msg.type === "getToken") {
+        const token = await figma.clientStorage.getAsync("token");
+        figma.ui.postMessage({ type: "storedToken", token });
       }
     };
   });
@@ -26,7 +31,7 @@ function Widget() {
           // opened. Resolving the promise, closing the Iframe window, or calling
           // "figma.closePlugin()" will terminate the code.
           () =>
-            new Promise((resolve) => {
+            new Promise(async (resolve) => {
               figma.showUI(__html__, {
                 width: 480,
                 height: 720,
