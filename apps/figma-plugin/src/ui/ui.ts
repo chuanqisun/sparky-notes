@@ -30,7 +30,7 @@ async function main() {
   }`;
 
   searchButton.onclick = async () => {
-    const data = await fetch("http://localhost:5000/graphql", {
+    const data = await fetch("https://hits-figma-proxy.azurewebsites.net/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

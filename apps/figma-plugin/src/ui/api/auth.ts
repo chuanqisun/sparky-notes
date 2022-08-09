@@ -1,6 +1,6 @@
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://hits-figma-proxy.azurewebsites.net";
 
 export interface AuthServiceConfig {
   onTokenChange: (token: TokenSummary | null) => any;
