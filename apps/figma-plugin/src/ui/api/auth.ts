@@ -2,7 +2,7 @@ const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 const API_BASE_URL = "http://localhost:5000";
 
-export interface DeviceCodeOutput {
+export interface DeviceCodeSummary {
   device_code: string;
   expires_in: number;
   interval: number;
@@ -11,7 +11,7 @@ export interface DeviceCodeOutput {
   verification_uri: string;
 }
 
-export async function getDeviceCode(): Promise<DeviceCodeOutput> {
+export async function getDeviceCode(): Promise<DeviceCodeSummary> {
   const requestData = new URLSearchParams({
     client_id: AAD_CLIENT_ID,
     scope: `${HITS_API_RESOURCE_ID}/.default offline_access`,
@@ -84,12 +84,12 @@ export interface GetTokenByRefreshInput {
   device_code: string;
   refresh_token: string;
 }
-export async function getTokenByRefresh({ refresh_token, device_code }: GetTokenByRefreshInput): Promise<TokenSummary> {
+export async function getTokenByRefresh({ refresh_token }: GetTokenByRefreshInput): Promise<TokenSummary> {
   const refreshData = new URLSearchParams({
-    grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+    grant_type: "refresh_token",
     refresh_token,
-    device_code,
     client_id: AAD_CLIENT_ID,
+    scope: `${HITS_API_RESOURCE_ID}/.default offline_access`,
   });
   const refreshConfig = {
     method: "post",
@@ -102,7 +102,94 @@ export async function getTokenByRefresh({ refresh_token, device_code }: GetToken
 
   return {
     ...tokenResult,
-    device_code,
     expires_at: Date.now() + tokenResult.expires_in * 1000,
   };
+}
+
+export async function getStoreToken() {
+  return new Promise<TokenSummary | undefined>((resolve) => {
+    window.onmessage = (event) => {
+      if (event.data?.pluginMessage?.type === "storedToken") {
+        const tokenSummary = event.data.pluginMessage.token as TokenSummary | undefined;
+        resolve(tokenSummary);
+      }
+    };
+    parent.postMessage({ pluginMessage: { type: "getToken" } }, "https://www.figma.com");
+  });
+}
+
+export async function setStoreToken(token: TokenSummary) {
+  parent.postMessage({ pluginMessage: { type: "setToken", token } }, "https://www.figma.com");
+}
+
+export async function observeTokenChange(onTokenChange?: (token: TokenSummary | null) => any) {
+  const task = async () => {
+    const storedToken = await getStoreToken();
+
+    if (!storedToken) {
+      onTokenChange?.(null);
+      return;
+    }
+
+    if (storedToken.expires_at < Date.now() + 60 * 1000) {
+      // less than 1 minute left, consider as expired
+      onTokenChange?.(null);
+    }
+
+    try {
+      const newToken = await getTokenByRefresh(storedToken);
+      setStoreToken(newToken);
+      onTokenChange?.(newToken);
+    } catch {
+      onTokenChange?.(null);
+    }
+  };
+
+  setInterval(task, 10000);
+  task();
+}
+
+export async function signIn(onDeviceCode: (deviceCode: DeviceCodeSummary) => any) {
+  const deviceCode = await getDeviceCode();
+
+  onDeviceCode(deviceCode);
+
+  const tokenSummary = await getTokenByPolling({
+    device_code: deviceCode.device_code,
+    timeoutMs: deviceCode.expires_in * 1000,
+    intervalMs: deviceCode.interval * 1000,
+  });
+
+  setStoreToken(tokenSummary);
+}
+
+export interface AuthServiceConfig {
+  onTokenChange: (token: TokenSummary | null) => any;
+}
+
+export class AuthService {
+  constructor(private config: AuthServiceConfig) {
+    observeTokenChange(config.onTokenChange);
+  }
+
+  async signIn() {
+    const deviceCodeSummary = await getDeviceCode();
+
+    // background task
+    getTokenByPolling({
+      device_code: deviceCodeSummary.device_code,
+      timeoutMs: deviceCodeSummary.expires_in * 1000,
+      intervalMs: deviceCodeSummary.interval * 1000,
+    })
+      .then((tokenSummary) => {
+        setStoreToken(tokenSummary);
+        this.config.onTokenChange(tokenSummary);
+      })
+      .catch((e) => {
+        console.error("Token polling failed", e);
+        this.config.onTokenChange(null);
+      });
+
+    return deviceCodeSummary;
+  }
 }
