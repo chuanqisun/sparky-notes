@@ -6,6 +6,7 @@
   - Eugene Gavriloff did SSO for content reel
 
 - Research
+
   - Kick-off meeting
   - Info gathering w/ interview
   - Co-design session
@@ -14,3 +15,14 @@
     - Research presentation
     - Design review meetings
     - Figma/FigJam sessions
+
+- Kick-off
+  - Introduction
+  - Establish baseline
+    - What's the existing workflow involving Figma and HITS
+  - Assess needs
+    - Painpoints
+    - Magic wand
+  - Request next steps
+    - Figma/FigJam observation
+    - Research + Design or PM disucssion where HITS might help
