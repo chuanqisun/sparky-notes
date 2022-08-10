@@ -7,6 +7,10 @@ function Widget() {
   const [content, setContent] = useSyncedState<null | string>("cardContent", null);
 
   useEffect(() => {
+    console.log("updated!!!!", Date.now());
+  });
+
+  useEffect(() => {
     figma.ui.onmessage = async (msg) => {
       if (msg.type === "selectItem") {
         const { id, title } = msg;
@@ -27,7 +31,7 @@ function Widget() {
   });
 
   return (
-    <AutoLayout>
+    <AutoLayout direction="vertical">
       <Text
         fontSize={24}
         onClick={
@@ -45,6 +49,7 @@ function Widget() {
       >
         {content ? content : "Search in HITS"}
       </Text>
+      <Text>&nbsp;&nbsp;</Text>
       <Text
         fontSize={24}
         onClick={
@@ -53,11 +58,14 @@ function Widget() {
           // "figma.closePlugin()" will terminate the code.
           () =>
             new Promise((resolve) => {
-              figma.showUI(`<script>window.location.href="http://localhost:8080/auth/index.html"</script>`);
+              figma.showUI(`<script>window.location.href="https://www.wikipedia.org"</script>`, {
+                width: 480,
+                height: 720,
+              });
             })
         }
       >
-        Sign in
+        Demo Link
       </Text>
     </AutoLayout>
   );
