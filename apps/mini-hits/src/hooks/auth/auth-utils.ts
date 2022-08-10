@@ -127,9 +127,9 @@ export async function observeTokenChange(onTokenChange?: (token: TokenSummary | 
       return;
     }
 
-    if (storedToken.expires_at < Date.now() + 60 * 1000) {
-      // less than 1 minute left, consider as expired
-      onTokenChange?.(null);
+    if (storedToken.expires_at > Date.now() + 60 * 1000) {
+      // more than 1 minute left, consider as valid
+      onTokenChange?.(storedToken);
     }
 
     try {
