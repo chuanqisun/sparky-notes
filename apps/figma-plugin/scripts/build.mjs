@@ -11,6 +11,7 @@ async function main() {
     sourcemap: "inline", // TODO perf?
     watch: false, // TODO
     minify: false, // TODO
+    loader: { ".svg": "text", ".png": "dataurl" },
     watch: isWatch
       ? {
           onRebuild(error) {
@@ -54,10 +55,7 @@ async function main() {
 
 async function outputUIScript(script) {
   const templateHmlt = await fs.readFile("src/ui/ui.html", "utf-8");
-  const resultHtml = templateHmlt.replace(
-    "<!-- BUILD_OUTPUT -->",
-    `<script type="module">${script}</script>`
-  );
+  const resultHtml = templateHmlt.replace("<!-- BUILD_OUTPUT -->", `<script type="module">${script}</script>`);
   await fs.mkdir("dist", { recursive: true });
   await fs.writeFile("dist/ui.html", resultHtml);
 }

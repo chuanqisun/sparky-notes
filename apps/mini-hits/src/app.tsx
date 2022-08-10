@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
 import "./app.css";
 import { useAuth } from "./hooks/auth/use-auth";
+import { sendToMain } from "./hooks/ipc/ipc-utils";
 import { useSearch } from "./hooks/search/use-search";
 
 export function App() {
@@ -33,7 +34,23 @@ export function App() {
       <div class="search-results">
         {searchLoading && <p>Searching...</p>}
         {searchError && <p>Something went wrong.</p>}
-        {searchData && searchData.search.organicResults.map((result: any) => <article key={result.id}>{result.title}</article>)}
+        {searchData &&
+          searchData.search.organicResults.map((result) => (
+            <article key={result.id}>
+              <div>{result.entityType}</div>
+              <div>{result.title}</div>
+              <ul>
+                {result.children.map((child) => (
+                  <li key={child.id}>
+                    <div>
+                      {child.entityType} - {child.title}
+                    </div>
+                    <button onClick={() => sendToMain({ type: "selectItem", ...child })}>Add to canvas</button>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
       </div>
     </>
   );

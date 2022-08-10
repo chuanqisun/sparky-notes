@@ -11,8 +11,8 @@ export function useSearch({ searchPhrase, token }: SearchProps) {
   const {
     data: searchData,
     loading: searchLoading,
-    error: searchError,
-  } = useQuery(token ?? "", {
+    errors: searchError,
+  } = useQuery<SearchOutput>(token ?? "", {
     query: SEARCH_QUERY,
     variables: {
       args: {
@@ -34,7 +34,28 @@ export const SEARCH_QUERY = `query Search($args: SearchArgs!) {
   search(args: $args) {
     organicResults {
       id
+      entityType
       title
+      children {
+        id
+        entityType
+        title
+      }
     }
   }
 }`;
+
+export interface SearchOutput {
+  search: {
+    organicResults: {
+      id: number;
+      entityType: number;
+      title: string;
+      children: {
+        id: number;
+        title: string;
+        entityType: number;
+      }[];
+    }[];
+  };
+}

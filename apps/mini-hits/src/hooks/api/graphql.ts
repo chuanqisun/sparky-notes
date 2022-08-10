@@ -2,19 +2,19 @@ import { useEffect, useState } from "preact/hooks";
 
 const GRAPHQL_ENDPOINT = "https://hits-figma-proxy.azurewebsites.net/graphql";
 
-export interface QueryResult {
-  error: any;
+export interface QueryResult<T = any> {
+  errors?: any[];
   loading: boolean;
-  data: any;
+  data?: T;
 }
 
 export interface QueryInput extends GraphqlInput {
   skip?: boolean;
 }
 
-export function useQuery(token: string, input: QueryInput) {
-  const [result, setResult] = useState<QueryResult>({
-    error: undefined,
+export function useQuery<T = any>(token: string, input: QueryInput) {
+  const [result, setResult] = useState<QueryResult<T>>({
+    errors: undefined,
     loading: false,
     data: undefined,
   });
@@ -23,13 +23,13 @@ export function useQuery(token: string, input: QueryInput) {
     if (input.skip) return;
 
     setResult({
-      error: undefined,
+      errors: undefined,
       loading: true,
       data: undefined,
     });
     graphql(token, input).then((response) => {
       setResult({
-        error: response.errors,
+        errors: response.errors,
         loading: false,
         data: response.data,
       });
