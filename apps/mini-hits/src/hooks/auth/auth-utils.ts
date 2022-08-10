@@ -1,6 +1,11 @@
+import { sendMessage } from "../ipc/ipc-utils";
+
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 const API_BASE_URL = "https://hits-figma-proxy.azurewebsites.net";
+const PLUGIN_ID = "1137434697958861539";
+
+const sendToMain = sendMessage.bind(null, PLUGIN_ID);
 
 export interface AuthServiceConfig {
   onTokenChange: (token: TokenSummary | null) => any;
@@ -177,10 +182,10 @@ export async function getStoreToken() {
         resolve(tokenSummary);
       }
     };
-    parent.postMessage({ pluginMessage: { type: "getToken" } }, "https://www.figma.com");
+    sendToMain({ type: "getToken" });
   });
 }
 
 export async function setStoreToken(token: TokenSummary | null) {
-  parent.postMessage({ pluginMessage: { type: "setToken", token } }, "https://www.figma.com");
+  sendToMain({ type: "setToken", token });
 }

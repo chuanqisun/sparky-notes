@@ -1,6 +1,5 @@
 import { AuthService } from "./api/auth";
-import { graphql, GraphqlInput } from "./api/graphql";
-import { SEARCH_QUERY } from "./graphql";
+import { graphql, GraphqlInput, SEARCH_QUERY } from "./api/graphql";
 
 async function main() {
   const searchButton = document.getElementById("search") as HTMLButtonElement;

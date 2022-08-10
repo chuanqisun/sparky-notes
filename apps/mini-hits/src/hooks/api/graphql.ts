@@ -29,3 +29,5 @@ export const SEARCH_QUERY = `query Search($args: SearchArgs!) {
     }
   }
 }`;
+
+export const USER_PROFILE_QUERY = ``;

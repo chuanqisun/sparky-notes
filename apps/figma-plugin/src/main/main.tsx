@@ -58,7 +58,7 @@ function Widget() {
           // "figma.closePlugin()" will terminate the code.
           () =>
             new Promise((resolve) => {
-              figma.showUI(`<script>window.location.href="https://www.wikipedia.org"</script>`, {
+              figma.showUI(`<script>window.location.href="http://localhost:5173"</script>`, {
                 width: 480,
                 height: 720,
               });
