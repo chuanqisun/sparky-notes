@@ -49,7 +49,7 @@ export async function graphql(token: string, input: GraphqlInput) {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      "hits-api-authorization": `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       query: input.query,
