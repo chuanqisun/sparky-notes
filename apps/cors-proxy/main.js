@@ -16,7 +16,7 @@ app.use(
     changeOrigin: true,
   })
 );
-app.use("/graphql", createProxyMiddleware({ logLevel: "debug", target: "https://hits.microsoft.com", changeOrigin: true }));
+app.use("/graphql", createProxyMiddleware({ logLevel: "debug", target: "https://hits.microsoft.com/api", changeOrigin: true }));
 
 app.listen(port);
 console.log(`[proxy] Listening at port ${port}`);
