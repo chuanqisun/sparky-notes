@@ -36,4 +36,4 @@ app.get("/hits/signin", async (req, res) => {
 });
 
 app.listen(port);
-console.log(`[aad-auth-server] Listening at port ${port}`);
+console.log(`[auth-server] Listening at port ${port}`);

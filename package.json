@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "concurrently npm:dev:*",
     "dev:figma-plugin": "npm run dev -w apps/figma-plugin",
-    "dev:web": "npm run dev -w apps/web"
+    "dev:web": "npm run dev -w apps/web",
+    "dev:auth-server": "npm run dev -w apps/auth-server"
   },
   "repository": {
     "type": "git",
