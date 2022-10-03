@@ -2,6 +2,7 @@ import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../u
 
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 const GRAPH_API_RESOURCE_ID = "https://graph.microsoft.com";
 
 export async function interactiveSignIn() {
@@ -11,7 +12,7 @@ export async function interactiveSignIn() {
     client_id: AAD_CLIENT_ID,
     response_type: "code",
     redirect_uri: "http://localhost:5200/auth-redirect.html",
-    scope: `${GRAPH_API_RESOURCE_ID}/.default`,
+    scope: `${HITS_API_RESOURCE_ID}/.default email offline_access openid`,
     code_challenge: challenge,
     code_challenge_method: "S256",
   });

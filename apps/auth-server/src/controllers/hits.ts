@@ -6,6 +6,7 @@ import { readFileSafe, writeJsonFile } from "../utils/fs";
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
+const GRAPH_API_RESOURCE_ID = "https://graph.microsoft.com";
 
 export interface SignInProps {
   code: string;
@@ -19,7 +20,7 @@ export async function signIn(props: SignInProps) {
     client_id: AAD_CLIENT_ID,
     scope: `${HITS_API_RESOURCE_ID}/.default offline_access openid`,
     code: code as string,
-    redirect_uri: "http://localhost:5000",
+    redirect_uri: "http://localhost:5200/auth-redirect.html",
     grant_type: "authorization_code",
     code_verifier: code_verifier as string,
     client_secret: process.env.AAD_CLIENT_SECRET as string,
@@ -33,6 +34,7 @@ export async function signIn(props: SignInProps) {
   });
 
   assert(typeof response?.data?.id_token === "string");
+  console.log(response.data);
   const access_token = response.data.access_token;
   const hitsProfile = await getUser(access_token);
   assert(typeof hitsProfile?.user?.mail === "string");
@@ -110,7 +112,7 @@ export async function getToken(props: GetTokenProps): Promise<GetTokenResponse> 
 }
 
 async function getUser(token: string) {
-  const result = await axios("http://localhost:5001/api/classic/user/findoradduser", {
+  const result = await axios("https://hits.microsoft.com/api/classic/user/findoradduser", {
     method: "post",
     headers: {
       Authorization: `Bearer ${token}`,

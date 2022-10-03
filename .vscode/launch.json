@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "Debug build.mjs",
+      "name": "Debug all",
       "request": "launch",
       "runtimeArgs": ["run-script", "dev"],
       "runtimeVersion": "16",
