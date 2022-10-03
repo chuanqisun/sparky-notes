@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "preact/hooks";
 import type { MessageToUI } from "types";
+import { interactiveSignIn } from "./features/auth/auth";
 import { sendMessage } from "./utils/ipc";
 
 const links = {
@@ -28,9 +29,14 @@ export function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  const handleSignIn = () => {
+    interactiveSignIn();
+  };
+
   return (
     <>
       <h1>hello h20</h1>
+      <button onClick={handleSignIn}>Sign in</button>
     </>
   );
 }
