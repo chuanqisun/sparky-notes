@@ -1,0 +1,21 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "assets": "file:packages/assets",
+    "preact": "^10.11.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.4.0",
+    "types": "file:packages/types",
+    "typescript": "^4.8.4",
+    "vite": "^3.1.4"
+  }
+}

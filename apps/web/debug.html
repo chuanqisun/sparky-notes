@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<head>
+  <title>Sandbox</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: auto auto;
+      place-content: center center;
+      gap: 16px;
+    }
+
+    .debug-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    iframe {
+      border: none;
+      width: 360px;
+      height: 580px;
+    }
+  </style>
+</head>
+<body>
+  <div class="debug-panel">
+    <button data-action="reset">Reset</button>
+    <button data-action="init-nickname">Init nickname</button>
+    <label data-action="allow-polling"><input name="allow-poll" type="checkbox" />Sync chat</label>
+    <button data-action="clear-chat-history">Clear chat history</button>
+    <button data-action="receive-message">Receive mock message</button>
+    <button data-action="request-map">Request map</button>
+  </div>
+  <iframe src="http://localhost:5173"></iframe>
+  <script type="module" src="./src/dev-shim.ts"></script>
+</body>

@@ -1,0 +1,7 @@
+{
+  "name": "h20",
+  "id": "1158882313748845661",
+  "api": "1.0.0",
+  "main": "dist/main.js",
+  "editorType": ["figma", "figjam"]
+}

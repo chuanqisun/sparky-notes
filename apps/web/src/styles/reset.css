@@ -1,0 +1,25 @@
+* {
+  box-sizing: border-box;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+}
+*:focus-visible {
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+summary {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+}
+a:where(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
