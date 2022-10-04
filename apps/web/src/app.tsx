@@ -94,7 +94,7 @@ export function App() {
 
       const parsedFilters = Object.fromEntries(
         [...url.searchParams.entries()]
-          .filter(([key, value]) => ["researcherIds", "productIds", "groupIds", "topicIds", "methodIds"].includes(key))
+          .filter(([key, value]) => ["researcherIds", "productIds", "groupIds", "topicIds", "methodIds", "entityTypes"].includes(key))
           .map(([key, value]) => [key, JSON.parse(value)])
       );
       console.log(parsedFilters);
