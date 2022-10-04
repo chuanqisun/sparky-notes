@@ -102,7 +102,7 @@ export function useHits(): PluginBase &
   const toDisplayItem = useCallback(
     (data: HitsGraphNode) => ({
       iconUrl,
-      title: `hits: ${entityNames[data.entityType]} ${data.title}`,
+      title: `${data.title}`,
     }),
     []
   );

@@ -1,3 +1,59 @@
+.c-app-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.c-app-header {
+  background-color: black;
+  display: grid;
+}
+
+.c-button--card:where(:focus-visible, :hover) {
+  outline: 2px solid black;
+}
+.c-button--card:active {
+  transform: scale(0.98);
+}
+
+.c-command-bar {
+  margin-left: auto;
+  display: inline-flex;
+  background-color: white;
+  border-left: 1px solid white;
+  gap: 1px;
+}
+.c-command-bar--btn {
+  padding: 4px 16px;
+  background-color: black;
+  border: none;
+  color: white;
+}
+
 .c-component {
   color: black;
+}
+
+.c-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.c-list-item {
+  background-color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.c-main {
+  padding: 8px 8px;
+  background-color: #ccc;
+}
+
+.c-search-input {
+  width: 100%;
+  padding: 8px 8px;
+  border: none;
+  border-bottom: 2px solid black;
 }
