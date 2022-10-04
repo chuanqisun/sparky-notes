@@ -1,4 +1,4 @@
-import type { SignInInput, SignInOutput, SignInStatusOutput } from "@h20/auth-server";
+import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/auth-server";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
@@ -42,7 +42,7 @@ export interface AuthRedirectResult {
   email: string;
   idToken: string;
 }
-export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> {
+export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
   const code_verifier = sessionStorage.getItem("aad-last-verifier");
   const code = new URLSearchParams(location.search).get("code");
   if (!code_verifier || !code) {
@@ -55,7 +55,6 @@ export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> 
     code_verifier,
   };
 
-  // TODO hide creds in POST body
   const result: SignInOutput = await fetch(`http://localhost:5201/hits/signin`, {
     headers: {
       "content-type": "application/json",
@@ -63,29 +62,36 @@ export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> 
     method: "POST",
     body: JSON.stringify(input),
   }).then((res) => res.json());
-  const { email, id_token } = result;
 
   console.log("[hits] id updated", result);
   const mutableUrl = new URL(location.href);
   mutableUrl.search = "";
   history.replaceState(undefined, "", mutableUrl);
 
-  return {
-    email,
-    idToken: id_token,
-  };
+  return result;
 }
 
-export async function getAccessToken(email: string, idToken: string) {
+export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutput> {
   const result = await fetch(`http://localhost:5201/hits/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      id_token: idToken,
-      email,
-    }),
+    body: JSON.stringify(input),
+  });
+
+  if (!result.ok) throw new Error(result.statusText);
+
+  return result.json();
+}
+
+export async function signOutRemote(input: SignOutInput): Promise<SignOutOutput> {
+  const result = await fetch(`http://localhost:5201/hits/signout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
   });
 
   if (!result.ok) throw new Error(result.statusText);

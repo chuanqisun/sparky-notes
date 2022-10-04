@@ -58,7 +58,7 @@ export async function signIn(input: SignInInput): Response<SignInOutput> {
   const userClientId = crypto.randomUUID();
 
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]");
-  const updatedUsers = updateUserTable(users, { ...response.data, email, code_verifier, userClientId });
+  const updatedUsers = updateUserInTable(users, { ...response.data, email, code_verifier, userClientId });
   await writeJsonFile(userTable, updatedUsers);
 
   console.log("[signin] sign in success");
@@ -72,6 +72,35 @@ export async function signIn(input: SignInInput): Response<SignInOutput> {
   };
 }
 
+export interface SignOutInput {
+  email: string;
+  id_token: string;
+  userClientId: string;
+}
+
+export type SignOutOutput = {};
+
+export async function signOut(input: SignOutInput): Response<SignOutOutput> {
+  const userTable = path.join(process.cwd(), "db", "users.json");
+
+  const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
+  const user = users.find((user) => user.email === input.email && user.id_token === input.id_token && user.userClientId === input.userClientId);
+
+  if (!user) {
+    return {
+      status: 404,
+    };
+  }
+
+  const updatedUsers = removeUserInTable(users, user);
+  await writeJsonFile(userTable, updatedUsers);
+
+  return {
+    status: 200,
+    data: {},
+  };
+}
+
 export interface GetSignInStatusInput {
   code_verifier: string;
 }
@@ -79,6 +108,7 @@ export interface GetSignInStatusInput {
 export interface SignInStatusOutput {
   email: string;
   id_token: string;
+  userClientId: string;
 }
 
 export async function getInteractiveSignInStatus(input: GetSignInStatusInput): Response<SignInStatusOutput> {
@@ -96,7 +126,7 @@ export async function getInteractiveSignInStatus(input: GetSignInStatusInput): R
         // exclude verifier in the table. We use it only once
         const { code_verifier, ...userWithoutVerifier } = user;
 
-        const updatedUsers = updateUserTable(users, userWithoutVerifier);
+        const updatedUsers = updateUserInTable(users, userWithoutVerifier);
         await writeJsonFile(userTable, updatedUsers);
 
         resolve({
@@ -104,6 +134,7 @@ export async function getInteractiveSignInStatus(input: GetSignInStatusInput): R
           data: {
             email: user.email,
             id_token: user.id_token,
+            userClientId: user.userClientId,
           },
         });
       }
@@ -122,6 +153,7 @@ export async function getInteractiveSignInStatus(input: GetSignInStatusInput): R
 
 export interface GetTokenInput {
   email: string;
+  userClientId: string;
   id_token: string;
 }
 
@@ -130,10 +162,11 @@ export type GetTokenOutput = string;
 export async function getToken(input: GetTokenInput): Response<string> {
   assert(typeof input.id_token === "string");
   assert(typeof input.email === "string");
+  assert(typeof input.userClientId === "string");
 
   const userTable = path.join(process.cwd(), "db", "users.json");
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
-  const user = users.find((user) => user.email === input.email && user.id_token === input.id_token);
+  const user = users.find((user) => user.email === input.email && user.id_token === input.id_token && user.userClientId === input.userClientId);
 
   if (!user) {
     return {
@@ -168,7 +201,7 @@ export async function getToken(input: GetTokenInput): Response<string> {
   // HACK: read user table again to reduce chance of race condition
   const users2 = JSON.parse((await readFileSafe(userTable)) ?? "[]");
   // roll the refresh token, but keep the old email and id_token
-  const updatedUsers = updateUserTable(users2, { ...response.data, email: input.email, id_token: input.id_token });
+  const updatedUsers = updateUserInTable(users2, { ...response.data, email: input.email, id_token: input.id_token, userClientId: input.userClientId });
   await writeJsonFile(userTable, updatedUsers);
 
   return {
@@ -188,6 +221,14 @@ async function getUser(token: string) {
   return result.data;
 }
 
-function updateUserTable<T extends { email: string }>(table: T[], userWithEmail: T) {
-  return [{ ...userWithEmail, email: userWithEmail.email }, ...table.filter((user) => user.email !== userWithEmail.email)];
+function updateUserInTable<T extends { email: string; userClientId: string }>(table: T[], userToUpdate: T) {
+  return [
+    { ...userToUpdate, email: userToUpdate.email },
+    // ensure uniqueness by using (email, userClientId) tuple as a multi-column key
+    ...table.filter((user) => user.email !== userToUpdate.email || user.userClientId !== userToUpdate.userClientId),
+  ];
+}
+
+function removeUserInTable<T extends { email: string; userClientId: string }>(table: T[], userToRemove: T) {
+  return table.filter((user) => user.email !== userToRemove.email || user.userClientId !== userToRemove.userClientId);
 }

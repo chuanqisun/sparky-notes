@@ -1,1 +1,1 @@
-export * from "./controllers/hits";
+export * from "./routes/hits";

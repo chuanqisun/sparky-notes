@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import type { Authenticatable, Configurable, Displayable, LinkSourceable, LinkTargetable, PluginBase, Searchable, Syncable } from "../../modules/kernel/kernel";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { PluginId } from "../plugin-ids";
-import { embeddedSignIn, getAccessToken } from "./auth";
+import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import type { FilterConfig } from "./hits";
 import iconUrl from "./hits.svg";
 import { searchHits } from "./proxy";
@@ -24,6 +24,7 @@ export interface HitsGraphNode {
 export interface HitsConfig {
   email: string;
   idToken: string;
+  userClientId: string;
   queries: FilterConfig[];
 }
 
@@ -53,13 +54,13 @@ export function useHits(): PluginBase &
   useEffect(() => {
     if (!hitsConfig.value.email || !hitsConfig.value.idToken) return;
 
-    getAccessToken(hitsConfig.value.email, hitsConfig.value.idToken)
+    getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId })
       .then(() => setIsConnected(true))
       .catch(() => setIsConnected(false));
   }, [hitsConfig.value.idToken]);
 
   const pull = useCallback(async () => {
-    const token = await getAccessToken(hitsConfig.value.email, hitsConfig.value.idToken);
+    const token = await getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId });
     const searchSummary = await searchHits(token, hitsConfig.value.queries[0]);
     console.log(searchSummary);
 
@@ -81,13 +82,15 @@ export function useHits(): PluginBase &
 
   const signIn = useCallback(() => {
     embeddedSignIn().then((result) => {
-      hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token });
+      hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
     });
   }, []);
 
   const signOut = useCallback(() => {
-    hitsConfig.update(getBlankConfig());
-  }, []);
+    signOutRemote({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId }).then(() => {
+      hitsConfig.update(getBlankConfig());
+    });
+  }, [hitsConfig.value]);
 
   const toSearchItem = useCallback(
     (data: HitsGraphNode) => ({
@@ -144,6 +147,7 @@ export function getBlankConfig(): HitsConfig {
   return {
     email: "alias@microsoft.com",
     idToken: "examplehitsdevelopertoken",
+    userClientId: "unassigned",
     queries: [
       {
         entityTypes: [2], // study only
