@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "./dist/main.js",
-  "types": "./src/main.ts",
+  "types": "./src/interface.d.ts",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts",
     "start": "npm run build && node dist/main.js",

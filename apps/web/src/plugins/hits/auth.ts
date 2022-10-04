@@ -1,3 +1,4 @@
+import type { SignInInput, SignInOutput, SignInStatusOutput } from "@h20/auth-server";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
@@ -23,7 +24,7 @@ export async function embeddedSignIn() {
   const code_verifier = generateCodeVerifier();
   window.open(`http://localhost:5200/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result = await fetch(`http://localhost:5201/hits/signinstatus`, {
+  const result: SignInStatusOutput = await fetch(`http://localhost:5201/hits/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -42,15 +43,26 @@ export interface AuthRedirectResult {
   idToken: string;
 }
 export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> {
-  const verifier = sessionStorage.getItem("aad-last-verifier");
+  const code_verifier = sessionStorage.getItem("aad-last-verifier");
   const code = new URLSearchParams(location.search).get("code");
-  if (!verifier || !code) {
+  if (!code_verifier || !code) {
     console.error("missing verifier or code");
     return null;
   }
 
+  const input: SignInInput = {
+    code,
+    code_verifier,
+  };
+
   // TODO hide creds in POST body
-  const result = await fetch(`http://localhost:5201/hits/signin?code=${code}&code_verifier=${verifier}`).then((res) => res.json());
+  const result: SignInOutput = await fetch(`http://localhost:5201/hits/signin`, {
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    body: JSON.stringify(input),
+  }).then((res) => res.json());
   const { email, id_token } = result;
 
   console.log("[hits] id updated", result);

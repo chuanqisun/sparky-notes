@@ -8,7 +8,7 @@ const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 
-export interface SignInRequest {
+export interface SignInInput {
   code: string;
   code_verifier: string;
 }
@@ -18,14 +18,17 @@ export type Response<T> = Promise<{
   data?: T;
 }>;
 
-export interface SignInResult {
+export interface SignInOutput {
   email: string;
   userClientId: string;
   id_token: string;
 }
 
-export async function signIn(req: SignInRequest): Response<SignInResult> {
-  const { code, code_verifier } = req;
+export async function signIn(input: SignInInput): Response<SignInOutput> {
+  assert(typeof input.code === "string");
+  assert(typeof input.code_verifier === "string");
+
+  const { code, code_verifier } = input;
   const userTable = path.join(process.cwd(), "db", "users.json");
 
   const params = new URLSearchParams({
@@ -69,22 +72,23 @@ export async function signIn(req: SignInRequest): Response<SignInResult> {
   };
 }
 
-export interface GetSignInStatusRequest {
+export interface GetSignInStatusInput {
   code_verifier: string;
 }
 
-export interface SignInStatus {
+export interface SignInStatusOutput {
   email: string;
   id_token: string;
 }
 
-export async function getInteractiveSignInStatus(req: GetSignInStatusRequest): Response<SignInStatus> {
+export async function getInteractiveSignInStatus(input: GetSignInStatusInput): Response<SignInStatusOutput> {
+  assert(typeof input.code_verifier === "string");
   return new Promise<any>((resolve) => {
     const userTable = path.join(process.cwd(), "db", "users.json");
 
     const pollId = setInterval(async () => {
       const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
-      const user = users.find((user) => user.code_verifier === req.code_verifier);
+      const user = users.find((user) => user.code_verifier === input.code_verifier);
       if (user) {
         clearInterval(pollId);
         clearTimeout(timeoutId);
@@ -116,17 +120,20 @@ export async function getInteractiveSignInStatus(req: GetSignInStatusRequest): R
   });
 }
 
-export interface GetTokenRequest {
+export interface GetTokenInput {
   email: string;
   id_token: string;
 }
 
-export type GetTokenResponse = string;
+export type GetTokenOutput = string;
 
-export async function getToken(req: GetTokenRequest): Response<string> {
+export async function getToken(input: GetTokenInput): Response<string> {
+  assert(typeof input.id_token === "string");
+  assert(typeof input.email === "string");
+
   const userTable = path.join(process.cwd(), "db", "users.json");
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
-  const user = users.find((user) => user.email === req.email && user.id_token === req.id_token);
+  const user = users.find((user) => user.email === input.email && user.id_token === input.id_token);
 
   if (!user) {
     return {
@@ -161,7 +168,7 @@ export async function getToken(req: GetTokenRequest): Response<string> {
   // HACK: read user table again to reduce chance of race condition
   const users2 = JSON.parse((await readFileSafe(userTable)) ?? "[]");
   // roll the refresh token, but keep the old email and id_token
-  const updatedUsers = updateUserTable(users2, { ...response.data, email: req.email, id_token: req.id_token });
+  const updatedUsers = updateUserTable(users2, { ...response.data, email: input.email, id_token: input.id_token });
   await writeJsonFile(userTable, updatedUsers);
 
   return {
