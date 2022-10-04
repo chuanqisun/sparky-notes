@@ -6,7 +6,7 @@ import { getInteractiveSignInStatus, getToken, signIn } from "./controllers/hits
 
 dotenv.config();
 
-const port = process.env.PORT || 5002;
+const port = process.env.PORT || 5201;
 const app = express();
 
 app.use(express.json());

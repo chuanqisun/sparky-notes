@@ -23,7 +23,7 @@ export async function embeddedSignIn() {
   const code_verifier = generateCodeVerifier();
   window.open(`http://localhost:5200/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result = await fetch(`http://localhost:5002/hits/signinstatus`, {
+  const result = await fetch(`http://localhost:5201/hits/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -50,7 +50,7 @@ export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> 
   }
 
   // TODO hide creds in POST body
-  const result = await fetch(`http://localhost:5002/hits/signin?code=${code}&code_verifier=${verifier}`).then((res) => res.json());
+  const result = await fetch(`http://localhost:5201/hits/signin?code=${code}&code_verifier=${verifier}`).then((res) => res.json());
   const { email, id_token } = result;
 
   console.log("[hits] id updated", result);
