@@ -3,6 +3,7 @@ export interface FilterConfig {
   productIds?: number[];
   topicIds?: number[];
   groupIds?: number[];
+  researcherIds?: number[];
   researcherDirectoryObjectIds?: string[];
   methodIds?: number[];
   publishDateRange?: [string, string]; // [from, to]

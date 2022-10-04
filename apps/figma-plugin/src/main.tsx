@@ -9,6 +9,14 @@ async function main() {
   figma.ui.onmessage = async (msg: MessageToMain) => {
     console.log(msg);
 
+    if (msg.importResult) {
+      if (msg.importResult.isSuccess) {
+        figma.notify("Import HITS Search success");
+      } else {
+        figma.notify("Import HITS Search failed", { error: true });
+      }
+    }
+
     if (msg.addCard) {
       await figma.loadFontAsync({ family: "Inter", style: "Regular" });
       const textNode = figma.createText();

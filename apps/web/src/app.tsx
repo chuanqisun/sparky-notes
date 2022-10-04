@@ -1,4 +1,5 @@
 import type { MessageToUI } from "@h20/types";
+import type { JSX } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useGraph } from "./modules/graph/use-graph";
 import type { DisplayItem } from "./modules/kernel/kernel";
@@ -42,7 +43,7 @@ export function App() {
       console.log(`[sync] success`, changeset);
       return graph.put(changeset.add);
     });
-  }, []);
+  }, [hitsPlugin.config]);
 
   // auto index on graph change
   useEffect(() => {
@@ -85,6 +86,37 @@ export function App() {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
 
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handlePaste = (e: JSX.TargetedClipboardEvent<HTMLInputElement>) => {
+    try {
+      const url = new URL(e.clipboardData?.getData("text/plain") ?? "");
+
+      const parsedFilters = Object.fromEntries(
+        [...url.searchParams.entries()]
+          .filter(([key, value]) => ["researcherIds", "productIds", "groupIds", "topicIds", "methodIds"].includes(key))
+          .map(([key, value]) => [key, JSON.parse(value)])
+      );
+      console.log(parsedFilters);
+      hitsPlugin.updateConfig({ ...hitsPlugin.config, queries: [parsedFilters] });
+
+      setIsImporting(false);
+      sendToMain({
+        importResult: {
+          isSuccess: true,
+        },
+      });
+
+      e.preventDefault();
+    } catch {
+      sendToMain({
+        importResult: {
+          isSuccess: false,
+        },
+      });
+    }
+  };
+
   return (
     <>
       <header class="c-app-header">
@@ -97,6 +129,9 @@ export function App() {
           )}
           {hitsPlugin.isConnected && (
             <>
+              <button class="c-command-bar--btn" onClick={() => setIsImporting((prev) => !prev)}>
+                Import
+              </button>
               <button class="c-command-bar--btn" onClick={hitsPlugin.signOut}>
                 Sign out
               </button>
@@ -106,6 +141,7 @@ export function App() {
             </>
           )}
         </menu>
+        {isImporting && <input class="c-import-url" type="url" placeholder="Paste HITS Search URL" onPaste={(e) => handlePaste(e)} />}
         <input class="c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={(e) => setQuery((e.target as any).value)} />
       </header>
       <main class="u-scroll c-main">

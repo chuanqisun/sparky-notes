@@ -5,6 +5,9 @@ export interface MessageToUI {
 
 export interface MessageToMain {
   ping?: string;
+  importResult?: {
+    isSuccess?: boolean;
+  };
   addCard?: {
     title: string;
     url?: string;

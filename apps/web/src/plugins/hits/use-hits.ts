@@ -152,7 +152,8 @@ export function getBlankConfig(): HitsConfig {
     queries: [
       {
         entityTypes: [2], // study only
-        researcherDirectoryObjectIds: ["d9d18774-66e4-40c1-8353-a7ea2fd6bc82"],
+        researcherIds: [835],
+        // researcherDirectoryObjectIds: ["d9d18774-66e4-40c1-8353-a7ea2fd6bc82"],
       },
     ],
   };
