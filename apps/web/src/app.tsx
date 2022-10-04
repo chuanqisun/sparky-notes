@@ -26,11 +26,14 @@ export function App() {
 
   return (
     <>
-      <h1>hello h20</h1>
-
       {hitsPlugin.isConnected === undefined && <div>Signing in</div>}
       {hitsPlugin.isConnected === false && <button onClick={hitsPlugin.signIn}>Sign in</button>}
-      {hitsPlugin.isConnected && <button onClick={hitsPlugin.signOut}>Sign out</button>}
+      {hitsPlugin.isConnected && (
+        <div>
+          <button onClick={hitsPlugin.signOut}>Sign out</button>
+          <button onClick={() => hitsPlugin.pull([])}>Sync</button>
+        </div>
+      )}
     </>
   );
 }

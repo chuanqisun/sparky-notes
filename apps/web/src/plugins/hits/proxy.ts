@@ -2,7 +2,7 @@ import type { FilterConfig, SearchOutput } from "./hits";
 import { getFilterString, getOrderBy, getOrderByPublishDateClause } from "./search";
 
 export async function searchHits(token: string, filter: FilterConfig): Promise<SearchOutput> {
-  const result = await fetch("http://localhost:5001/api/search/index", {
+  const result = await fetch("http://localhost:5202/api/search/index", {
     method: "post",
     headers: {
       Authorization: `Bearer ${token}`,

@@ -7,7 +7,8 @@
     "dev": "concurrently npm:dev:*",
     "dev:figma-plugin": "npm run dev -w apps/figma-plugin",
     "dev:web": "npm run dev -w apps/web",
-    "dev:auth-server": "npm run dev -w apps/auth-server"
+    "dev:auth-server": "npm run dev -w apps/auth-server",
+    "dev:api-proxy": "npm run dev -w apps/api-proxy"
   },
   "repository": {
     "type": "git",
