@@ -62,6 +62,7 @@ export interface DisplayItem {
   title: string;
   iconUrl?: string;
   thumbnailUrl?: string;
+  externalUrl?: string;
 }
 
 export interface ConnectionStatus {

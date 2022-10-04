@@ -81,6 +81,10 @@ export function App() {
       });
   }, [query, search.query, graph.get]);
 
+  useEffect(() => {
+    document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
+  }, []);
+
   return (
     <>
       <header class="c-app-header">
@@ -110,7 +114,19 @@ export function App() {
             <ul class="c-list">
               {searchResultItems.map((item) => (
                 <li key={item.key}>
-                  <button class="u-reset c-button--card c-list-item">{item.title}</button>
+                  <button
+                    class="u-reset c-button--card c-list-item"
+                    onClick={() =>
+                      sendToMain({
+                        addCard: {
+                          title: item.title,
+                          url: item.externalUrl,
+                        },
+                      })
+                    }
+                  >
+                    {item.title}
+                  </button>
                 </li>
               ))}
             </ul>

@@ -5,4 +5,8 @@ export interface MessageToUI {
 
 export interface MessageToMain {
   ping?: string;
+  addCard?: {
+    title: string;
+    url?: string;
+  };
 }

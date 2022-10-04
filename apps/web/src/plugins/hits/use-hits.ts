@@ -103,6 +103,7 @@ export function useHits(): PluginBase &
     (data: HitsGraphNode) => ({
       iconUrl,
       title: `${data.title}`,
+      externalUrl: `https://hits.microsoft.com/${entityNames[data.entityType]}/${data.id}`,
     }),
     []
   );

@@ -6,5 +6,4 @@ document.getElementById("app")!.innerHTML = "";
 
 render(<App />, document.getElementById("app") as HTMLElement);
 
-// start handling keyboard input
 window.focus();
