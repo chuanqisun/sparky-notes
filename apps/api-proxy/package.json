@@ -1,5 +1,5 @@
 {
-  "name": "api-proxy",
+  "name": "@h20/api-proxy",
   "version": "1.0.0",
   "description": "",
   "main": "dist/main.js",

@@ -1,8 +1,9 @@
 {
-  "name": "aad-auth-server",
+  "name": "@h20/auth-server",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/main.js",
+  "main": "./dist/main.js",
+  "types": "./src/main.ts",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts",
     "start": "npm run build && node dist/main.js",

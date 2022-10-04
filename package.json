@@ -1,8 +1,7 @@
 {
-  "name": "hits-assistant-for-figma",
+  "name": "root",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "dev": "concurrently npm:dev:*",
     "build": "concurrently npm:build:*",

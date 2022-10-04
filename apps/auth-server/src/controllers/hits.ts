@@ -1,5 +1,6 @@
 import assert from "assert";
 import axios from "axios";
+import crypto from "crypto";
 import path from "path";
 import { readFileSafe, writeJsonFile } from "../utils/fs";
 
@@ -7,12 +8,24 @@ const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 
-export interface SignInProps {
+export interface SignInRequest {
   code: string;
   code_verifier: string;
 }
-export async function signIn(props: SignInProps) {
-  const { code, code_verifier } = props;
+
+export type Response<T> = Promise<{
+  status: number;
+  data?: T;
+}>;
+
+export interface SignInResult {
+  email: string;
+  userClientId: string;
+  id_token: string;
+}
+
+export async function signIn(req: SignInRequest): Response<SignInResult> {
+  const { code, code_verifier } = req;
   const userTable = path.join(process.cwd(), "db", "users.json");
 
   const params = new URLSearchParams({
@@ -39,8 +52,10 @@ export async function signIn(props: SignInProps) {
   assert(typeof hitsProfile?.user?.mail === "string");
   const email = hitsProfile.user.mail;
 
+  const userClientId = crypto.randomUUID();
+
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]");
-  const updatedUsers = updateUserTable(users, { ...response.data, email, code_verifier });
+  const updatedUsers = updateUserTable(users, { ...response.data, email, code_verifier, userClientId });
   await writeJsonFile(userTable, updatedUsers);
 
   console.log("[signin] sign in success");
@@ -48,30 +63,28 @@ export async function signIn(props: SignInProps) {
     status: response.status,
     data: {
       email,
+      userClientId,
       id_token: response.data.id_token,
     },
   };
 }
 
-export interface GetSignInResultProps {
+export interface GetSignInStatusRequest {
   code_verifier: string;
 }
 
-export interface GetSignInResultResponse {
-  status: number;
-  data?: {
-    email: string;
-    id_token: string;
-  };
+export interface SignInStatus {
+  email: string;
+  id_token: string;
 }
 
-export async function getInteractiveSignInStatus(props: GetSignInResultProps): Promise<GetSignInResultResponse> {
-  return new Promise<GetSignInResultResponse>((resolve) => {
+export async function getInteractiveSignInStatus(req: GetSignInStatusRequest): Response<SignInStatus> {
+  return new Promise<any>((resolve) => {
     const userTable = path.join(process.cwd(), "db", "users.json");
 
     const pollId = setInterval(async () => {
       const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
-      const user = users.find((user) => user.code_verifier === props.code_verifier);
+      const user = users.find((user) => user.code_verifier === req.code_verifier);
       if (user) {
         clearInterval(pollId);
         clearTimeout(timeoutId);
@@ -103,20 +116,17 @@ export async function getInteractiveSignInStatus(props: GetSignInResultProps): P
   });
 }
 
-export interface GetTokenProps {
+export interface GetTokenRequest {
   email: string;
   id_token: string;
 }
 
-export interface GetTokenResponse {
-  status: number;
-  data: string;
-}
+export type GetTokenResponse = string;
 
-export async function getToken(props: GetTokenProps): Promise<GetTokenResponse> {
+export async function getToken(req: GetTokenRequest): Response<string> {
   const userTable = path.join(process.cwd(), "db", "users.json");
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
-  const user = users.find((user) => user.email === props.email && user.id_token === props.id_token);
+  const user = users.find((user) => user.email === req.email && user.id_token === req.id_token);
 
   if (!user) {
     return {
@@ -151,7 +161,7 @@ export async function getToken(props: GetTokenProps): Promise<GetTokenResponse> 
   // HACK: read user table again to reduce chance of race condition
   const users2 = JSON.parse((await readFileSafe(userTable)) ?? "[]");
   // roll the refresh token, but keep the old email and id_token
-  const updatedUsers = updateUserTable(users2, { ...response.data, email: props.email, id_token: props.id_token });
+  const updatedUsers = updateUserTable(users2, { ...response.data, email: req.email, id_token: req.id_token });
   await writeJsonFile(userTable, updatedUsers);
 
   return {
