@@ -6,7 +6,6 @@ import { readFileSafe, writeJsonFile } from "../utils/fs";
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
-const GRAPH_API_RESOURCE_ID = "https://graph.microsoft.com";
 
 export interface SignInProps {
   code: string;
@@ -41,7 +40,7 @@ export async function signIn(props: SignInProps) {
   const email = hitsProfile.user.mail;
 
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]");
-  const updatedUsers = updateUserTable(users, { ...response.data, email });
+  const updatedUsers = updateUserTable(users, { ...response.data, email, code_verifier });
   await writeJsonFile(userTable, updatedUsers);
 
   console.log("[signin] sign in success");
@@ -52,6 +51,56 @@ export async function signIn(props: SignInProps) {
       id_token: response.data.id_token,
     },
   };
+}
+
+export interface GetSignInResultProps {
+  code_verifier: string;
+}
+
+export interface GetSignInResultResponse {
+  status: number;
+  data?: {
+    email: string;
+    id_token: string;
+  };
+}
+
+export async function getSignInStatus(props: GetSignInResultProps): Promise<GetSignInResultResponse> {
+  return new Promise<GetSignInResultResponse>((resolve) => {
+    const userTable = path.join(process.cwd(), "db", "users.json");
+
+    const pollId = setInterval(async () => {
+      const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
+      const user = users.find((user) => user.code_verifier === props.code_verifier);
+      if (user) {
+        clearInterval(pollId);
+        clearTimeout(timeoutId);
+
+        // exclude verifier in the table. We use it only once
+        const { code_verifier, ...userWithoutVerifier } = user;
+
+        const updatedUsers = updateUserTable(users, userWithoutVerifier);
+        await writeJsonFile(userTable, updatedUsers);
+
+        resolve({
+          status: 200,
+          data: {
+            email: user.email,
+            id_token: user.id_token,
+          },
+        });
+      }
+    }, 3000);
+
+    const timeoutId = setTimeout(() => {
+      clearInterval(pollId);
+      resolve({ status: 408 });
+    }, 60000);
+  }).catch(() => {
+    return {
+      status: 500,
+    };
+  });
 }
 
 export interface GetTokenProps {

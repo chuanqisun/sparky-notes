@@ -3,7 +3,6 @@ import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../u
 const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
-const GRAPH_API_RESOURCE_ID = "https://graph.microsoft.com";
 
 export async function interactiveSignIn() {
   const verifier = generateCodeVerifier();
@@ -19,6 +18,18 @@ export async function interactiveSignIn() {
 
   sessionStorage.setItem("aad-last-verifier", verifier);
   window.open(`https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
+
+  const result = await fetch(`http://localhost:5002/hits/signinstatus`, {
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    body: JSON.stringify({
+      code_verifier: verifier,
+    }),
+  }).then((res) => res.json());
+
+  console.log(`[interactive-signin]`, result);
 }
 
 export interface AuthRedirectResult {
@@ -30,6 +41,7 @@ export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> 
   const code = new URLSearchParams(location.search).get("code");
   if (!code) return null;
 
+  // TODO hide creds in POST body
   const result = await fetch(`http://localhost:5002/hits/signin?code=${code}&code_verifier=${verifier}`).then((res) => res.json());
   const { email, id_token } = result;
 

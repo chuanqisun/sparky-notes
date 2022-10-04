@@ -2,7 +2,7 @@ import assert from "assert";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { getToken, signIn } from "./controllers/hits";
+import { getSignInStatus, getToken, signIn } from "./controllers/hits";
 
 dotenv.config();
 
@@ -19,6 +19,15 @@ app.post("/hits/token", async (req, res) => {
   const { data, status } = await getToken({ id_token: req.body.id_token, email: req.body.email });
 
   console.log("/hits/token", status);
+  return res.status(status).json(data);
+});
+
+app.post("/hits/signinstatus", async (req, res) => {
+  assert(typeof req.body?.code_verifier === "string");
+
+  const { data, status } = await getSignInStatus({ code_verifier: req.body.code_verifier });
+  console.log("/hits/signinstatus", status);
+
   return res.status(status).json(data);
 });
 
