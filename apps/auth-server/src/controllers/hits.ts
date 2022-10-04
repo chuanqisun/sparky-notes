@@ -65,7 +65,7 @@ export interface GetSignInResultResponse {
   };
 }
 
-export async function getSignInStatus(props: GetSignInResultProps): Promise<GetSignInResultResponse> {
+export async function getInteractiveSignInStatus(props: GetSignInResultProps): Promise<GetSignInResultResponse> {
   return new Promise<GetSignInResultResponse>((resolve) => {
     const userTable = path.join(process.cwd(), "db", "users.json");
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "preact/hooks";
 import type { MessageToUI } from "types";
-import { interactiveSignIn } from "./features/auth/auth";
+import { embeddedSignIn } from "./features/auth/auth";
 import { sendMessage } from "./utils/ipc";
 
 export function App() {
@@ -25,7 +25,7 @@ export function App() {
   useEffect(() => {}, []);
 
   const handleSignIn = () => {
-    interactiveSignIn();
+    embeddedSignIn();
 
     // polling backend until token sign in success
   };
@@ -33,6 +33,7 @@ export function App() {
   return (
     <>
       <h1>hello h20</h1>
+
       <button onClick={handleSignIn}>Sign in</button>
     </>
   );

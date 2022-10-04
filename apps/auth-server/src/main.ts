@@ -2,7 +2,7 @@ import assert from "assert";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { getSignInStatus, getToken, signIn } from "./controllers/hits";
+import { getInteractiveSignInStatus, getToken, signIn } from "./controllers/hits";
 
 dotenv.config();
 
@@ -25,7 +25,7 @@ app.post("/hits/token", async (req, res) => {
 app.post("/hits/signinstatus", async (req, res) => {
   assert(typeof req.body?.code_verifier === "string");
 
-  const { data, status } = await getSignInStatus({ code_verifier: req.body.code_verifier });
+  const { data, status } = await getInteractiveSignInStatus({ code_verifier: req.body.code_verifier });
   console.log("/hits/signinstatus", status);
 
   return res.status(status).json(data);

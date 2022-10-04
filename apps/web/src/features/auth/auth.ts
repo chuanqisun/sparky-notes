@@ -4,9 +4,8 @@ const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
 const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 
-export async function interactiveSignIn() {
-  const verifier = generateCodeVerifier();
-  const challenge = await generateCodeChallengeFromVerifier(verifier);
+export async function interactiveSignIn(code_verifier: string) {
+  const challenge = await generateCodeChallengeFromVerifier(code_verifier);
   const params = new URLSearchParams({
     client_id: AAD_CLIENT_ID,
     response_type: "code",
@@ -16,8 +15,13 @@ export async function interactiveSignIn() {
     code_challenge_method: "S256",
   });
 
-  sessionStorage.setItem("aad-last-verifier", verifier);
-  window.open(`https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
+  sessionStorage.setItem("aad-last-verifier", code_verifier);
+  location.replace(`https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
+}
+
+export async function embeddedSignIn() {
+  const code_verifier = generateCodeVerifier();
+  window.open(`http://localhost:5200/sign-in.html?code_verifier=${code_verifier}`);
 
   const result = await fetch(`http://localhost:5002/hits/signinstatus`, {
     headers: {
@@ -25,11 +29,12 @@ export async function interactiveSignIn() {
     },
     method: "POST",
     body: JSON.stringify({
-      code_verifier: verifier,
+      code_verifier: code_verifier,
     }),
   }).then((res) => res.json());
 
-  console.log(`[interactive-signin]`, result);
+  console.log(`[embedded-signin]`, result);
+  return result;
 }
 
 export interface AuthRedirectResult {
@@ -39,7 +44,10 @@ export interface AuthRedirectResult {
 export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> {
   const verifier = sessionStorage.getItem("aad-last-verifier");
   const code = new URLSearchParams(location.search).get("code");
-  if (!code) return null;
+  if (!verifier || !code) {
+    console.error("missing verifier or code");
+    return null;
+  }
 
   // TODO hide creds in POST body
   const result = await fetch(`http://localhost:5002/hits/signin?code=${code}&code_verifier=${verifier}`).then((res) => res.json());
