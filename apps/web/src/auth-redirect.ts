@@ -1,5 +1,7 @@
-import { handleOAuthRedirect } from "./features/auth/auth";
+import { handleOAuthRedirect } from "./plugins/hits/auth";
 
 handleOAuthRedirect().then((res) => {
-  document.getElementById("output")!.innerHTML = res?.email ? `Successfully signed in as ${res.email}. You may close the window now.` : "Error signing in";
+  setTimeout(() => {
+    document.getElementById("output")!.innerHTML = res?.email ? `Successfully signed in as ${res.email}. You may close the window now.` : "Error signing in";
+  }, 3000); // match the polling rate
 });

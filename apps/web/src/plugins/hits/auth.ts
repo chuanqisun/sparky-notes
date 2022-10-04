@@ -63,3 +63,20 @@ export async function handleOAuthRedirect(): Promise<AuthRedirectResult | null> 
     idToken: id_token,
   };
 }
+
+export async function getAccessToken(email: string, idToken: string) {
+  const result = await fetch(`http://localhost:5201/hits/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id_token: idToken,
+      email,
+    }),
+  });
+
+  if (!result.ok) throw new Error(result.statusText);
+
+  return result.json();
+}

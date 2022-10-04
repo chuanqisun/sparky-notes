@@ -1,4 +1,4 @@
-import { interactiveSignIn } from "./features/auth/auth";
+import { interactiveSignIn } from "./plugins/hits/auth";
 
 async function main() {
   const code_verfier = new URLSearchParams(location.search).get("code_verifier");

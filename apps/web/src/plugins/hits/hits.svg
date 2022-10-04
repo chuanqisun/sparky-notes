@@ -1,0 +1,61 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_290_0)">
+<path d="M1.66795 6.9453C1.43277 7.29807 1.44561 7.76081 1.7 8.1L4.7 12.1C4.72839 12.1379 4.75943 12.1736 4.79289 12.2071L5.67815 13.0924L6.60557 14.9472C6.77496 15.286 7.12123 15.5 7.5 15.5H8.5C8.87877 15.5 9.22504 15.286 9.39443 14.9472L10.3219 13.0924L11.2071 12.2071C11.2406 12.1736 11.2716 12.1379 11.3 12.1L14.3 8.1C14.5544 7.76081 14.5672 7.29807 14.3321 6.9453L12.3321 3.9453C12.2146 3.76919 12.0456 3.63648 11.8507 3.56351L12.7071 2.70711C12.9619 2.45236 13.0599 2.08027 12.9637 1.73307C12.8675 1.38587 12.5921 1.11724 12.2425 1.02986L8.24254 0.0298575C8.0833 -0.00995255 7.9167 -0.00995255 7.75746 0.0298575L3.75746 1.02986C3.40795 1.11724 3.13245 1.38587 3.03629 1.73307C2.94012 2.08027 3.03814 2.45236 3.29289 2.70711L4.14929 3.56351C3.95444 3.63648 3.78536 3.76919 3.66795 3.9453L1.66795 6.9453Z" fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+<path d="M5.5 10.5H10.5" stroke="black" stroke-linecap="round"/>
+<path d="M6.5 12.5H9.5" stroke="black" stroke-linecap="round"/>
+<path d="M7.5 14.5H8.5" stroke="black" stroke-linecap="round"/>
+<g style="mix-blend-mode:multiply">
+<path d="M8 4L4.5 4.5" stroke="#B8D432" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M8 4L11.5 4.5" stroke="#FFB900" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M4.5 4.5L2.5 7.5" stroke="#00BCF2" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M11.5 4.5L13.5 7.5" stroke="#B8D432" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M2.5 7.5L5.5 11.5" stroke="#FFB900" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M13.5 7.5L10.5 11.5" stroke="#FFB900" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M5.5 11.5L5 7.5" stroke="#00BCF2" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M10.5 11.5L11 7.5" stroke="#B8D432" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M11 7.5L11.5 4.5" stroke="#00BCF2" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M11 7.5L8 4" stroke="#B8D432" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M5 7.5L4.5 4.5" stroke="#FFB900" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M5 7.5L8 4" stroke="#00BCF2" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M13.5 7.5H11" stroke="#00BCF2" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M2.5 7.5H5" stroke="#B8D432" stroke-linecap="round"/>
+</g>
+<g style="mix-blend-mode:multiply">
+<path d="M5 7.5H11" stroke="#FFB900" stroke-linecap="round"/>
+</g>
+<path d="M5.14645 3.85355C5.34171 4.04882 5.65829 4.04882 5.85355 3.85355C6.04882 3.65829 6.04882 3.34171 5.85355 3.14645L5.14645 3.85355ZM5.85355 3.14645L4.35355 1.64645L3.64645 2.35355L5.14645 3.85355L5.85355 3.14645Z" fill="black"/>
+<path d="M7.5 3C7.5 3.27614 7.72386 3.5 8 3.5C8.27614 3.5 8.5 3.27614 8.5 3H7.5ZM8.5 3V1H7.5V3H8.5Z" fill="black"/>
+<path d="M10.1464 3.14645C9.95118 3.34171 9.95118 3.65829 10.1464 3.85355C10.3417 4.04882 10.6583 4.04882 10.8536 3.85355L10.1464 3.14645ZM10.8536 3.85355L12.3536 2.35355L11.6464 1.64645L10.1464 3.14645L10.8536 3.85355Z" fill="black"/>
+</g>
+<defs>
+<clipPath id="clip0_290_0">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

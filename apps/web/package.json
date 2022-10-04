@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "acs-expression-builder": "^0.0.2",
     "assets": "file:packages/assets",
     "preact": "^10.11.0"
   },

@@ -1,10 +1,12 @@
 import { useCallback, useEffect } from "preact/hooks";
 import type { MessageToUI } from "types";
-import { embeddedSignIn } from "./features/auth/auth";
+import { useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
 
 export function App() {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
+
+  const hitsPlugin = useHits();
 
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
@@ -22,19 +24,13 @@ export function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  useEffect(() => {}, []);
-
-  const handleSignIn = () => {
-    embeddedSignIn();
-
-    // polling backend until token sign in success
-  };
-
   return (
     <>
       <h1>hello h20</h1>
 
-      <button onClick={handleSignIn}>Sign in</button>
+      {hitsPlugin.isConnected === undefined && <div>Signing in</div>}
+      {hitsPlugin.isConnected === false && <button onClick={hitsPlugin.signIn}>Sign in</button>}
+      {hitsPlugin.isConnected && <button onClick={hitsPlugin.signOut}>Sign out</button>}
     </>
   );
 }
