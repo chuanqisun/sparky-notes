@@ -39,10 +39,13 @@ export function App() {
 
   // auto sync
   useEffect(() => {
-    hitsPlugin.pull([]).then(async (changeset) => {
-      console.log(`[sync] success`, changeset);
-      return graph.put(changeset.add);
-    });
+    graph
+      .clearAll()
+      .then(() => hitsPlugin.pull([]))
+      .then((changeset) => {
+        console.log(`[sync] success`, changeset);
+        return graph.put(changeset.add);
+      });
   }, [hitsPlugin.config]);
 
   // auto index on graph change
@@ -161,7 +164,7 @@ export function App() {
                       })
                     }
                   >
-                    {item.title}
+                    {item.innerElement || item.title}
                   </button>
                 </li>
               ))}

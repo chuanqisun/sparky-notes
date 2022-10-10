@@ -7,6 +7,8 @@ export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[
   const allClaims: HitsGraphNode[] = searchResult
     .map((reportResult) => reportResult.document)
     .flatMap((document) => {
+      if (!document.researchers.length) throw new Error("!");
+
       const claims = document.children
         .filter((child) => [1, 25].includes(child.entityType))
         .map((claim) => ({
@@ -15,42 +17,31 @@ export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[
           entityType: claim.entityType,
           details: claim.contents?.trim().slice(0, 255) ?? "",
           updatedOn: claim.updatedOn,
+          group: {
+            id: document.group.id,
+            displayName: document.group.name,
+          },
+          researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
+          tags: [...claim.products, ...claim.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
           targets: [],
         }));
 
-      const report = {
-        title: document.title ?? "Untitled",
-        id: document.id,
-        entityType: document.entityType,
-        details: document.contents?.trim().slice(0, 255) ?? "",
-        updatedOn: document.updatedOn,
-        targets: claims.map((claim) => ({
-          id: claim.id,
-          entityType: claim.entityType,
-          relation: "contains",
-        })),
-      };
+      // const report = {
+      //   title: document.title ?? "Untitled",
+      //   id: document.id,
+      //   entityType: document.entityType,
+      //   details: document.contents?.trim().slice(0, 255) ?? "",
+      //   updatedOn: document.updatedOn,
+      //   researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
+      //   targets: claims.map((claim) => ({
+      //     id: claim.id,
+      //     entityType: claim.entityType,
+      //     relation: "contains",
+      //   })),
+      // };
 
-      return [report, ...claims];
+      return [...claims];
     });
-
-  const uniqueClaims = allClaims.filter(uniqueBy.bind(null, "id"));
-
-  return uniqueClaims;
-}
-
-export function getClaimsFromSearchResultItems(searchResult: SearchResultItem[]): HitsGraphNode[] {
-  const allClaims: HitsGraphNode[] = searchResult
-    .flatMap((reportResult) => reportResult.document.children)
-    .filter((child) => [1, 25].includes(child.entityType))
-    .map((claim, index) => ({
-      title: claim.title ?? "Untitled",
-      id: claim.id,
-      entityType: claim.entityType,
-      details: claim.contents?.trim().slice(0, 255) ?? "",
-      updatedOn: claim.updatedOn,
-      targets: [],
-    }));
 
   const uniqueClaims = allClaims.filter(uniqueBy.bind(null, "id"));
 

@@ -71,6 +71,8 @@ export interface SearchResultChild {
   nestLevel: number; // starts with 1
   parents: SearchResultChildParent[]; // top level claims point to the report as parent
   updatedOn: string;
+  topics: SearchResultTag[];
+  products: SearchResultTag[];
 }
 export interface SearchResultChildWithTitle extends SearchResultChild {
   title: string;

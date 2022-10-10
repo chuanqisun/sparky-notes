@@ -1,0 +1,32 @@
+.hits-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+}
+
+.hits-item__text {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.hits-item__title {
+  font-weight: 600;
+}
+.hits-item__meta-field {
+  color: #666;
+}
+.hits-item__tag {
+  font-size: 12px;
+  height: 18px;
+  margin-block: 1px;
+  padding-inline: 2px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  max-width: 32ch;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

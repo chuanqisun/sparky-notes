@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import type { PluginId } from "../../plugins/plugin-ids";
 
 export interface PluginBase {
@@ -58,11 +59,13 @@ export interface SearchItem {
   keywords: string;
 }
 
+// TODO add a separate interface for Figma display item
 export interface DisplayItem {
   title: string;
-  iconUrl?: string;
-  thumbnailUrl?: string;
+  // iconUrl?: string;
+  // thumbnailUrl?: string;
   externalUrl?: string;
+  innerElement?: JSX.Element;
 }
 
 export interface ConnectionStatus {

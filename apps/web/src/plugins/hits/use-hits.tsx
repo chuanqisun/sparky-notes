@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import type { Authenticatable, Configurable, Displayable, LinkSourceable, LinkTargetable, PluginBase, Searchable, Syncable } from "../../modules/kernel/kernel";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { PluginId } from "../plugin-ids";
+import lightbulbIconUrl from "./assets/lightbulb.svg";
+import thumbupIconUrl from "./assets/thumbup.svg";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import type { FilterConfig } from "./hits";
 import iconUrl from "./hits.svg";
 import { searchHits } from "./proxy";
 import { getClaimsFromSearchResultItemsV2 } from "./search";
+import "./styles.css";
 
 export interface HitsGraphNode {
   title: string;
@@ -14,6 +17,18 @@ export interface HitsGraphNode {
   id: string;
   entityType: number;
   updatedOn: string;
+  group: {
+    id: number;
+    displayName: string;
+  };
+  researchers: {
+    id: number;
+    displayName: string;
+  }[];
+  tags: {
+    id: number;
+    displayName: string;
+  }[];
   targets: {
     id: string;
     entityType: number;
@@ -34,6 +49,11 @@ const entityNames: Record<number, string> = {
   32: "collection",
   64: "note",
   25: "recommendation",
+};
+
+const entityIcons: Record<number, string> = {
+  1: lightbulbIconUrl,
+  25: thumbupIconUrl,
 };
 
 export function useHits(): PluginBase &
@@ -94,7 +114,9 @@ export function useHits(): PluginBase &
 
   const toSearchItem = useCallback(
     (data: HitsGraphNode) => ({
-      keywords: `hits: ${entityNames[data.entityType]} ${data.title}`,
+      keywords: `${entityNames[data.entityType]} ${data.title} ${data.group.displayName} ${data.researchers
+        .map((person) => person.displayName)
+        .join(" ")} ${data.tags.map((tag) => tag.displayName).join(" ")}`,
     }),
     []
   );
@@ -102,8 +124,28 @@ export function useHits(): PluginBase &
   const toDisplayItem = useCallback(
     (data: HitsGraphNode) => ({
       iconUrl,
-      title: `${data.title}`,
+      title: `${data.title}\n${data.researchers.map((person) => person.displayName).join(", ")}`,
       externalUrl: `https://hits.microsoft.com/${entityNames[data.entityType]}/${data.id}`,
+      innerElement: (
+        <article class="hits-item">
+          <img src={entityIcons[data.entityType]} />
+          <div class="hits-item__text">
+            <span class="hits-item__title">{data.title}</span>{" "}
+            {data.tags.length > 0 && (
+              <span class="hits-item__tags">
+                {data.tags.map((tag) => (
+                  <span class="hits-item__tag" key={tag.id}>
+                    {tag.displayName}
+                  </span>
+                ))}
+              </span>
+            )}{" "}
+            <span class="hits-item__meta-field">{data.group.displayName}</span>&nbsp;·{" "}
+            <span class="hits-item__meta-field">{data.researchers.map((person) => person.displayName).join(", ")}</span>&nbsp;·{" "}
+            <span class="hits-item__meta-field">{new Date(data.updatedOn).toLocaleDateString()}</span>
+          </div>
+        </article>
+      ),
     }),
     []
   );

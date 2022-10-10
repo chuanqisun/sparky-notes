@@ -8,8 +8,9 @@
   display: grid;
 }
 
-.c-button--card:where(:focus-visible, :hover) {
-  outline: 2px solid black;
+.c-button--card:is(:focus-visible, :hover) {
+  color: #000;
+  background-color: #eee;
 }
 .c-button--card:active {
   transform: scale(0.98);
@@ -37,17 +38,16 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1px;
 }
 
 .c-list-item {
+  padding: 4px;
+  color: #333;
   background-color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .c-main {
-  padding: 8px 8px;
   background-color: #ccc;
 }
 

@@ -26,12 +26,8 @@
 </head>
 <body>
   <div class="debug-panel">
-    <button data-action="reset">Reset</button>
-    <button data-action="init-nickname">Init nickname</button>
-    <label data-action="allow-polling"><input name="allow-poll" type="checkbox" />Sync chat</label>
-    <button data-action="clear-chat-history">Clear chat history</button>
-    <button data-action="receive-message">Receive mock message</button>
-    <button data-action="request-map">Request map</button>
+    <button data-action="reset">Reset Indexed DB</button>
+    <button data-action="reset">Reset Local Storage</button>
   </div>
   <iframe src="http://localhost:5200"></iframe>
   <script type="module" src="./src/dev-shim.ts"></script>
