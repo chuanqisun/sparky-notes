@@ -14,6 +14,10 @@ export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[
         .map((claim) => ({
           title: claim.title ?? "Untitled",
           id: claim.id,
+          parent: {
+            title: document.title,
+            id: parseInt(document.id),
+          },
           entityType: claim.entityType,
           details: claim.contents?.trim().slice(0, 255) ?? "",
           updatedOn: claim.updatedOn,

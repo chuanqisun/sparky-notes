@@ -58,15 +58,15 @@ async function main() {
         },
       };
       // paint.paints = [solidPaint]:
-      frame.backgrounds = [blackPaint];
-      frame.strokes = [whitePaint];
+      frame.backgrounds = [whitePaint];
+      frame.strokes = [blackPaint];
       frame.strokeWeight = 2;
 
       textNode.resize(400, 10);
       textNode.textAutoResize = "HEIGHT";
       textNode.layoutAlign = "STRETCH";
       textNode.fontSize = 20;
-      textNode.fills = [whitePaint];
+      textNode.fills = [blackPaint];
       textNode.locked = true;
 
       frame.x = figma.viewport.center.x - frame.width / 2 + 32;

@@ -11,7 +11,7 @@ export async function searchHits(token: string, filter: FilterConfig): Promise<S
       count: true,
       queryType: "Full",
       searchText: "*",
-      top: 100,
+      top: 20,
       filter: getFilterString(filter),
       orderBy: getOrderBy(getOrderByPublishDateClause()),
     }),

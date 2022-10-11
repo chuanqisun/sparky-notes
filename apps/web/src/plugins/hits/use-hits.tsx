@@ -17,6 +17,10 @@ export interface HitsGraphNode {
   id: string;
   entityType: number;
   updatedOn: string;
+  parent: {
+    title: string;
+    id: number;
+  };
   group: {
     id: number;
     displayName: string;
@@ -114,9 +118,9 @@ export function useHits(): PluginBase &
 
   const toSearchItem = useCallback(
     (data: HitsGraphNode) => ({
-      keywords: `${entityNames[data.entityType]}; ${data.title}; ${data.group.displayName}; ${data.researchers
+      keywords: `${entityNames[data.entityType]}; ${data.title}; ${data.parent.title}; ${data.group.displayName}; ${data.researchers
         .map((person) => person.displayName)
-        .join(", ")}; ${data.tags.map((tag) => tag.displayName).join(", ")}`,
+        .join(", ")}; ${data.tags.map((tag) => tag.displayName).join(", ")}; ${new Date(data.updatedOn).toLocaleDateString()}`,
     }),
     []
   );
@@ -126,7 +130,7 @@ export function useHits(): PluginBase &
       .split(" ")
       .map((item) => item.trim())
       .filter(Boolean);
-    const tokensPattern = tokens.length ? new RegExp(`(${tokens.join("|")})`, "gi") : null;
+    const tokensPattern = tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null;
     const getHighlightedHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
 
     return {
@@ -138,6 +142,7 @@ export function useHits(): PluginBase &
           <img src={entityIcons[data.entityType]} />
           <div class="hits-item__text">
             <span class="hits-item__title" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.title) }} />{" "}
+            <span class="hits-item__parent-title" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.parent.title) }} />{" "}
             {data.tags.length > 0 && (
               <span class="hits-item__tags">
                 {data.tags.map((tag) => (
@@ -151,7 +156,8 @@ export function useHits(): PluginBase &
               class="hits-item__meta-field"
               dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.researchers.map((person) => person.displayName).join(", ")) }}
             />
-            &nbsp;· <span class="hits-item__meta-field">{new Date(data.updatedOn).toLocaleDateString()}</span>
+            &nbsp;·{" "}
+            <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(new Date(data.updatedOn).toLocaleDateString()) }} />
           </div>
         </article>
       ),

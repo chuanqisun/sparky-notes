@@ -12,6 +12,9 @@
 .hits-item__title {
   font-weight: 600;
 }
+.hits-item__parent-title {
+  font-style: italic;
+}
 .hits-item__meta-field {
   color: #666;
 }
@@ -26,7 +29,7 @@
   align-items: center;
   max-width: 32ch;
 
-  white-space: nowrap;
+  white-space: pre;
   text-overflow: ellipsis;
   overflow: hidden;
 }
