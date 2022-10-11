@@ -5,8 +5,9 @@ import { once } from "../../utils/once";
 
 const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
   preset: "default",
-  charset: "latin:advanced",
+  charset: "latin:simple",
   tokenize: "forward",
+  stemmer: false,
   document: {
     id: "id",
     index: ["fuzzyTokens"],

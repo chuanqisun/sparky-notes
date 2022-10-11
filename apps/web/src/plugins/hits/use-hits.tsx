@@ -114,15 +114,22 @@ export function useHits(): PluginBase &
 
   const toSearchItem = useCallback(
     (data: HitsGraphNode) => ({
-      keywords: `${entityNames[data.entityType]} ${data.title} ${data.group.displayName} ${data.researchers
+      keywords: `${entityNames[data.entityType]}; ${data.title}; ${data.group.displayName}; ${data.researchers
         .map((person) => person.displayName)
-        .join(" ")} ${data.tags.map((tag) => tag.displayName).join(" ")}`,
+        .join(", ")}; ${data.tags.map((tag) => tag.displayName).join(", ")}`,
     }),
     []
   );
 
-  const toDisplayItem = useCallback(
-    (data: HitsGraphNode) => ({
+  const toDisplayItem = useCallback((data: HitsGraphNode, query: string) => {
+    const tokens = query
+      .split(" ")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const tokensPattern = tokens.length ? new RegExp(`(${tokens.join("|")})`, "gi") : null;
+    const getHighlightedHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
+
+    return {
       iconUrl,
       title: `${data.title}\n${data.researchers.map((person) => person.displayName).join(", ")}`,
       externalUrl: `https://hits.microsoft.com/${entityNames[data.entityType]}/${data.id}`,
@@ -130,25 +137,26 @@ export function useHits(): PluginBase &
         <article class="hits-item">
           <img src={entityIcons[data.entityType]} />
           <div class="hits-item__text">
-            <span class="hits-item__title">{data.title}</span>{" "}
+            <span class="hits-item__title" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.title) }} />{" "}
             {data.tags.length > 0 && (
               <span class="hits-item__tags">
                 {data.tags.map((tag) => (
-                  <span class="hits-item__tag" key={tag.id}>
-                    {tag.displayName}
-                  </span>
+                  <span class="hits-item__tag" key={tag.id} dangerouslySetInnerHTML={{ __html: getHighlightedHtml(tag.displayName) }} />
                 ))}
               </span>
             )}{" "}
-            <span class="hits-item__meta-field">{data.group.displayName}</span>&nbsp;·{" "}
-            <span class="hits-item__meta-field">{data.researchers.map((person) => person.displayName).join(", ")}</span>&nbsp;·{" "}
-            <span class="hits-item__meta-field">{new Date(data.updatedOn).toLocaleDateString()}</span>
+            <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.group.displayName) }} />
+            &nbsp;·{" "}
+            <span
+              class="hits-item__meta-field"
+              dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.researchers.map((person) => person.displayName).join(", ")) }}
+            />
+            &nbsp;· <span class="hits-item__meta-field">{new Date(data.updatedOn).toLocaleDateString()}</span>
           </div>
         </article>
       ),
-    }),
-    []
-  );
+    };
+  }, []);
 
   const toLinkSource = useCallback(
     (node: HitsGraphNode) => ({

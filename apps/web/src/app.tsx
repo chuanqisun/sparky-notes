@@ -79,7 +79,7 @@ export function App() {
             .filter((node) => !!node)
             .map((node) => ({
               key: node!.id,
-              ...pluginMap[node!.pluginId].toDisplayItem(node!.data),
+              ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query),
             }))
         );
       });

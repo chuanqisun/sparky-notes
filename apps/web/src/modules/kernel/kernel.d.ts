@@ -30,7 +30,7 @@ export interface Searchable<DataType> {
 }
 
 export interface Displayable<DataType> {
-  toDisplayItem: (node: DataType) => DisplayItem;
+  toDisplayItem: (node: DataType, query: string) => DisplayItem;
 }
 
 export interface Syncable<DataType> {
