@@ -1,6 +1,9 @@
 import { MessageToMain } from "@h20/types";
+import BadgeLightSvg from "./assets/BadgeLight.svg";
 const { widget } = figma;
-const { useEffect, Text } = widget;
+const { useEffect, Text, Image, SVG } = widget;
+
+console.log(BadgeLightSvg);
 
 const showUI = () =>
   figma.showUI(`<script>window.location.href="${process.env.WEB_URL}"</script>`, {
@@ -85,17 +88,17 @@ function Widget() {
   });
 
   return (
-    <Text
-      fontSize={24}
+    <SVG
+      src={BadgeLightSvg}
+      width={756}
+      height={756}
       onClick={
         // Use async callbacks or return a promise to keep the Iframe window
         // opened. Resolving the promise, closing the Iframe window, or calling
         // "figma.closePlugin()" will terminate the code.
         () => new Promise((resolve) => showUI())
       }
-    >
-      Open IFrame
-    </Text>
+    />
   );
 }
 

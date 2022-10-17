@@ -14,6 +14,9 @@ async function main() {
     sourcemap: "inline", // TODO perf?
     watch: false, // TODO
     minify: false, // TODO
+    loader: {
+      ".svg": "text",
+    },
     define: {
       "process.env.WEB_URL": `"${process.env.WEB_URL}"`,
     },
