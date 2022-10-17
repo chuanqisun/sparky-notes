@@ -10,8 +10,9 @@
   "author": "HITS Engineering",
   "license": "",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.52.0",
+    "@figma/plugin-typings": "*",
+    "@figma/widget-typings": "*",
     "dotenv": "^16.0.3",
-    "esbuild": "^0.15.10"
+    "esbuild": "^0.15.11"
   }
 }
