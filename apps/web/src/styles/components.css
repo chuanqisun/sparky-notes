@@ -47,6 +47,10 @@
   background-color: white;
 }
 
+.c-list--inner {
+  padding-left: 24px;
+}
+
 .c-main {
   background-color: #ccc;
 }

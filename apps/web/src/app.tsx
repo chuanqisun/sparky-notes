@@ -11,8 +11,8 @@ import type { Keyed } from "./utils/types";
 
 interface SearchResultTree {
   [key: string]: {
-    self: any;
-    children: any[];
+    self: Keyed<DisplayItem>;
+    children: Keyed<DisplayItem>[];
   };
 }
 
@@ -51,24 +51,42 @@ export function App() {
 
   const [query, setQuery] = useState("");
   const [searchResultItems, setResults] = useState<Keyed<DisplayItem>[]>([]);
+  const [searchResultTree, setResultTree] = useState<SearchResultTree>({});
 
-  function toHierarchicalList(nodes: (NodeSchema | undefined)[]): SearchResultTree {
-    return nodes.filter(Boolean).reduce((tree, node) => {
-      // hack, this should be opaque to kernel
-      const data = node!.data as HitsGraphNode;
+  const toSearchResultTree = useCallback(
+    async (nodes: (NodeSchema | undefined)[]) => {
+      const missingNodeId = new Set();
+      const partialTree = nodes.filter(Boolean).reduce((tree, node) => {
+        // hack, this should be opaque to kernel
+        const data = node!.data as HitsGraphNode;
 
-      // is leaf node => append to <parentId>.children
-      if (data.parent) {
-        tree[`hits_${data.parent.id}`] ??= { self: undefined, children: [] };
-        tree[`hits_${data.parent.id}`].children.push({ key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) });
-      } else {
-        tree[node!.id] ??= { self: undefined, children: [] };
-        tree[node!.id].self = { key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) };
-      }
+        // is leaf node => append to <parentId>.children
+        if (data.parent) {
+          tree[`hits_${data.parent.id}`] ??= { self: undefined as any, children: [] };
+          tree[`hits_${data.parent.id}`].children.push({ key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) });
+          missingNodeId.add(`hits_${data.parent.id}`);
+        } else {
+          tree[node!.id] ??= { self: undefined as any, children: [] };
+          tree[node!.id].self = { key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) };
+          missingNodeId.delete(node!.id);
+        }
 
-      return tree;
-    }, {} as SearchResultTree);
-  }
+        return tree;
+      }, {} as SearchResultTree);
+
+      const missingNodes = await graph.get([...missingNodeId] as string[]);
+      const missingDisplayNodes = missingNodes.map((node) => ({ key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) }));
+      const fullTree = Object.fromEntries(
+        Object.entries(partialTree).map(([key, value]) => [
+          key,
+          { self: value.self ?? missingDisplayNodes.find((item) => item.key === key), children: value.children },
+        ])
+      );
+
+      return fullTree;
+    },
+    [query, graph.get, pluginMap]
+  );
 
   // auto sync
   useEffect(() => {
@@ -96,7 +114,8 @@ export function App() {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed.length) {
-      setResults([]);
+      // setResults([]);
+      setResultTree({});
       return;
     }
     search
@@ -106,18 +125,18 @@ export function App() {
 
         return graph.get(ids);
       })
-      .then((nodes) => {
-        console.log(toHierarchicalList(nodes));
-        setResults(
-          nodes
-            .filter((node) => !!node)
-            .map((node) => ({
-              key: node!.id,
-              ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query),
-            }))
-        );
+      .then(async (nodes) => {
+        setResultTree(await toSearchResultTree(nodes));
+        // setResults(
+        //   nodes
+        //     .filter((node) => !!node)
+        //     .map((node) => ({
+        //       key: node!.id,
+        //       ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query),
+        //     }))
+        // );
       });
-  }, [query, search.query, graph.get]);
+  }, [query, setResultTree, search.query, graph.get]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
@@ -154,6 +173,8 @@ export function App() {
     }
   };
 
+  console.log(searchResultTree);
+
   return (
     <>
       <header class="c-app-header">
@@ -182,29 +203,52 @@ export function App() {
         <input class="c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={(e) => setQuery((e.target as any).value)} />
       </header>
       <main class="u-scroll c-main">
-        {!!searchResultItems.length && (
+        {
           <section>
             <ul class="c-list">
-              {searchResultItems.map((item) => (
-                <li key={item.key}>
-                  <button
-                    class="u-reset c-button--card c-list-item"
-                    onClick={() =>
-                      sendToMain({
-                        addCard: {
-                          title: item.title,
-                          url: item.externalUrl,
-                        },
-                      })
-                    }
-                  >
-                    {item.innerElement || item.title}
-                  </button>
-                </li>
+              {Object.values(searchResultTree).map(({ self, children }) => (
+                <>
+                  <li key={self.key}>
+                    <button
+                      class="u-reset c-button--card c-list-item"
+                      onClick={() =>
+                        sendToMain({
+                          addCard: {
+                            title: self.title,
+                            url: self.externalUrl,
+                          },
+                        })
+                      }
+                    >
+                      {self.innerElement || self.title}
+                    </button>
+                  </li>
+                  {children.length > 0 && (
+                    <>
+                      {children.map((child) => (
+                        <li key={child.key}>
+                          <button
+                            class="u-reset c-button--card c-list-item"
+                            onClick={() =>
+                              sendToMain({
+                                addCard: {
+                                  title: child.title,
+                                  url: child.externalUrl,
+                                },
+                              })
+                            }
+                          >
+                            {child.innerElement || child.title}
+                          </button>
+                        </li>
+                      ))}
+                    </>
+                  )}
+                </>
               ))}
             </ul>
           </section>
-        )}
+        }
       </main>
     </>
   );
