@@ -1,4 +1,4 @@
-import type { MessageToMain, MessageToUI } from "types";
+import type { MessageToMain, MessageToUI } from "@h20/types";
 
 export default {};
 console.log("[debug-shim] ready");
@@ -18,6 +18,13 @@ window.addEventListener("click", (e) => {
       sendMessageFromMockMain({
         ping: new Date().toLocaleString(),
       });
+      break;
+    case "openUrl":
+      const iframe = document.querySelector("iframe")!;
+      const mutableUrl = new URL(iframe.src);
+      mutableUrl.searchParams.set("openUrl", "https://bing.com");
+      mutableUrl.search = mutableUrl.searchParams.toString();
+      iframe.src = mutableUrl.toString();
       break;
   }
 });

@@ -34,6 +34,13 @@ export function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  useEffect(() => {
+    const openUrl = new URLSearchParams(location.search).get("openUrl");
+    if (openUrl) {
+      window.open(openUrl, "_blank");
+    }
+  }, []);
+
   const [query, setQuery] = useState("");
   const [searchResultItems, setResults] = useState<Keyed<DisplayItem>[]>([]);
 

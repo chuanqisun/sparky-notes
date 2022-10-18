@@ -1,17 +1,28 @@
-import { MessageToMain } from "@h20/types";
+import { MessageToMain, MessageToUI } from "@h20/types";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 const { widget } = figma;
-const { useEffect, Text, Image, SVG } = widget;
+const { useEffect, AutoLayout, useSyncedState, useWidgetId, SVG, Text } = widget;
 
-console.log(BadgeLightSvg);
-
-const showUI = () =>
-  figma.showUI(`<script>window.location.href="${process.env.WEB_URL}"</script>`, {
+const showUI = (search: string = "") =>
+  figma.showUI(`<script>window.location.href="${process.env.WEB_URL + search}"</script>`, {
     height: 800,
     width: 420,
   });
 
+const sendToUI = (message: MessageToUI) => {
+  figma.ui.postMessage(message);
+};
+
+export interface CardData {
+  title: string;
+  url?: string;
+}
+
 function Widget() {
+  const widgetId = useWidgetId();
+
+  const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
+
   useEffect(() => {
     figma.ui.onmessage = async (msg: MessageToMain) => {
       console.log(msg);
@@ -26,61 +37,18 @@ function Widget() {
 
       if (msg.addCard) {
         await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-        const textNode = figma.createText();
-        textNode.characters = msg.addCard.title;
-        if (msg.addCard.url) {
-          textNode.hyperlink = {
-            type: "URL",
-            value: msg.addCard.url,
-          };
-        }
 
-        const frame = figma.createFrame();
-        frame.layoutMode = "VERTICAL";
-        frame.appendChild(textNode);
+        const widgetNode = figma.getNodeById(widgetId) as WidgetNode;
 
-        frame.paddingTop = 8;
-        frame.paddingBottom = 8;
-        frame.paddingLeft = 16;
-        frame.paddingRight = 16;
-        frame.cornerRadius = 8;
+        const clonedWidget = widgetNode.cloneWidget({
+          cardData: msg.addCard,
+        });
 
-        frame.counterAxisSizingMode = "AUTO";
-        frame.primaryAxisSizingMode = "AUTO";
+        clonedWidget.x = figma.viewport.center.x - clonedWidget.width / 2 + 32;
+        clonedWidget.y = figma.viewport.center.y - clonedWidget.height / 2 + 32;
+        figma.currentPage.appendChild(clonedWidget);
 
-        const blackPaint: SolidPaint = {
-          type: "SOLID",
-          color: {
-            r: 0,
-            g: 0,
-            b: 0,
-          },
-        };
-        const whitePaint: SolidPaint = {
-          type: "SOLID",
-          color: {
-            r: 1,
-            g: 1,
-            b: 1,
-          },
-        };
-        // paint.paints = [solidPaint]:
-        frame.backgrounds = [whitePaint];
-        frame.strokes = [blackPaint];
-        frame.strokeWeight = 2;
-
-        textNode.resize(400, 10);
-        textNode.textAutoResize = "HEIGHT";
-        textNode.layoutAlign = "STRETCH";
-        textNode.fontSize = 20;
-        textNode.fills = [blackPaint];
-        textNode.locked = true;
-
-        frame.x = figma.viewport.center.x - frame.width / 2 + 32;
-        frame.y = figma.viewport.center.y - frame.height / 2 + 32;
-        figma.currentPage.appendChild(frame);
-
-        figma.viewport.scrollAndZoomIntoView([frame]);
+        figma.viewport.scrollAndZoomIntoView([clonedWidget]);
 
         figma.notify(`✅ Card added to canvas`);
       }
@@ -88,17 +56,26 @@ function Widget() {
   });
 
   return (
-    <SVG
-      src={BadgeLightSvg}
-      width={756}
-      height={756}
-      onClick={
-        // Use async callbacks or return a promise to keep the Iframe window
-        // opened. Resolving the promise, closing the Iframe window, or calling
-        // "figma.closePlugin()" will terminate the code.
-        () => new Promise((resolve) => showUI())
-      }
-    />
+    <AutoLayout>
+      {cardData === null ? (
+        <SVG src={BadgeLightSvg} width={756} height={756} onClick={() => new Promise((resolve) => showUI())} />
+      ) : (
+        <AutoLayout
+          padding={24}
+          fill="#fff"
+          stroke="#000"
+          strokeWidth={2}
+          cornerRadius={12}
+          onClick={() =>
+            new Promise((resolve) => {
+              showUI(`?openUrl=${cardData.url}`);
+            })
+          }
+        >
+          <Text width={400}>{cardData.title}</Text>
+        </AutoLayout>
+      )}
+    </AutoLayout>
   );
 }
 
