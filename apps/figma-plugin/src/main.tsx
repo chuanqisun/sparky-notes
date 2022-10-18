@@ -3,6 +3,13 @@ import BadgeLightSvg from "./assets/BadgeLight.svg";
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, useWidgetId, SVG, Text } = widget;
 
+// TODOs
+// Generate card next to circle
+// Insight inspector mode
+// Native circle background and ring rendering
+// Ring animation
+// Hover state
+
 const showUI = (search: string = "") =>
   figma.showUI(`<script>window.location.href="${process.env.WEB_URL + search}"</script>`, {
     height: 800,
@@ -58,7 +65,7 @@ function Widget() {
   return (
     <AutoLayout>
       {cardData === null ? (
-        <SVG src={BadgeLightSvg} width={756} height={756} onClick={() => new Promise((resolve) => showUI())} />
+        <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((resolve) => showUI())} />
       ) : (
         <AutoLayout
           padding={24}
