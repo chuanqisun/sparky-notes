@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
-import type { Authenticatable, Configurable, Displayable, LinkSourceable, LinkTargetable, PluginBase, Searchable, Syncable } from "../../modules/kernel/kernel";
+import type { Authenticatable, Configurable, Displayable, LinkTargetable, PluginBase, Searchable, Syncable } from "../../modules/kernel/kernel";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { PluginId } from "../plugin-ids";
 import lightbulbIconUrl from "./assets/lightbulb.svg";
@@ -17,26 +17,21 @@ export interface HitsGraphNode {
   id: string;
   entityType: number;
   updatedOn: string;
-  parent: {
+  parent?: {
     title: string;
     id: number;
   };
-  group: {
+  group?: {
     id: number;
     displayName: string;
   };
-  researchers: {
+  researchers?: {
     id: number;
     displayName: string;
   }[];
-  tags: {
+  tags?: {
     id: number;
     displayName: string;
-  }[];
-  targets: {
-    id: string;
-    entityType: number;
-    relation: string;
   }[];
 }
 
@@ -65,7 +60,6 @@ export function useHits(): PluginBase &
   Displayable<HitsGraphNode> &
   Syncable<HitsGraphNode> &
   Configurable<HitsConfig> &
-  LinkSourceable<HitsGraphNode> &
   LinkTargetable &
   Authenticatable {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);
@@ -118,9 +112,9 @@ export function useHits(): PluginBase &
 
   const toSearchItem = useCallback(
     (data: HitsGraphNode) => ({
-      keywords: `${entityNames[data.entityType]}; ${data.title}; ${data.parent.title}; ${data.group.displayName}; ${data.researchers
-        .map((person) => person.displayName)
-        .join(", ")}; ${data.tags.map((tag) => tag.displayName).join(", ")}; ${new Date(data.updatedOn).toLocaleDateString()}`,
+      keywords: `${entityNames[data.entityType]}; ${data.title}; ${data.group?.displayName ?? ""}; ${
+        data.researchers?.map((person) => person.displayName).join(", ") ?? ""
+      }; ${data.tags?.map((tag) => tag.displayName).join(", ") ?? ""}; ${new Date(data.updatedOn).toLocaleDateString()}`,
     }),
     []
   );
@@ -135,44 +129,30 @@ export function useHits(): PluginBase &
 
     return {
       iconUrl,
-      title: `${data.title}\n${data.researchers.map((person) => person.displayName).join(", ")}`,
+      title: `${data.title}\n${data.researchers?.map((person) => person.displayName).join(", ") ?? ""}`,
       externalUrl: `https://hits.microsoft.com/${entityNames[data.entityType]}/${data.id}`,
       innerElement: (
         <article class="hits-item">
           <img src={entityIcons[data.entityType]} />
           <div class="hits-item__text">
             <span class="hits-item__title" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.title) }} />{" "}
-            <span class="hits-item__parent-title" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.parent.title) }} />{" "}
-            {data.tags.length > 0 && (
-              <span class="hits-item__tags">
-                {data.tags.map((tag) => (
-                  <span class="hits-item__tag" key={tag.id} dangerouslySetInnerHTML={{ __html: getHighlightedHtml(tag.displayName) }} />
-                ))}
-              </span>
-            )}{" "}
-            <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.group.displayName) }} />
-            &nbsp;·{" "}
-            <span
-              class="hits-item__meta-field"
-              dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.researchers.map((person) => person.displayName).join(", ")) }}
-            />
-            &nbsp;·{" "}
-            <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(new Date(data.updatedOn).toLocaleDateString()) }} />
+            {!data.parent && (
+              <>
+                {data.researchers && (
+                  <span
+                    class="hits-item__meta-field"
+                    dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.researchers.map((person) => person.displayName).join(", ")) }}
+                  />
+                )}
+                &nbsp;·{" "}
+                <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(new Date(data.updatedOn).toLocaleDateString()) }} />
+              </>
+            )}
           </div>
         </article>
       ),
     };
   }, []);
-
-  const toLinkSource = useCallback(
-    (node: HitsGraphNode) => ({
-      targets: node.targets.map((target) => ({
-        url: `https://hits.microsoft.com/${entityNames[target.entityType]}/${target.id}`,
-        relation: target.relation,
-      })),
-    }),
-    []
-  );
 
   const getIdFromUrl = useCallback((url: URL) => {
     if (!url.href.includes("https://hits.microsoft.com")) return null;
@@ -192,7 +172,6 @@ export function useHits(): PluginBase &
     pull,
     signIn,
     signOut,
-    toLinkSource,
     updateConfig: hitsConfig.update,
     resetConfig: hitsConfig.reset,
     toSearchItem,

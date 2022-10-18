@@ -21,30 +21,23 @@ export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[
           entityType: claim.entityType,
           details: claim.contents?.trim().slice(0, 255) ?? "",
           updatedOn: claim.updatedOn,
-          group: {
-            id: document.group.id,
-            displayName: document.group.name,
-          },
-          researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
-          tags: [...claim.products, ...claim.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
-          targets: [],
         }));
 
-      // const report = {
-      //   title: document.title ?? "Untitled",
-      //   id: document.id,
-      //   entityType: document.entityType,
-      //   details: document.contents?.trim().slice(0, 255) ?? "",
-      //   updatedOn: document.updatedOn,
-      //   researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
-      //   targets: claims.map((claim) => ({
-      //     id: claim.id,
-      //     entityType: claim.entityType,
-      //     relation: "contains",
-      //   })),
-      // };
+      const report = {
+        title: document.title ?? "Untitled",
+        id: document.id,
+        entityType: document.entityType,
+        details: document.contents?.trim().slice(0, 255) ?? "",
+        updatedOn: document.updatedOn,
+        researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
+        tags: [...document.products, ...document.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
+        group: {
+          id: document.group.id,
+          displayName: document.group.name,
+        },
+      };
 
-      return [...claims];
+      return [report, ...claims];
     });
 
   const uniqueClaims = allClaims.filter(uniqueBy.bind(null, "id"));

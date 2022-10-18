@@ -1,12 +1,20 @@
 import type { MessageToUI } from "@h20/types";
 import type { JSX } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
+import type { NodeSchema } from "./modules/graph/db";
 import { useGraph } from "./modules/graph/use-graph";
 import type { DisplayItem } from "./modules/kernel/kernel";
 import { IndexedItem, useSearch } from "./modules/search/use-search";
-import { useHits } from "./plugins/hits/use-hits";
+import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
 import type { Keyed } from "./utils/types";
+
+interface SearchResultTree {
+  [key: string]: {
+    self: any;
+    children: any[];
+  };
+}
 
 export function App() {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
@@ -43,6 +51,24 @@ export function App() {
 
   const [query, setQuery] = useState("");
   const [searchResultItems, setResults] = useState<Keyed<DisplayItem>[]>([]);
+
+  function toHierarchicalList(nodes: (NodeSchema | undefined)[]): SearchResultTree {
+    return nodes.filter(Boolean).reduce((tree, node) => {
+      // hack, this should be opaque to kernel
+      const data = node!.data as HitsGraphNode;
+
+      // is leaf node => append to <parentId>.children
+      if (data.parent) {
+        tree[`hits_${data.parent.id}`] ??= { self: undefined, children: [] };
+        tree[`hits_${data.parent.id}`].children.push({ key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) });
+      } else {
+        tree[node!.id] ??= { self: undefined, children: [] };
+        tree[node!.id].self = { key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) };
+      }
+
+      return tree;
+    }, {} as SearchResultTree);
+  }
 
   // auto sync
   useEffect(() => {
@@ -81,6 +107,7 @@ export function App() {
         return graph.get(ids);
       })
       .then((nodes) => {
+        console.log(toHierarchicalList(nodes));
         setResults(
           nodes
             .filter((node) => !!node)
