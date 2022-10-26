@@ -3,7 +3,6 @@ import type { JSX } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { NodeSchema } from "./modules/graph/db";
 import { useGraph } from "./modules/graph/use-graph";
-import type { DisplayItem } from "./modules/kernel/kernel";
 import { IndexedItem, useSearch } from "./modules/search/use-search";
 import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
@@ -14,6 +13,14 @@ interface SearchResultTree {
     self: Keyed<DisplayItem>;
     children: Keyed<DisplayItem>[];
   };
+}
+
+export interface DisplayItem {
+  title: string;
+  // iconUrl?: string;
+  // thumbnailUrl?: string;
+  externalUrl?: string;
+  innerElement?: JSX.Element;
 }
 
 export function App() {
