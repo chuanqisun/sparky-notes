@@ -3,7 +3,7 @@
   grid-template-columns: auto 1fr;
   gap: 8px;
   padding-inline: 8px;
-  padding-top: 4px;
+  padding-block: 4px;
 }
 
 .hits-item__text {

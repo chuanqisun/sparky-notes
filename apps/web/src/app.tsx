@@ -50,7 +50,6 @@ export function App() {
   }, []);
 
   const [query, setQuery] = useState("");
-  const [searchResultItems, setResults] = useState<Keyed<DisplayItem>[]>([]);
   const [searchResultTree, setResultTree] = useState<SearchResultTree>({});
 
   const toSearchResultTree = useCallback(
@@ -114,7 +113,6 @@ export function App() {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed.length) {
-      // setResults([]);
       setResultTree({});
       return;
     }
@@ -122,19 +120,10 @@ export function App() {
       .query(query)
       .then((results) => {
         const ids = results.flatMap((result) => result.result) as string[];
-
         return graph.get(ids);
       })
       .then(async (nodes) => {
         setResultTree(await toSearchResultTree(nodes));
-        // setResults(
-        //   nodes
-        //     .filter((node) => !!node)
-        //     .map((node) => ({
-        //       key: node!.id,
-        //       ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query),
-        //     }))
-        // );
       });
   }, [query, setResultTree, search.query, graph.get]);
 
@@ -173,8 +162,6 @@ export function App() {
     }
   };
 
-  console.log(searchResultTree);
-
   return (
     <>
       <header class="c-app-header">
@@ -208,7 +195,7 @@ export function App() {
             <ul class="c-list">
               {Object.values(searchResultTree).map(({ self, children }) => (
                 <>
-                  <li key={self.key}>
+                  <li class="c-list-item-container--parent" key={self.key}>
                     <button
                       class="u-reset c-button--card c-list-item"
                       onClick={() =>

@@ -49,6 +49,10 @@
   /* gap: 1px; */
 }
 
+.c-list-item-container--parent {
+  border-top: 1px solid #ccc;
+}
+
 .c-list-item {
   width: 100%;
 }
