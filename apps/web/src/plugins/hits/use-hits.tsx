@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useLocalStorage } from "../../utils/use-local-storage";
-import { PluginId } from "../plugin-ids";
 import documentIconUrl from "./assets/document.svg";
 import lightbulbIconUrl from "./assets/lightbulb.svg";
 import thumbupIconUrl from "./assets/thumbup.svg";
@@ -82,7 +81,6 @@ export function useHits() {
     const addItems = claims.map((claim) => ({
       id: `hits_${claim.id}`,
       data: claim,
-      pluginId: PluginId.Hits,
       dateUpdated: new Date(claim.updatedOn),
     }));
 
@@ -164,7 +162,6 @@ export function useHits() {
   }, []);
 
   return {
-    id: PluginId.Hits,
     displayName: "HITS",
     isConnected,
     config: hitsConfig.value,

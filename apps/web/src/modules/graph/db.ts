@@ -6,7 +6,6 @@ export interface GraphDBSchema extends DBSchema {
     value: NodeSchema;
     key: string;
     indexes: {
-      byPluginId: PluginId;
       byDateUpdated: Date;
     };
   };
@@ -24,7 +23,6 @@ export interface GraphDBSchema extends DBSchema {
 export interface NodeSchema {
   id: string;
   data: any;
-  pluginId: PluginId;
   dateUpdated: Date;
 }
 
@@ -35,12 +33,6 @@ export interface EdgeSchema {
   rel: string;
 }
 
-export enum PluginId {
-  Hits = 1,
-  Ado = 2,
-  Figma = 3,
-}
-
 export type GraphDB = IDBPDatabase<GraphDBSchema>;
 
 export async function openAppDB(): Promise<GraphDB> {
@@ -48,7 +40,6 @@ export async function openAppDB(): Promise<GraphDB> {
     upgrade(db, _oldVersion, _newVersion, _transaction) {
       const nodeStore = db.createObjectStore("node", { keyPath: "id" });
       nodeStore.createIndex("byDateUpdated", "dateUpdated");
-      nodeStore.createIndex("byPluginId", "pluginId");
 
       const edgeStore = db.createObjectStore("edge", { keyPath: "id", autoIncrement: true });
       edgeStore.createIndex("byFrom", "from");
