@@ -19,10 +19,7 @@ interface SearchResultTree {
 export function App() {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
 
-  const hitsPlugin = useHits();
-  const plugins = [hitsPlugin];
-  const pluginMap = Object.fromEntries(plugins.map((plugin) => [plugin.id, plugin]));
-
+  const hits = useHits();
   const graph = useGraph();
   const search = useSearch();
 
@@ -62,11 +59,11 @@ export function App() {
         // is leaf node => append to <parentId>.children
         if (data.parent) {
           tree[`hits_${data.parent.id}`] ??= { self: undefined as any, children: [] };
-          tree[`hits_${data.parent.id}`].children.push({ key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) });
+          tree[`hits_${data.parent.id}`].children.push({ key: node!.id, ...hits.toDisplayItem(node!.data, query) });
           missingNodeId.add(`hits_${data.parent.id}`);
         } else {
           tree[node!.id] ??= { self: undefined as any, children: [] };
-          tree[node!.id].self = { key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) };
+          tree[node!.id].self = { key: node!.id, ...hits.toDisplayItem(node!.data, query) };
           missingNodeId.delete(node!.id);
         }
 
@@ -74,7 +71,7 @@ export function App() {
       }, {} as SearchResultTree);
 
       const missingNodes = await graph.get([...missingNodeId] as string[]);
-      const missingDisplayNodes = missingNodes.map((node) => ({ key: node!.id, ...pluginMap[node!.pluginId].toDisplayItem(node!.data, query) }));
+      const missingDisplayNodes = missingNodes.map((node) => ({ key: node!.id, ...hits.toDisplayItem(node!.data, query) }));
       const fullTree = Object.fromEntries(
         Object.entries(partialTree).map(([key, value]) => [
           key,
@@ -84,31 +81,32 @@ export function App() {
 
       return fullTree;
     },
-    [query, graph.get, pluginMap]
+    [query, graph.get, hits.toDisplayItem]
   );
 
   // auto sync
   useEffect(() => {
+    // TODO incremental sync based on timestamp
     graph
       .clearAll()
-      .then(() => hitsPlugin.pull([]))
+      .then(() => hits.pull())
       .then((changeset) => {
         console.log(`[sync] success`, changeset);
         return graph.put(changeset.add);
       });
-  }, [hitsPlugin.config]);
+  }, [hits.config]);
 
   // auto index on graph change
   useEffect(() => {
     graph.dump().then((dumpResult) => {
       const searchItems: IndexedItem[] = dumpResult.nodes.map((node) => ({
         ...node,
-        fuzzyTokens: pluginMap[node.pluginId].toSearchItem(node.data).keywords,
+        fuzzyTokens: hits.toSearchItem(node.data).keywords,
       }));
       search.add(searchItems);
       console.log(`[search] indexed`, searchItems);
     });
-  }, [graph.dump]);
+  }, [graph.dump, hits.toSearchItem]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -143,7 +141,7 @@ export function App() {
           .map(([key, value]) => [key, JSON.parse(value)])
       );
       console.log(parsedFilters);
-      hitsPlugin.updateConfig({ ...hitsPlugin.config, queries: [parsedFilters] });
+      hits.updateConfig({ ...hits.config, queries: [parsedFilters] });
 
       setIsImporting(false);
       sendToMain({
@@ -166,21 +164,21 @@ export function App() {
     <>
       <header class="c-app-header">
         <menu class="c-command-bar">
-          {hitsPlugin.isConnected === undefined && <span class="c-command-bar--text">Signing in...</span>}
-          {hitsPlugin.isConnected === false && (
-            <button class="c-command-bar--btn" onClick={hitsPlugin.signIn}>
+          {hits.isConnected === undefined && <span class="c-command-bar--text">Signing in...</span>}
+          {hits.isConnected === false && (
+            <button class="c-command-bar--btn" onClick={hits.signIn}>
               Sign in
             </button>
           )}
-          {hitsPlugin.isConnected && (
+          {hits.isConnected && (
             <>
               <button class="c-command-bar--btn" onClick={() => setIsImporting((prev) => !prev)}>
                 Import
               </button>
-              <button class="c-command-bar--btn" onClick={() => hitsPlugin.pull([])}>
+              <button class="c-command-bar--btn" onClick={() => hits.pull()}>
                 Sync
               </button>
-              <button class="c-command-bar--btn" onClick={hitsPlugin.signOut}>
+              <button class="c-command-bar--btn" onClick={hits.signOut}>
                 Sign out
               </button>
             </>

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
-import type { Authenticatable, Configurable, Displayable, LinkTargetable, PluginBase, Searchable, Syncable } from "../../modules/kernel/kernel";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { PluginId } from "../plugin-ids";
 import documentIconUrl from "./assets/document.svg";
@@ -59,13 +58,7 @@ const entityIcons: Record<number, string> = {
   64: documentIconUrl,
 };
 
-export function useHits(): PluginBase &
-  Searchable<HitsGraphNode> &
-  Displayable<HitsGraphNode> &
-  Syncable<HitsGraphNode> &
-  Configurable<HitsConfig> &
-  LinkTargetable &
-  Authenticatable {
+export function useHits() {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);
 
   const hitsConfig = useLocalStorage({
@@ -84,8 +77,6 @@ export function useHits(): PluginBase &
   const pull = useCallback(async () => {
     const token = await getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId });
     const searchSummary = await searchHits(token, hitsConfig.value.queries[0]);
-    console.log(searchSummary);
-
     const claims = getClaimsFromSearchResultItemsV2(searchSummary.results);
 
     const addItems = claims.map((claim) => ({
