@@ -6,7 +6,4 @@ export default defineConfig({
   clearScreen: false,
   base: "",
   plugins: [preact()],
-  server: {
-    open: "/debug.html",
-  },
 });
