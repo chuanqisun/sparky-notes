@@ -179,7 +179,7 @@ export function App() {
     <>
       <header class="c-app-header">
         <menu class="c-command-bar">
-          {hitsPlugin.isConnected === undefined && <div>Signing in</div>}
+          {hitsPlugin.isConnected === undefined && <span class="c-command-bar--text">Signing in...</span>}
           {hitsPlugin.isConnected === false && (
             <button class="c-command-bar--btn" onClick={hitsPlugin.signIn}>
               Sign in
@@ -190,11 +190,11 @@ export function App() {
               <button class="c-command-bar--btn" onClick={() => setIsImporting((prev) => !prev)}>
                 Import
               </button>
-              <button class="c-command-bar--btn" onClick={hitsPlugin.signOut}>
-                Sign out
-              </button>
               <button class="c-command-bar--btn" onClick={() => hitsPlugin.pull([])}>
                 Sync
+              </button>
+              <button class="c-command-bar--btn" onClick={hitsPlugin.signOut}>
+                Sign out
               </button>
             </>
           )}

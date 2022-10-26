@@ -2,6 +2,8 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px;
+  padding-inline: 8px;
+  padding-top: 4px;
 }
 
 .hits-item__text {
@@ -9,11 +11,8 @@
   line-height: 18px;
 }
 
-.hits-item__title {
-  font-weight: 600;
-}
-.hits-item__parent-title {
-  font-style: italic;
+.hits-item__title--parent {
+  font-weight: 700;
 }
 .hits-item__meta-field {
   color: #666;

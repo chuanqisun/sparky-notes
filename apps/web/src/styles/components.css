@@ -22,11 +22,19 @@
   background-color: white;
   border-left: 1px solid white;
   gap: 1px;
+  height: 32px;
 }
 .c-command-bar--btn {
   padding: 4px 16px;
+  display: flex;
   background-color: black;
   border: none;
+  color: white;
+}
+.c-command-bar--text {
+  padding: 4px 16px;
+  display: flex;
+  background-color: black;
   color: white;
 }
 
@@ -38,21 +46,11 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  /* gap: 1px; */
 }
 
 .c-list-item {
-  padding: 4px;
-  color: #333;
-  background-color: white;
-}
-
-.c-list--inner {
-  padding-left: 24px;
-}
-
-.c-main {
-  background-color: #ccc;
+  width: 100%;
 }
 
 .c-search-input {

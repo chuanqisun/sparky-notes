@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import type { Authenticatable, Configurable, Displayable, LinkTargetable, PluginBase, Searchable, Syncable } from "../../modules/kernel/kernel";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { PluginId } from "../plugin-ids";
+import documentIconUrl from "./assets/document.svg";
 import lightbulbIconUrl from "./assets/lightbulb.svg";
 import thumbupIconUrl from "./assets/thumbup.svg";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
@@ -52,7 +53,10 @@ const entityNames: Record<number, string> = {
 
 const entityIcons: Record<number, string> = {
   1: lightbulbIconUrl,
+  2: documentIconUrl,
   25: thumbupIconUrl,
+  32: documentIconUrl,
+  64: documentIconUrl,
 };
 
 export function useHits(): PluginBase &
@@ -127,16 +131,21 @@ export function useHits(): PluginBase &
     const tokensPattern = tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null;
     const getHighlightedHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
 
+    const isParent = !data.parent;
+
     return {
       iconUrl,
       title: `${data.title}\n${data.researchers?.map((person) => person.displayName).join(", ") ?? ""}`,
       externalUrl: `https://hits.microsoft.com/${entityNames[data.entityType]}/${data.id}`,
       innerElement: (
-        <article class="hits-item">
-          <img src={entityIcons[data.entityType]} />
+        <article class={`hits-item ${isParent ? "hits-item--parent" : ""}`}>
+          <img class="hits-item__icon" src={entityIcons[data.entityType]} />
           <div class="hits-item__text">
-            <span class="hits-item__title" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.title) }} />{" "}
-            {!data.parent && (
+            <span
+              class={`hits-item__title ${isParent ? "hits-item__title--parent" : ""}`}
+              dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.title) }}
+            />{" "}
+            {isParent && (
               <>
                 {data.researchers && (
                   <span
