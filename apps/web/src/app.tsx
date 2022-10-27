@@ -169,14 +169,7 @@ export function App() {
           <section>
             <ul class="c-list">
               {searchResultTree.map((parentNode) => (
-                <>
-                  <HitsDisplayItem node={parentNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
-                  <>
-                    {parentNode?.children?.map((childNode) => (
-                      <HitsDisplayItem node={childNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
-                    ))}
-                  </>
-                </>
+                <HitsDisplayItem node={parentNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
               ))}
             </ul>
           </section>

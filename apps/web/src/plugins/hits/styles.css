@@ -1,10 +1,15 @@
-.c-list-item--hits {
-  padding-inline: 8px;
-  padding-block: 2px;
-}
-.c-list-item--parent {
-  padding-block: 4px;
+.c-list-item + .c-list-item:has(.c-button--hits-parent) {
   border-top: 1px solid #ccc;
+}
+
+.c-button--hits {
+  padding-inline: 8px;
+}
+.c-button--hits-parent {
+  padding-block: 8px 4px;
+}
+.c-button--hits-child {
+  padding-block: 4px;
 }
 
 .hits-item {
