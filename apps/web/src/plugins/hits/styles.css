@@ -3,12 +3,12 @@
   grid-template-columns: auto 1fr;
   gap: 8px;
   padding-inline: 8px;
-  padding-block: 4px;
+  padding-block: 8px;
 }
 
 .hits-item__text {
   font-size: 14px;
-  line-height: 18px;
+  line-height: 16px;
 }
 
 .hits-item__title--parent {
