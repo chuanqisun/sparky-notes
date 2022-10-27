@@ -3,7 +3,8 @@ import type { JSX } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
 import { IndexedItem, useSearch } from "./modules/search/use-search";
-import { useHits } from "./plugins/hits/use-hits";
+import { HitsDisplayItem } from "./plugins/hits/display-item";
+import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
 import type { Keyed } from "./utils/types";
 
@@ -128,6 +129,14 @@ export function App() {
     }
   };
 
+  const tokens = query
+    .split(" ")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const tokensPattern = tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null;
+  const getHighlightHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
+  const sendToFigma = (addCard: any) => sendToMain({ addCard });
+
   return (
     <>
       <header class="c-app-header">
@@ -161,42 +170,12 @@ export function App() {
             <ul class="c-list">
               {searchResultTree.map((parentNode) => (
                 <>
-                  <li class="c-list-item-container--parent" key={parentNode.id}>
-                    <button
-                      class="u-reset c-button--card c-list-item"
-                      onClick={() =>
-                        sendToMain({
-                          addCard: {
-                            title: "TBD",
-                            url: "TBD",
-                          },
-                        })
-                      }
-                    >
-                      {hits.toDisplayItem(parentNode as any, query).innerElement}
-                    </button>
-                  </li>
-                  {parentNode.children && parentNode.children.length > 0 && (
-                    <>
-                      {parentNode.children.map((child) => (
-                        <li key={child.key}>
-                          <button
-                            class="u-reset c-button--card c-list-item"
-                            onClick={() =>
-                              sendToMain({
-                                addCard: {
-                                  title: child.title,
-                                  url: child.externalUrl,
-                                },
-                              })
-                            }
-                          >
-                            {hits.toDisplayItem(child as any, query).innerElement}
-                          </button>
-                        </li>
-                      ))}
-                    </>
-                  )}
+                  <HitsDisplayItem node={parentNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
+                  <>
+                    {parentNode?.children?.map((childNode) => (
+                      <HitsDisplayItem node={childNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
+                    ))}
+                  </>
                 </>
               ))}
             </ul>

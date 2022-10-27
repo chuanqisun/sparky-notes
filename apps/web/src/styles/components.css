@@ -49,14 +49,6 @@
   /* gap: 1px; */
 }
 
-.c-list-item-container--parent {
-  border-top: 1px solid #ccc;
-}
-
-.c-list-item {
-  width: 100%;
-}
-
 .c-search-input {
   width: 100%;
   padding: 8px 8px;

@@ -1,9 +1,16 @@
+.c-list-item--hits {
+  padding-inline: 8px;
+  padding-block: 2px;
+}
+.c-list-item--parent {
+  padding-block: 4px;
+  border-top: 1px solid #ccc;
+}
+
 .hits-item {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px;
-  padding-inline: 8px;
-  padding-block: 4px;
 }
 
 .hits-item__text {
