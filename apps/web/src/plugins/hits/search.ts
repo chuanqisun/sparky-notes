@@ -14,21 +14,16 @@ export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[
         .map((claim) => ({
           title: claim.title ?? "Untitled",
           id: claim.id,
-          parent: {
-            title: document.title,
-            id: parseInt(document.id),
-          },
+          parentId: document.id,
           entityType: claim.entityType,
-          details: claim.contents?.trim().slice(0, 255) ?? "",
-          updatedOn: claim.updatedOn,
+          updatedOn: new Date(claim.updatedOn),
         }));
 
       const report = {
         title: document.title ?? "Untitled",
         id: document.id,
         entityType: document.entityType,
-        details: document.contents?.trim().slice(0, 255) ?? "",
-        updatedOn: document.updatedOn,
+        updatedOn: new Date(document.updatedOn),
         researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
         tags: [...document.products, ...document.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
         group: {

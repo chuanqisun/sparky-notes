@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
+import type { NodeSchema } from "../../modules/graph/db";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import documentIconUrl from "./assets/document.svg";
 import lightbulbIconUrl from "./assets/lightbulb.svg";
@@ -10,15 +11,12 @@ import { searchHits } from "./proxy";
 import { getClaimsFromSearchResultItemsV2 } from "./search";
 import "./styles.css";
 
-export interface HitsGraphNode {
-  title: string;
+export interface HitsGraphNode extends NodeSchema {
   id: string;
+  updatedOn: Date;
+  parentId?: string;
+  title: string;
   entityType: number;
-  updatedOn: string;
-  parent?: {
-    title: string;
-    id: number;
-  };
   group?: {
     id: number;
     displayName: string;
@@ -78,11 +76,7 @@ export function useHits() {
     const claims = getClaimsFromSearchResultItemsV2(searchSummary.results);
 
     // TODO differential pull
-    const addItems = claims.map((claim) => ({
-      id: `hits_${claim.id}`,
-      data: claim,
-      dateUpdated: new Date(claim.updatedOn),
-    }));
+    const addItems = claims;
 
     return {
       add: addItems,
@@ -112,6 +106,9 @@ export function useHits() {
     []
   );
 
+  // toDisplayItem = (data: GraphNode, addHighlight: (text: string) => string, addFigma: (card: any) => void) => JSX.Element
+  const toDisplayItemV2 = (data: HitsGraphNode, addHighlight: (text: string) => string, sendToFigma: (figmaCard: any) => void) => {};
+
   const toDisplayItem = useCallback((data: HitsGraphNode, query: string) => {
     const tokens = query
       .split(" ")
@@ -120,7 +117,7 @@ export function useHits() {
     const tokensPattern = tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null;
     const getHighlightedHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
 
-    const isParent = !data.parent;
+    const isParent = [2, 32, 64].includes(data.entityType);
 
     return {
       iconUrl,

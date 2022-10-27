@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import type { NodeSchema } from "./modules/graph/db";
 import { useGraph } from "./modules/graph/use-graph";
 import { IndexedItem, useSearch } from "./modules/search/use-search";
-import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
+import { useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
 import type { Keyed } from "./utils/types";
 
@@ -57,20 +57,18 @@ export function App() {
   const [searchResultTree, setResultTree] = useState<SearchResultTree>({});
 
   const toSearchResultTree = useCallback(
-    async (nodes: (NodeSchema | undefined)[]) => {
+    // TODO, just generate the tree skeleton. Render should happen later
+    async (nodes: NodeSchema[]) => {
       const missingNodeId = new Set();
       const partialTree = nodes.filter(Boolean).reduce((tree, node) => {
-        // hack, this should be opaque to kernel
-        const data = node!.data as HitsGraphNode;
-
         // is leaf node => append to <parentId>.children
-        if (data.parent) {
-          tree[`hits_${data.parent.id}`] ??= { self: undefined as any, children: [] };
-          tree[`hits_${data.parent.id}`].children.push({ key: node!.id, ...hits.toDisplayItem(node!.data, query) });
-          missingNodeId.add(`hits_${data.parent.id}`);
+        if (node.parentId) {
+          tree[node.parentId] ??= { self: undefined as any, children: [] };
+          tree[node.parentId].children.push({ key: node!.id, ...hits.toDisplayItem(node as any, query) });
+          missingNodeId.add(node.parentId);
         } else {
           tree[node!.id] ??= { self: undefined as any, children: [] };
-          tree[node!.id].self = { key: node!.id, ...hits.toDisplayItem(node!.data, query) };
+          tree[node!.id].self = { key: node!.id, ...hits.toDisplayItem(node as any, query) };
           missingNodeId.delete(node!.id);
         }
 
@@ -78,7 +76,7 @@ export function App() {
       }, {} as SearchResultTree);
 
       const missingNodes = await graph.get([...missingNodeId] as string[]);
-      const missingDisplayNodes = missingNodes.map((node) => ({ key: node!.id, ...hits.toDisplayItem(node!.data, query) }));
+      const missingDisplayNodes = missingNodes.map((node) => ({ key: node!.id, ...hits.toDisplayItem(node as any, query) }));
       const fullTree = Object.fromEntries(
         Object.entries(partialTree).map(([key, value]) => [
           key,
@@ -108,7 +106,7 @@ export function App() {
     graph.dump().then((dumpResult) => {
       const searchItems: IndexedItem[] = dumpResult.nodes.map((node) => ({
         ...node,
-        fuzzyTokens: hits.toSearchItem(node.data).keywords,
+        fuzzyTokens: hits.toSearchItem(node as any).keywords,
       }));
       search.add(searchItems);
       console.log(`[search] indexed`, searchItems);
@@ -128,7 +126,7 @@ export function App() {
         return graph.get(ids);
       })
       .then(async (nodes) => {
-        setResultTree(await toSearchResultTree(nodes));
+        setResultTree(await toSearchResultTree(nodes.filter(Boolean) as NodeSchema[]));
       });
   }, [query, setResultTree, search.query, graph.get]);
 
