@@ -6,7 +6,6 @@ import lightbulbIconUrl from "./assets/lightbulb.svg";
 import thumbupIconUrl from "./assets/thumbup.svg";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import type { FilterConfig } from "./hits";
-import iconUrl from "./hits.svg";
 import { searchHits } from "./proxy";
 import { getClaimsFromSearchResultItemsV2 } from "./search";
 import "./styles.css";
@@ -106,49 +105,6 @@ export function useHits() {
     []
   );
 
-  // toDisplayItem = (data: GraphNode, addHighlight: (text: string) => string, addFigma: (card: any) => void) => JSX.Element
-  const toDisplayItemV2 = (data: HitsGraphNode, addHighlight: (text: string) => string, sendToFigma: (figmaCard: any) => void) => {};
-
-  const toDisplayItem = useCallback((data: HitsGraphNode, query: string) => {
-    const tokens = query
-      .split(" ")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    const tokensPattern = tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null;
-    const getHighlightedHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
-
-    const isParent = [2, 32, 64].includes(data.entityType);
-
-    return {
-      iconUrl,
-      title: `${data.title}\n${data.researchers?.map((person) => person.displayName).join(", ") ?? ""}`,
-      externalUrl: `https://hits.microsoft.com/${entityNames[data.entityType]}/${data.id}`,
-      innerElement: (
-        <article class={`hits-item ${isParent ? "hits-item--parent" : ""}`}>
-          <img class="hits-item__icon" src={entityIcons[data.entityType]} />
-          <div class="hits-item__text">
-            <span
-              class={`hits-item__title ${isParent ? "hits-item__title--parent" : ""}`}
-              dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.title) }}
-            />{" "}
-            {isParent && (
-              <>
-                {data.researchers && (
-                  <span
-                    class="hits-item__meta-field"
-                    dangerouslySetInnerHTML={{ __html: getHighlightedHtml(data.researchers.map((person) => person.displayName).join(", ")) }}
-                  />
-                )}
-                &nbsp;·{" "}
-                <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightedHtml(new Date(data.updatedOn).toLocaleDateString()) }} />
-              </>
-            )}
-          </div>
-        </article>
-      ),
-    };
-  }, []);
-
   return {
     displayName: "HITS",
     isConnected,
@@ -159,7 +115,6 @@ export function useHits() {
     updateConfig: hitsConfig.update,
     resetConfig: hitsConfig.reset,
     toSearchItem,
-    toDisplayItem,
   };
 }
 
