@@ -1,8 +1,7 @@
 import type { MessageToUI } from "@h20/types";
 import type { JSX } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import type { NodeSchema } from "./modules/graph/db";
-import { useGraph } from "./modules/graph/use-graph";
+import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
 import { IndexedItem, useSearch } from "./modules/search/use-search";
 import { useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
@@ -54,40 +53,7 @@ export function App() {
   }, []);
 
   const [query, setQuery] = useState("");
-  const [searchResultTree, setResultTree] = useState<SearchResultTree>({});
-
-  const toSearchResultTree = useCallback(
-    // TODO, just generate the tree skeleton. Render should happen later
-    async (nodes: NodeSchema[]) => {
-      const missingNodeId = new Set();
-      const partialTree = nodes.filter(Boolean).reduce((tree, node) => {
-        // is leaf node => append to <parentId>.children
-        if (node.parentId) {
-          tree[node.parentId] ??= { self: undefined as any, children: [] };
-          tree[node.parentId].children.push({ key: node!.id, ...hits.toDisplayItem(node as any, query) });
-          missingNodeId.add(node.parentId);
-        } else {
-          tree[node!.id] ??= { self: undefined as any, children: [] };
-          tree[node!.id].self = { key: node!.id, ...hits.toDisplayItem(node as any, query) };
-          missingNodeId.delete(node!.id);
-        }
-
-        return tree;
-      }, {} as SearchResultTree);
-
-      const missingNodes = await graph.get([...missingNodeId] as string[]);
-      const missingDisplayNodes = missingNodes.map((node) => ({ key: node!.id, ...hits.toDisplayItem(node as any, query) }));
-      const fullTree = Object.fromEntries(
-        Object.entries(partialTree).map(([key, value]) => [
-          key,
-          { self: value.self ?? missingDisplayNodes.find((item) => item.key === key), children: value.children },
-        ])
-      );
-
-      return fullTree;
-    },
-    [query, graph.get, hits.toDisplayItem]
-  );
+  const [searchResultTree, setResultTree] = useState<TreeNodeSchema[]>([]);
 
   // auto sync
   useEffect(() => {
@@ -116,19 +82,16 @@ export function App() {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed.length) {
-      setResultTree({});
+      setResultTree([]);
       return;
     }
-    search
-      .query(query)
-      .then((results) => {
-        const ids = results.flatMap((result) => result.result) as string[];
-        return graph.get(ids);
-      })
-      .then(async (nodes) => {
-        setResultTree(await toSearchResultTree(nodes.filter(Boolean) as NodeSchema[]));
-      });
-  }, [query, setResultTree, search.query, graph.get]);
+    search.query(query).then(async (results) => {
+      const ids = results.flatMap((result) => result.result) as string[];
+      const priorityTree = await graph.getPriorityTree(ids);
+      const list = [...priorityTree];
+      setResultTree(list);
+    });
+  }, [query, graph.getPriorityTree, setResultTree, search.query]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
@@ -196,26 +159,26 @@ export function App() {
         {
           <section>
             <ul class="c-list">
-              {Object.values(searchResultTree).map(({ self, children }) => (
+              {searchResultTree.map((parentNode) => (
                 <>
-                  <li class="c-list-item-container--parent" key={self.key}>
+                  <li class="c-list-item-container--parent" key={parentNode.id}>
                     <button
                       class="u-reset c-button--card c-list-item"
                       onClick={() =>
                         sendToMain({
                           addCard: {
-                            title: self.title,
-                            url: self.externalUrl,
+                            title: "TBD",
+                            url: "TBD",
                           },
                         })
                       }
                     >
-                      {self.innerElement || self.title}
+                      {hits.toDisplayItem(parentNode as any, query).innerElement}
                     </button>
                   </li>
-                  {children.length > 0 && (
+                  {parentNode.children && parentNode.children.length > 0 && (
                     <>
-                      {children.map((child) => (
+                      {parentNode.children.map((child) => (
                         <li key={child.key}>
                           <button
                             class="u-reset c-button--card c-list-item"
@@ -228,7 +191,7 @@ export function App() {
                               })
                             }
                           >
-                            {child.innerElement || child.title}
+                            {hits.toDisplayItem(child as any, query).innerElement}
                           </button>
                         </li>
                       ))}

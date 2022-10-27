@@ -1,6 +1,11 @@
 import { useCallback, useRef, useState } from "preact/hooks";
+import { isTruthy } from "../../utils/guard";
 import { getGraphDB, NodeSchema } from "./db";
 import { tx } from "./tx";
+
+export interface TreeNodeSchema extends NodeSchema {
+  children?: TreeNodeSchema[];
+}
 
 export function useGraph() {
   const [rev, setRev] = useState(0);
@@ -38,6 +43,61 @@ export function useGraph() {
     [rev]
   );
 
+  /**
+   * Convert list of ids to a list of tree nodes that satisfy the following:
+   * All parent nodes will be immediately followed by either the child node that appears earliest in the input or another parent node, or is the last node in the result
+   * All parent nodes will be sorted according to the appearance of either themselves or their earliest appearing child node in the input, whichever comes first
+   * All child nodes will appear after its corresponding parent, even if the parent was not part of the input
+   * All child nodes will appear in the same order as the input
+   */
+  const getPriorityTree = useCallback(
+    async (ids: string[]) =>
+      tx(await graphAsync.current, ["node"], "readonly", async (tx) => {
+        const nodeStore = tx.objectStore("node");
+
+        const nodes = (await Promise.all(ids.map((id) => nodeStore.get(id)))).filter(isTruthy);
+        const results = new Map<string, TreeNodeSchema>();
+
+        nodes.reduce((result, node) => {
+          if (node.parentId) {
+            // is a child node
+            if (!result.has(node.parentId)) {
+              // create parent, if none exist, and add self as first child.
+              result.set(node.parentId, { children: [node] } as TreeNodeSchema);
+            } else {
+              // parent already exist, append to children array
+              result.get(node.parentId)!.children!.push(node);
+            }
+          } else {
+            // is a parent node
+            if (!result.has(node.id)) {
+              // parent node doesn't exist yet, create one
+              result.set(node.id, { ...node, children: [] });
+            } else {
+              // fill out parent placeholder, if one already exists.
+              Object.assign(result.get(node.id)!, node);
+            }
+          }
+          return result;
+        }, results);
+
+        // List with parent nodes that could be placeholder
+        // This happens when search matched query to a child node but not its parent node
+        // JavaScript Map/Set preserves insertion order.
+        const intermediateList = [...results.entries()];
+
+        // ensure all parent node is hydrated
+        const fullList = await Promise.all(
+          intermediateList.map(async (parentNode) =>
+            Promise.resolve(parentNode[1].updatedOn ? parentNode[1] : { ...(await nodeStore.get(parentNode[0])), ...parentNode[1] })
+          )
+        );
+
+        return fullList;
+      }),
+    [rev]
+  );
+
   const clearAll = useCallback(async () => {
     (await graphAsync.current).clear("node");
   }, []);
@@ -46,6 +106,7 @@ export function useGraph() {
     dump,
     clearAll,
     get,
+    getPriorityTree,
     put,
     rev,
   };
