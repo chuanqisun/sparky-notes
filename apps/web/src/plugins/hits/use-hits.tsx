@@ -12,7 +12,6 @@ import "./styles.css";
 
 export interface HitsGraphNode {
   title: string;
-  details: string;
   id: string;
   entityType: number;
   updatedOn: string;
@@ -78,6 +77,7 @@ export function useHits() {
     const searchSummary = await searchHits(token, hitsConfig.value.queries[0]);
     const claims = getClaimsFromSearchResultItemsV2(searchSummary.results);
 
+    // TODO differential pull
     const addItems = claims.map((claim) => ({
       id: `hits_${claim.id}`,
       data: claim,
@@ -152,20 +152,10 @@ export function useHits() {
     };
   }, []);
 
-  const getIdFromUrl = useCallback((url: URL) => {
-    if (!url.href.includes("https://hits.microsoft.com")) return null;
-
-    const id = url.href.toLocaleLowerCase().replace("https://hits.microsoft.com/insight/", "").replace("https://hits.microsoft.com/recommendation/", "");
-    id.replace("/", "");
-
-    return `hits_${id}`;
-  }, []);
-
   return {
     displayName: "HITS",
     isConnected,
     config: hitsConfig.value,
-    getIdFromUrl,
     pull,
     signIn,
     signOut,
@@ -185,7 +175,6 @@ export function getBlankConfig(): HitsConfig {
       {
         entityTypes: [2], // study only
         researcherIds: [835],
-        // researcherDirectoryObjectIds: ["d9d18774-66e4-40c1-8353-a7ea2fd6bc82"],
       },
     ],
   };
