@@ -2,26 +2,10 @@ import type { MessageToUI } from "@h20/types";
 import type { JSX } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
-import { IndexedItem, useSearch } from "./modules/search/use-search";
+import { IndexedItem, useHighlight, useSearch } from "./modules/search/use-search";
 import { HitsDisplayItem } from "./plugins/hits/display-item";
 import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
 import { sendMessage } from "./utils/ipc";
-import type { Keyed } from "./utils/types";
-
-interface SearchResultTree {
-  [key: string]: {
-    self: Keyed<DisplayItem>;
-    children: Keyed<DisplayItem>[];
-  };
-}
-
-export interface DisplayItem {
-  title: string;
-  // iconUrl?: string;
-  // thumbnailUrl?: string;
-  externalUrl?: string;
-  innerElement?: JSX.Element;
-}
 
 export function App() {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
@@ -129,12 +113,8 @@ export function App() {
     }
   };
 
-  const tokens = query
-    .split(" ")
-    .map((item) => item.trim())
-    .filter(Boolean);
-  const tokensPattern = tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null;
-  const getHighlightHtml = (input: string) => (tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input);
+  const { getHighlightHtml } = useHighlight(query);
+
   const sendToFigma = (addCard: any) => sendToMain({ addCard });
 
   return (

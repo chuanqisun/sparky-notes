@@ -1,6 +1,6 @@
 import type { IndexOptionsForDocumentSearch } from "flexsearch";
 import { Document as FlexDocument } from "flexsearch";
-import { useCallback, useRef } from "preact/hooks";
+import { useCallback, useMemo, useRef } from "preact/hooks";
 import { once } from "../../utils/once";
 
 const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
@@ -24,6 +24,7 @@ const getIndex = once(() => new FlexDocument(indexConfig));
 export function useSearch() {
   const idx = useRef(getIndex());
 
+  // TODO add should cause query and dump behavior to update
   const add = useCallback((items: IndexedItem[]) => Promise.all(items.map((item) => idx.current.addAsync(item.id, item))), []);
 
   const query = useCallback((query: string) => idx.current.searchAsync(query, { index: "fuzzyTokens" }), []);
@@ -34,5 +35,25 @@ export function useSearch() {
     add,
     query,
     dump,
+  };
+}
+
+export function useHighlight(query: string) {
+  const tokens = useMemo(
+    () =>
+      query
+        .split(" ")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    [query]
+  );
+  const tokensPattern = useMemo(() => (tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null), [tokens]);
+  const getHighlightHtml = useMemo(
+    () => (input: string) => tokensPattern ? input.replace(tokensPattern, (match) => `<mark>${match}</mark>`) : input,
+    [tokensPattern]
+  );
+
+  return {
+    getHighlightHtml,
   };
 }
