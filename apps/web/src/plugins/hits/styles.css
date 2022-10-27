@@ -1,4 +1,4 @@
-.c-list-item + .c-list-item:has(.c-button--hits-parent) {
+.c-button--hits-parent {
   border-top: 1px solid #ccc;
 }
 
