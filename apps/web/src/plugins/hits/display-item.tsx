@@ -2,7 +2,7 @@ import type { TreeNodeSchema } from "../../modules/graph/use-graph";
 import documentIconUrl from "./assets/document.svg";
 import lightbulbIconUrl from "./assets/lightbulb.svg";
 import thumbupIconUrl from "./assets/thumbup.svg";
-import type { HitsGraphNode } from "./use-hits";
+import { entityNames, HitsGraphNode } from "./use-hits";
 
 const entityIcons: Record<number, string> = {
   1: lightbulbIconUrl,
@@ -29,8 +29,8 @@ export function HitsDisplayItem({ node, getHighlightHtml, sendToFigma, isChild }
           onClick={() =>
             sendToFigma({
               addCard: {
-                title: "TBD",
-                url: "TBD",
+                title: node.title,
+                url: `https://hits.microsoft.com/${entityNames[node.entityType]}/${node.id}`,
               },
             })
           }

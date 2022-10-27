@@ -115,8 +115,6 @@ export function App() {
 
   const { getHighlightHtml } = useHighlight(query);
 
-  const sendToFigma = (addCard: any) => sendToMain({ addCard });
-
   return (
     <>
       <header class="c-app-header">
@@ -149,7 +147,7 @@ export function App() {
           <section>
             <ul class="c-list">
               {searchResultTree.map((parentNode) => (
-                <HitsDisplayItem node={parentNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
+                <HitsDisplayItem node={parentNode as HitsGraphNode} sendToFigma={sendToMain} getHighlightHtml={getHighlightHtml} />
               ))}
             </ul>
           </section>

@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { NodeSchema } from "../../modules/graph/db";
 import { useLocalStorage } from "../../utils/use-local-storage";
-import documentIconUrl from "./assets/document.svg";
-import lightbulbIconUrl from "./assets/lightbulb.svg";
-import thumbupIconUrl from "./assets/thumbup.svg";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import type { FilterConfig } from "./hits";
 import { searchHits } from "./proxy";
@@ -37,20 +34,12 @@ export interface HitsConfig {
   queries: FilterConfig[];
 }
 
-const entityNames: Record<number, string> = {
+export const entityNames: Record<number, string> = {
   1: "insight",
   2: "study",
   32: "collection",
   64: "note",
   25: "recommendation",
-};
-
-const entityIcons: Record<number, string> = {
-  1: lightbulbIconUrl,
-  2: documentIconUrl,
-  25: thumbupIconUrl,
-  32: documentIconUrl,
-  64: documentIconUrl,
 };
 
 export function useHits() {
