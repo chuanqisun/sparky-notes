@@ -1,20 +1,12 @@
-import type { FilterConfig, SearchOutput } from "./hits";
-import { getFilterString, getOrderBy, getOrderByPublishDateClause } from "./search";
+import type { SearchOutput } from "./hits";
 
-export async function searchHits(token: string, filter: FilterConfig): Promise<SearchOutput> {
+export async function requestSearch(token: string, payload: any): Promise<SearchOutput> {
   const result = await fetch("http://localhost:5202/api/search/index", {
     method: "post",
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      count: true,
-      queryType: "Full",
-      searchText: "*",
-      top: 99,
-      filter: getFilterString(filter),
-      orderBy: getOrderBy(getOrderByPublishDateClause()),
-    }),
+    body: JSON.stringify(payload),
   }).then((res) => res.json());
 
   return result;

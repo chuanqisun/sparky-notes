@@ -1,7 +1,47 @@
 import { field, ifAll, ifAny } from "acs-expression-builder";
+import { getPageOffsets } from "../../utils/chunk";
 import { uniqueBy } from "../../utils/unique-by";
-import type { FilterConfig, SearchResultItem } from "./hits";
+import type { FilterConfig, SearchOutput, SearchResultDocument, SearchResultItem } from "./hits";
 import type { HitsGraphNode } from "./use-hits";
+
+export async function search(proxy: (payload: any) => Promise<SearchOutput>, filter: FilterConfig) {
+  // execute 1st search to get total
+  const pageSize = 10;
+  const payload = getSearchPayloadV2({ count: true, top: pageSize, skip: 0, filter });
+  const { totalCount, results } = await proxy(payload);
+  const pageOffsets = getPageOffsets(pageSize, totalCount);
+  pageOffsets.shift(); // discard first page which is already available from previous query
+
+  const allResults: SearchResultDocument[] = results.map((result) => result.document);
+
+  for (let offset of pageOffsets) {
+    const payload = getSearchPayloadV2({ count: false, top: pageSize, skip: offset, filter });
+    const { results } = await proxy(payload);
+    allResults.push(...results.map((result) => result.document));
+  }
+
+  return allResults;
+}
+
+export function getSearchPayloadV2(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {
+  return {
+    queryType: "Simple",
+    searchText: "*",
+    orderBy: getOrderBy(getOrderByPublishDateClause()),
+    ...config,
+  };
+}
+
+export function getSearchPayload(filter: FilterConfig) {
+  return {
+    count: true,
+    queryType: "Full",
+    searchText: "*",
+    top: 99,
+    filter: getFilterString(filter),
+    orderBy: getOrderBy(getOrderByPublishDateClause()),
+  };
+}
 
 export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[]): HitsGraphNode[] {
   const allClaims: HitsGraphNode[] = searchResult

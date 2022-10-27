@@ -3,8 +3,8 @@ import type { NodeSchema } from "../../modules/graph/db";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import type { FilterConfig } from "./hits";
-import { searchHits } from "./proxy";
-import { getClaimsFromSearchResultItemsV2 } from "./search";
+import { requestSearch } from "./proxy";
+import { getClaimsFromSearchResultItemsV2, getSearchPayload } from "./search";
 import "./styles.css";
 
 export interface HitsGraphNode extends NodeSchema {
@@ -60,7 +60,8 @@ export function useHits() {
 
   const pull = useCallback(async () => {
     const token = await getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId });
-    const searchSummary = await searchHits(token, hitsConfig.value.queries[0]);
+    const searchPayload = getSearchPayload(hitsConfig.value.queries[0]);
+    const searchSummary = await requestSearch(token, searchPayload);
     const claims = getClaimsFromSearchResultItemsV2(searchSummary.results);
 
     // TODO differential pull
