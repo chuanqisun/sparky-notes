@@ -58,22 +58,26 @@ export function useHits() {
       .catch(() => setIsConnected(false));
   }, [hitsConfig.value.idToken]);
 
-  const pull = useCallback(async () => {
-    const token = await getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId });
+  const pull = useCallback(
+    async (newerThan?: Date) => {
+      const token = await getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId });
 
-    const proxy = requestSearch.bind(null, token);
-    const result = await search(proxy, hitsConfig.value.queries[0]);
+      const proxy = requestSearch.bind(null, token);
 
-    const claims = getClaimsFromSearchResultItemsV2(result);
+      const result = await search(proxy, { ...hitsConfig.value.queries[0], publishDateNewerThan: newerThan?.toISOString() });
 
-    const addItems = claims;
+      const claims = getClaimsFromSearchResultItemsV2(result);
 
-    return {
-      add: addItems,
-      remove: [],
-      update: [],
-    };
-  }, [hitsConfig.value]);
+      const addItems = claims;
+
+      return {
+        add: addItems,
+        remove: [],
+        update: [],
+      };
+    },
+    [hitsConfig.value]
+  );
 
   const signIn = useCallback(() => {
     embeddedSignIn().then((result) => {

@@ -100,12 +100,12 @@ export function getFilterString(filterConfig: FilterConfig, inverseFilterConfig?
     ...(filterConfig.researcherDirectoryObjectIds?.length
       ? [hasOneOfValues("Researchers", "DirectoryObjectId", filterConfig.researcherDirectoryObjectIds)]
       : []),
-    ...(filterConfig.publishDateRange?.length === 2 ? [isInTimeRange("PublishedOn", filterConfig.publishDateRange)] : []),
+    ...(filterConfig.publishDateNewerThan ? [isNewerThan("UpdatedOn", filterConfig.publishDateNewerThan)] : []),
   ]).toString();
 }
 
-function isInTimeRange(fieldName: string, range: [lowerOpen: string, upperClosed: string]) {
-  return field(fieldName).gt(new Date(range[0])).and.field(fieldName).le(new Date(range[1]));
+function isNewerThan(fieldName: string, lowerOpen: string) {
+  return field(fieldName).gt(new Date(lowerOpen));
 }
 
 function hasOneOfIds(fieldName: string, candidates: number[]) {

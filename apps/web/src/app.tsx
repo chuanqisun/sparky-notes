@@ -43,9 +43,15 @@ export function App() {
   // auto sync
   useEffect(() => {
     // TODO incremental sync based on timestamp
+    // TODO timestamp comparison should use both report and claim timestamp
+
     graph
-      .clearAll()
-      .then(() => hits.pull())
+      .mostRecentTimestamp()
+      .then((baseTimestamp) => {
+        console.log("Latest timestamp", baseTimestamp);
+        return baseTimestamp;
+      })
+      .then((baseTimestamp) => hits.pull(baseTimestamp))
       .then((changeset) => {
         console.log(`[sync] success`, changeset);
         return graph.put(changeset.add);

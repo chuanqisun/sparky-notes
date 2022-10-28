@@ -6,7 +6,7 @@ export interface FilterConfig {
   researcherIds?: number[];
   researcherDirectoryObjectIds?: string[];
   methodIds?: number[];
-  publishDateRange?: [string, string]; // [from, to]
+  publishDateNewerThan?: string;
 }
 
 export interface SearchOutput {

@@ -43,6 +43,15 @@ export function useGraph() {
     [rev]
   );
 
+  const mostRecentTimestamp = useCallback(
+    async () =>
+      tx(await graphAsync.current, ["node"], "readonly", async (tx) => {
+        const cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
+        return cursor?.key;
+      }),
+    [rev]
+  );
+
   /**
    * Convert list of ids to a list of tree nodes that satisfy the following:
    * All parent nodes will be immediately followed by either the child node that appears earliest in the input or another parent node, or is the last node in the result
@@ -107,6 +116,7 @@ export function useGraph() {
     clearAll,
     get,
     getPriorityTree,
+    mostRecentTimestamp,
     put,
     rev,
   };
