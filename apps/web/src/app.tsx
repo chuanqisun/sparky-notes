@@ -42,9 +42,6 @@ export function App() {
 
   // auto sync
   useEffect(() => {
-    // TODO incremental sync based on timestamp
-    // TODO timestamp comparison should use both report and claim timestamp
-
     graph
       .mostRecentTimestamp()
       .then((baseTimestamp) => {
