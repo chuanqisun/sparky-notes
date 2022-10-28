@@ -1,7 +1,7 @@
 import { field, ifAll, ifAny } from "acs-expression-builder";
 import { getPageOffsets } from "../../utils/chunk";
 import { uniqueBy } from "../../utils/unique-by";
-import type { FilterConfig, SearchOutput, SearchResultDocument, SearchResultItem } from "./hits";
+import type { FilterConfig, SearchOutput, SearchResultDocument } from "./hits";
 import type { HitsGraphNode } from "./use-hits";
 
 export async function search(proxy: (payload: any) => Promise<SearchOutput>, filter: FilterConfig) {
@@ -12,68 +12,75 @@ export async function search(proxy: (payload: any) => Promise<SearchOutput>, fil
   const pageOffsets = getPageOffsets(pageSize, totalCount);
   pageOffsets.shift(); // discard first page which is already available from previous query
 
-  const allResults: SearchResultDocument[] = results.map((result) => result.document);
+  const pages = await Promise.all(
+    pageOffsets.map(async (offset) => {
+      const payload = getSearchPayloadV2({ count: false, top: pageSize, skip: offset, filter });
+      return (await proxy(payload)).results;
+    })
+  );
 
-  for (let offset of pageOffsets) {
-    const payload = getSearchPayloadV2({ count: false, top: pageSize, skip: offset, filter });
-    const { results } = await proxy(payload);
-    allResults.push(...results.map((result) => result.document));
-  }
-
-  return allResults;
+  return [results, ...pages].flat().map((result) => result.document);
 }
 
 export function getSearchPayloadV2(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {
   return {
+    count: config.count,
+    top: config.top,
+    skip: config.skip,
+    filter: getFilterString(config.filter),
     queryType: "Simple",
     searchText: "*",
+    select: [
+      "Id",
+      "EntityType",
+      "Title",
+      "UpdatedOn",
+      "Children/Id",
+      "Children/EntityType",
+      "Children/Title",
+      "Children/UpdatedOn",
+      "Researchers/Id",
+      "Researchers/Name",
+      "Products/Id",
+      "Products/Name",
+      "Topics/Id",
+      "Topics/Name",
+      "Group/Id",
+      "Group/Name",
+    ],
     orderBy: getOrderBy(getOrderByPublishDateClause()),
-    ...config,
   };
 }
 
-export function getSearchPayload(filter: FilterConfig) {
-  return {
-    count: true,
-    queryType: "Full",
-    searchText: "*",
-    top: 99,
-    filter: getFilterString(filter),
-    orderBy: getOrderBy(getOrderByPublishDateClause()),
-  };
-}
+export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultDocument[]): HitsGraphNode[] {
+  const allClaims: HitsGraphNode[] = searchResult.flatMap((document) => {
+    if (!document.researchers.length) throw new Error("!");
 
-export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultItem[]): HitsGraphNode[] {
-  const allClaims: HitsGraphNode[] = searchResult
-    .map((reportResult) => reportResult.document)
-    .flatMap((document) => {
-      if (!document.researchers.length) throw new Error("!");
+    const claims = document.children
+      .filter((child) => [1, 25].includes(child.entityType))
+      .map((claim) => ({
+        title: claim.title ?? "Untitled",
+        id: claim.id,
+        parentId: document.id,
+        entityType: claim.entityType,
+        updatedOn: new Date(claim.updatedOn),
+      }));
 
-      const claims = document.children
-        .filter((child) => [1, 25].includes(child.entityType))
-        .map((claim) => ({
-          title: claim.title ?? "Untitled",
-          id: claim.id,
-          parentId: document.id,
-          entityType: claim.entityType,
-          updatedOn: new Date(claim.updatedOn),
-        }));
+    const report = {
+      title: document.title ?? "Untitled",
+      id: document.id,
+      entityType: document.entityType,
+      updatedOn: new Date(document.updatedOn),
+      researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
+      tags: [...document.products, ...document.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
+      group: {
+        id: document.group.id,
+        displayName: document.group.name,
+      },
+    };
 
-      const report = {
-        title: document.title ?? "Untitled",
-        id: document.id,
-        entityType: document.entityType,
-        updatedOn: new Date(document.updatedOn),
-        researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
-        tags: [...document.products, ...document.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
-        group: {
-          id: document.group.id,
-          displayName: document.group.name,
-        },
-      };
-
-      return [report, ...claims];
-    });
+    return [report, ...claims];
+  });
 
   const uniqueClaims = allClaims.filter(uniqueBy.bind(null, "id"));
 
