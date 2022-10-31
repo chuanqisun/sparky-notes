@@ -1,12 +1,10 @@
+import { authConfig } from "@h20/auth";
 import assert from "assert";
 import axios from "axios";
 import crypto from "crypto";
 import path from "path";
 import { readFileSafe, writeJsonFile } from "../utils/fs";
-
-const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
-const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
-const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
+import { parseJwt } from "../utils/jwt";
 
 export interface SignInInput {
   code: string;
@@ -32,8 +30,8 @@ export async function signIn(input: SignInInput): Response<SignInOutput> {
   const userTable = path.join(process.cwd(), "db", "users.json");
 
   const params = new URLSearchParams({
-    client_id: AAD_CLIENT_ID,
-    scope: `${HITS_API_RESOURCE_ID}/.default offline_access openid`,
+    client_id: authConfig.AAD_CLIENT_ID,
+    scope: authConfig.OAUTH_SCOPES,
     code: code as string,
     redirect_uri: "http://localhost:5200/auth-redirect.html",
     grant_type: "authorization_code",
@@ -43,17 +41,15 @@ export async function signIn(input: SignInInput): Response<SignInOutput> {
 
   const response = await axios({
     method: "post",
-    url: `https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token`,
+    url: `https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/token`,
     headers: { "Content-Type": "application/x-www-form-urlencoded", Host: "" },
     data: params.toString(),
   });
 
   assert(typeof response?.data?.id_token === "string");
-  console.log(response.data);
-  const access_token = response.data.access_token;
-  const hitsProfile = await getUser(access_token);
-  assert(typeof hitsProfile?.user?.mail === "string");
-  const email = hitsProfile.user.mail;
+  const jwt = parseJwt(response.data.id_token);
+  const { email } = jwt;
+  assert(typeof email === "string");
 
   const userClientId = crypto.randomUUID();
 
@@ -177,8 +173,8 @@ export async function getToken(input: GetTokenInput): Response<string> {
 
   // try get access token
   const params = new URLSearchParams({
-    client_id: AAD_CLIENT_ID,
-    scope: `${HITS_API_RESOURCE_ID}/.default offline_access openid`,
+    client_id: authConfig.AAD_CLIENT_ID,
+    scope: authConfig.OAUTH_SCOPES,
     refresh_token: user.refresh_token,
     grant_type: "refresh_token",
     client_secret: process.env.AAD_CLIENT_SECRET as string,
@@ -186,7 +182,7 @@ export async function getToken(input: GetTokenInput): Response<string> {
 
   const response = await axios({
     method: "post",
-    url: `https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token`,
+    url: `https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/token`,
     headers: { "Content-Type": "application/x-www-form-urlencoded", Host: "" },
     data: params.toString(),
   });

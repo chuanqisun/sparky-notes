@@ -1,23 +1,20 @@
+import { authConfig } from "@h20/auth";
 import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/auth-server";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
-
-const AAD_CLIENT_ID = "bc9d8487-53f6-418d-bdce-7ed1f265c33a";
-const AAD_TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
-const HITS_API_RESOURCE_ID = "https://microsoft.onmicrosoft.com/MSFT_HITS_API";
 
 export async function interactiveSignIn(code_verifier: string) {
   const challenge = await generateCodeChallengeFromVerifier(code_verifier);
   const params = new URLSearchParams({
-    client_id: AAD_CLIENT_ID,
+    client_id: authConfig.AAD_CLIENT_ID,
     response_type: "code",
     redirect_uri: "http://localhost:5200/auth-redirect.html",
-    scope: `${HITS_API_RESOURCE_ID}/.default email offline_access openid`,
+    scope: authConfig.OAUTH_SCOPES,
     code_challenge: challenge,
     code_challenge_method: "S256",
   });
 
   sessionStorage.setItem("aad-last-verifier", code_verifier);
-  location.replace(`https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
+  location.replace(`https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
 }
 
 export async function embeddedSignIn() {
