@@ -41,8 +41,7 @@ export function App() {
   const [query, setQuery] = useState("");
   const [searchResultTree, setResultTree] = useState<TreeNodeSchema[]>([]);
 
-  // auto sync
-  useEffect(() => {
+  const syncIncremental = useCallback(() => {
     graph
       .mostRecentTimestamp()
       .then((baseTimestamp) => {
@@ -54,6 +53,11 @@ export function App() {
         console.log(`[sync] success`, changeset);
         return graph.put(changeset.add);
       });
+  }, [graph.mostRecentTimestamp, hits.config]);
+
+  // auto sync on start
+  useEffect(() => {
+    syncIncremental();
   }, [hits.config]);
 
   // auto index on graph change
@@ -135,7 +139,7 @@ export function App() {
                 Import
               </button>
               <button class="c-command-bar--btn" onClick={() => hits.pull()}>
-                Sync
+                Manual sync
               </button>
               <button class="c-command-bar--btn" onClick={hits.signOut}>
                 Sign out
