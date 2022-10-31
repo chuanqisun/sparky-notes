@@ -34,6 +34,7 @@ export function App() {
     const openUrl = new URLSearchParams(location.search).get("openUrl");
     if (openUrl) {
       window.open(openUrl, "_blank");
+      sendToMain({ requestClose: true });
     }
   }, []);
 

@@ -71,6 +71,10 @@ function Widget() {
 
         figma.notify(`✅ Card added to canvas`);
       }
+
+      if (msg.requestClose) {
+        figma.closePlugin();
+      }
     };
   });
 

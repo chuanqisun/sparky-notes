@@ -14,4 +14,5 @@ export interface MessageToMain {
     entityType: number;
     url: string;
   };
+  requestClose?: boolean;
 }
