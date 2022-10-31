@@ -11,6 +11,7 @@ export interface MessageToMain {
   };
   addCard?: {
     title: string;
-    url?: string;
+    entityType: number;
+    url: string;
   };
 }

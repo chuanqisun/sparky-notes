@@ -1,7 +1,18 @@
 import { MessageToMain, MessageToUI } from "@h20/types";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
+import documentIconUrl from "./assets/Document.svg";
+import lightbulbIconUrl from "./assets/Lightbulb.svg";
+import thumbupIconUrl from "./assets/Thumbup.svg";
+
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, useWidgetId, SVG, Text } = widget;
+const entityIcons: Record<number, string> = {
+  1: lightbulbIconUrl,
+  2: documentIconUrl,
+  25: thumbupIconUrl,
+  32: documentIconUrl,
+  64: documentIconUrl,
+};
 
 // TODOs
 // Generate card next to circle
@@ -22,6 +33,7 @@ const sendToUI = (message: MessageToUI) => {
 
 export interface CardData {
   title: string;
+  entityType: number;
   url?: string;
 }
 
@@ -62,26 +74,26 @@ function Widget() {
     };
   });
 
-  return (
-    <AutoLayout>
-      {cardData === null ? (
-        <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((resolve) => showUI())} />
-      ) : (
-        <AutoLayout
-          padding={24}
-          fill="#fff"
-          stroke="#000"
-          strokeWidth={2}
-          cornerRadius={12}
-          onClick={() =>
-            new Promise((resolve) => {
-              showUI(`?openUrl=${cardData.url}`);
-            })
-          }
-        >
-          <Text width={400}>{cardData.title}</Text>
-        </AutoLayout>
-      )}
+  return cardData === null ? (
+    <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((resolve) => showUI())} />
+  ) : (
+    <AutoLayout
+      padding={12}
+      fill="#fff"
+      stroke="#000"
+      strokeWidth={2}
+      cornerRadius={6}
+      spacing={12}
+      onClick={() =>
+        new Promise((resolve) => {
+          showUI(`?openUrl=${cardData.url}`);
+        })
+      }
+    >
+      <SVG src={entityIcons[cardData.entityType]} width={24} height={24} />
+      <Text width={400} fontSize={24} lineHeight={28}>
+        {cardData.title}
+      </Text>
     </AutoLayout>
   );
 }

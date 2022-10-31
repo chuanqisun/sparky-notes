@@ -1,7 +1,8 @@
+import type { MessageToMain } from "@h20/types";
 import type { TreeNodeSchema } from "../../modules/graph/use-graph";
-import documentIconUrl from "./assets/document.svg";
-import lightbulbIconUrl from "./assets/lightbulb.svg";
-import thumbupIconUrl from "./assets/thumbup.svg";
+import documentIconUrl from "./assets/Document.svg";
+import lightbulbIconUrl from "./assets/Lightbulb.svg";
+import thumbupIconUrl from "./assets/Thumbup.svg";
 import { entityNames, HitsGraphNode } from "./use-hits";
 
 const entityIcons: Record<number, string> = {
@@ -16,7 +17,7 @@ export interface DisplayItem {
   node: HitsGraphNode;
   isChild?: boolean;
   getHighlightHtml: (text: string) => string;
-  sendToFigma: (figmaCard: any) => void;
+  sendToFigma: (figmaCard: MessageToMain) => void;
 }
 export function HitsDisplayItem({ node, getHighlightHtml, sendToFigma, isChild }: DisplayItem) {
   const isParent = [2, 32, 64].includes(node.entityType);
@@ -30,6 +31,7 @@ export function HitsDisplayItem({ node, getHighlightHtml, sendToFigma, isChild }
             sendToFigma({
               addCard: {
                 title: node.title,
+                entityType: node.entityType,
                 url: `https://hits.microsoft.com/${entityNames[node.entityType]}/${node.id}`,
               },
             })
