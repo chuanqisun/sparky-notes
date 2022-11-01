@@ -93,7 +93,7 @@ export function App() {
   const [isImporting, setIsImporting] = useState(false);
 
   const handlePaste = useCallback(
-    (e: JSX.TargetedClipboardEvent<HTMLInputElement>) => {
+    async (e: JSX.TargetedClipboardEvent<HTMLInputElement>) => {
       try {
         const url = new URL(e.clipboardData?.getData("text/plain") ?? "");
 
@@ -111,8 +111,8 @@ export function App() {
 
         console.log(parsedFilters);
         hits.updateConfig({ ...hits.config, queries: [parsedFilters] });
-        graph.clearAll();
-        hits.pull();
+        await graph.clearAll();
+        await hits.pull();
 
         setIsImporting(false);
         sendToMain({

@@ -48,11 +48,11 @@ function Widget() {
 
       if (msg.importResult) {
         if (msg.importResult.isSuccess) {
-          figma.notify("Import HITS Search success");
+          figma.notify("Importing... Success");
         } else if (msg.importResult.isError) {
-          figma.notify("Import HITS Search failed", { error: true });
+          figma.notify("Importing... Failed", { error: true });
         } else if (msg.importResult.isInProgress) {
-          figma.notify("Importing...", { error: true });
+          figma.notify("Importing...");
         }
       }
 
