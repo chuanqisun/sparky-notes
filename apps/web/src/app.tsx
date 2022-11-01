@@ -92,34 +92,39 @@ export function App() {
 
   const [isImporting, setIsImporting] = useState(false);
 
-  const handlePaste = (e: JSX.TargetedClipboardEvent<HTMLInputElement>) => {
-    try {
-      const url = new URL(e.clipboardData?.getData("text/plain") ?? "");
+  const handlePaste = useCallback(
+    (e: JSX.TargetedClipboardEvent<HTMLInputElement>) => {
+      try {
+        const url = new URL(e.clipboardData?.getData("text/plain") ?? "");
 
-      const parsedFilters = Object.fromEntries(
-        [...url.searchParams.entries()]
-          .filter(([key, value]) => ["researcherIds", "productIds", "groupIds", "topicIds", "methodIds", "entityTypes"].includes(key))
-          .map(([key, value]) => [key, JSON.parse(value)])
-      );
-      console.log(parsedFilters);
-      hits.updateConfig({ ...hits.config, queries: [parsedFilters] });
+        const parsedFilters = Object.fromEntries(
+          [...url.searchParams.entries()]
+            .filter(([key, value]) => ["researcherIds", "productIds", "groupIds", "topicIds", "methodIds", "entityTypes"].includes(key))
+            .map(([key, value]) => [key, JSON.parse(value)])
+        );
+        console.log(parsedFilters);
+        hits.updateConfig({ ...hits.config, queries: [parsedFilters] });
+        graph.clearAll();
+        hits.pull();
 
-      setIsImporting(false);
-      sendToMain({
-        importResult: {
-          isSuccess: true,
-        },
-      });
+        setIsImporting(false);
+        sendToMain({
+          importResult: {
+            isSuccess: true,
+          },
+        });
 
-      e.preventDefault();
-    } catch {
-      sendToMain({
-        importResult: {
-          isSuccess: false,
-        },
-      });
-    }
-  };
+        e.preventDefault();
+      } catch {
+        sendToMain({
+          importResult: {
+            isSuccess: false,
+          },
+        });
+      }
+    },
+    [hits.updateConfig, graph.clearAll, hits.pull]
+  );
 
   const { getHighlightHtml } = useHighlight(query);
 
