@@ -2,6 +2,7 @@ import { authConfig } from "@h20/auth";
 import assert from "assert";
 import axios from "axios";
 import crypto from "crypto";
+import type { Request } from "express";
 import path from "path";
 import { readFileSafe, writeJsonFile } from "../utils/fs";
 import { parseJwt } from "../utils/jwt";
@@ -22,7 +23,10 @@ export interface SignInOutput {
   id_token: string;
 }
 
-export async function signIn(input: SignInInput): Response<SignInOutput> {
+export async function signIn(req: Request): Response<SignInOutput> {
+  const input: SignInInput = req.body;
+  const redirectHost = req.get("origin");
+
   assert(typeof input.code === "string");
   assert(typeof input.code_verifier === "string");
 
@@ -33,7 +37,7 @@ export async function signIn(input: SignInInput): Response<SignInOutput> {
     client_id: authConfig.AAD_CLIENT_ID,
     scope: authConfig.OAUTH_SCOPES,
     code: code as string,
-    redirect_uri: `${process.env.WEB_HOST}/auth-redirect.html`,
+    redirect_uri: `${redirectHost}/auth-redirect.html`,
     grant_type: "authorization_code",
     code_verifier: code_verifier as string,
     client_secret: process.env.AAD_CLIENT_SECRET as string,
@@ -76,7 +80,9 @@ export interface SignOutInput {
 
 export type SignOutOutput = {};
 
-export async function signOut(input: SignOutInput): Response<SignOutOutput> {
+export async function signOut(req: Request): Response<SignOutOutput> {
+  const input: SignOutInput = req.body;
+
   const userTable = path.join(process.cwd(), "db", "users.json");
 
   const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
@@ -107,7 +113,9 @@ export interface SignInStatusOutput {
   userClientId: string;
 }
 
-export async function getInteractiveSignInStatus(input: GetSignInStatusInput): Response<SignInStatusOutput> {
+export async function getInteractiveSignInStatus(req: Request): Response<SignInStatusOutput> {
+  const input = req.body;
+
   assert(typeof input.code_verifier === "string");
   return new Promise<any>((resolve) => {
     const userTable = path.join(process.cwd(), "db", "users.json");
@@ -155,7 +163,9 @@ export interface GetTokenInput {
 
 export type GetTokenOutput = string;
 
-export async function getToken(input: GetTokenInput): Response<string> {
+export async function getToken(req: Request): Response<string> {
+  const input: GetTokenInput = req.body;
+
   assert(typeof input.id_token === "string");
   assert(typeof input.email === "string");
   assert(typeof input.userClientId === "string");
