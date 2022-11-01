@@ -5,7 +5,7 @@
   },
   "settings": {},
   "remoteUser": "node",
-  "forwardPorts": [8080],
+  "forwardPorts": [5200, 5201, 5202],
   "postCreateCommand": "./.devcontainer/init.sh",
   "extensions": ["esbenp.prettier-vscode", "ms-vscode.azure-account", "ms-azuretools.vscode-azurestorage", "ms-azuretools.vscode-azureappservice"]
 }
