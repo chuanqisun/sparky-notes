@@ -35,7 +35,7 @@ jobs:
       - name: Upload api proxy
         uses: actions/upload-artifact@v2
         with:
-          name: all-apps
+          name: api-proxy
           path: ./apps/api-proxy
 
   deploy:
