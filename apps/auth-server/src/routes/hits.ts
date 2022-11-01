@@ -33,7 +33,7 @@ export async function signIn(input: SignInInput): Response<SignInOutput> {
     client_id: authConfig.AAD_CLIENT_ID,
     scope: authConfig.OAUTH_SCOPES,
     code: code as string,
-    redirect_uri: "http://localhost:5200/auth-redirect.html",
+    redirect_uri: `${process.env.WEB_HOST}/auth-redirect.html`,
     grant_type: "authorization_code",
     code_verifier: code_verifier as string,
     client_secret: process.env.AAD_CLIENT_SECRET as string,
