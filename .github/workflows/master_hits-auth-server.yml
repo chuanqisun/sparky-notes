@@ -46,7 +46,7 @@ jobs:
         with:
           name: all-apps
 
-      - name: "Deploy to Azure Web App"
+      - name: "Deploy auth server"
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
@@ -54,3 +54,12 @@ jobs:
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2D301BEF5A4C48F68617409F8E8D3AEE }}
           package: ./auth-server
+
+      - name: "Deploy API Proxy"
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "hits-api-proxy"
+          slot-name: "Production"
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_83BA8BBDC89C4E67BE7D4787C8649135 }}
+          package: ./api-proxy
