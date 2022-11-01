@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port 5200",
     "localbuild": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 5200"
   },
   "dependencies": {
     "acs-expression-builder": "^0.0.2",
