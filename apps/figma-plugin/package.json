@@ -5,7 +5,7 @@
   "main": "code.js",
   "scripts": {
     "dev": "npm run build -- --dev",
-    "build": "node scripts/build.mjs"
+    "localbuild": "node scripts/build.mjs"
   },
   "author": "HITS Engineering",
   "license": "",

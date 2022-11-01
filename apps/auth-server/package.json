@@ -6,8 +6,8 @@
   "types": "./src/interface.d.ts",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts",
-    "start": "npm run build && node dist/main.js",
-    "build": "esbuild src/main.ts --platform=node --sourcemap --target=node18 --bundle --outdir=dist"
+    "localstart": "npm run localbuild && node dist/main.js",
+    "localbuild": "esbuild src/main.ts --platform=node --sourcemap --target=node18 --bundle --outdir=dist"
   },
   "keywords": [],
   "author": "",
