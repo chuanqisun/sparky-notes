@@ -3,8 +3,11 @@
 FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:0-18
 
 # [Optional] Uncomment this section to install additional OS packages.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
+
+## Install Azure Storage deployment dependencies
+## Ref: https://github.com/microsoft/vscode-azurestorage/wiki/Known-Issues
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends libsecret-1-0
 
 # [Optional] Uncomment if you want to install an additional version of node using nvm
 ARG EXTRA_NODE_VERSION=18
