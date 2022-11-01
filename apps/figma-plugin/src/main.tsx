@@ -49,8 +49,10 @@ function Widget() {
       if (msg.importResult) {
         if (msg.importResult.isSuccess) {
           figma.notify("Import HITS Search success");
-        } else {
+        } else if (msg.importResult.isError) {
           figma.notify("Import HITS Search failed", { error: true });
+        } else if (msg.importResult.isInProgress) {
+          figma.notify("Importing...", { error: true });
         }
       }
 

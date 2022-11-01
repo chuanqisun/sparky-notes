@@ -102,6 +102,13 @@ export function App() {
             .filter(([key, value]) => ["researcherIds", "productIds", "groupIds", "topicIds", "methodIds", "entityTypes"].includes(key))
             .map(([key, value]) => [key, JSON.parse(value)])
         );
+
+        sendToMain({
+          importResult: {
+            isInProgress: true,
+          },
+        });
+
         console.log(parsedFilters);
         hits.updateConfig({ ...hits.config, queries: [parsedFilters] });
         graph.clearAll();
@@ -118,7 +125,7 @@ export function App() {
       } catch {
         sendToMain({
           importResult: {
-            isSuccess: false,
+            isError: true,
           },
         });
       }

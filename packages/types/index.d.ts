@@ -7,7 +7,9 @@ export interface MessageToUI {
 export interface MessageToMain {
   ping?: string;
   importResult?: {
+    isInProgress?: boolean;
     isSuccess?: boolean;
+    isError?: boolean;
   };
   addCard?: {
     title: string;
