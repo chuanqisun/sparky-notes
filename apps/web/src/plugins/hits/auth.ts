@@ -2,12 +2,15 @@ import { authConfig } from "@h20/auth";
 import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/auth-server";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
+const AUTH_SERVER_HOST = import.meta.env.VITE_AUTH_SERVER_HOST;
+const WEB_HOST = import.meta.env.VITE_WEB_HOST;
+
 export async function interactiveSignIn(code_verifier: string) {
   const challenge = await generateCodeChallengeFromVerifier(code_verifier);
   const params = new URLSearchParams({
     client_id: authConfig.AAD_CLIENT_ID,
     response_type: "code",
-    redirect_uri: "http://localhost:5200/auth-redirect.html",
+    redirect_uri: `${WEB_HOST}/auth-redirect.html`,
     scope: authConfig.OAUTH_SCOPES,
     code_challenge: challenge,
     code_challenge_method: "S256",
@@ -19,9 +22,9 @@ export async function interactiveSignIn(code_verifier: string) {
 
 export async function embeddedSignIn() {
   const code_verifier = generateCodeVerifier();
-  window.open(`http://localhost:5200/sign-in.html?code_verifier=${code_verifier}`);
+  window.open(`${WEB_HOST}/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result: SignInStatusOutput = await fetch(`http://localhost:5201/hits/signinstatus`, {
+  const result: SignInStatusOutput = await fetch(`${AUTH_SERVER_HOST}/hits/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -52,7 +55,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
     code_verifier,
   };
 
-  const result: SignInOutput = await fetch(`http://localhost:5201/hits/signin`, {
+  const result: SignInOutput = await fetch(`${AUTH_SERVER_HOST}/hits/signin`, {
     headers: {
       "content-type": "application/json",
     },
@@ -69,7 +72,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
 }
 
 export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutput> {
-  const result = await fetch(`http://localhost:5201/hits/token`, {
+  const result = await fetch(`${AUTH_SERVER_HOST}/hits/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -83,7 +86,7 @@ export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutp
 }
 
 export async function signOutRemote(input: SignOutInput): Promise<SignOutOutput> {
-  const result = await fetch(`http://localhost:5201/hits/signout`, {
+  const result = await fetch(`${AUTH_SERVER_HOST}/hits/signout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
