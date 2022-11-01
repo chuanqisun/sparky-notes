@@ -5,8 +5,8 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/main.ts",
-    "localstart": "npm run localbuild && node dist/main.js",
-    "localbuild": "esbuild src/main.ts --platform=node --sourcemap --target=node16 --bundle --outdir=dist"
+    "localstart": "npm run build && node dist/main.js",
+    "build": "esbuild src/main.ts --platform=node --sourcemap --target=node16 --bundle --outdir=dist"
   },
   "keywords": [],
   "author": "",

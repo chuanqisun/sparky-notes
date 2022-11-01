@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5200",
-    "localbuild": "tsc && vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview --port 5200"
   },
   "dependencies": {
