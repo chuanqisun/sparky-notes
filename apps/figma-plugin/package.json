@@ -4,7 +4,7 @@
   "description": "Your Figma Plugin",
   "main": "code.js",
   "scripts": {
-    "dev": "npm run build -- --dev",
+    "dev": "npm run localbuild -- --dev",
     "localbuild": "node scripts/build.mjs"
   },
   "author": "HITS Engineering",
