@@ -32,7 +32,6 @@ jobs:
         with:
           name: auth-server
           path: ./apps/auth-server
-
       - name: Upload api proxy
         uses: actions/upload-artifact@v2
         with:
@@ -60,7 +59,6 @@ jobs:
           path: api-proxy
 
       - name: "Deploy auth server"
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: "hits-auth-server"
@@ -69,7 +67,6 @@ jobs:
           package: ./auth-server
 
       - name: "Deploy api proxy"
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: "hits-api-proxy"
