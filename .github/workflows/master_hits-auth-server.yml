@@ -27,17 +27,11 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Upload auth server
+      - name: Upload all node apps
         uses: actions/upload-artifact@v2
         with:
-          name: auth-server
-          path: ./apps/auth-server
-
-      - name: Upload api proxy
-        uses: actions/upload-artifact@v2
-        with:
-          name: api-proxy
-          path: ./apps/api-proxy
+          name: all-apps
+          path: ./apps
 
   deploy:
     runs-on: ubuntu-latest
@@ -50,7 +44,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v2
         with:
-          name: auth-server
+          name: all-apps
 
       - name: "Deploy to Azure Web App"
         id: deploy-to-webapp
@@ -59,4 +53,4 @@ jobs:
           app-name: "hits-auth-server"
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2D301BEF5A4C48F68617409F8E8D3AEE }}
-          package: auth-server
+          package: ./auth-server
