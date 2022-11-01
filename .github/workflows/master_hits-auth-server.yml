@@ -59,4 +59,4 @@ jobs:
           app-name: "hits-auth-server"
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2D301BEF5A4C48F68617409F8E8D3AEE }}
-          package: ./apps/auth-server
+          package: auth-server
