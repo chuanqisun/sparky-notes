@@ -50,13 +50,13 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: auth-server
-          path: auth-server
+          path: ./auth-server
 
       - name: Download api-proxy
         uses: actions/download-artifact@v2
         with:
           name: api-proxy
-          path: api-proxy
+          path: ./api-proxy
 
       - name: "Deploy auth server"
         uses: azure/webapps-deploy@v2
