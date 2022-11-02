@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { once } from "../../utils/once";
 
 export interface GraphDBSchema extends DBSchema {
   node: {
@@ -38,4 +39,4 @@ async function openAppDB(): Promise<GraphDB> {
     },
   });
 }
-export const db = openAppDB();
+export const getDb = once(openAppDB);
