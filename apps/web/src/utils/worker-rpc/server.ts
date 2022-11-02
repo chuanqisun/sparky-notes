@@ -15,6 +15,7 @@ export class WorkerServer<TSchema extends BaseProxySchema> {
         port.start();
       });
     }
+    return this;
   }
 
   private bindListeners(port: MessagePort | DedicatedWorkerGlobalScope) {
@@ -56,5 +57,7 @@ export class WorkerServer<TSchema extends BaseProxySchema> {
         });
       }
     });
+
+    return this;
   }
 }

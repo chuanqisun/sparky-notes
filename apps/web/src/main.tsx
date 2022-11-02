@@ -6,22 +6,22 @@ import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
 import { IndexedItem, useHighlight, useSearch } from "./modules/search/use-search";
 import { HitsDisplayItem } from "./plugins/hits/display-item";
 import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
+import type { WorkerRoutes } from "./routes";
 import { sendMessage } from "./utils/figma-rpc";
+import { WorkerClient } from "./utils/worker-rpc";
 
-import Worker from "./worker?worker";
+import WebWorker from "./worker?worker";
 
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
 window.focus();
 
-const worker = new Worker();
-render(<App worker={worker} />, document.getElementById("app") as HTMLElement);
+const worker = new WorkerClient<WorkerRoutes>(new WebWorker()).start();
 
-export interface ClientProps {
-  worker: Worker;
-}
-export function App(props: ClientProps) {
+function App(props: { worker: WorkerClient<WorkerRoutes> }) {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
+
+  props.worker.request("echo", { message: "test" }).then((res) => console.log(res));
 
   const hits = useHits();
   const graph = useGraph();
@@ -189,3 +189,5 @@ export function App(props: ClientProps) {
     </>
   );
 }
+
+render(<App worker={worker} />, document.getElementById("app") as HTMLElement);
