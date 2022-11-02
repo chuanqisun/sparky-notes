@@ -1,4 +1,3 @@
-- Flat search
 - Flat indexer
 - Put indexer behind worker
 - Status bar
