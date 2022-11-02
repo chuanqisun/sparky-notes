@@ -3,7 +3,6 @@ import type { NodeSchema } from "../graph-v2/db";
 export interface HitsGraphNode extends NodeSchema {
   id: string;
   updatedOn: Date;
-  parentId?: string;
   title: string;
   entityType: number;
   group?: {
@@ -18,6 +17,13 @@ export interface HitsGraphNode extends NodeSchema {
     id: number;
     displayName: string;
   }[];
+  children: HitsGraphChildNode[];
+}
+
+export interface HitsGraphChildNode {
+  id: string;
+  title: string;
+  entityType: number;
 }
 
 export interface FilterConfig {

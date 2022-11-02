@@ -1,4 +1,4 @@
-export const EntityTypes = {
+export const EntityType = {
   Insight: 1,
   Study: 2,
   Recommendation: 25,

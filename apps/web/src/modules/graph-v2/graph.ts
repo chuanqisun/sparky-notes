@@ -2,40 +2,40 @@ import { isTruthy } from "../../utils/guard";
 import type { GraphDB, NodeSchema } from "./db";
 import { tx } from "./tx";
 
-export const dump = async (db: Promise<GraphDB>) =>
-  tx(await db, ["node"], "readonly", async (tx) => {
+export const dump = (db: GraphDB) =>
+  tx(db, ["node"], "readonly", async (tx) => {
     const nodes = await tx.objectStore("node").getAll();
     return {
       nodes,
     };
   });
 
-export const put = async (db: Promise<GraphDB>, nodes: NodeSchema[]) =>
-  tx(await db, ["node"], "readwrite", async (tx) => {
+export const put = (db: GraphDB, nodes: NodeSchema[]) =>
+  tx(db, ["node"], "readwrite", async (tx) => {
     const nodeStore = tx.objectStore("node");
     nodes.map((node) => nodeStore.put(node));
   });
 
-export const get = async (db: Promise<GraphDB>, ids: string[]) =>
-  tx(await db, ["node"], "readonly", async (tx) => {
+export const get = (db: GraphDB, ids: string[]) =>
+  tx(db, ["node"], "readonly", async (tx) => {
     const nodeStore = tx.objectStore("node");
     const nodes = await Promise.all(ids.map((id) => nodeStore.get(id)));
     return nodes;
   });
 
-export const mostRecentTimestamp = async (db: Promise<GraphDB>) =>
-  tx(await db, ["node"], "readonly", async (tx) => {
+export const mostRecentTimestamp = (db: GraphDB) =>
+  tx(db, ["node"], "readonly", async (tx) => {
     const cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
     return cursor?.key;
   });
 
-export const clearAll = async (db: Promise<GraphDB>) => (await db).clear("node");
+export const clearAll = (db: GraphDB) => db.clear("node");
 
 export interface TreeNodeSchema extends NodeSchema {
   children?: TreeNodeSchema[];
 }
-export const getPriorityTree = async (db: Promise<GraphDB>, ids: string[]) =>
-  tx(await db, ["node"], "readonly", async (tx) => {
+export const getPriorityTree = (db: GraphDB, ids: string[]) =>
+  tx(db, ["node"], "readonly", async (tx) => {
     const nodeStore = tx.objectStore("node");
 
     const nodes = (await Promise.all(ids.map((id) => nodeStore.get(id)))).filter(isTruthy);

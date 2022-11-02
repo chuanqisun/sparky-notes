@@ -1,35 +1,53 @@
-import { uniqueBy } from "../../utils/unique-by";
-import { EntityTypes } from "./entity";
-import type { HitsGraphNode, SearchResultDocument } from "./hits";
+import { EntityType } from "./entity";
+import type { HitsGraphChildNode, HitsGraphNode, SearchResultChild, SearchResultDocument } from "./hits";
 
 export function searchResultDocumentToGraphNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
-  const allNodes: HitsGraphNode[] = searchResult.flatMap((document) => {
-    const claims = document.children
-      .filter((child) => [EntityTypes.Insight, EntityTypes.Recommendation].includes(child.entityType))
-      .map((claim) => ({
-        title: claim.title ?? "Untitled",
-        id: claim.id,
-        parentId: document.id,
-        entityType: claim.entityType,
-        updatedOn: new Date(claim.updatedOn),
-      }));
+  return searchResult.map((document) => {
+    const childNodes = toChildNodes(document.children);
+    const updatedOn = getUpdatedOn(document);
 
-    const report = {
+    return {
       title: document.title ?? "Untitled",
       id: document.id,
       entityType: document.entityType,
-      updatedOn: new Date(document.updatedOn),
-      researchers: document.researchers.map((person) => ({ id: person.id, displayName: person.name })),
-      tags: [...document.products, ...document.topics].map((tag) => ({ id: tag.id, displayName: tag.name })),
+      updatedOn: updatedOn,
+      researchers: document.researchers.map(getPerson),
+      tags: [...document.products, ...document.topics].map(getTag),
       group: {
         id: document.group.id,
         displayName: document.group.name,
       },
+      children: childNodes,
     };
-
-    return [report, ...claims];
   });
-  const uniqueClaims = allNodes.filter(uniqueBy.bind(null, "id"));
+}
 
-  return uniqueClaims;
+function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
+  return children
+    .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
+    .map((claim) => ({
+      title: claim.title ?? "Untitled",
+      id: claim.id,
+      entityType: claim.entityType,
+    }));
+}
+
+function getUpdatedOn(document: SearchResultDocument): Date {
+  return [new Date(document.updatedOn), ...document.children.map((child) => new Date(child.updatedOn))]
+    .sort((a, b) => b.getTime() - a.getTime()) // descending
+    .pop()!; // most recent date
+}
+
+function getPerson(searchResultPerson: { id: number; name: string }) {
+  return {
+    id: searchResultPerson.id,
+    displayName: searchResultPerson.name,
+  };
+}
+
+function getTag(searchResultTag: { id: number; name: string }) {
+  return {
+    id: searchResultTag.id,
+    displayName: searchResultTag.name,
+  };
 }
