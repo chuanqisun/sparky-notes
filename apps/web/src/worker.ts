@@ -1,5 +1,6 @@
 /// <reference lib="WebWorker" />
 
+import { searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import { EntityTypes } from "./modules/hits/entity";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
@@ -25,7 +26,10 @@ const handleSync: WorkerRoutes["sync"] = async ({ req }) => {
       entityTypes: [EntityTypes.Study],
       researcherIds: [835],
     },
-    onProgress: console.log,
+    onProgress: (progress) => {
+      const nodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
+      console.log(nodes);
+    },
   });
   // TODO pipe to graph and local indexer
   return summary;

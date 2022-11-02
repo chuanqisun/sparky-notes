@@ -13,3 +13,4 @@
 - Debug occasional get token 500 error
 - Index robustness: from old to new
 - Push code update to Figma Widget instance
+- Handle 1-to-many rel in claim-to-report, due to guest claim

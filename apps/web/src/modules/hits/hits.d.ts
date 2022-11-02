@@ -1,3 +1,25 @@
+import type { NodeSchema } from "../graph-v2/db";
+
+export interface HitsGraphNode extends NodeSchema {
+  id: string;
+  updatedOn: Date;
+  parentId?: string;
+  title: string;
+  entityType: number;
+  group?: {
+    id: number;
+    displayName: string;
+  };
+  researchers?: {
+    id: number;
+    displayName: string;
+  }[];
+  tags?: {
+    id: number;
+    displayName: string;
+  }[];
+}
+
 export interface FilterConfig {
   entityTypes?: number[];
   productIds?: number[];
