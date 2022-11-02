@@ -6,7 +6,7 @@ import type { HitsGraphNode } from "./use-hits";
 
 export async function search(proxy: (payload: any) => Promise<SearchOutput>, filter: FilterConfig) {
   // execute 1st search to get total
-  const pageSize = 10;
+  const pageSize = 100;
   const payload = getSearchPayloadV2({ count: true, top: pageSize, skip: 0, filter });
   const { totalCount, results } = await proxy(payload);
   const pageOffsets = getPageOffsets(pageSize, totalCount);

@@ -1,5 +1,6 @@
 - CORS access to search index
 - Status bar: sync
+- Put indexer behind worker
 - Make insights searchable by parent
 - Index as we download
 - Test Full HITS sync
@@ -8,3 +9,4 @@
 - Car positioning improvements
 - Virtual DOM
 - Debug ` if (!te.researchers.length) throw new Error("!");`
+  - Handle reports without researcher
