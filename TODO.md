@@ -10,4 +10,5 @@
 - Car positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
-- Pending: CORS access to search index
+- CORS access to search index
+  - Update hits-search function app with SAW and JIT
