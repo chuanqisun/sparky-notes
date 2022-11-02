@@ -12,3 +12,4 @@
   - Handle reports without researcher
 - CORS access to search index
   - Update hits-search function app with SAW and JIT
+- Index robustness: from old to new
