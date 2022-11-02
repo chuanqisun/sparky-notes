@@ -1,0 +1,4 @@
+- Status bar: sync
+- Display most recent content by default
+- Menu
+- Car positioning improvements
