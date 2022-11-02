@@ -10,6 +10,6 @@
 - Car positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
-- CORS access to search index
-  - Update hits-search function app with SAW and JIT
+- Debug occasional get token 500 error
 - Index robustness: from old to new
+- Push code update to Figma Widget instance
