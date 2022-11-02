@@ -3,6 +3,7 @@ import type { JSX } from "preact";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
+import { getHitsConfig } from "./modules/hits/config";
 import { IndexedItem, useHighlight, useSearch } from "./modules/search/use-search";
 import { HitsDisplayItem } from "./plugins/hits/display-item";
 import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
@@ -67,6 +68,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes> }) {
         return graph.put(changeset.add);
       });
   }, [graph.mostRecentTimestamp, hits.config]);
+
+  const syncV2 = useCallback(async () => {
+    const config = getHitsConfig();
+    const result = await props.worker.request("sync", { config });
+    console.log("Sync result", result);
+  }, []);
 
   // auto sync on start
   useEffect(() => {
@@ -164,7 +171,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes> }) {
                 Import
               </button>
               <button class="c-command-bar--btn" onClick={() => hits.pull()}>
-                Manual sync
+                Sync v1
+              </button>
+              <button class="c-command-bar--btn" onClick={syncV2}>
+                Sync v2
               </button>
               <button class="c-command-bar--btn" onClick={hits.signOut}>
                 Sign out
