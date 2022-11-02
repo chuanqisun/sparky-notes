@@ -27,7 +27,7 @@ export function useSearch() {
   // TODO add should cause query and dump behavior to update
   const add = useCallback((items: IndexedItem[]) => Promise.all(items.map((item) => idx.current.addAsync(item.id, item))), []);
 
-  const query = useCallback((query: string) => idx.current.searchAsync(query, { index: "fuzzyTokens" }), []);
+  const query = useCallback((query: string) => idx.current.searchAsync(query, { index: "fuzzyTokens", limit: 10 }), []);
 
   const dump = useCallback(() => idx.current.export(console.log), []);
 

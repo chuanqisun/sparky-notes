@@ -5,9 +5,12 @@ import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
 import { IndexedItem, useHighlight, useSearch } from "./modules/search/use-search";
 import { HitsDisplayItem } from "./plugins/hits/display-item";
 import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
-import { sendMessage } from "./utils/ipc";
+import { sendMessage } from "./utils/figma-rpc";
 
-export function App() {
+export interface ClientProps {
+  worker: Worker;
+}
+export function App(props: ClientProps) {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
 
   const hits = useHits();
