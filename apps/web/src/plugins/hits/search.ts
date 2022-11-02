@@ -54,8 +54,6 @@ export function getSearchPayloadV2(config: { count: boolean; top: number; skip: 
 
 export function getClaimsFromSearchResultItemsV2(searchResult: SearchResultDocument[]): HitsGraphNode[] {
   const allClaims: HitsGraphNode[] = searchResult.flatMap((document) => {
-    if (!document.researchers.length) throw new Error("!");
-
     const claims = document.children
       .filter((child) => [1, 25].includes(child.entityType))
       .map((claim) => ({

@@ -1,4 +1,10 @@
+- CORS access to search index
 - Status bar: sync
+- Make insights searchable by parent
+- Index as we download
+- Test Full HITS sync
 - Display most recent content by default
 - Menu
 - Car positioning improvements
+- Virtual DOM
+- Debug ` if (!te.researchers.length) throw new Error("!");`
