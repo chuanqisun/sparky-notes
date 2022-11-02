@@ -1,46 +1,6 @@
-import { openDB, type DBSchema, type IDBPDatabase, type IDBPTransaction, type StoreNames } from "idb";
-import { isTruthy } from "../utils/guard";
-
-export interface GraphDBSchema extends DBSchema {
-  node: {
-    value: NodeSchema;
-    key: string;
-    indexes: {
-      byUpdatedOn: Date;
-      byParentId: string;
-    };
-  };
-}
-
-export interface NodeSchema {
-  id: string;
-  parentId?: string;
-  updatedOn: Date;
-  [key: string]: any;
-}
-
-export type GraphDB = IDBPDatabase<GraphDBSchema>;
-
-export const db = openAppDB();
-
-export async function openAppDB(): Promise<GraphDB> {
-  return openDB<GraphDBSchema>("hits-assistant-graph", 1, {
-    upgrade(db, _oldVersion, _newVersion, _transaction) {
-      const nodeStore = db.createObjectStore("node", { keyPath: "id" });
-      nodeStore.createIndex("byUpdatedOn", "updatedOn");
-      nodeStore.createIndex("byParentId", "parentId");
-    },
-    blocked() {
-      // …
-    },
-    blocking() {
-      // …
-    },
-    terminated() {
-      // …
-    },
-  });
-}
+import { isTruthy } from "../../utils/guard";
+import type { GraphDB, NodeSchema } from "./db";
+import { tx } from "./tx";
 
 export const dump = async (db: Promise<GraphDB>) =>
   tx(await db, ["node"], "readonly", async (tx) => {
@@ -118,28 +78,3 @@ export const getPriorityTree = async (db: Promise<GraphDB>, ids: string[]) =>
 
     return fullList;
   });
-
-export type ExtractSchema<DBType> = DBType extends IDBPDatabase<infer SchemaType> ? SchemaType : never;
-
-export type TxType<
-  DBSchemaType extends DBSchema,
-  Name extends StoreNames<DBSchemaType> | ArrayLike<StoreNames<DBSchemaType>>,
-  Mode extends IDBTransactionMode = "readonly"
-> = Name extends ArrayLike<any>
-  ? IDBPTransaction<DBSchemaType, Name, Mode>
-  : Name extends StoreNames<DBSchemaType>
-  ? IDBPTransaction<DBSchemaType, [Name], Mode>
-  : never;
-
-export async function tx<
-  DBType extends IDBPDatabase<any>,
-  Names extends StoreNames<ExtractSchema<DBType>> | ArrayLike<StoreNames<ExtractSchema<DBType>>>,
-  Mode extends IDBTransactionMode,
-  Transact extends (tx: TxType<ExtractSchema<DBType>, Names, Mode>) => any
->(db: DBType, names: Names, mode: Mode, transact: Transact): Promise<Awaited<ReturnType<Transact>>> {
-  const tx = db.transaction(names, mode);
-  const result = transact(tx as any);
-  await tx.done;
-
-  return await result;
-}
