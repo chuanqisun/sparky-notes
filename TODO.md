@@ -14,3 +14,5 @@
 - Advanced performance hack: Index as we download, from existing to downloaded
 - Export index only when CPU is idle
 - Timestamp last access token usage
+- One click reset: sign out + DB wipe + code update
+- Sign out from all HITS Assistants
