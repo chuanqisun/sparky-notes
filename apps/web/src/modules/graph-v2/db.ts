@@ -35,13 +35,12 @@ export type GraphDB = IDBPDatabase<GraphDBSchema>;
 async function openAppDB(): Promise<GraphDB> {
   return openDB<GraphDBSchema>("hits-assistant-graph", 2, {
     upgrade(db, oldVersion, _newVersion, transaction) {
-      if (oldVersion === 0) {
+      if (oldVersion < 1) {
         const nodeStore = db.createObjectStore("node", { keyPath: "id" });
         nodeStore.createIndex("byUpdatedOn", "updatedOn");
       }
 
-      if (oldVersion === 1) {
-        transaction.objectStore("node").deleteIndex("byParentId");
+      if (oldVersion < 2) {
         db.createObjectStore("syncRecord", { autoIncrement: true });
       }
     },

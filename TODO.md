@@ -14,3 +14,4 @@
 - Handle 1-to-many rel in claim-to-report, due to guest claim
 - Try Intl.Segmenter as custom tokenizer
 - Advanced performance hack: Index as we download, from existing to downloaded
+- Export index only when CPU is idle
