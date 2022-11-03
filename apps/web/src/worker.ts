@@ -23,7 +23,7 @@ async function main() {
 
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
 
-const handleSync: WorkerRoutes["sync"] = async ({ req }) => {
+const handleSync: WorkerRoutes["sync"] = async ({ req, emit }) => {
   const config = req.config;
   const db = getDb();
   const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
@@ -40,10 +40,10 @@ const handleSync: WorkerRoutes["sync"] = async ({ req }) => {
       researcherIds: [835],
     },
     onProgress: async (progress) => {
-      // TODO pipe through local indexer
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
       await put(await db, graphNodes);
       graphNodes.map(graphNodeToFtsDocument).forEach((doc) => index.add(doc));
+      emit("syncProgress", progress);
     },
   });
   return summary;

@@ -18,7 +18,7 @@ export class WorkerClient<RouteTypes extends BaseRouteTypes, EventTypes extends 
     return this;
   }
 
-  async subscribe<EventType extends keyof EventTypes>(
+  subscribe<EventType extends keyof EventTypes>(
     type: EventType,
     listener: (...args: EventTypes[EventType] extends undefined ? [] : [data: EventTypes[EventType]]) => any
   ) {

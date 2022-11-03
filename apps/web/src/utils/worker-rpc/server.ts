@@ -42,7 +42,7 @@ export class WorkerServer<RouteTypes extends BaseRouteTypes, EventTypes extends 
       if (route !== requestRoute) return;
 
       try {
-        const responseData = await handler({ req: data });
+        const responseData = await handler({ req: data, emit: this.emit.bind(this) as any });
 
         port.postMessage({
           nonce,
