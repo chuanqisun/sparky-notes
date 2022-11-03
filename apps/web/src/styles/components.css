@@ -6,6 +6,7 @@
 .c-app-header {
   background-color: black;
   display: grid;
+  grid-template-columns: 1fr auto;
 }
 
 .c-button--card:is(:focus-visible, :hover) {
@@ -47,6 +48,17 @@
   display: flex;
   flex-direction: column;
   /* gap: 1px; */
+}
+
+.c-menu-button {
+  padding: 4px 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: black;
+  border: none;
+  color: white;
 }
 
 .c-search-input {

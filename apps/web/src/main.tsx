@@ -28,6 +28,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { isConnected, signIn, signOut } = useAuth();
   const { value: configValue } = useConfig();
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
+
   useEffect(() => {
     switch (isConnected) {
       case false:
@@ -107,6 +110,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   return (
     <>
       <header class="c-app-header">
+        <input class="c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={(e) => setQuery((e.target as any).value)} />
+        <button class="c-menu-button" data-active={isMenuOpen} onClick={toggleMenu}>
+          Menu
+        </button>
+      </header>
+      {isMenuOpen && (
         <menu class="c-command-bar">
           {isConnected === undefined && <span class="c-command-bar--text">Signing in...</span>}
           {isConnected === false && (
@@ -125,8 +134,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </>
           )}
         </menu>
-        <input class="c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={(e) => setQuery((e.target as any).value)} />
-      </header>
+      )}
       <main class="u-scroll c-main">
         {
           <section>

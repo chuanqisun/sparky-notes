@@ -10,10 +10,10 @@
   overflow: hidden;
 }
 
-.c-status-bar.expanded {
+.c-status-bar[data-expanded="true"] {
   overflow: auto;
   height: auto;
-  max-height: 80vh;
+  max-height: 50vh;
 }
 
 .c-status-bar__line {
