@@ -1,19 +1,16 @@
 - Flat indexer
-- Put indexer behind worker
 - Status bar
   - Sync progress
   - Index progress
 - Virtual DOM
 - Make insights searchable by parent
-- Index as we download
 - Display most recent content by default
 - Menu
-- Car positioning improvements
+- New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
 - Debug occasional get token 500 error
-- Index robustness: from old to new
 - Push code update to Figma Widget instance
 - Handle 1-to-many rel in claim-to-report, due to guest claim
 - Try Intl.Segmenter as custom tokenizer
-- Bypass IDB. Use document search from flex search
+- Advanced performance hack: Index as we download, from existing to downloaded
