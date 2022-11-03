@@ -25,6 +25,7 @@ export class WorkerClient<RouteTypes extends BaseRouteTypes, EventTypes extends 
     const focusedListener = (maybeEvent: Event) => {
       const { type: actualType, data } = (maybeEvent as MessageEvent).data;
       if (actualType !== type) return; // noop on irrelevant event
+
       (listener as any)(data);
     };
 

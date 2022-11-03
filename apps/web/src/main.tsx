@@ -28,6 +28,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const graph = useGraph();
   const search = useSearch();
 
+  useEffect(() => {
+    worker.subscribe("indexChanged", () => {
+      console.log("index changed");
+    });
+  }, []);
+
   useEffect(() => worker.subscribe("syncProgressed", console.log), []);
 
   useEffect(() => {
@@ -73,7 +79,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const syncV2 = useCallback(async () => {
     const config = getHitsConfig();
-    const result = await worker.request("sync", { config });
+    const result = await worker.request("fullSync", { config });
     console.log("Sync result", result);
   }, []);
 

@@ -1,8 +1,8 @@
 import type { IndexOptionsForDocumentSearch } from "flexsearch";
 import { Document as FlexDocument } from "flexsearch";
-import { once } from "../../utils/once";
 
-const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
+// TODO do not export
+export const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
   preset: "default",
   charset: "latin:simple",
   tokenize: "forward",
@@ -18,16 +18,47 @@ export interface IndexedItem {
   keywords: string;
 }
 
-export const ftsGetIndex = once(() => new FlexDocument(indexConfig));
-export const ftsAdd = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
-export const ftsQuery = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords", limit: 100 });
-export const ftsExportIndex = (idx: FlexDocument<IndexedItem>) => {
-  const result: any = {};
-  idx.export((key, val) => {
-    result[key] = val;
+export interface ExportedIndex {
+  // Caution: User might have an older version in their IndexedDB
+  config: IndexOptionsForDocumentSearch<IndexedItem>;
+  // Caution: Dict must be in sync with config
+  dict: Record<string, any>;
+}
+
+export const createFtsIndex = () => new FlexDocument(indexConfig);
+export const addFtsItems = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
+export const queryFts = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords", limit: 100 });
+export const exportFtsIndex = async (idx: FlexDocument<IndexedItem>) => {
+  const dict: any = {};
+  await idx.export((key, val) => {
+    dict[key] = val;
+  });
+  // HACK due to https://github.com/nextapps-de/flexsearch/issues/274
+  // Because Flexsearch export promise resolves prematurely,
+  // We poll to ensure the largest chunk (fuzzyTokens.map) exists and then
+  // give it another 1000ms to ensure everything else is saved
+  await new Promise((resolve) => {
+    const polling = setInterval(() => {
+      // expecting 6 keys: <index>.cfg, <index>.ctx, <index>.map, reg, store, tag
+      if (Object.keys(dict).length === 6 && Object.hasOwn(dict, "keywords.map")) {
+        resolve(dict);
+        clearInterval(polling);
+      } else {
+        // log to console for future debugging
+        console.log(`Missing in imported index. Will retry...`);
+      }
+    }, 100);
   });
 
-  return result;
+  return {
+    config: indexConfig,
+    dict,
+  } as ExportedIndex;
+};
+export const importFtsIndex = async <T extends FlexDocument<any>>(exportedIndex: ExportedIndex) => {
+  const index = new FlexDocument(exportedIndex.config);
+  await Promise.all(Object.entries(exportedIndex.dict).map(([key, value]) => index.import(key, value)));
+  return index as T;
 };
 
 export const getTokens = (query: string) =>

@@ -24,7 +24,10 @@ export interface NodeSchema {
 export interface SyncRecordSchema {
   latestUpdatedOn: Date;
   syncedOn: Date;
-  exportedIndex: any;
+  exportedIndex: {
+    config: any;
+    dict: any;
+  };
 }
 
 export type GraphDB = IDBPDatabase<GraphDBSchema>;

@@ -1,10 +1,10 @@
 import type { HitsConfig } from "./modules/hits/config";
-import type { SearchProgress } from "./modules/hits/search";
+import type { SearchProgress, SearchSummary } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
 
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
-  sync: RouteHandler<SyncReq, any, WorkerEvents>;
+  fullSync: RouteHandler<FullSyncReq, SearchSummary, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
 };
 
@@ -20,7 +20,7 @@ export interface EchoRes {
   message: string;
 }
 
-export interface SyncReq {
+export interface FullSyncReq {
   config: HitsConfig;
 }
 

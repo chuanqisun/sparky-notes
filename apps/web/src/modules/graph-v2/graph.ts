@@ -2,34 +2,37 @@ import { isTruthy } from "../../utils/guard";
 import type { GraphDB, NodeSchema } from "./db";
 import { tx } from "./tx";
 
-export const dump = (db: GraphDB) =>
+export interface ExportNodeData {
+  node: NodeSchema;
+  success: number;
+  total: number;
+}
+export const exportNodes = (db: GraphDB, onData: (data: ExportNodeData) => any) =>
   tx(db, ["node"], "readonly", async (tx) => {
-    const nodes = await tx.objectStore("node").getAll();
-    return {
-      nodes,
-    };
+    const total = await tx.objectStore("node").count();
+    let cursor = await tx.objectStore("node").openCursor();
+    let success = 0;
+
+    while (cursor) {
+      onData({ node: cursor.value, total, success });
+      cursor = await cursor.continue();
+    }
   });
 
-export const put = (db: GraphDB, nodes: NodeSchema[]) =>
+export const putNode = (db: GraphDB, nodes: NodeSchema[]) =>
   tx(db, ["node"], "readwrite", async (tx) => {
     const nodeStore = tx.objectStore("node");
     nodes.map((node) => nodeStore.put(node));
   });
 
-export const get = (db: GraphDB, ids: string[]) =>
+export const getNode = (db: GraphDB, ids: string[]) =>
   tx(db, ["node"], "readonly", async (tx) => {
     const nodeStore = tx.objectStore("node");
     const nodes = await Promise.all(ids.map((id) => nodeStore.get(id)));
     return nodes;
   });
 
-export const mostRecentTimestamp = (db: GraphDB) =>
-  tx(db, ["node"], "readonly", async (tx) => {
-    const cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
-    return cursor?.key;
-  });
-
-export const updateSyncRecord = (db: GraphDB, syncedOn: Date, searchIndex: string) =>
+export const updateSyncRecord = (db: GraphDB, syncedOn: Date, exportedIndex: any) =>
   tx(db, ["node", "syncRecord"], "readwrite", async (tx) => {
     const cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
     const latestUpdatedOn = cursor?.key;
@@ -39,11 +42,13 @@ export const updateSyncRecord = (db: GraphDB, syncedOn: Date, searchIndex: strin
     tx.objectStore("syncRecord").put({
       syncedOn,
       latestUpdatedOn,
-      exportedIndex: searchIndex,
+      exportedIndex,
     });
   });
 
-export const clearAll = (db: GraphDB) => db.clear("node");
+export const getLastSyncRecord = (db: GraphDB) => tx(db, ["syncRecord"], "readonly", async (tx) => (await tx.objectStore("syncRecord").getAll()).pop());
+
+export const clearAllNodes = (db: GraphDB) => db.clear("node");
 
 export interface TreeNodeSchema extends NodeSchema {
   children?: TreeNodeSchema[];
