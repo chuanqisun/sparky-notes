@@ -2,11 +2,12 @@ import type { MessageToUI } from "@h20/types";
 import type { JSX } from "preact";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { TreeNodeSchema, useGraph } from "./modules/graph/use-graph";
+import { useGraph } from "./modules/graph/use-graph";
+import { HitsCard } from "./modules/hits/card";
 import { getHitsConfig } from "./modules/hits/config";
+import type { HitsGraphNode } from "./modules/hits/hits";
 import { IndexedItem, useHighlight, useSearch } from "./modules/search/use-search";
-import { HitsDisplayItem } from "./plugins/hits/display-item";
-import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
+import { useHits } from "./plugins/hits/use-hits";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { sendMessage } from "./utils/figma-rpc";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -61,7 +62,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const [query, setQuery] = useState("");
-  const [searchResultTree, setResultTree] = useState<TreeNodeSchema[]>([]);
+  const [searchResultTree, setResultTree] = useState<HitsGraphNode[]>([]);
 
   const syncIncremental = useCallback(() => {
     graph
@@ -106,13 +107,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       return;
     }
 
-    worker.request("search", { query }).then((res) => console.log("fts result", res));
+    worker.request("search", { query }).then((searchResult) => {
+      setResultTree(searchResult.nodes);
+    });
 
     search.query(query).then(async (results) => {
       const ids = results.flatMap((result) => result.result) as string[];
       const priorityTree = await graph.getPriorityTree(ids);
       const list = [...priorityTree];
-      setResultTree(list);
+      // setResultTree(list);
     });
   }, [query, graph.getPriorityTree, setResultTree, search.query]);
 
@@ -139,7 +142,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           },
         });
 
-        console.log(parsedFilters);
         hits.updateConfig({ ...hits.config, queries: [parsedFilters] });
         await graph.clearAll();
         await hits.pull();
@@ -200,7 +202,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <section>
             <ul class="c-list">
               {searchResultTree.map((parentNode) => (
-                <HitsDisplayItem node={parentNode as HitsGraphNode} sendToFigma={sendToMain} getHighlightHtml={getHighlightHtml} />
+                <HitsCard node={parentNode} isParent={true} sendToFigma={sendToMain} getHighlightHtml={getHighlightHtml} />
               ))}
             </ul>
           </section>

@@ -1,5 +1,5 @@
 import type { IndexedItem } from "../fts/fts";
-import { EntityNames, EntityType } from "./entity";
+import { EntityName, EntityType } from "./entity";
 import type { HitsGraphChildNode, HitsGraphNode, SearchResultChild, SearchResultDocument } from "./hits";
 
 export function searchResultDocumentToGraphNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
@@ -24,7 +24,7 @@ export function searchResultDocumentToGraphNode(searchResult: SearchResultDocume
 }
 
 export function graphNodeToFtsDocument(node: HitsGraphNode): IndexedItem {
-  const keywords = `${EntityNames[node.entityType]}; ${node.title}; ${node.group?.displayName ?? ""}; ${
+  const keywords = `${EntityName[node.entityType]}; ${node.title}; ${node.group?.displayName ?? ""}; ${
     node.researchers?.map((person) => person.displayName).join(", ") ?? ""
   }; ${node.tags?.map((tag) => tag.displayName).join(", ") ?? ""}; ${new Date(node.updatedOn).toLocaleDateString()}; ${node.children
     .map((child) => `${child.entityType}; ${child.title}`)
