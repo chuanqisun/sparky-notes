@@ -4,13 +4,13 @@ import type { RouteHandler } from "./utils/worker-rpc";
 
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
-  sync: RouteHandler<SyncReq, any, Pick<WorkerEvents, "syncProgress">>;
+  sync: RouteHandler<SyncReq, any, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
 };
 
 export type WorkerEvents = {
-  syncProgress: SearchProgress;
-  indexUpdated: undefined;
+  syncProgressed: SearchProgress;
+  indexChanged: undefined;
 };
 
 export interface EchoReq {

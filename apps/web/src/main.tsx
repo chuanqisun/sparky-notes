@@ -28,7 +28,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const graph = useGraph();
   const search = useSearch();
 
-  useEffect(() => worker.subscribe("syncProgress", console.log), []);
+  useEffect(() => worker.subscribe("syncProgressed", console.log), []);
 
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {

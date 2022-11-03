@@ -43,9 +43,12 @@ const handleSync: WorkerRoutes["sync"] = async ({ req, emit }) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
       await put(await db, graphNodes);
       graphNodes.map(graphNodeToFtsDocument).forEach((doc) => index.add(doc));
-      emit("syncProgress", progress);
+      emit("syncProgressed", progress);
     },
   });
+
+  emit("indexChanged");
+
   return summary;
 };
 

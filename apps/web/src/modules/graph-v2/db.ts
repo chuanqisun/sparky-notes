@@ -9,6 +9,10 @@ export interface GraphDBSchema extends DBSchema {
       byUpdatedOn: Date;
     };
   };
+  syncRecord: {
+    value: SyncRecordSchema;
+    key: string;
+  };
 }
 
 export interface NodeSchema {
@@ -17,13 +21,26 @@ export interface NodeSchema {
   [key: string]: any;
 }
 
+export interface SyncRecordSchema {
+  latestUpdatedOn: Date;
+  syncedOn: Date;
+  searchIndex: string;
+}
+
 export type GraphDB = IDBPDatabase<GraphDBSchema>;
 
 async function openAppDB(): Promise<GraphDB> {
-  return openDB<GraphDBSchema>("hits-assistant-graph", 1, {
-    upgrade(db, _oldVersion, _newVersion, _transaction) {
-      const nodeStore = db.createObjectStore("node", { keyPath: "id" });
-      nodeStore.createIndex("byUpdatedOn", "updatedOn");
+  return openDB<GraphDBSchema>("hits-assistant-graph", 2, {
+    upgrade(db, oldVersion, _newVersion, transaction) {
+      if (oldVersion === 0) {
+        const nodeStore = db.createObjectStore("node", { keyPath: "id" });
+        nodeStore.createIndex("byUpdatedOn", "updatedOn");
+      }
+
+      if (oldVersion === 1) {
+        transaction.objectStore("node").deleteIndex("byParentId");
+        db.createObjectStore("syncRecord", { autoIncrement: true });
+      }
     },
     blocked() {
       // …
