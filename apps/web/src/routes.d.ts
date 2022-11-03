@@ -1,12 +1,12 @@
 import type { HitsConfig } from "./modules/hits/config";
 import type { HitsGraphNode } from "./modules/hits/hits";
-import type { SearchProgress, SearchSummary } from "./modules/hits/search";
+import type { SearchProgress } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
 
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
-  incSync: RouteHandler<any, any>; // TBD
-  fullSync: RouteHandler<FullSyncReq, SearchSummary, WorkerEvents>;
+  fullSync: RouteHandler<FullSyncReq, FullSyncRes, WorkerEvents>;
+  incSync: RouteHandler<IncSyncReq, IncSyncRes, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
 };
 
@@ -24,6 +24,23 @@ export interface EchoRes {
 
 export interface FullSyncReq {
   config: HitsConfig;
+}
+
+export interface FullSyncRes {
+  total: number;
+  success: number;
+  hasError: boolean;
+}
+
+export interface IncSyncReq {
+  config: HitsConfig;
+}
+
+export interface IncSyncRes {
+  requireFullSync?: boolean;
+  total: number;
+  success: number;
+  hasError: boolean;
 }
 
 export interface SearchReq {

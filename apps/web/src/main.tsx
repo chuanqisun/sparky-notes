@@ -44,7 +44,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   useEffect(() => {
     worker.subscribe("indexChanged", () => {
-      console.log("index changed");
+      log(`Search index updated`);
     });
   }, []);
 
@@ -80,12 +80,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Full sync on demand
   const fullSync = useCallback(async () => {
     const result = await worker.request("fullSync", { config: configValue });
-    log(`Sync ${result.success}/${result.total}... Done`);
   }, [configValue]);
 
   // Incremental sync on start
   useEffect(() => {
-    // TBD
+    worker.request("incSync", { config: configValue });
   }, []);
 
   // handle search

@@ -21,6 +21,7 @@ async function main() {
   const worker = new WorkerServer<WorkerRoutes, WorkerEvents>(self)
     .onRequest("echo", handleEcho)
     .onRequest("fullSync", handleFullSync)
+    .onRequest("incSync", handleIncSync)
     .onRequest("search", handleSearch)
     .start();
 
@@ -35,6 +36,47 @@ async function main() {
 }
 
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
+
+const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
+  const config = req.config;
+  const db = getDb();
+  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const proxy = getAuthenticatedProxy(accessToken);
+
+  const lastSync = await getLastSyncRecord(await db);
+  if (!lastSync) {
+    return {
+      requireFullSync: true,
+      total: 0,
+      success: 0,
+      hasError: false,
+    };
+  }
+
+  const summary = await search({
+    proxy,
+    filter: {
+      publishDateNewerThan: lastSync.latestUpdatedOn.toISOString(),
+      entityTypes: [EntityType.Study],
+      researcherIds: [835],
+    },
+    onProgress: async (progress) => {
+      const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
+      await putNodes(await db, graphNodes);
+      emit("syncProgressed", progress);
+    },
+  });
+
+  const draftIndex = createFtsIndex();
+  await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
+  activeIndex = draftIndex;
+  emit("indexChanged");
+
+  const exportedIndex = await exportFtsIndex(draftIndex);
+  updateSyncRecord(await db, new Date(), exportedIndex);
+
+  return summary;
+};
 
 const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   const config = req.config;
