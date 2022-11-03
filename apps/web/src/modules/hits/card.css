@@ -1,17 +1,15 @@
-.c-button--card:is(:focus-visible, :hover) {
-  color: #000;
-  background-color: #eee;
-}
-.c-button--card:active {
-  transform: scale(0.98);
-}
-
 .c-button--hits-parent {
   border-top: 1px solid #ccc;
 }
-
 .c-button--hits {
   padding-inline: 8px;
+}
+.c-button--hits:is(:focus-visible, :hover) {
+  color: #000;
+  background-color: #eee;
+}
+.c-button--hits:active {
+  transform: scale(0.98);
 }
 .c-button--hits-parent {
   padding-block: 8px 4px;

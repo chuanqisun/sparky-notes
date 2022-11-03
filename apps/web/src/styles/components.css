@@ -24,6 +24,7 @@
 
 .c-app-menu {
   display: grid;
+  background: white;
   border-bottom: 2px solid black;
 }
 .c-app-menu--btn {

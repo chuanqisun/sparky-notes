@@ -14,7 +14,7 @@ export function HitsCard({ node, getHighlightHtml, sendToFigma, isParent }: Hits
     <>
       <li class={`c-list-item`} key={node.id}>
         <button
-          class={`u-reset c-button--card c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
+          class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
           onClick={() =>
             sendToFigma({
               addCard: {

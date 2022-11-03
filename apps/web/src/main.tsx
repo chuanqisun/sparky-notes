@@ -118,23 +118,23 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           value={query}
           onInput={(e) => setQuery((e.target as any).value)}
         />
-        <button class="c-app-header__trigger c-menu-trigger-button" data-active={isMenuOpen} onClick={toggleMenu}>
+        <button class="u-reset c-app-header__trigger c-menu-trigger-button" data-active={isMenuOpen} onClick={toggleMenu}>
           Menu
         </button>
         {isMenuOpen && (
           <menu class="c-app-header__menu c-app-menu" onClick={toggleMenu}>
             {isConnected === undefined && <span class="c-app-menu--text">Signing in...</span>}
             {isConnected === false && (
-              <button class="c-app-menu--btn" onClick={signIn}>
+              <button class="u-reset c-app-menu--btn" onClick={signIn}>
                 Sign in
               </button>
             )}
             {isConnected && (
               <>
-                <button class="c-app-menu--btn" onClick={fullSync}>
+                <button class="u-reset c-app-menu--btn" onClick={fullSync}>
                   Sync
                 </button>
-                <button class="c-app-menu--btn" onClick={signOut}>
+                <button class="u-reset c-app-menu--btn" onClick={signOut}>
                   Sign out
                 </button>
               </>
@@ -143,15 +143,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="u-scroll c-main">
-        {
-          <section>
-            <ul class="c-list">
-              {searchResultTree.map((parentNode) => (
-                <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />
-              ))}
-            </ul>
-          </section>
-        }
+        <ul class="c-list">
+          {searchResultTree.map((parentNode) => (
+            <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />
+          ))}
+        </ul>
       </main>
       <footer>
         <StatusBar lines={lines} />
