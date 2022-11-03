@@ -7,7 +7,7 @@ import { getHitsConfig } from "./modules/hits/config";
 import { IndexedItem, useHighlight, useSearch } from "./modules/search/use-search";
 import { HitsDisplayItem } from "./plugins/hits/display-item";
 import { HitsGraphNode, useHits } from "./plugins/hits/use-hits";
-import type { WorkerRoutes } from "./routes";
+import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { sendMessage } from "./utils/figma-rpc";
 import { WorkerClient } from "./utils/worker-rpc";
 
@@ -17,9 +17,9 @@ import WebWorker from "./worker?worker";
 document.getElementById("app")!.innerHTML = "";
 window.focus();
 
-const worker = new WorkerClient<WorkerRoutes>(new WebWorker()).start();
+const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).start();
 
-function App(props: { worker: WorkerClient<WorkerRoutes> }) {
+function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;

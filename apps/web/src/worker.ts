@@ -8,13 +8,17 @@ import { getAccessToken } from "./modules/hits/auth";
 import { EntityType } from "./modules/hits/entity";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { search } from "./modules/hits/search";
-import type { WorkerRoutes } from "./routes";
+import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { WorkerServer } from "./utils/worker-rpc";
 
 declare const self: SharedWorkerGlobalScope | DedicatedWorkerGlobalScope;
 
 async function main() {
-  new WorkerServer<WorkerRoutes>(self).onRequest("echo", handleEcho).onRequest("sync", handleSync).onRequest("search", handleSearch).start();
+  const worker = new WorkerServer<WorkerRoutes, WorkerEvents>(self)
+    .onRequest("echo", handleEcho)
+    .onRequest("sync", handleSync)
+    .onRequest("search", handleSearch)
+    .start();
 }
 
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });

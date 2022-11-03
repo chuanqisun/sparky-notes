@@ -1,6 +1,6 @@
-import type { BaseProxySchema, PickKeysByValueType, RouteHandler } from "./types";
+import type { BaseEventTypes, BaseRouteTypes, PickKeysByValueType, RouteHandler } from "./types";
 
-export class WorkerClient<TSchema extends BaseProxySchema> {
+export class WorkerClient<RouteTypes extends BaseRouteTypes, EventTypes extends BaseEventTypes> {
   private port: Worker | MessagePort;
 
   constructor(worker: Worker | SharedWorker) {
@@ -18,10 +18,25 @@ export class WorkerClient<TSchema extends BaseProxySchema> {
     return this;
   }
 
-  async request<TRoute extends PickKeysByValueType<TSchema, RouteHandler>>(
-    route: TRoute,
-    ...dataList: TSchema[TRoute] extends RouteHandler<undefined> ? [] : TSchema[TRoute] extends RouteHandler<infer TIn> ? [data: TIn] : []
-  ): Promise<TSchema[TRoute] extends RouteHandler<any, infer TOut> ? TOut : any> {
+  async subscribe<EventType extends keyof EventTypes>(
+    type: EventType,
+    listener: (...args: EventTypes[EventType] extends undefined ? [] : [data: EventTypes[EventType]]) => any
+  ) {
+    const focusedListener = (maybeEvent: Event) => {
+      const { type: actualType, data } = (maybeEvent as MessageEvent).data;
+      if (actualType !== type) return; // noop on irrelevant event
+      (listener as any)(data);
+    };
+
+    this.port.addEventListener("message", focusedListener);
+
+    return () => this.port.removeEventListener("message", focusedListener);
+  }
+
+  async request<RouteType extends PickKeysByValueType<RouteTypes, RouteHandler>>(
+    route: RouteType,
+    ...dataList: RouteTypes[RouteType] extends RouteHandler<undefined> ? [] : RouteTypes[RouteType] extends RouteHandler<infer TIn> ? [data: TIn] : []
+  ): Promise<RouteTypes[RouteType] extends RouteHandler<any, infer TOut> ? TOut : any> {
     return new Promise((resolve, reject) => {
       const nonce = crypto.randomUUID();
       const requestTimestamp = Date.now();

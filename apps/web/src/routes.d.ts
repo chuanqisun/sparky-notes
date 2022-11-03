@@ -7,6 +7,10 @@ export type WorkerRoutes = {
   search: RouteHandler<SearchReq, SearchRes>;
 };
 
+export type WorkerEvents = {
+  indexUpdated: undefined;
+};
+
 export interface EchoReq {
   message: string;
 }
