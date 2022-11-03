@@ -19,7 +19,7 @@ document.getElementById("app")!.innerHTML = "";
 window.focus();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
-  const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
+  const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;
   const { isConnected, signIn, signOut } = useAuth();
@@ -53,19 +53,20 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     const openUrl = new URLSearchParams(location.search).get("openUrl");
     if (openUrl) {
       window.open(openUrl, "_blank");
-      sendToMain({ requestClose: true });
+      notifyFigma({ requestClose: true });
     }
   }, []);
 
   const [query, setQuery] = useState("");
   const [searchResultTree, setResultTree] = useState<HitsGraphNode[]>([]);
 
-  const syncV2 = useCallback(async () => {
+  // Full sync on demand
+  const fullSync = useCallback(async () => {
     const result = await worker.request("fullSync", { config: configValue });
-    console.log("Sync result", result);
+    console.log("Full sync success", result);
   }, [configValue]);
 
-  // auto sync on start
+  // Incremental sync on start
   useEffect(() => {
     // TBD
   }, []);
@@ -101,7 +102,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           )}
           {isConnected && (
             <>
-              <button class="c-command-bar--btn" onClick={syncV2}>
+              <button class="c-command-bar--btn" onClick={fullSync}>
                 Sync
               </button>
               <button class="c-command-bar--btn" onClick={signOut}>
@@ -117,7 +118,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <section>
             <ul class="c-list">
               {searchResultTree.map((parentNode) => (
-                <HitsCard node={parentNode} isParent={true} sendToFigma={sendToMain} getHighlightHtml={getHighlightHtml} />
+                <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />
               ))}
             </ul>
           </section>
