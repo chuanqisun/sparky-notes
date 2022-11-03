@@ -1,9 +1,9 @@
 /// <reference lib="WebWorker" />
 
 import type { Document as FlexDocument } from "flexsearch";
-import { createFtsIndex, exportFtsIndex, importFtsIndex, IndexedItem } from "./modules/fts/fts";
+import { createFtsIndex, exportFtsIndex, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph-v2/db";
-import { clearAllNodes, exportNodes, getLastSyncRecord, putNode, updateSyncRecord } from "./modules/graph-v2/graph";
+import { clearAllNodes, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph-v2/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import { EntityType } from "./modules/hits/entity";
@@ -52,7 +52,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
     },
     onProgress: async (progress) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
-      await putNode(await db, graphNodes);
+      await putNodes(await db, graphNodes);
       emit("syncProgressed", progress);
     },
   });
@@ -69,11 +69,13 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 };
 
 const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
-  const results = (await activeIndex?.searchAsync(req.query)) ?? [];
+  const db = getDb();
+  const ids = (await queryFts(activeIndex!, req.query)) as string[];
+  // TODO memoize getNodes
+  const nodes = await getNodes<HitsGraphNode>(await db, ids);
 
-  // TODO return highlighted html
   return {
-    results,
+    nodes,
   };
 };
 

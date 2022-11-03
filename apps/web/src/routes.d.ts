@@ -1,9 +1,11 @@
 import type { HitsConfig } from "./modules/hits/config";
+import type { HitsGraphNode } from "./modules/hits/hits";
 import type { SearchProgress, SearchSummary } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
 
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
+  incSync: RouteHandler<any, any>; // TBD
   fullSync: RouteHandler<FullSyncReq, SearchSummary, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
 };
@@ -29,5 +31,5 @@ export interface SearchReq {
 }
 
 export interface SearchRes {
-  results: any[];
+  nodes: HitsGraphNode[];
 }

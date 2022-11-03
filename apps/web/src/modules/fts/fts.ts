@@ -27,7 +27,7 @@ export interface ExportedIndex {
 
 export const createFtsIndex = () => new FlexDocument(indexConfig);
 export const addFtsItems = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
-export const queryFts = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords", limit: 100 });
+export const queryFts = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords" }).then((results) => results[0].result);
 export const exportFtsIndex = async (idx: FlexDocument<IndexedItem>) => {
   const dict: any = {};
   await idx.export((key, val) => {

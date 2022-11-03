@@ -19,17 +19,23 @@ export const exportNodes = (db: GraphDB, onData: (data: ExportNodeData) => any) 
     }
   });
 
-export const putNode = (db: GraphDB, nodes: NodeSchema[]) =>
+export const putNodes = <T extends NodeSchema>(db: GraphDB, nodes: T[]) =>
   tx(db, ["node"], "readwrite", async (tx) => {
     const nodeStore = tx.objectStore("node");
     nodes.map((node) => nodeStore.put(node));
   });
 
-export const getNode = (db: GraphDB, ids: string[]) =>
+export const getNodes = <T extends NodeSchema>(db: GraphDB, ids: string[]) =>
   tx(db, ["node"], "readonly", async (tx) => {
     const nodeStore = tx.objectStore("node");
-    const nodes = await Promise.all(ids.map((id) => nodeStore.get(id)));
-    return nodes;
+    const foundNodes: T[] = [];
+    await Promise.all(
+      ids.map(async (id) => {
+        const node = await nodeStore.get(id);
+        if (node) foundNodes.push(node as T);
+      })
+    );
+    return foundNodes;
   });
 
 export const updateSyncRecord = (db: GraphDB, syncedOn: Date, exportedIndex: any) =>
