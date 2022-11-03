@@ -7,32 +7,40 @@
   background-color: black;
   display: grid;
   grid-template-columns: 1fr auto;
+  grid-template:
+    "input button" auto
+    "menu menu" auto / 1fr auto;
 }
 
-.c-button--card:is(:focus-visible, :hover) {
-  color: #000;
-  background-color: #eee;
+.c-app-header__input {
+  grid-area: input;
 }
-.c-button--card:active {
-  transform: scale(0.98);
+.c-app-header__trigger {
+  grid-area: button;
+}
+.c-app-header__menu {
+  grid-area: menu;
 }
 
-.c-command-bar {
-  margin-left: auto;
-  display: inline-flex;
-  background-color: white;
-  border-left: 1px solid white;
-  gap: 1px;
-  height: 32px;
+.c-app-menu {
+  display: grid;
+  border-bottom: 2px solid black;
 }
-.c-command-bar--btn {
-  padding: 4px 16px;
+.c-app-menu--btn {
+  height: 40px;
+  padding-inline: 16px;
+  font-weight: 600;
   display: flex;
-  background-color: black;
+  align-items: center;
+  justify-content: end;
   border: none;
+}
+.c-app-menu--btn:where(:hover, :focus-visible):not(:active) {
+  background-color: black;
   color: white;
 }
-.c-command-bar--text {
+
+.c-app-menu--text {
   padding: 4px 16px;
   display: flex;
   background-color: black;
@@ -50,7 +58,7 @@
   /* gap: 1px; */
 }
 
-.c-menu-button {
+.c-menu-trigger-button {
   padding: 4px 16px;
   font-weight: 600;
   display: flex;
@@ -58,7 +66,13 @@
   justify-content: center;
   background-color: black;
   border: none;
+  border-left: 2px solid black;
+  border-bottom: 2px solid black;
   color: white;
+}
+.c-menu-trigger-button[data-active="true"] {
+  color: black;
+  background-color: white;
 }
 
 .c-search-input {

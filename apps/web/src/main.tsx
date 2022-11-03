@@ -110,31 +110,38 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   return (
     <>
       <header class="c-app-header">
-        <input class="c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={(e) => setQuery((e.target as any).value)} />
-        <button class="c-menu-button" data-active={isMenuOpen} onClick={toggleMenu}>
+        <input
+          class="c-app-header__input c-search-input"
+          type="search"
+          placeholder="Search"
+          spellcheck={false}
+          value={query}
+          onInput={(e) => setQuery((e.target as any).value)}
+        />
+        <button class="c-app-header__trigger c-menu-trigger-button" data-active={isMenuOpen} onClick={toggleMenu}>
           Menu
         </button>
+        {isMenuOpen && (
+          <menu class="c-app-header__menu c-app-menu" onClick={toggleMenu}>
+            {isConnected === undefined && <span class="c-app-menu--text">Signing in...</span>}
+            {isConnected === false && (
+              <button class="c-app-menu--btn" onClick={signIn}>
+                Sign in
+              </button>
+            )}
+            {isConnected && (
+              <>
+                <button class="c-app-menu--btn" onClick={fullSync}>
+                  Sync
+                </button>
+                <button class="c-app-menu--btn" onClick={signOut}>
+                  Sign out
+                </button>
+              </>
+            )}
+          </menu>
+        )}
       </header>
-      {isMenuOpen && (
-        <menu class="c-command-bar">
-          {isConnected === undefined && <span class="c-command-bar--text">Signing in...</span>}
-          {isConnected === false && (
-            <button class="c-command-bar--btn" onClick={signIn}>
-              Sign in
-            </button>
-          )}
-          {isConnected && (
-            <>
-              <button class="c-command-bar--btn" onClick={fullSync}>
-                Sync
-              </button>
-              <button class="c-command-bar--btn" onClick={signOut}>
-                Sign out
-              </button>
-            </>
-          )}
-        </menu>
-      )}
       <main class="u-scroll c-main">
         {
           <section>
