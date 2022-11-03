@@ -34,7 +34,7 @@ const handleSync: WorkerRoutes["sync"] = async ({ req }) => {
     },
     onProgress: async (progress) => {
       // TODO pipe through local indexer
-      put(await db, searchResultDocumentToGraphNode(progress.items.map((item) => item.document)));
+      const dbUpdate = put(await db, searchResultDocumentToGraphNode(progress.items.map((item) => item.document)));
     },
   });
   return summary;
