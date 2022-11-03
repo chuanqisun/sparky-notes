@@ -1,10 +1,10 @@
+- Menu
 - Status bar
   - Sync progress
   - Index progress
 - Incremental sync
 - Virtualize list update
 - Display most recent content by default
-- Menu
 - New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher

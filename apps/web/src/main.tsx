@@ -6,6 +6,7 @@ import type { HitsGraphNode } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { useHighlight } from "./modules/search/use-search";
+import { StatusBar, useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { sendMessage } from "./utils/figma-rpc";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -21,9 +22,22 @@ window.focus();
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
 
+  const { log, lines } = useLog();
+
   const { worker } = props;
   const { isConnected, signIn, signOut } = useAuth();
   const { value: configValue } = useConfig();
+
+  useEffect(() => {
+    switch (isConnected) {
+      case false:
+        return log("Signed out");
+      case true:
+        return log("Signed in");
+      case undefined:
+        return log("Signing in...");
+    }
+  }, [isConnected]);
 
   useEffect(() => {
     worker.subscribe("indexChanged", () => {
@@ -31,7 +45,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     });
   }, []);
 
-  useEffect(() => worker.subscribe("syncProgressed", console.log), []);
+  useEffect(() => worker.subscribe("syncProgressed", (progress) => log(`Sync ${progress.success}/${progress.total}...`)), []);
 
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
@@ -63,7 +77,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Full sync on demand
   const fullSync = useCallback(async () => {
     const result = await worker.request("fullSync", { config: configValue });
-    console.log("Full sync success", result);
+    log(`Sync ${result.success}/${result.total}... Done`);
   }, [configValue]);
 
   // Incremental sync on start
@@ -124,6 +138,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </section>
         }
       </main>
+      <footer>
+        <StatusBar lines={lines} />
+      </footer>
     </>
   );
 }
