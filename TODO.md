@@ -1,17 +1,15 @@
-- Flat indexer
+- Incremental sync
 - Status bar
   - Sync progress
   - Index progress
-- Virtual DOM
-- Make insights searchable by parent
+- Virtualize list update
 - Display most recent content by default
 - Menu
 - New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
 - Debug occasional get token 500 error
-- Push code update to Figma Widget instance
-- Handle 1-to-many rel in claim-to-report, due to guest claim
+- Auto push code update to Figma Widget instance
 - Try Intl.Segmenter as custom tokenizer
 - Advanced performance hack: Index as we download, from existing to downloaded
 - Export index only when CPU is idle
