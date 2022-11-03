@@ -1,4 +1,4 @@
-import type { NodeSchema } from "../graph-v2/db";
+import type { NodeSchema } from "../graph/db";
 
 export interface HitsGraphNode extends NodeSchema {
   id: string;

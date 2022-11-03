@@ -2,8 +2,8 @@
 
 import type { Document as FlexDocument } from "flexsearch";
 import { createFtsIndex, exportFtsIndex, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
-import { getDb } from "./modules/graph-v2/db";
-import { clearAllNodes, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph-v2/graph";
+import { getDb } from "./modules/graph/db";
+import { clearAllNodes, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import { EntityType } from "./modules/hits/entity";
