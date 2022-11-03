@@ -1,8 +1,9 @@
 /// <reference lib="WebWorker" />
 
+import { getIndex } from "./modules/fts/fts";
 import { getDb } from "./modules/graph-v2/db";
 import { clearAll, put } from "./modules/graph-v2/graph";
-import { searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
+import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import { EntityType } from "./modules/hits/entity";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
@@ -13,7 +14,7 @@ import { WorkerServer } from "./utils/worker-rpc";
 declare const self: SharedWorkerGlobalScope | DedicatedWorkerGlobalScope;
 
 async function main() {
-  new WorkerServer<WorkerRoutes>(self).onRequest("echo", handleEcho).onRequest("sync", handleSync).start();
+  new WorkerServer<WorkerRoutes>(self).onRequest("echo", handleEcho).onRequest("sync", handleSync).onRequest("search", handleSearch).start();
 }
 
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
@@ -23,6 +24,8 @@ const handleSync: WorkerRoutes["sync"] = async ({ req }) => {
   const db = getDb();
   const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
+
+  const index = getIndex();
 
   await clearAll(await db);
 
@@ -34,10 +37,23 @@ const handleSync: WorkerRoutes["sync"] = async ({ req }) => {
     },
     onProgress: async (progress) => {
       // TODO pipe through local indexer
-      const dbUpdate = put(await db, searchResultDocumentToGraphNode(progress.items.map((item) => item.document)));
+      const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
+      await put(await db, graphNodes);
+      graphNodes.map(graphNodeToFtsDocument).forEach((doc) => index.add(doc));
     },
   });
   return summary;
+};
+
+const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
+  const index = getIndex();
+
+  const results = await index.searchAsync(req.query);
+
+  // TODO return highlighted html
+  return {
+    results,
+  };
 };
 
 main();

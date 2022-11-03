@@ -4,6 +4,7 @@ import type { RouteHandler } from "./utils/worker-rpc";
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
   sync: RouteHandler<SyncReq, any>;
+  search: RouteHandler<SearchReq, SearchRes>;
 };
 
 export interface EchoReq {
@@ -15,4 +16,12 @@ export interface EchoRes {
 
 export interface SyncReq {
   config: HitsConfig;
+}
+
+export interface SearchReq {
+  query: string;
+}
+
+export interface SearchRes {
+  results: any[];
 }

@@ -8,19 +8,19 @@ const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
   tokenize: "forward",
   stemmer: false,
   document: {
-    id: "id",
-    index: ["fuzzyTokens"],
+    id: "key",
+    index: ["keywords"],
   },
 };
 
 export interface IndexedItem {
-  id: string;
-  fuzzyTokens: string;
+  key: string;
+  keywords: string;
 }
 
 export const getIndex = once(() => new FlexDocument(indexConfig));
 export const add = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
-export const query = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "fuzzyTokens", limit: 100 });
+export const query = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords", limit: 100 });
 export const dump = (idx: FlexDocument<IndexedItem>) => idx.export(console.log);
 
 export const getTokens = (query: string) =>

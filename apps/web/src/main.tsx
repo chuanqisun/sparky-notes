@@ -22,7 +22,7 @@ const worker = new WorkerClient<WorkerRoutes>(new WebWorker()).start();
 function App(props: { worker: WorkerClient<WorkerRoutes> }) {
   const sendToMain = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
 
-  props.worker.request("echo", { message: "test" }).then((res) => console.log(res));
+  const { worker } = props;
 
   const hits = useHits();
   const graph = useGraph();
@@ -71,7 +71,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes> }) {
 
   const syncV2 = useCallback(async () => {
     const config = getHitsConfig();
-    const result = await props.worker.request("sync", { config });
+    const result = await worker.request("sync", { config });
     console.log("Sync result", result);
   }, []);
 
@@ -88,7 +88,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes> }) {
         fuzzyTokens: hits.toSearchItem(node as any).keywords,
       }));
       search.add(searchItems);
-      console.log(`[search] indexed`, searchItems);
     });
   }, [graph.dump, hits.toSearchItem]);
 
@@ -98,6 +97,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes> }) {
       setResultTree([]);
       return;
     }
+
+    worker.request("search", { query }).then((res) => console.log("fts result", res));
+
     search.query(query).then(async (results) => {
       const ids = results.flatMap((result) => result.result) as string[];
       const priorityTree = await graph.getPriorityTree(ids);
