@@ -1,7 +1,7 @@
-- Incremental sync
 - Status bar
   - Sync progress
   - Index progress
+- Incremental sync
 - Virtualize list update
 - Display most recent content by default
 - Menu
