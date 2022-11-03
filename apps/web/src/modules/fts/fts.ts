@@ -8,13 +8,13 @@ const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
   tokenize: "forward",
   stemmer: false,
   document: {
-    id: "key",
+    id: "id",
     index: ["keywords"],
   },
 };
 
 export interface IndexedItem {
-  key: string;
+  id: string;
   keywords: string;
 }
 

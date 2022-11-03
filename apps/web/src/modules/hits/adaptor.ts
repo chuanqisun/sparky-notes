@@ -31,7 +31,7 @@ export function graphNodeToFtsDocument(node: HitsGraphNode): IndexedItem {
     .join("; ")}`;
 
   return {
-    key: node.id,
+    id: node.id,
     keywords,
   };
 }
