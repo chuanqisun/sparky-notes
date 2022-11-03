@@ -1,8 +1,8 @@
 /// <reference lib="WebWorker" />
 
-import { getIndex } from "./modules/fts/fts";
+import { ftsExportIndex, ftsGetIndex } from "./modules/fts/fts";
 import { getDb } from "./modules/graph-v2/db";
-import { clearAll, put } from "./modules/graph-v2/graph";
+import { clearAll, put, updateSyncRecord } from "./modules/graph-v2/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import { EntityType } from "./modules/hits/entity";
@@ -29,7 +29,7 @@ const handleSync: WorkerRoutes["sync"] = async ({ req, emit }) => {
   const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
 
-  const index = getIndex();
+  const index = ftsGetIndex();
 
   await clearAll(await db);
 
@@ -49,11 +49,13 @@ const handleSync: WorkerRoutes["sync"] = async ({ req, emit }) => {
 
   emit("indexChanged");
 
+  updateSyncRecord(await db, new Date(), ftsExportIndex(index));
+
   return summary;
 };
 
 const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
-  const index = getIndex();
+  const index = ftsGetIndex();
 
   const results = await index.searchAsync(req.query);
 

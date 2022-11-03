@@ -18,10 +18,17 @@ export interface IndexedItem {
   keywords: string;
 }
 
-export const getIndex = once(() => new FlexDocument(indexConfig));
-export const add = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
-export const query = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords", limit: 100 });
-export const dump = (idx: FlexDocument<IndexedItem>) => idx.export(console.log);
+export const ftsGetIndex = once(() => new FlexDocument(indexConfig));
+export const ftsAdd = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
+export const ftsQuery = (idx: FlexDocument<IndexedItem>, query: string) => idx.searchAsync(query, { index: "keywords", limit: 100 });
+export const ftsExportIndex = (idx: FlexDocument<IndexedItem>) => {
+  const result: any = {};
+  idx.export((key, val) => {
+    result[key] = val;
+  });
+
+  return result;
+};
 
 export const getTokens = (query: string) =>
   query

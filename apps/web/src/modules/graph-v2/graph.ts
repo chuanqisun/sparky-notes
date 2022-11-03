@@ -29,6 +29,20 @@ export const mostRecentTimestamp = (db: GraphDB) =>
     return cursor?.key;
   });
 
+export const updateSyncRecord = (db: GraphDB, syncedOn: Date, searchIndex: string) =>
+  tx(db, ["node", "syncRecord"], "readwrite", async (tx) => {
+    const cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
+    const latestUpdatedOn = cursor?.key;
+    if (!latestUpdatedOn) return; // noop
+
+    tx.objectStore("syncRecord").clear();
+    tx.objectStore("syncRecord").put({
+      syncedOn,
+      latestUpdatedOn,
+      exportedIndex: searchIndex,
+    });
+  });
+
 export const clearAll = (db: GraphDB) => db.clear("node");
 
 export interface TreeNodeSchema extends NodeSchema {
