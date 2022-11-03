@@ -5,21 +5,6 @@ import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../u
 const AUTH_SERVER_HOST = import.meta.env.VITE_AUTH_SERVER_HOST;
 const WEB_HOST = import.meta.env.VITE_WEB_HOST;
 
-export async function interactiveSignIn(code_verifier: string) {
-  const challenge = await generateCodeChallengeFromVerifier(code_verifier);
-  const params = new URLSearchParams({
-    client_id: authConfig.AAD_CLIENT_ID,
-    response_type: "code",
-    redirect_uri: `${WEB_HOST}/auth-redirect.html`,
-    scope: authConfig.OAUTH_SCOPES,
-    code_challenge: challenge,
-    code_challenge_method: "S256",
-  });
-
-  sessionStorage.setItem("aad-last-verifier", code_verifier);
-  location.replace(`https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
-}
-
 export async function embeddedSignIn() {
   const code_verifier = generateCodeVerifier();
   window.open(`${WEB_HOST}/sign-in.html?code_verifier=${code_verifier}`);
@@ -36,6 +21,21 @@ export async function embeddedSignIn() {
 
   console.log(`[embedded-signin]`, result);
   return result;
+}
+
+export async function interactiveSignIn(code_verifier: string) {
+  const challenge = await generateCodeChallengeFromVerifier(code_verifier);
+  const params = new URLSearchParams({
+    client_id: authConfig.AAD_CLIENT_ID,
+    response_type: "code",
+    redirect_uri: `${WEB_HOST}/auth-redirect.html`,
+    scope: authConfig.OAUTH_SCOPES,
+    code_challenge: challenge,
+    code_challenge_method: "S256",
+  });
+
+  sessionStorage.setItem("aad-last-verifier", code_verifier);
+  location.replace(`https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
 }
 
 export interface AuthRedirectResult {

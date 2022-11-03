@@ -1,4 +1,5 @@
 import type { MessageToMain } from "@h20/types";
+import "./card.css";
 import { EntityIcon, EntityName } from "./entity";
 import type { HitsGraphNode } from "./hits";
 

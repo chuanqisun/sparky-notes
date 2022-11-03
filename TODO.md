@@ -15,3 +15,4 @@
 - Try Intl.Segmenter as custom tokenizer
 - Advanced performance hack: Index as we download, from existing to downloaded
 - Export index only when CPU is idle
+- Timestamp last access token usage

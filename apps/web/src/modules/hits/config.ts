@@ -1,12 +1,8 @@
-import { getJson } from "../../utils/local-storage";
-
 export interface HitsConfig {
   email: string;
   idToken: string;
   userClientId: string;
 }
-
-export const getHitsConfig = () => getJson<HitsConfig>("hits-config") ?? getBlankConfig();
 
 export function getBlankConfig(): HitsConfig {
   return {
