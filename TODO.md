@@ -1,4 +1,5 @@
 - Display most recent content by default
+- Unblock search during index export
 - Deduplicate inc and full sync logic
 - Debounce and throttle search
 - New card positioning improvements
