@@ -3,22 +3,14 @@
 import type { Document as FlexDocument } from "flexsearch";
 import { createFtsIndex, exportFtsIndex, getTokens, getTokensPattern, hitsGraphNodeToFtsNode, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
-import {
-  clearAllNodes,
-  clearAllStores,
-  exportNodesNewToOld,
-  getLastSyncRecord,
-  getNodes,
-  getRecentNodes,
-  putNodes,
-  updateSyncRecord,
-} from "./modules/graph/graph";
+import { clearAllNodes, clearAllStores, exportAllNodes, getLastSyncRecord, getNodes, getRecentNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { search } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
+import { batchScheduler } from "./utils/batch-scheduler";
 import { identity } from "./utils/identity";
 import { WorkerServer } from "./utils/worker-rpc";
 
@@ -72,16 +64,17 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
 
   let silentReindex = false;
 
-  const existingContentIndexTask = exportNodesNewToOld(await db, (exportNodeData) => {
-    draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode));
+  const existingContentIndexTask = exportAllNodes(await db).then((allNodes) => {
+    existingTotal = allNodes.length;
 
-    if (silentReindex) return;
-
-    if (exportNodeData.success % 50 === 0 || exportNodeData.success === exportNodeData.total) {
-      existingIndexed = exportNodeData.success;
-      existingTotal = exportNodeData.total;
-      emit("incSyncProgressed", { newTotal, existingTotal, newIndexed, existingIndexed });
-    }
+    return batchScheduler(50, existingTotal, (i, isBoundary, isEnd) => {
+      draftIndex.add(graphNodeToFtsDocument(allNodes[i] as HitsGraphNode));
+      if (silentReindex) return;
+      if (isBoundary || isEnd) {
+        existingIndexed = i;
+        emit("incSyncProgressed", { newTotal, existingTotal, newIndexed, existingIndexed });
+      }
+    });
   });
 
   const summary = await search({
