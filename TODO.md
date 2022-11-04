@@ -1,4 +1,4 @@
-- Incremental sync
+- Reflect installation state in the button
 - Virtualize list update
 - Deduplicate inc and full sync logic
 - Display most recent content by default

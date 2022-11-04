@@ -61,13 +61,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       } else {
         log(`Sync... Success! ${summary.total ? `${summary.total} items updated` : "No change"}`);
       }
-
-      setInstallationState(summary.hasError ? "error" : "installed");
     });
     const unsub4 = worker.subscribe("requestInstallation", () => setInstallationState("new"));
-    const unusb5 = worker.subscribe("uninstalled", () => location.reload());
+    const unsub5 = worker.subscribe("uninstalled", () => location.reload());
+    const unsub6 = worker.subscribe("installed", (status) => {
+      setInstallationState(status === "success" ? "installed" : "error");
+    });
 
-    return () => [unsub1, unsub2, unsub3, unsub4, unusb5].map((fn) => fn());
+    return () => [unsub1, unsub2, unsub3, unsub4, unsub5, unsub6].map((fn) => fn());
   }, []);
 
   // Figma RPC

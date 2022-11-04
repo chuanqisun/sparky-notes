@@ -62,6 +62,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   });
 
   emit("syncCompleted", summary);
+  emit("installed", "success");
 
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
@@ -99,6 +100,8 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);
+
+  summary.hasError ? emit("installed", "failed") : emit("installed", "success");
 };
 
 const handleUninstall: WorkerRoutes["uninstall"] = async ({ req, emit }) => {

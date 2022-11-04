@@ -17,6 +17,7 @@ export type WorkerEvents = {
   indexChanged: "imported" | "updated";
   requestInstallation: undefined;
   uninstalled: undefined;
+  installed: "success" | "failed";
 };
 
 export interface EchoReq {
