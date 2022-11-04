@@ -1,4 +1,4 @@
-- Reflect installation state in the button
+- Advanced performance hack: Index as we download, from existing to downloaded
 - Virtualize list update
 - Deduplicate inc and full sync logic
 - Display most recent content by default
@@ -8,7 +8,6 @@
 - Debug occasional get token 500 error
 - Auto push code update to Figma Widget instance
 - Try Intl.Segmenter as custom tokenizer
-- Advanced performance hack: Index as we download, from existing to downloaded
 - Export index only when CPU is idle
 - Timestamp last access token usage
 - One click reset: sign out + DB wipe + code update
