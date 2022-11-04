@@ -1,6 +1,10 @@
 .c-app-layout {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
+}
+
+.c-app-layout__main {
+  min-height: 0;
 }
 
 .c-app-header {
@@ -76,7 +80,11 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  /* gap: 1px; */
+  height: 100%;
+}
+
+.c-list__placeholder {
+  height: 800px;
 }
 
 .c-menu-trigger-button {

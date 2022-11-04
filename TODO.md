@@ -1,6 +1,7 @@
-- Virtualize list update
-- Deduplicate inc and full sync logic
+- Hide non-highlight items
 - Display most recent content by default
+- Deduplicate inc and full sync logic
+- Debounce and throttle search
 - New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
@@ -11,3 +12,5 @@
 - Timestamp last access token usage
 - One click reset: sign out + DB wipe + code update
 - Sign out from all HITS Assistants
+- Handle "/" with custom tokenizer
+- Progressively disclose more non-highlight items

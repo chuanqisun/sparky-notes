@@ -9,6 +9,7 @@ import { useHighlight } from "./modules/search/use-search";
 import { StatusBar, useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { sendMessage } from "./utils/figma-rpc";
+import { useVirtualList } from "./utils/use-virtual-list";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -120,6 +121,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     await worker.request("fullSync", { config: configValue });
   }, [configValue]);
 
+  const handleInputChange = useCallback((event: Event) => {
+    setQuery((event.target as any).value);
+    virtualListRef.current?.scrollTo({ top: 0 });
+  }, []);
+
   // handle search
   useEffect(() => {
     const trimmed = query.trim();
@@ -139,17 +145,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const { getHighlightHtml } = useHighlight(query);
 
+  const { VirtualListItem, setVirtualListRef, virtualListRef } = useVirtualList();
+
   return (
     <>
       <header class="c-app-header">
-        <input
-          class="c-app-header__input c-search-input"
-          type="search"
-          placeholder="Search"
-          spellcheck={false}
-          value={query}
-          onInput={(e) => setQuery((e.target as any).value)}
-        />
+        <input class="c-app-header__input c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={handleInputChange} />
         <button class="u-reset c-app-header__trigger c-menu-trigger-button" data-active={isMenuOpen} onClick={toggleMenu}>
           Menu
         </button>
@@ -174,7 +175,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
-      <main class="u-scroll c-main">
+      <main class="c-app-layout__main">
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -203,9 +204,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
-        <ul class="c-list">
-          {searchResultTree.map((parentNode) => (
-            <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />
+        <ul class="u-scroll c-list" ref={setVirtualListRef}>
+          {searchResultTree.map((parentNode, index) => (
+            <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
+              <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />
+            </VirtualListItem>
           ))}
         </ul>
       </main>

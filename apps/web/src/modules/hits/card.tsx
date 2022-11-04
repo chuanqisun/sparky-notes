@@ -12,7 +12,7 @@ export interface HitsCardProps {
 export function HitsCard({ node, getHighlightHtml, sendToFigma, isParent }: HitsCardProps) {
   return (
     <>
-      <li class={`c-list-item`} key={node.id}>
+      <li class={`c-list__item`} key={node.id}>
         <button
           class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
           onClick={() =>
