@@ -1,3 +1,4 @@
+- Allow search title + "insight" to browse
 - Deduplicate inc and full sync logic
 - Debounce and throttle search
 - New card positioning improvements
