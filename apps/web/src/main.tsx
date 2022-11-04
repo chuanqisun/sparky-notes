@@ -122,7 +122,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const handleInputChange = useCallback((event: Event) => {
     setQuery((event.target as any).value);
-    virtualListRef.current?.scrollTo({ top: 0 });
+    document.getElementById("js-virtual-list")?.firstElementChild?.scrollTo({ top: 0 });
   }, []);
 
   // handle search
@@ -142,7 +142,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
 
-  const { VirtualListItem, setVirtualListRef, virtualListRef } = useVirtualList();
+  const { VirtualListItem, setVirtualListRef } = useVirtualList();
 
   return (
     <>
@@ -172,7 +172,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
-      <main class="c-app-layout__main">
+      <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -201,7 +201,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
-        <ul class="u-scroll c-list" ref={setVirtualListRef}>
+        <ul class="c-list" id="js-virtual-list">
           {ftsNodes.map((parentNode, index) => (
             <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
               <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} />

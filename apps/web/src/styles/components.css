@@ -80,7 +80,6 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .c-list__placeholder {
