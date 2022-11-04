@@ -19,6 +19,7 @@ export function useAuth() {
     setIsConnected(undefined);
     embeddedSignIn().then((result) => {
       hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
+      location.reload();
     });
   }, []);
 

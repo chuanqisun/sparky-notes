@@ -42,17 +42,19 @@
 }
 
 .c-app-menu--text {
-  padding: 4px 16px;
+  height: 40px;
+  padding-inline: 16px;
+  font-weight: 600;
   display: flex;
-  background-color: black;
-  color: white;
+  align-items: center;
+  justify-content: end;
 }
 
 .c-component {
   color: black;
 }
 
-.c-install-button {
+.c-jumbo-button {
   color: white;
   display: flex;
   font-weight: 600;
@@ -62,6 +64,12 @@
   border-left: 2px solid black;
   border-bottom: 2px solid black;
   padding: 16px;
+}
+
+.c-jumbo-button__progress {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  width: 7ch;
 }
 
 .c-list {

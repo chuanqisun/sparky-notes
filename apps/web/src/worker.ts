@@ -47,6 +47,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
     emit("requestInstallation");
     return;
   }
+  emit("installed", "success");
 
   const draftIndex = createFtsIndex();
 
@@ -105,7 +106,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   await existingContentIndexTask;
 
   activeIndex = draftIndex;
-  emit("indexChanged", "built");
+  emit("indexChanged", "builtFromIncSync");
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);
@@ -143,7 +144,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   summary.hasError && emit("syncFailed");
 
   activeIndex = draftIndex;
-  emit("indexChanged", "built");
+  emit("indexChanged", "builtFromFullSync");
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);

@@ -39,7 +39,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
   const [installationState, setInstallationState] = useState<"installed" | "new" | "error" | "installing" | "unknown">("unknown");
-  const [installProgress, setInstallProgress] = useState("0%");
+  const [installProgress, setInstallProgress] = useState("0.00%");
 
   useEffect(() => {
     switch (isConnected) {
@@ -50,13 +50,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       case undefined:
         return log("Signing in...");
     }
-  }, [isConnected]);
+  }, [isConnected, isConnected]);
 
   // Handle server events
   // Caution: please keep deps array empty
   useEffect(() => {
     const subArray = [
-      worker.subscribe("indexChanged", (type) => type === "built" && log(`Index maintenance... Success`)),
+      worker.subscribe("indexChanged", (type) => type === "builtFromIncSync" && log(`Index maintenance... Success`)),
       worker.subscribe("fullSyncProgressed", (progress) => {
         if (progress.total) {
           const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
@@ -175,18 +175,28 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="u-scroll c-main">
-        {(installationState === "new" || installationState === "installing") && (
+        {isConnected === false && (
+          <section class="c-welcome-mat">
+            <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
+            <div class="c-welcome-action-group">
+              <button class="u-reset c-jumbo-button" onClick={signIn}>
+                Sign in
+              </button>
+            </div>
+          </section>
+        )}
+        {((isConnected === true && installationState === "new") || installationState === "installing") && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
             <div class="c-welcome-action-group">
               {installationState === "new" && (
-                <button class="u-reset c-install-button" onClick={handleInstall}>
+                <button class="u-reset c-jumbo-button" onClick={handleInstall}>
                   <span>Install</span>
                 </button>
               )}
               {installationState === "installing" && (
-                <button class="u-reset c-install-button" onClick={handleInstall} disabled>
-                  Installing... {installProgress}
+                <button class="u-reset c-jumbo-button" onClick={handleInstall} disabled>
+                  Installing...<span class="c-jumbo-button__progress">&nbsp;{installProgress}</span>
                 </button>
               )}
               <small class="c-welcome-hint">(Will download about 20MB of data)</small>

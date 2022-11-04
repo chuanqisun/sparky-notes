@@ -15,7 +15,7 @@ export type WorkerEvents = {
   fullSyncProgressed: SearchProgress;
   syncFailed: undefined;
   incSyncProgressed: IncSyncProgress;
-  indexChanged: "imported" | "built";
+  indexChanged: "imported" | "builtFromIncSync" | "builtFromFullSync";
   requestInstallation: undefined;
   uninstalled: undefined;
   installed: "success" | "failed";
