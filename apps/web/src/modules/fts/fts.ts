@@ -45,7 +45,7 @@ export const exportFtsIndex = async (idx: FlexDocument<IndexedItem>) => {
         clearInterval(polling);
       } else {
         // log to console for future debugging
-        console.log(`Missing in imported index. Will retry...`);
+        console.log(`Index export partial success. Will retry...`);
       }
     }, 100);
   });

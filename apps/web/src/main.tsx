@@ -20,8 +20,16 @@ document.getElementById("app")!.innerHTML = "";
 window.focus();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
-  const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
+  // Handle URL redirect
+  useEffect(() => {
+    const openUrl = new URLSearchParams(location.search).get("openUrl");
+    if (openUrl) {
+      window.open(openUrl, "_blank");
+      notifyFigma({ requestClose: true });
+    }
+  }, []);
 
+  const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
   const { log, lines } = useLog();
 
   const { worker } = props;
@@ -43,14 +51,26 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     }
   }, [isConnected]);
 
+  // Handle server events
   useEffect(() => {
-    worker.subscribe("indexChanged", (type) => {
-      if (type === "updated") log(`Search index updated`);
+    const unsub1 = worker.subscribe("indexChanged", (type) => type === "updated" && log(`Search index updated`));
+    const unsub2 = worker.subscribe("syncProgressed", (progress) => progress.total && log(`Sync... ${(progress.success / progress.total).toFixed(2)}`));
+    const unsub3 = worker.subscribe("syncCompleted", (summary) => {
+      if (summary.hasError) {
+        log(`Sync... Failed. Please try again or reset the app`);
+      } else {
+        log(`Sync... Success! ${summary.total ? `${summary.total} items updated` : "No change"}`);
+      }
+
+      setInstallationState(summary.hasError ? "error" : "installed");
     });
+    const unsub4 = worker.subscribe("requestInstallation", () => setInstallationState("new"));
+    const unusb5 = worker.subscribe("uninstalled", () => location.reload());
+
+    return () => [unsub1, unsub2, unsub3, unsub4, unusb5].map((fn) => fn());
   }, []);
 
-  useEffect(() => worker.subscribe("syncProgressed", (progress) => log(`Sync ${progress.success}/${progress.total}...`)), []);
-
+  // Figma RPC
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
       const pluginMessage = e.data.pluginMessage as MessageToUI;
@@ -67,34 +87,19 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  useEffect(() => {
-    const openUrl = new URLSearchParams(location.search).get("openUrl");
-    if (openUrl) {
-      window.open(openUrl, "_blank");
-      notifyFigma({ requestClose: true });
-    }
-  }, []);
-
   const [query, setQuery] = useState("");
   const [searchResultTree, setResultTree] = useState<HitsGraphNode[]>([]);
 
   // Incremental sync on start
-  useEffect(() => {
-    worker.request("incSync", { config: configValue }).then((res) => {
-      if (res.requireFullSync) {
-        log("Pending installation...");
-        setInstallationState("new");
-      }
-    });
-  }, []);
+  useEffect(() => void worker.request("incSync", { config: configValue }), []);
 
-  // TBD
-  const handleReset = useCallback(async () => {}, []);
+  const handleUninstall = useCallback(async () => {
+    worker.request("uninstall");
+  }, []);
 
   const handleInstall = useCallback(async () => {
     setInstallationState("installing");
-    const result = await worker.request("fullSync", { config: configValue });
-    setInstallationState(result.hasError ? "error" : "installed");
+    await worker.request("fullSync", { config: configValue });
   }, [configValue]);
 
   // handle search
@@ -145,6 +150,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 </button>
               </>
             )}
+            <button class="u-reset c-app-menu--btn" onClick={handleUninstall}>
+              Uninstall
+            </button>
           </menu>
         )}
       </header>

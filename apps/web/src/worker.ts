@@ -3,7 +3,7 @@
 import type { Document as FlexDocument } from "flexsearch";
 import { createFtsIndex, exportFtsIndex, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
-import { clearAllNodes, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
+import { clearAllNodes, clearAllStores, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
@@ -22,6 +22,7 @@ async function main() {
     .onRequest("fullSync", handleFullSync)
     .onRequest("incSync", handleIncSync)
     .onRequest("search", handleSearch)
+    .onRequest("uninstall", handleUninstall)
     .start();
 
   getDb()
@@ -44,12 +45,8 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
 
   const lastSync = await getLastSyncRecord(await db);
   if (!lastSync) {
-    return {
-      requireFullSync: true,
-      total: 0,
-      success: 0,
-      hasError: false,
-    };
+    emit("requestInstallation");
+    return;
   }
 
   const summary = await search({
@@ -64,6 +61,8 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
     },
   });
 
+  emit("syncCompleted", summary);
+
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
@@ -71,8 +70,6 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);
-
-  return summary;
 };
 
 const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
@@ -93,6 +90,8 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
     },
   });
 
+  emit("syncCompleted", summary);
+
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
@@ -100,8 +99,12 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);
+};
 
-  return summary;
+const handleUninstall: WorkerRoutes["uninstall"] = async ({ req, emit }) => {
+  const db = getDb();
+  await clearAllStores(await db);
+  emit("uninstalled");
 };
 
 const handleSearch: WorkerRoutes["search"] = async ({ req }) => {

@@ -56,6 +56,13 @@ export const getLastSyncRecord = (db: GraphDB) => tx(db, ["syncRecord"], "readon
 
 export const clearAllNodes = (db: GraphDB) => db.clear("node");
 
+export const clearAllStores = (db: GraphDB) => {
+  return tx(db, ["node", "syncRecord"], "readwrite", async (tx) => {
+    tx.objectStore("syncRecord").clear();
+    tx.objectStore("node").clear();
+  });
+};
+
 export interface TreeNodeSchema extends NodeSchema {
   children?: TreeNodeSchema[];
 }

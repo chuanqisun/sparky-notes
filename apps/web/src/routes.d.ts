@@ -5,14 +5,18 @@ import type { RouteHandler } from "./utils/worker-rpc";
 
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
-  fullSync: RouteHandler<FullSyncReq, FullSyncRes, WorkerEvents>;
-  incSync: RouteHandler<IncSyncReq, IncSyncRes, WorkerEvents>;
+  fullSync: RouteHandler<FullSyncReq, void, WorkerEvents>;
+  incSync: RouteHandler<IncSyncReq, void, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
+  uninstall: RouteHandler<undefined, void>;
 };
 
 export type WorkerEvents = {
   syncProgressed: SearchProgress;
+  syncCompleted: FullSyncRes | IncSyncRes;
   indexChanged: "imported" | "updated";
+  requestInstallation: undefined;
+  uninstalled: undefined;
 };
 
 export interface EchoReq {
@@ -37,7 +41,6 @@ export interface IncSyncReq {
 }
 
 export interface IncSyncRes {
-  requireFullSync?: boolean;
   total: number;
   success: number;
   hasError: boolean;
