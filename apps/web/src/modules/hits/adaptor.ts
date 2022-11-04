@@ -47,8 +47,8 @@ function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
 }
 
 function getUpdatedOn(document: SearchResultDocument): Date {
-  return [new Date(document.updatedOn), ...document.children.map((child) => new Date(child.updatedOn))]
-    .sort((a, b) => b.getTime() - a.getTime()) // descending
+  return [...document.children.map((child) => new Date(child.updatedOn)), new Date(document.updatedOn)] // Parent usually has latest timestamp
+    .sort((a, b) => a.getTime() - b.getTime()) // Ascending because the array above is likely partially ascending
     .pop()!; // most recent date
 }
 

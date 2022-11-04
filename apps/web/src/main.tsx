@@ -56,12 +56,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Caution: please keep deps array empty
   useEffect(() => {
     const subArray = [
-      worker.subscribe("indexChanged", (type) => type === "built" && log(`Building index... Success`)),
+      worker.subscribe("indexChanged", (type) => type === "built" && log(`Build index... Success`)),
       worker.subscribe("syncProgressed", (progress) => {
         if (progress.total) {
           const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
-          log(`Sync... ${progress.success == progress.total ? `Success! ${progress.total ? `${progress.total} items updated` : "No change"}` : percentage}`);
+          log(`Sync... ${progress.success == progress.total ? `Success! ${progress.total} items updated` : percentage}`);
           setInstallProgress(percentage);
+        } else {
+          log(`Sync... No change`);
         }
       }),
       worker.subscribe("syncCompleted", (summary) => summary.hasError && log(`Sync... Failed. Please try again or reset the app`)),
