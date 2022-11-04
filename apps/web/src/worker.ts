@@ -62,7 +62,6 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   });
 
   emit("syncCompleted", summary);
-  emit("installed", "success");
 
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
@@ -78,6 +77,9 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   const db = getDb();
   const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
+  const draftIndex = createFtsIndex();
+
+  let indexSuccess = 0;
 
   await clearAllNodes(await db);
 
@@ -88,14 +90,19 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
     onProgress: async (progress) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
       await putNodes(await db, graphNodes);
-      emit("syncProgressed", progress);
+
+      graphNodes.forEach((node) => {
+        indexSuccess++;
+        draftIndex.add(graphNodeToFtsDocument(node));
+        if (indexSuccess % 50 === 0 || indexSuccess === progress.total) {
+          emit("syncProgressed", { ...progress, success: indexSuccess });
+        }
+      });
     },
   });
 
   emit("syncCompleted", summary);
 
-  const draftIndex = createFtsIndex();
-  await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
   emit("indexChanged", "built");
 

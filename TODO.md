@@ -1,4 +1,3 @@
-- Advanced performance hack: Index as we download, from existing to downloaded
 - Virtualize list update
 - Deduplicate inc and full sync logic
 - Display most recent content by default

@@ -39,7 +39,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
   const [installationState, setInstallationState] = useState<"installed" | "new" | "error" | "installing" | "unknown">("unknown");
-  const [installProgress, setInstallProgress] = useState("Connecting");
+  const [installProgress, setInstallProgress] = useState("0%");
 
   useEffect(() => {
     switch (isConnected) {
@@ -60,17 +60,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       worker.subscribe("syncProgressed", (progress) => {
         if (progress.total) {
           const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
-          log(`Sync... ${percentage}`);
+          log(`Sync... ${progress.success == progress.total ? `Success! ${progress.total ? `${progress.total} items updated` : "No change"}` : percentage}`);
           setInstallProgress(percentage);
         }
       }),
-      worker.subscribe("syncCompleted", (summary) => {
-        if (summary.hasError) {
-          log(`Sync... Failed. Please try again or reset the app`);
-        } else {
-          log(`Sync... Success! ${summary.total ? `${summary.total} items updated` : "No change"}`);
-        }
-      }),
+      worker.subscribe("syncCompleted", (summary) => summary.hasError && log(`Sync... Failed. Please try again or reset the app`)),
       worker.subscribe("requestInstallation", () => setInstallationState("new")),
       worker.subscribe("uninstalled", () => location.reload()),
       worker.subscribe("installed", (status) => {
@@ -106,6 +100,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const handleUninstall = useCallback(async () => {
     worker.request("uninstall");
+    log("Uninstalling...");
   }, []);
 
   const handleInstall = useCallback(async () => {
