@@ -158,19 +158,21 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       </header>
       <main class="u-scroll c-main">
         {(installationState === "new" || installationState === "installing") && (
-          <section>
-            <h1>Welcome to HITS Assistant</h1>
-            {installationState === "new" && (
-              <button onClick={handleInstall}>
-                Install
-                <small>(Approximately 20MB of download)</small>
-              </button>
-            )}
-            {installationState === "installing" && (
-              <button onClick={handleInstall} disabled>
-                Installing...
-              </button>
-            )}
+          <section class="c-welcome-mat">
+            <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
+            <div class="c-welcome-action-group">
+              {installationState === "new" && (
+                <button class="u-reset c-install-button" onClick={handleInstall}>
+                  <span>Install</span>
+                </button>
+              )}
+              {installationState === "installing" && (
+                <button class="u-reset c-install-button" onClick={handleInstall} disabled>
+                  Installing...
+                </button>
+              )}
+              <small class="c-welcome-hint">(Will download about 20MB of data)</small>
+            </div>
           </section>
         )}
         <ul class="c-list">
