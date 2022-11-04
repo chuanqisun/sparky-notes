@@ -1,7 +1,7 @@
 /// <reference lib="WebWorker" />
 
 import type { Document as FlexDocument } from "flexsearch";
-import { createFtsIndex, exportFtsIndex, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
+import { createFtsIndex, exportFtsIndex, getTokens, getTokensPattern, hitsGraphNodeToFtsNode, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
 import { clearAllNodes, clearAllStores, exportNodesNewToOld, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
@@ -10,6 +10,7 @@ import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { search } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
+import { identity } from "./utils/identity";
 import { WorkerServer } from "./utils/worker-rpc";
 
 declare const self: SharedWorkerGlobalScope | DedicatedWorkerGlobalScope;
@@ -164,8 +165,20 @@ const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
   // TODO memoize getNodes
   const nodes = await getNodes<HitsGraphNode>(await db, ids);
 
+  const pattern = getTokensPattern(getTokens(req.query));
+  const highlighter = pattern
+    ? (input: string, onMatch?: () => any) => {
+        return input.replaceAll(pattern, (match) => {
+          onMatch?.();
+          return `<mark>${match}</mark>`;
+        });
+      }
+    : identity;
+
+  const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(highlighter, node));
+
   return {
-    nodes,
+    nodes: ftsNodes,
   };
 };
 

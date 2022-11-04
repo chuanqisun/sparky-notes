@@ -1,11 +1,10 @@
 import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
+import type { HitsFtsNode } from "./modules/fts/fts";
 import { HitsCard } from "./modules/hits/card";
-import type { HitsGraphNode } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
-import { useHighlight } from "./modules/search/use-search";
 import { StatusBar, useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { sendMessage } from "./utils/figma-rpc";
@@ -106,7 +105,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const [query, setQuery] = useState("");
-  const [searchResultTree, setResultTree] = useState<HitsGraphNode[]>([]);
+  const [ftsNodes, setFtsNodes] = useState<HitsFtsNode[]>([]);
 
   // Incremental sync on start
   useEffect(() => void worker.request("incSync", { config: configValue }), []);
@@ -130,20 +129,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed.length) {
-      setResultTree([]);
+      setFtsNodes([]);
       return;
     }
 
     worker.request("search", { query }).then((searchResult) => {
-      setResultTree(searchResult.nodes);
+      setFtsNodes(searchResult.nodes);
     });
-  }, [query, setResultTree]);
+  }, [query, setFtsNodes]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
-
-  const { getHighlightHtml } = useHighlight(query);
 
   const { VirtualListItem, setVirtualListRef, virtualListRef } = useVirtualList();
 
@@ -205,9 +202,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </section>
         )}
         <ul class="u-scroll c-list" ref={setVirtualListRef}>
-          {searchResultTree.map((parentNode, index) => (
+          {ftsNodes.map((parentNode, index) => (
             <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
-              <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />
+              <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             </VirtualListItem>
           ))}
         </ul>

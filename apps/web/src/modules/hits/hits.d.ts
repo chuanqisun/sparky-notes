@@ -9,11 +9,11 @@ export interface HitsGraphNode extends NodeSchema {
     id: number;
     displayName: string;
   };
-  researchers?: {
+  researchers: {
     id: number;
     displayName: string;
   }[];
-  tags?: {
+  tags: {
     id: number;
     displayName: string;
   }[];

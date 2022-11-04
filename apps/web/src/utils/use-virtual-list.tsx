@@ -24,8 +24,6 @@ export function useVirtualList() {
           .forEach((entry) => {
             revealCallbacks.current.get(entry.target)?.();
           });
-
-        console.log(entries);
       },
       {
         root: containerNode,

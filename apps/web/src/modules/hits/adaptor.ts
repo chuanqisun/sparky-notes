@@ -25,10 +25,8 @@ export function searchResultDocumentToGraphNode(searchResult: SearchResultDocume
 
 export function graphNodeToFtsDocument(node: HitsGraphNode): IndexedItem {
   const keywords = `${EntityName[node.entityType]}; ${node.title}; ${node.group?.displayName ?? ""}; ${
-    node.researchers?.map((person) => person.displayName).join(", ") ?? ""
-  }; ${node.tags?.map((tag) => tag.displayName).join(", ") ?? ""}; ${new Date(node.updatedOn).toLocaleDateString()}; ${node.children
-    .map((child) => `${child.entityType}; ${child.title}`)
-    .join("; ")}`;
+    node.researchers.map((person) => person.displayName).join(", ") ?? ""
+  }; ${new Date(node.updatedOn).toLocaleDateString()}; ${node.children.map((child) => `${child.entityType}; ${child.title}`).join("; ")}`;
 
   return {
     id: node.id,

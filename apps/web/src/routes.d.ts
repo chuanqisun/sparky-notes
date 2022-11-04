@@ -1,5 +1,5 @@
+import type { HitsFtsNode } from "./modules/fts/fts";
 import type { HitsConfig } from "./modules/hits/config";
-import type { HitsGraphNode } from "./modules/hits/hits";
 import type { SearchProgress } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
 
@@ -48,5 +48,5 @@ export interface SearchReq {
 }
 
 export interface SearchRes {
-  nodes: HitsGraphNode[];
+  nodes: HitsFtsNode[];
 }

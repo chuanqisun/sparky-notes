@@ -1,15 +1,14 @@
 import type { MessageToMain } from "@h20/types";
+import type { HitsFtsNode } from "../fts/fts";
 import "./card.css";
 import { EntityIcon, EntityName } from "./entity";
-import type { HitsGraphNode } from "./hits";
 
 export interface HitsCardProps {
-  node: HitsGraphNode;
+  node: HitsFtsNode;
   isParent?: boolean;
-  getHighlightHtml: (text: string) => string;
   sendToFigma: (figmaCard: MessageToMain) => void;
 }
-export function HitsCard({ node, getHighlightHtml, sendToFigma, isParent }: HitsCardProps) {
+export function HitsCard({ node, sendToFigma, isParent }: HitsCardProps) {
   return (
     <>
       <li class={`c-list__item`} key={node.id}>
@@ -28,28 +27,21 @@ export function HitsCard({ node, getHighlightHtml, sendToFigma, isParent }: Hits
           <article class="hits-item">
             <img class="hits-item__icon" src={EntityIcon[node.entityType]} />
             <div class="hits-item__text">
-              <span
-                class={`hits-item__title ${isParent ? "hits-item__title--parent" : ""}`}
-                dangerouslySetInnerHTML={{ __html: getHighlightHtml(node.title) }}
-              />{" "}
+              <span class={`hits-item__title ${isParent ? "hits-item__title--parent" : ""}`} dangerouslySetInnerHTML={{ __html: node.titleHtml }} />{" "}
               {isParent && (
                 <>
-                  {node.researchers && (
-                    <span
-                      class="hits-item__meta-field"
-                      dangerouslySetInnerHTML={{ __html: getHighlightHtml(node.researchers.map((person) => person.displayName).join(", ")) }}
-                    />
-                  )}
-                  &nbsp;· <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: getHighlightHtml(node.updatedOn.toLocaleDateString()) }} />
+                  {node.researchers && <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: node.researchersHtml }} />}
+                  &nbsp;· <span class="hits-item__meta-field">{node.updatedOn.toLocaleDateString()}</span>
                 </>
               )}
             </div>
           </article>
         </button>
       </li>
-      {node?.children?.map((childNode) => (
-        <HitsCard isParent={false} node={childNode as HitsGraphNode} sendToFigma={sendToFigma} getHighlightHtml={getHighlightHtml} />
-      ))}
+      {isParent &&
+        node.children.map((childNode) =>
+          childNode.hasHighlight ? <HitsCard isParent={false} node={childNode as any as HitsFtsNode} sendToFigma={sendToFigma} /> : null
+        )}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import type { IndexOptionsForDocumentSearch } from "flexsearch";
 import { Document as FlexDocument } from "flexsearch";
+import type { HitsGraphChildNode, HitsGraphNode } from "../hits/hits";
 
 // TODO do not export
 export const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
@@ -68,8 +69,37 @@ export const getTokens = (query: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-export const getTokensPattern = (tokens: string[]) => (tokens.length ? new RegExp(String.raw`\b(${tokens.join("|")})`, "gi") : null);
+const escape = {
+  from: /[.*+?^${}()|[\]\\]/g,
+  to: "\\$&",
+};
+
+export const getTokensPattern = (tokens: string[]) =>
+  tokens.length ? new RegExp(String.raw`\b(${tokens.map((t) => t.replace(escape.from, escape.to)).join("|")})`, "gi") : null;
 
 export function getHighlightHtml(tokensPattern: RegExp, query: string) {
   return query.replace(tokensPattern, (match) => `<mark>${match}</mark>`);
+}
+
+export interface HitsFtsNode extends HitsGraphNode {
+  titleHtml: string;
+  researchersHtml: string;
+  children: HitsFtsCildNode[];
+}
+export interface HitsFtsCildNode extends HitsGraphChildNode {
+  hasHighlight: boolean;
+  titleHtml: string;
+}
+
+export function hitsGraphNodeToFtsNode(highlight: (input: string, onMatch?: () => any) => string, node: HitsGraphNode): HitsFtsNode {
+  return {
+    ...node,
+    titleHtml: highlight(node.title),
+    researchersHtml: highlight(node.researchers.map((person) => person.displayName).join(", ")),
+    children: node.children.map((child) => {
+      let hasHighlight = false;
+      const titleHtml = highlight(child.title, () => (hasHighlight = true));
+      return { ...child, titleHtml, hasHighlight: hasHighlight };
+    }),
+  };
 }

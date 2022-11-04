@@ -84,7 +84,7 @@
 }
 
 .c-list__placeholder {
-  height: 800px;
+  min-height: 200px;
 }
 
 .c-menu-trigger-button {
