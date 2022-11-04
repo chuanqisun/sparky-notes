@@ -1,4 +1,5 @@
 - Allow search title + "insight" to browse
+- Ctrl + Click to open in web
 - Deduplicate inc and full sync logic
 - Debounce and throttle search
 - New card positioning improvements
