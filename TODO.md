@@ -1,4 +1,3 @@
-- Debug scroll bar slipping on recent page due to placeholder sizing error
 - Deduplicate inc and full sync logic
 - Debounce and throttle search
 - New card positioning improvements
