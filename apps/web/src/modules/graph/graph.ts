@@ -32,6 +32,8 @@ export const exportNodesNewToOld = (db: GraphDB, onData: (data: ExportNodeData) 
     }
   });
 
+export const exportAllNodes = (db: GraphDB) => tx(db, ["node"], "readonly", async (tx) => tx.objectStore("node").getAll());
+
 export const putNodes = <T extends NodeSchema>(db: GraphDB, nodes: T[]) =>
   tx(db, ["node"], "readwrite", async (tx) => {
     const nodeStore = tx.objectStore("node");
