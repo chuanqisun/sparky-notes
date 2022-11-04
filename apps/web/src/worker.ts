@@ -6,7 +6,6 @@ import { getDb } from "./modules/graph/db";
 import { clearAllNodes, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
-import { EntityType } from "./modules/hits/entity";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { search } from "./modules/hits/search";
@@ -31,7 +30,7 @@ async function main() {
     .then((initialIndex) => {
       activeIndex = initialIndex;
       console.log("emitting indexChanged");
-      worker.emit("indexChanged");
+      worker.emit("indexChanged", "imported");
     });
 }
 
@@ -57,8 +56,6 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
     proxy,
     filter: {
       publishDateNewerThan: lastSync.latestUpdatedOn.toISOString(),
-      entityTypes: [EntityType.Study],
-      researcherIds: [835],
     },
     onProgress: async (progress) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
@@ -70,7 +67,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
-  emit("indexChanged");
+  emit("indexChanged", "updated");
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);
@@ -88,10 +85,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 
   const summary = await search({
     proxy,
-    filter: {
-      entityTypes: [EntityType.Study],
-      researcherIds: [835],
-    },
+    filter: {},
     onProgress: async (progress) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
       await putNodes(await db, graphNodes);
@@ -102,7 +96,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
-  emit("indexChanged");
+  emit("indexChanged", "updated");
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);

@@ -1,9 +1,6 @@
-- Menu
-- Status bar
-  - Sync progress
-  - Index progress
 - Incremental sync
 - Virtualize list update
+- Deduplicate inc and full sync logic
 - Display most recent content by default
 - New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`

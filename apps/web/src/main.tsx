@@ -30,6 +30,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
+  const [installationState, setInstallationState] = useState<"installed" | "new" | "error" | "installing" | "unknown">("unknown");
 
   useEffect(() => {
     switch (isConnected) {
@@ -43,8 +44,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [isConnected]);
 
   useEffect(() => {
-    worker.subscribe("indexChanged", () => {
-      log(`Search index updated`);
+    worker.subscribe("indexChanged", (type) => {
+      if (type === "updated") log(`Search index updated`);
     });
   }, []);
 
@@ -77,15 +78,24 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [query, setQuery] = useState("");
   const [searchResultTree, setResultTree] = useState<HitsGraphNode[]>([]);
 
-  // Full sync on demand
-  const fullSync = useCallback(async () => {
-    const result = await worker.request("fullSync", { config: configValue });
-  }, [configValue]);
-
   // Incremental sync on start
   useEffect(() => {
-    worker.request("incSync", { config: configValue });
+    worker.request("incSync", { config: configValue }).then((res) => {
+      if (res.requireFullSync) {
+        log("Pending installation...");
+        setInstallationState("new");
+      }
+    });
   }, []);
+
+  // TBD
+  const handleReset = useCallback(async () => {}, []);
+
+  const handleInstall = useCallback(async () => {
+    setInstallationState("installing");
+    const result = await worker.request("fullSync", { config: configValue });
+    setInstallationState(result.hasError ? "error" : "installed");
+  }, [configValue]);
 
   // handle search
   useEffect(() => {
@@ -130,9 +140,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             )}
             {isConnected && (
               <>
-                <button class="u-reset c-app-menu--btn" onClick={fullSync}>
-                  Sync
-                </button>
                 <button class="u-reset c-app-menu--btn" onClick={signOut}>
                   Sign out
                 </button>
@@ -142,6 +149,22 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="u-scroll c-main">
+        {(installationState === "new" || installationState === "installing") && (
+          <section>
+            <h1>Welcome to HITS Assistant</h1>
+            {installationState === "new" && (
+              <button onClick={handleInstall}>
+                Install
+                <small>(Approximately 20MB of download)</small>
+              </button>
+            )}
+            {installationState === "installing" && (
+              <button onClick={handleInstall} disabled>
+                Installing...
+              </button>
+            )}
+          </section>
+        )}
         <ul class="c-list">
           {searchResultTree.map((parentNode) => (
             <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} getHighlightHtml={getHighlightHtml} />

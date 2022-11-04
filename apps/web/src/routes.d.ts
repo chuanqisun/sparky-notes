@@ -12,7 +12,7 @@ export type WorkerRoutes = {
 
 export type WorkerEvents = {
   syncProgressed: SearchProgress;
-  indexChanged: undefined;
+  indexChanged: "imported" | "updated";
 };
 
 export interface EchoReq {
