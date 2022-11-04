@@ -1,4 +1,3 @@
-- Debug layout issue during install
 - Display most recent content by default
 - Deduplicate inc and full sync logic
 - Debounce and throttle search
