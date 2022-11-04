@@ -1,5 +1,3 @@
-- Indexing while inc downloading
-- Debug latest timestamp issue
 - Virtualize list update
 - Deduplicate inc and full sync logic
 - Display most recent content by default

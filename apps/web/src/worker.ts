@@ -3,7 +3,7 @@
 import type { Document as FlexDocument } from "flexsearch";
 import { createFtsIndex, exportFtsIndex, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
-import { clearAllNodes, clearAllStores, exportNodes, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
+import { clearAllNodes, clearAllStores, exportNodesNewToOld, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
@@ -48,6 +48,30 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
     return;
   }
 
+  const draftIndex = createFtsIndex();
+
+  // Start indexing existing content before checking updates
+  // Start from newest and cursor towards to oldest to prevent overlap with newly downloaded content
+  let existingIndexed = 0;
+  let existingTotal = 0;
+
+  let newIndexed = 0;
+  let newTotal = 0;
+
+  let silentReindex = false;
+
+  const existingContentIndexTask = exportNodesNewToOld(await db, (exportNodeData) => {
+    draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode));
+
+    if (silentReindex) return;
+
+    if (exportNodeData.success % 50 === 0 || exportNodeData.success === exportNodeData.total) {
+      existingIndexed = exportNodeData.success;
+      existingTotal = exportNodeData.total;
+      emit("incSyncProgressed", { newTotal, existingTotal, newIndexed, existingIndexed });
+    }
+  });
+
   const summary = await search({
     proxy,
     pageSize: 100,
@@ -57,14 +81,29 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
     onProgress: async (progress) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
       await putNodes(await db, graphNodes);
-      emit("syncProgressed", progress);
+
+      graphNodes.forEach((node) => {
+        draftIndex.add(graphNodeToFtsDocument(node));
+
+        if (progress.success % 50 === 0 || progress.success === progress.total) {
+          newIndexed = progress.success;
+          newTotal = progress.total;
+          emit("incSyncProgressed", { newTotal, newIndexed, existingTotal, existingIndexed });
+        }
+      });
     },
   });
 
-  emit("syncCompleted", summary);
+  // no updates, consider complete even though we are still reindexing in the background
+  if (!summary.total) {
+    emit("incSyncProgressed", { newTotal, newIndexed, existingTotal, existingIndexed: existingTotal });
+    silentReindex = true;
+  }
 
-  const draftIndex = createFtsIndex();
-  await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
+  summary.hasError && emit("syncFailed");
+
+  await existingContentIndexTask;
+
   activeIndex = draftIndex;
   emit("indexChanged", "built");
 
@@ -92,16 +131,16 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
       await putNodes(await db, graphNodes);
 
       graphNodes.forEach((node) => {
-        indexSuccess++;
         draftIndex.add(graphNodeToFtsDocument(node));
+        indexSuccess++;
         if (indexSuccess % 50 === 0 || indexSuccess === progress.total) {
-          emit("syncProgressed", { ...progress, success: indexSuccess });
+          emit("fullSyncProgressed", { ...progress, success: indexSuccess });
         }
       });
     },
   });
 
-  emit("syncCompleted", summary);
+  summary.hasError && emit("syncFailed");
 
   activeIndex = draftIndex;
   emit("indexChanged", "built");

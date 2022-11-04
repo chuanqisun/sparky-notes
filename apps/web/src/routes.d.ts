@@ -12,8 +12,9 @@ export type WorkerRoutes = {
 };
 
 export type WorkerEvents = {
-  syncProgressed: SearchProgress;
-  syncCompleted: FullSyncRes | IncSyncRes;
+  fullSyncProgressed: SearchProgress;
+  syncFailed: undefined;
+  incSyncProgressed: IncSyncProgress;
   indexChanged: "imported" | "built";
   requestInstallation: undefined;
   uninstalled: undefined;
@@ -31,20 +32,15 @@ export interface FullSyncReq {
   config: HitsConfig;
 }
 
-export interface FullSyncRes {
-  total: number;
-  success: number;
-  hasError: boolean;
-}
-
 export interface IncSyncReq {
   config: HitsConfig;
 }
 
-export interface IncSyncRes {
-  total: number;
-  success: number;
-  hasError: boolean;
+export interface IncSyncProgress {
+  existingTotal: number;
+  existingIndexed: number;
+  newTotal: number;
+  newIndexed: number;
 }
 
 export interface SearchReq {

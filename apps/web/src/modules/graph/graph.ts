@@ -7,14 +7,14 @@ export interface ExportNodeData {
   success: number;
   total: number;
 }
-export const exportNodes = (db: GraphDB, onData: (data: ExportNodeData) => any) =>
+export const exportNodesNewToOld = (db: GraphDB, onData: (data: ExportNodeData) => any) =>
   tx(db, ["node"], "readonly", async (tx) => {
     const total = await tx.objectStore("node").count();
-    let cursor = await tx.objectStore("node").openCursor();
+    let cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
     let success = 0;
 
     while (cursor) {
-      onData({ node: cursor.value, total, success });
+      onData({ node: cursor.value, total, success: ++success });
       cursor = await cursor.continue();
     }
   });

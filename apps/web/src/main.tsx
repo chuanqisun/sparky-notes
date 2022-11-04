@@ -56,17 +56,27 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Caution: please keep deps array empty
   useEffect(() => {
     const subArray = [
-      worker.subscribe("indexChanged", (type) => type === "built" && log(`Build index... Success`)),
-      worker.subscribe("syncProgressed", (progress) => {
+      worker.subscribe("indexChanged", (type) => type === "built" && log(`Index maintenance... Success`)),
+      worker.subscribe("fullSyncProgressed", (progress) => {
         if (progress.total) {
           const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
-          log(`Sync... ${progress.success == progress.total ? `Success! ${progress.total} items updated` : percentage}`);
+          log(`Sync... ${progress.success == progress.total ? `Success! ${progress.total} updated` : percentage}`);
           setInstallProgress(percentage);
         } else {
           log(`Sync... No change`);
         }
       }),
-      worker.subscribe("syncCompleted", (summary) => summary.hasError && log(`Sync... Failed. Please try again or reset the app`)),
+      worker.subscribe("incSyncProgressed", (progress) => {
+        const total = progress.existingTotal + progress.newTotal;
+        const indexed = progress.existingIndexed + progress.newIndexed;
+        const isDone = total === indexed;
+        if (total) {
+          log(`Sync... ${isDone ? `Success! ${progress.newTotal} updated | ${progress.existingTotal} existing` : `${((100 * indexed) / total).toFixed(2)}%`}`);
+        } else {
+          log(`Sync... No change`);
+        }
+      }),
+      worker.subscribe("syncFailed", () => log(`Sync... Failed. Please try again or reset the app`)),
       worker.subscribe("requestInstallation", () => setInstallationState("new")),
       worker.subscribe("uninstalled", () => location.reload()),
       worker.subscribe("installed", (status) => {
