@@ -6,7 +6,6 @@
 - Debug occasional get token 500 error
 - Auto push code update to Figma Widget instance
 - Try Intl.Segmenter as custom tokenizer
-- Export index only when CPU is idle
 - Timestamp last access token usage
 - One click reset: sign out + DB wipe + code update
 - Sign out from all HITS Assistants

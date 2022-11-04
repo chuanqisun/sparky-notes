@@ -8,7 +8,7 @@ export function searchResultDocumentToGraphNode(searchResult: SearchResultDocume
     const updatedOn = getUpdatedOn(document);
 
     return {
-      title: document.title ?? "Untitled",
+      title: document.title.length ? document.title : "Untitled",
       id: document.id,
       entityType: document.entityType,
       updatedOn: updatedOn,
@@ -38,7 +38,7 @@ function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
   return children
     .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
     .map((claim) => ({
-      title: claim.title ?? "Untitled",
+      title: claim.title?.length ? claim.title : "Untitled",
       id: claim.id,
       entityType: claim.entityType,
     }));

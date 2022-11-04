@@ -40,6 +40,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
   const [installationState, setInstallationState] = useState<"installed" | "new" | "error" | "installing" | "unknown">("unknown");
   const [installProgress, setInstallProgress] = useState("0.00%");
+  const [indexRev, setIndexRev] = useState(0);
 
   useEffect(() => {
     switch (isConnected) {
@@ -56,7 +57,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Caution: please keep deps array empty
   useEffect(() => {
     const subArray = [
-      worker.subscribe("indexChanged", (type) => type === "builtFromIncSync" && log(`Index maintenance... Success`)),
+      worker.subscribe("indexChanged", (type) => {
+        setIndexRev((prev) => prev + 1);
+        type === "builtFromIncSync" && log(`Index maintenance... Success`);
+      }),
       worker.subscribe("fullSyncProgressed", (progress) => {
         if (progress.total) {
           const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
@@ -126,7 +130,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   // handle search
-  // TODO auto update results when backend updates
   useEffect(() => {
     const trimmed = query.trim();
     // TODO need switch map
@@ -135,7 +138,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     } else {
       worker.request("search", { query }).then((searchResult) => setFtsNodes(searchResult.nodes));
     }
-  }, [query, setFtsNodes]);
+  }, [indexRev, query, setFtsNodes]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
