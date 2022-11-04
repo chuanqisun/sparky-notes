@@ -30,7 +30,6 @@ async function main() {
     .then((syncRecord) => (syncRecord ? importFtsIndex(syncRecord.exportedIndex) : createFtsIndex()))
     .then((initialIndex) => {
       activeIndex = initialIndex;
-      console.log("emitting indexChanged");
       worker.emit("indexChanged", "imported");
     });
 }
@@ -51,6 +50,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
 
   const summary = await search({
     proxy,
+    pageSize: 100,
     filter: {
       publishDateNewerThan: lastSync.latestUpdatedOn.toISOString(),
     },
@@ -67,7 +67,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
-  emit("indexChanged", "updated");
+  emit("indexChanged", "built");
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);
@@ -83,6 +83,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 
   const summary = await search({
     proxy,
+    pageSize: 200, // use larger page size for full sync
     filter: {},
     onProgress: async (progress) => {
       const graphNodes = searchResultDocumentToGraphNode(progress.items.map((item) => item.document));
@@ -96,7 +97,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   const draftIndex = createFtsIndex();
   await exportNodes(await db, (exportNodeData) => draftIndex.add(graphNodeToFtsDocument(exportNodeData.node as HitsGraphNode)));
   activeIndex = draftIndex;
-  emit("indexChanged", "updated");
+  emit("indexChanged", "built");
 
   const exportedIndex = await exportFtsIndex(draftIndex);
   updateSyncRecord(await db, new Date(), exportedIndex);

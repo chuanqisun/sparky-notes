@@ -39,6 +39,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
   const [installationState, setInstallationState] = useState<"installed" | "new" | "error" | "installing" | "unknown">("unknown");
+  const [installProgress, setInstallProgress] = useState("Connecting");
 
   useEffect(() => {
     switch (isConnected) {
@@ -52,23 +53,32 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [isConnected]);
 
   // Handle server events
+  // Caution: please keep deps array empty
   useEffect(() => {
-    const unsub1 = worker.subscribe("indexChanged", (type) => type === "updated" && log(`Search index updated`));
-    const unsub2 = worker.subscribe("syncProgressed", (progress) => progress.total && log(`Sync... ${(progress.success / progress.total).toFixed(2)}`));
-    const unsub3 = worker.subscribe("syncCompleted", (summary) => {
-      if (summary.hasError) {
-        log(`Sync... Failed. Please try again or reset the app`);
-      } else {
-        log(`Sync... Success! ${summary.total ? `${summary.total} items updated` : "No change"}`);
-      }
-    });
-    const unsub4 = worker.subscribe("requestInstallation", () => setInstallationState("new"));
-    const unsub5 = worker.subscribe("uninstalled", () => location.reload());
-    const unsub6 = worker.subscribe("installed", (status) => {
-      setInstallationState(status === "success" ? "installed" : "error");
-    });
+    const subArray = [
+      worker.subscribe("indexChanged", (type) => type === "built" && log(`Building index... Success`)),
+      worker.subscribe("syncProgressed", (progress) => {
+        if (progress.total) {
+          const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
+          log(`Sync... ${percentage}`);
+          setInstallProgress(percentage);
+        }
+      }),
+      worker.subscribe("syncCompleted", (summary) => {
+        if (summary.hasError) {
+          log(`Sync... Failed. Please try again or reset the app`);
+        } else {
+          log(`Sync... Success! ${summary.total ? `${summary.total} items updated` : "No change"}`);
+        }
+      }),
+      worker.subscribe("requestInstallation", () => setInstallationState("new")),
+      worker.subscribe("uninstalled", () => location.reload()),
+      worker.subscribe("installed", (status) => {
+        setInstallationState(status === "success" ? "installed" : "error");
+      }),
+    ];
 
-    return () => [unsub1, unsub2, unsub3, unsub4, unsub5, unsub6].map((fn) => fn());
+    return () => subArray.map((unsub) => unsub());
   }, []);
 
   // Figma RPC
@@ -169,7 +179,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               )}
               {installationState === "installing" && (
                 <button class="u-reset c-install-button" onClick={handleInstall} disabled>
-                  Installing...
+                  Installing... {installProgress}
                 </button>
               )}
               <small class="c-welcome-hint">(Will download about 20MB of data)</small>

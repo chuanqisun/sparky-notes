@@ -14,7 +14,7 @@ export type WorkerRoutes = {
 export type WorkerEvents = {
   syncProgressed: SearchProgress;
   syncCompleted: FullSyncRes | IncSyncRes;
-  indexChanged: "imported" | "updated";
+  indexChanged: "imported" | "built";
   requestInstallation: undefined;
   uninstalled: undefined;
   installed: "success" | "failed";

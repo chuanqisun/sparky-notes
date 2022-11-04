@@ -3,6 +3,7 @@ import { getPageOffsets } from "../../utils/chunk";
 import type { FilterConfig, SearchOutput, SearchResultItem } from "./hits";
 
 export interface SearchConfig {
+  pageSize: number;
   proxy: (payload: any) => Promise<SearchOutput>;
   filter: FilterConfig;
   onProgress?: (progress: SearchProgress) => any;
@@ -17,9 +18,8 @@ export interface SearchSummary {
   success: number;
   hasError: boolean;
 }
-export async function search({ proxy, filter, onProgress }: SearchConfig): Promise<SearchSummary> {
+export async function search({ proxy, filter, onProgress, pageSize }: SearchConfig): Promise<SearchSummary> {
   // execute 1st search to get total
-  const pageSize = 100;
   const payload = getSearchPayload({ count: true, top: pageSize, skip: 0, filter });
   const { totalCount, results } = await proxy(payload);
 
