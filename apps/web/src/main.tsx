@@ -122,27 +122,26 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const handleInputChange = useCallback((event: Event) => {
     setQuery((event.target as any).value);
-    document.getElementById("js-virtual-list")?.firstElementChild?.scrollTo({ top: 0 });
+    virtualListRef.current?.scrollTo({ top: 0 });
   }, []);
 
   // handle search
+  // TODO auto update results when backend updates
   useEffect(() => {
     const trimmed = query.trim();
+    // TODO need switch map
     if (!trimmed.length) {
-      setFtsNodes([]);
-      return;
+      worker.request("recent").then((recent) => setFtsNodes(recent.nodes));
+    } else {
+      worker.request("search", { query }).then((searchResult) => setFtsNodes(searchResult.nodes));
     }
-
-    worker.request("search", { query }).then((searchResult) => {
-      setFtsNodes(searchResult.nodes);
-    });
   }, [query, setFtsNodes]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
 
-  const { VirtualListItem, setVirtualListRef } = useVirtualList();
+  const { VirtualListItem, setVirtualListRef, virtualListRef } = useVirtualList();
 
   return (
     <>

@@ -3,7 +3,16 @@
 import type { Document as FlexDocument } from "flexsearch";
 import { createFtsIndex, exportFtsIndex, getTokens, getTokensPattern, hitsGraphNodeToFtsNode, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
-import { clearAllNodes, clearAllStores, exportNodesNewToOld, getLastSyncRecord, getNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
+import {
+  clearAllNodes,
+  clearAllStores,
+  exportNodesNewToOld,
+  getLastSyncRecord,
+  getNodes,
+  getRecentNodes,
+  putNodes,
+  updateSyncRecord,
+} from "./modules/graph/graph";
 import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
@@ -23,6 +32,7 @@ async function main() {
     .onRequest("fullSync", handleFullSync)
     .onRequest("incSync", handleIncSync)
     .onRequest("search", handleSearch)
+    .onRequest("recent", handleRecent)
     .onRequest("uninstall", handleUninstall)
     .start();
 
@@ -176,6 +186,16 @@ const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
     : identity;
 
   const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(highlighter, node));
+
+  return {
+    nodes: ftsNodes,
+  };
+};
+
+const handleRecent: WorkerRoutes["recent"] = async ({ req }) => {
+  const db = getDb();
+  const nodes = await getRecentNodes<HitsGraphNode>(await db);
+  const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(identity, node));
 
   return {
     nodes: ftsNodes,

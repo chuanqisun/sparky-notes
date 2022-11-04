@@ -7,6 +7,19 @@ export interface ExportNodeData {
   success: number;
   total: number;
 }
+
+export const getRecentNodes = <T extends NodeSchema>(db: GraphDB, limit = 100) =>
+  tx(db, ["node"], "readonly", async (tx) => {
+    const nodes: T[] = [];
+    let cursor = await tx.objectStore("node").index("byUpdatedOn").openCursor(null, "prev");
+
+    while (cursor && nodes.length < limit) {
+      nodes.push(cursor.value as T);
+      cursor = await cursor.continue();
+    }
+    return nodes;
+  });
+
 export const exportNodesNewToOld = (db: GraphDB, onData: (data: ExportNodeData) => any) =>
   tx(db, ["node"], "readonly", async (tx) => {
     const total = await tx.objectStore("node").count();

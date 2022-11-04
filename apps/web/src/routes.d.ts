@@ -8,6 +8,7 @@ export type WorkerRoutes = {
   fullSync: RouteHandler<FullSyncReq, void, WorkerEvents>;
   incSync: RouteHandler<IncSyncReq, void, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
+  recent: RouteHandler<undefined, RecentRes>;
   uninstall: RouteHandler<undefined, void>;
 };
 
@@ -48,5 +49,9 @@ export interface SearchReq {
 }
 
 export interface SearchRes {
+  nodes: HitsFtsNode[];
+}
+
+export interface RecentRes {
   nodes: HitsFtsNode[];
 }
