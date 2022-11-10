@@ -3,7 +3,7 @@ import BadgeLightSvg from "./assets/BadgeLight.svg";
 import figmaPalette from "./assets/figma-palette.json";
 
 const { widget } = figma;
-const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text } = widget;
+const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
 
 const showUI = (search: string = "") =>
   figma.showUI(`<script>window.location.href="${process.env.WEB_URL + search}"</script>`, {
@@ -18,7 +18,7 @@ const sendToUI = (message: MessageToUI) => {
 function Widget() {
   const widgetId = useWidgetId();
 
-  const [cardData, _setCardData] = useSyncedState<CardData | null>("cardData", null);
+  const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
   const [cardBackground, setCardBackground] = useSyncedState("cardBackground", figmaPalette[0].option);
 
   usePropertyMenu(
@@ -36,7 +36,7 @@ function Widget() {
     ({ propertyName, propertyValue }) => {
       switch (propertyName) {
         case "backgroundColor":
-          setCardBackground(propertyValue!);
+          setCardData({ ...cardData!, backgroundColor: propertyValue! });
           break;
       }
     }
@@ -60,11 +60,7 @@ function Widget() {
         await figma.loadFontAsync({ family: "Inter", style: "Regular" });
 
         const widgetNode = figma.getNodeById(widgetId) as WidgetNode;
-
-        const clonedWidget = widgetNode.cloneWidget({
-          cardData: msg.addCard,
-          cardBackground: msg.addCard.backgroundColor,
-        });
+        const clonedWidget = widgetNode.cloneWidget({ cardData: msg.addCard });
 
         clonedWidget.x = figma.viewport.center.x - clonedWidget.width / 2 + 32;
         clonedWidget.y = figma.viewport.center.y - clonedWidget.height / 2 + 32;
@@ -81,16 +77,17 @@ function Widget() {
     };
   });
 
+  const setCategory = (e: TextEditEvent) => setCardData((prevData) => ({ ...prevData!, category: e.characters }));
+
   return cardData === null ? (
     <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((resolve) => showUI())} />
   ) : (
-    <AutoLayout padding={24} direction="vertical" fill={cardBackground} cornerRadius={6} spacing={16}>
-      <AutoLayout>
-        <Text width={400} fontSize={24} lineHeight={28} fontWeight={700}>
-          {cardData.category}
-        </Text>
+    <AutoLayout padding={0} direction="vertical" fill={cardData.backgroundColor} cornerRadius={6}>
+      <AutoLayout padding={cssPad(24, 24, 8, 24)}>
+        <Input value={cardData.category} width={400} fontSize={24} lineHeight={28} fontWeight={700} onTextEditEnd={setCategory} />
       </AutoLayout>
       <AutoLayout
+        padding={cssPad(8, 24, 24, 24)}
         onClick={() =>
           new Promise((_resolve) => {
             showUI(`?openUrl=${cardData.url}`);
@@ -106,3 +103,12 @@ function Widget() {
 }
 
 widget.register(Widget);
+
+function cssPad(top: number, right: number, bottom: number, left: number) {
+  return {
+    top,
+    right,
+    bottom,
+    left,
+  };
+}

@@ -11,6 +11,7 @@ async function main() {
     entryPoints: ["src/main.tsx"],
     bundle: true,
     format: "esm",
+    target: "es6", // Figma sandbox seems to miss some ESNext language features
     sourcemap: "inline", // TODO perf?
     watch: false, // TODO
     minify: false, // TODO
