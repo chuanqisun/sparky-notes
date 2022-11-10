@@ -1,7 +1,7 @@
 import type { MessageToMain } from "@h20/types";
 import type { HitsFtsNode } from "../fts/fts";
 import "./card.css";
-import { EntityIcon, EntityName } from "./entity";
+import { EntityBackgroundColor, EntityDisplayName, EntityIcon, EntityName } from "./entity";
 
 export interface HitsCardProps {
   node: HitsFtsNode;
@@ -17,8 +17,10 @@ export function HitsCard({ node, sendToFigma, isParent }: HitsCardProps) {
           onClick={() =>
             sendToFigma({
               addCard: {
+                category: EntityDisplayName[node.entityType],
                 title: node.title,
                 entityType: node.entityType,
+                backgroundColor: EntityBackgroundColor[node.entityType],
                 url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
               },
             })

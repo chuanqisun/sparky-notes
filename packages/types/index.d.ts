@@ -11,10 +11,23 @@ export interface MessageToMain {
     isSuccess?: boolean;
     isError?: boolean;
   };
-  addCard?: {
-    title: string;
-    entityType: number;
-    url: string;
-  };
+  addCard?: CardData;
   requestClose?: boolean;
+}
+
+export interface CardData {
+  category: string;
+  title: string;
+  entityType: number;
+  url: string;
+  backgroundColor: string;
+}
+
+export interface CardMenuOptions {
+  backgroundColors: ColorOption[];
+}
+
+export interface ColorOption {
+  option: string;
+  tooltip: string;
 }

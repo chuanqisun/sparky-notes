@@ -1,0 +1,42 @@
+[
+  {
+    "option": "#afbccf",
+    "tooltip": "Gray"
+  },
+  {
+    "option": "#ffafa3",
+    "tooltip": "Red"
+  },
+  {
+    "option": "#ffc470",
+    "tooltip": "Orange"
+  },
+  {
+    "option": "#ffd966",
+    "tooltip": "Yello"
+  },
+  {
+    "option": "#85e0a3",
+    "tooltip": "Green"
+  },
+  {
+    "option": "#75d7f0",
+    "tooltip": "Teal"
+  },
+  {
+    "option": "#80caff",
+    "tooltip": "Blue"
+  },
+  {
+    "option": "#d9b8ff",
+    "tooltip": "Violet"
+  },
+  {
+    "option": "#ffbdf2",
+    "tooltip": "Pink"
+  },
+  {
+    "option": "#e6e6e6",
+    "tooltip": "Light gray"
+  }
+]
