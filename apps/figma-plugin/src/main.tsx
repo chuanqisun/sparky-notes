@@ -1,6 +1,7 @@
 import { CardData, MessageToMain, MessageToUI } from "@h20/types";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import figmaPalette from "./assets/figma-palette.json";
+import Plus from "./assets/FigmaPlus.svg";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
@@ -25,11 +26,28 @@ function Widget() {
     cardData
       ? [
           {
+            icon: Plus,
+            itemType: "action",
+            propertyName: "add",
+            tooltip: "New",
+          },
+          {
+            itemType: "separator",
+          },
+          {
             itemType: "color-selector",
             propertyName: "backgroundColor",
             tooltip: "Background",
             selectedOption: cardBackground,
             options: figmaPalette,
+          },
+          {
+            itemType: "separator",
+          },
+          {
+            itemType: "action",
+            propertyName: "openInBrowser",
+            tooltip: "Open in browser",
           },
         ]
       : [],
@@ -38,6 +56,12 @@ function Widget() {
         case "backgroundColor":
           setCardData({ ...cardData!, backgroundColor: propertyValue! });
           break;
+        case "add":
+          return new Promise((_resolve) => showUI());
+        case "openInBrowser":
+          return new Promise((_resolve) => {
+            showUI(`?openUrl=${cardData!.url}`);
+          });
       }
     }
   );
@@ -62,11 +86,9 @@ function Widget() {
         const widgetNode = figma.getNodeById(widgetId) as WidgetNode;
         const clonedWidget = widgetNode.cloneWidget({ cardData: msg.addCard });
 
-        clonedWidget.x = figma.viewport.center.x - clonedWidget.width / 2 + 32;
-        clonedWidget.y = figma.viewport.center.y - clonedWidget.height / 2 + 32;
+        clonedWidget.x = widgetNode.x;
+        clonedWidget.y = widgetNode.y + widgetNode.height + 32;
         figma.currentPage.appendChild(clonedWidget);
-
-        figma.viewport.scrollAndZoomIntoView([clonedWidget]);
 
         figma.notify(`✅ Card added to canvas`);
       }
@@ -86,14 +108,7 @@ function Widget() {
       <AutoLayout padding={cssPad(24, 24, 8, 24)}>
         <Input value={cardData.category} width={400} fontSize={24} lineHeight={28} fontWeight={700} onTextEditEnd={setCategory} />
       </AutoLayout>
-      <AutoLayout
-        padding={cssPad(8, 24, 24, 24)}
-        onClick={() =>
-          new Promise((_resolve) => {
-            showUI(`?openUrl=${cardData.url}`);
-          })
-        }
-      >
+      <AutoLayout padding={cssPad(8, 24, 24, 24)}>
         <Text width={400} fontSize={24} lineHeight={28}>
           {cardData.title}
         </Text>
