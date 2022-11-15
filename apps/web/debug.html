@@ -3,24 +3,32 @@
   <title>Sandbox</title>
   <style>
     body {
-      margin: 0;
-      height: 100vh;
+      margin: 16px;
       display: grid;
+      grid-template-rows: auto 1fr;
       grid-template-columns: auto auto;
-      place-content: center center;
+      justify-content: start;
       gap: 16px;
     }
 
     .debug-panel {
       display: flex;
-      flex-direction: column;
+      grid-column: 1 / -1;
       gap: 8px;
     }
 
     iframe {
       border: none;
+    }
+
+    #iframe-main {
       width: 420px;
       height: 800px;
+    }
+
+    #iframe-card {
+      width: 420px;
+      height: 600px;
     }
   </style>
 </head>
@@ -29,6 +37,7 @@
     <button data-action="ping">Ping</button>
     <button data-action="openUrl">Open bing.com</button>
   </div>
-  <iframe></iframe>
+  <iframe id="iframe-main"></iframe>
+  <iframe id="iframe-card"></iframe>
   <script type="module" src="./src/dev-shim.ts"></script>
 </body>

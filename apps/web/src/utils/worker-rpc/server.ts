@@ -9,8 +9,10 @@ export class WorkerServer<RouteTypes extends BaseRouteTypes, EventTypes extends 
   start() {
     if (this.isDedicatedWorker(this.worker)) {
       this.bindToPort(this.worker);
+      console.log("[worker] Dedicated mode");
     } else {
       this.worker.addEventListener("connect", async (connectEvent) => {
+        console.log("[worker] Shared mode");
         const port = connectEvent.ports[0];
         this.bindToPort(port);
         port.start();

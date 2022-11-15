@@ -3,7 +3,8 @@ import type { MessageToMain, MessageToUI } from "@h20/types";
 export default {};
 console.log("[debug-shim] ready");
 
-document.querySelector("iframe")!.src = import.meta.env.VITE_WEB_HOST;
+document.querySelector<HTMLIFrameElement>("#iframe-main")!.src = import.meta.env.VITE_WEB_HOST;
+document.querySelector<HTMLIFrameElement>("#iframe-card")!.src = import.meta.env.VITE_WEB_HOST + "/card.html";
 
 window.addEventListener("message", (e) => {
   const message = e.data?.pluginMessage as MessageToMain;
