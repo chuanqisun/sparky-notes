@@ -21,7 +21,7 @@ export interface IndexedItem {
 
 const getIndex = once(() => new FlexDocument(indexConfig));
 
-export function useSearch() {
+export function useLocalSearch() {
   const idx = useRef(getIndex());
 
   // TODO add should cause query and dump behavior to update
