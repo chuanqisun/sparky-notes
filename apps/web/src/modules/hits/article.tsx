@@ -1,6 +1,6 @@
 import type { MessageToMain } from "@h20/types";
 import type { HitsFtsNode } from "../fts/fts";
-import "./card.css";
+import "./article.css";
 import { EntityBackgroundColor, EntityDisplayName, EntityIcon, EntityName } from "./entity";
 
 export interface HitsCardProps {
@@ -8,7 +8,7 @@ export interface HitsCardProps {
   isParent?: boolean;
   sendToFigma: (figmaCard: MessageToMain) => void;
 }
-export function HitsCard({ node, sendToFigma, isParent }: HitsCardProps) {
+export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
   return (
     <>
       <li class={`c-list__item`} key={node.id}>
@@ -42,7 +42,7 @@ export function HitsCard({ node, sendToFigma, isParent }: HitsCardProps) {
       </li>
       {isParent &&
         node.children.map((childNode) =>
-          childNode.hasHighlight ? <HitsCard isParent={false} node={childNode as any as HitsFtsNode} sendToFigma={sendToFigma} /> : null
+          childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsFtsNode} sendToFigma={sendToFigma} /> : null
         )}
     </>
   );

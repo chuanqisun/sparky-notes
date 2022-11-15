@@ -2,7 +2,7 @@ import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { HitsFtsNode } from "./modules/fts/fts";
-import { HitsCard } from "./modules/hits/card";
+import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { StatusBar, useLog } from "./modules/status/status-bar";
@@ -206,7 +206,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         <ul class="c-list" id="js-virtual-list">
           {ftsNodes.map((parentNode, index) => (
             <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
-              <HitsCard node={parentNode} isParent={true} sendToFigma={notifyFigma} />
+              <HitsArticle node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             </VirtualListItem>
           ))}
         </ul>
