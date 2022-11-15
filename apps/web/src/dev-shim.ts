@@ -3,13 +3,22 @@ import type { MessageToMain, MessageToUI } from "@h20/types";
 export default {};
 console.log("[debug-shim] ready");
 
-document.querySelector<HTMLIFrameElement>("#iframe-main")!.src = import.meta.env.VITE_WEB_HOST;
-document.querySelector<HTMLIFrameElement>("#iframe-card")!.src = import.meta.env.VITE_WEB_HOST + "/card.html";
+const mainIframe = document.querySelector<HTMLIFrameElement>("#iframe-main")!;
+const cardIframe = document.querySelector<HTMLIFrameElement>("#iframe-card")!;
+const typePreview = document.querySelector<HTMLInputElement>(`[data-preview="type"]`)!;
+const idPreview = document.querySelector<HTMLInputElement>(`[data-preview="id"]`)!;
+
+mainIframe.src = import.meta.env.VITE_WEB_HOST;
+cardIframe.src = import.meta.env.VITE_WEB_HOST + "/card.html";
 
 window.addEventListener("message", (e) => {
   const message = e.data?.pluginMessage as MessageToMain;
-
   console.log(`[debug] UI -> Main`, message);
+
+  if (message.addCard) {
+    typePreview.value = message.addCard.entityType.toString();
+    idPreview.value = message.addCard.entityId;
+  }
 });
 
 window.addEventListener("click", (e) => {
@@ -28,6 +37,9 @@ window.addEventListener("click", (e) => {
       mutableUrl.searchParams.set("openUrl", "https://bing.com");
       mutableUrl.search = mutableUrl.searchParams.toString();
       iframe.src = mutableUrl.toString();
+      break;
+    case "loadCard":
+      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview}`;
       break;
   }
 });

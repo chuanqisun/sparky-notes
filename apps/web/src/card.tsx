@@ -19,8 +19,8 @@ window.focus();
 // extract entityId as first step
 const entityId = new URLSearchParams(location.search).get("entityId");
 if (!entityId) {
-  document.getElementById("app")!.innerHTML = "Invalid card URL";
-  throw new Error("Invalid card URL");
+  document.getElementById("app")!.innerHTML = "Specify an Id to load the card";
+  throw new Error("Id not found");
 }
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
@@ -57,12 +57,27 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   return (
     <>
-      <h1>Placeholder for claim title</h1>
-      <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-        dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-      </p>
+      {isConnected === false && (
+        <section class="c-welcome-mat">
+          <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
+          <div class="c-welcome-action-group">
+            <button class="u-reset c-jumbo-button" onClick={signIn}>
+              Sign in
+            </button>
+          </div>
+        </section>
+      )}
+      {isConnected === true && (
+        <>
+          <h1>Placeholder for claim title</h1>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+            quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+            cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
+            laborum.
+          </p>
+        </>
+      )}
     </>
   );
 }

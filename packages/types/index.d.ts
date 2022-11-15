@@ -18,6 +18,7 @@ export interface MessageToMain {
 export interface CardData {
   category: string;
   title: string;
+  entityId: string;
   entityType: number;
   url: string;
   backgroundColor: string;

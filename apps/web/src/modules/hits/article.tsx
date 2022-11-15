@@ -19,6 +19,7 @@ export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
               addCard: {
                 category: EntityDisplayName[node.entityType],
                 title: node.title,
+                entityId: node.id,
                 entityType: node.entityType,
                 backgroundColor: EntityBackgroundColor[node.entityType],
                 url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,

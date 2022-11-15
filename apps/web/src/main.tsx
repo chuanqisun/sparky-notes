@@ -203,13 +203,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
-        <ul class="c-list" id="js-virtual-list">
-          {ftsNodes.map((parentNode, index) => (
-            <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
-              <HitsArticle node={parentNode} isParent={true} sendToFigma={notifyFigma} />
-            </VirtualListItem>
-          ))}
-        </ul>
+        {isConnected !== false && (
+          <ul class="c-list" id="js-virtual-list">
+            {ftsNodes.map((parentNode, index) => (
+              <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
+                <HitsArticle node={parentNode} isParent={true} sendToFigma={notifyFigma} />
+              </VirtualListItem>
+            ))}
+          </ul>
+        )}
       </main>
       <footer>
         <StatusBar lines={lines} />

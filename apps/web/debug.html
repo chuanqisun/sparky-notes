@@ -11,6 +11,13 @@
       gap: 16px;
     }
 
+    input[data-preview="type"] {
+      width: 2rem;
+    }
+    input[data-preview="id"] {
+      width: 4rem;
+    }
+
     .debug-panel {
       display: flex;
       grid-column: 1 / -1;
@@ -36,8 +43,9 @@
   <div class="debug-panel">
     <button data-action="ping">Ping</button>
     <button data-action="openUrl">Test redirect</button>
-    <input readonly placeholder="Active item preview" />
-    <button data-action="load-item">Load to card</button>
+    <input data-preview="type" placeholder="Type" />
+    <input data-preview="id" placeholder="Id" />
+    <button data-action="loadCard">Load card with Id</button>
   </div>
   <iframe id="iframe-main"></iframe>
   <iframe id="iframe-card"></iframe>
