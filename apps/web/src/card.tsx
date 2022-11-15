@@ -16,16 +16,14 @@ const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).sta
 document.getElementById("app")!.innerHTML = "";
 window.focus();
 
-function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
-  // Handle URL redirect
-  useEffect(() => {
-    const openUrl = new URLSearchParams(location.search).get("openUrl");
-    if (openUrl) {
-      window.open(openUrl, "_blank");
-      notifyFigma({ requestClose: true });
-    }
-  }, []);
+// extract entityId as first step
+const entityId = new URLSearchParams(location.search).get("entityId");
+if (!entityId) {
+  document.getElementById("app")!.innerHTML = "Invalid card URL";
+  throw new Error("Invalid card URL");
+}
 
+function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
   const { log, lines } = useLog();
 

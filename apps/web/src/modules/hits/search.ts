@@ -2,6 +2,44 @@ import { field, ifAll, ifAny } from "acs-expression-builder";
 import { getPageOffsets } from "../../utils/chunk";
 import type { FilterConfig, SearchOutput, SearchResultItem } from "./hits";
 
+export interface FindConfig {
+  proxy: (payload: any) => Promise<SearchOutput>;
+  filter: FilterConfig;
+}
+export async function find({ proxy, filter }: FindConfig): Promise<SearchResultItem | null> {
+  const payload = getFindPayload({ filter });
+  const { results } = await proxy(payload);
+  return results[0] ?? null;
+}
+
+export function getFindPayload(config: { filter: FilterConfig }) {
+  return {
+    top: 1,
+    skip: 0,
+    filter: getFilterString(config.filter),
+    queryType: "Simple",
+    searchText: "*",
+    select: [
+      "Id",
+      "EntityType",
+      "Title",
+      "UpdatedOn",
+      "Children/Id",
+      "Children/EntityType",
+      "Children/Title",
+      "Children/UpdatedOn",
+      "Researchers/Id",
+      "Researchers/Name",
+      "Products/Id",
+      "Products/Name",
+      "Topics/Id",
+      "Topics/Name",
+      "Group/Id",
+      "Group/Name",
+    ],
+  };
+}
+
 export interface SearchConfig {
   pageSize: number;
   proxy: (payload: any) => Promise<SearchOutput>;
@@ -90,7 +128,8 @@ export function getSearchPayload(config: { count: boolean; top: number; skip: nu
 export function getFilterString(filterConfig: FilterConfig, inverseFilterConfig?: FilterConfig) {
   return ifAll([
     field("IsActive").eq(true),
-    ...(filterConfig.entityTypes?.length ? [isOneOfNumbers("EntityType", filterConfig.entityTypes)] : []),
+    ...(filterConfig.ids?.length ? [isOneOfValues("Id", filterConfig.ids)] : []),
+    ...(filterConfig.entityTypes?.length ? [isOneOfValues("EntityType", filterConfig.entityTypes)] : []),
     ...(inverseFilterConfig?.entityTypes?.length ? [isNoneOfNumbers("EntityType", inverseFilterConfig.entityTypes)] : []),
     ...(filterConfig.productIds?.length ? [hasOneOfIds("Products", filterConfig.productIds)] : []),
     ...(filterConfig.topicIds?.length ? [hasOneOfIds("Topics", filterConfig.topicIds)] : []),
@@ -120,7 +159,7 @@ function isOneOfIds(fieldName: string, candidates: number[]) {
   return ifAny(candidates.map((id) => field(fieldName).field("Id").eq(id)));
 }
 
-function isOneOfNumbers(fieldName: string, candidates: number[]) {
+function isOneOfValues(fieldName: string, candidates: (number | string)[]) {
   return ifAny(candidates.map((candidate) => field(fieldName).eq(candidate)));
 }
 
