@@ -4,27 +4,38 @@ import type { FilterConfig, SearchOutput, SearchResultItem } from "./hits";
 
 export interface FindConfig {
   proxy: (payload: any) => Promise<SearchOutput>;
-  filter: FilterConfig;
+  filter: FindFilter;
 }
+
+export interface FindFilter {
+  entityType: number;
+  entityId: string;
+}
+
 export async function searchFirst({ proxy, filter }: FindConfig): Promise<SearchResultItem | null> {
   const payload = getFindPayload({ filter });
   const { results } = await proxy(payload);
   return results[0] ?? null;
 }
 
-export function getFindPayload(config: { filter: FilterConfig }) {
+export function getFindPayload(config: { filter: FindFilter }) {
   return {
     top: 1,
     skip: 0,
-    filter: getFilterString(config.filter),
+    filter: ifAll([
+      field("IsActive").eq(true),
+      ifAny([field("Id").eq(config.filter.entityId), field("Children").any((item) => item("Id").eq(config.filter.entityId))]),
+    ]).toString(),
     queryType: "Simple",
     searchText: "*",
     select: [
       "Id",
       "EntityType",
       "Title",
+      "Contents",
       "UpdatedOn",
       "Children/Id",
+      "Children/Contents",
       "Children/EntityType",
       "Children/Title",
       "Children/UpdatedOn",

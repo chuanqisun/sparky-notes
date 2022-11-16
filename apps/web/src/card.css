@@ -12,3 +12,13 @@ body {
 #app {
   height: 100%;
 }
+
+article {
+  height: 100%;
+  overflow-y: auto;
+}
+
+ul {
+  list-style: initial;
+  padding-left: 2rem;
+}

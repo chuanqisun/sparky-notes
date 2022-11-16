@@ -1,6 +1,6 @@
 import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
@@ -24,6 +24,15 @@ if (!entityId || Number.isNaN(entityType)) {
   throw new Error("Type or Id not found");
 }
 
+interface CardData {
+  title: string;
+  updatedOn: Date;
+  children: {
+    entityId: string;
+    title: string;
+  }[];
+}
+
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
   const { log, lines } = useLog();
@@ -31,6 +40,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { worker } = props;
   const { isConnected, signIn, signOut } = useAuth();
   const { value: configValue } = useConfig();
+
+  const [cardData, setCardData] = useState<CardData | null>(null);
 
   useEffect(() => {
     switch (isConnected) {
@@ -58,10 +69,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // Fetch entity content
   useEffect(() => {
-    if (!isConnected) return;
+    // Assume user is already connected to reduce latency
 
-    worker.request("getCardData", { config: configValue, entityId: entityId!, entityType: entityType! });
-  }, [isConnected]);
+    worker.request("getCardData", { config: configValue, entityId: entityId!, entityType: entityType! }).then((result) => {
+      if (!result.cardData) return;
+
+      setCardData({
+        title: result.cardData.title,
+        updatedOn: new Date(result.cardData.updatedOn),
+        children: result.cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled" })),
+      });
+    });
+  }, []);
 
   return (
     <>
@@ -75,16 +94,16 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </div>
         </section>
       )}
-      {isConnected === true && (
-        <>
-          <h1>Placeholder for claim title</h1>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-            quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-            cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-            laborum.
-          </p>
-        </>
+      {isConnected === true && cardData && (
+        <article>
+          <h1>{cardData.title}</h1>
+          <p>{cardData.updatedOn.toLocaleString()}</p>
+          <ul>
+            {cardData.children.map((child) => (
+              <li key={child.entityId}>{child.title}</li>
+            ))}
+          </ul>
+        </article>
       )}
     </>
   );

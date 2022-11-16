@@ -166,7 +166,8 @@ const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
   const result = await searchFirst({
     proxy,
     filter: {
-      ids: [req.entityId],
+      entityId: req.entityId,
+      entityType: req.entityType,
     },
   });
   console.log(`[get-card-data] ${(performance.measure("duration", "start").duration / 1000).toFixed(2)}ms`, result);
