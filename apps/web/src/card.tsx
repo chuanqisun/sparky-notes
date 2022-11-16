@@ -1,6 +1,7 @@
 import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
+import { EntityName } from "./modules/hits/entity";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
@@ -26,6 +27,7 @@ if (!entityId || Number.isNaN(entityType)) {
 
 interface CardData {
   title: string;
+  entityType: number;
   updatedOn: Date;
   children: {
     entityId: string;
@@ -76,6 +78,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
       setCardData({
         title: result.cardData.title,
+        entityType: result.cardData.entityType,
         updatedOn: new Date(result.cardData.updatedOn),
         children: result.cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled" })),
       });
@@ -103,6 +106,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               <li key={child.entityId}>{child.title}</li>
             ))}
           </ul>
+          <a target="_blank" href={`https://hits.microsoft.com/${EntityName[cardData.entityType]}/${entityId}`}>
+            Open in browser
+          </a>
         </article>
       )}
     </>
