@@ -22,7 +22,7 @@ const entityId = new URLSearchParams(location.search).get("entityId");
 const entityType = parseInt(new URLSearchParams(location.search).get("entityType")!);
 if (!entityId || Number.isNaN(entityType)) {
   document.getElementById("app")!.innerHTML = "Specify an Type and Id to load the card";
-  throw new Error("Type or Id not found");
+  console.warn("Type or Id not found");
 }
 
 interface CardData {

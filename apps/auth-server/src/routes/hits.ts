@@ -4,7 +4,7 @@ import axios from "axios";
 import crypto from "crypto";
 import type { Request } from "express";
 import path from "path";
-import { readFileSafe, writeJsonFile } from "../utils/fs";
+import { BufferedJsonFile } from "../utils/fs";
 import { parseJwt } from "../utils/jwt";
 
 export interface SignInInput {
@@ -22,6 +22,8 @@ export interface SignInOutput {
   userClientId: string;
   id_token: string;
 }
+
+const bufferedUserTable = new BufferedJsonFile<any[]>(path.join(process.cwd(), "db", "users.json")).init("[]");
 
 export async function signIn(req: Request): Response<SignInOutput> {
   const input: SignInInput = req.body;
@@ -57,9 +59,9 @@ export async function signIn(req: Request): Response<SignInOutput> {
 
   const userClientId = crypto.randomUUID();
 
-  const users = JSON.parse((await readFileSafe(userTable)) ?? "[]");
+  const users = bufferedUserTable.read();
   const updatedUsers = updateUserInTable(users, { ...response.data, email, code_verifier, userClientId });
-  await writeJsonFile(userTable, updatedUsers);
+  bufferedUserTable.write(updatedUsers);
 
   console.log("[signin] sign in success");
   return {
@@ -83,9 +85,7 @@ export type SignOutOutput = {};
 export async function signOut(req: Request): Response<SignOutOutput> {
   const input: SignOutInput = req.body;
 
-  const userTable = path.join(process.cwd(), "db", "users.json");
-
-  const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
+  const users = bufferedUserTable.read();
   const user = users.find((user) => user.email === input.email && user.id_token === input.id_token && user.userClientId === input.userClientId);
 
   if (!user) {
@@ -95,7 +95,7 @@ export async function signOut(req: Request): Response<SignOutOutput> {
   }
 
   const updatedUsers = removeUserInTable(users, user);
-  await writeJsonFile(userTable, updatedUsers);
+  bufferedUserTable.write(updatedUsers);
 
   return {
     status: 200,
@@ -118,10 +118,8 @@ export async function getInteractiveSignInStatus(req: Request): Response<SignInS
 
   assert(typeof input.code_verifier === "string");
   return new Promise<any>((resolve) => {
-    const userTable = path.join(process.cwd(), "db", "users.json");
-
     const pollId = setInterval(async () => {
-      const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
+      const users = bufferedUserTable.read();
       const user = users.find((user) => user.code_verifier === input.code_verifier);
       if (user) {
         clearInterval(pollId);
@@ -131,7 +129,7 @@ export async function getInteractiveSignInStatus(req: Request): Response<SignInS
         const { code_verifier, ...userWithoutVerifier } = user;
 
         const updatedUsers = updateUserInTable(users, userWithoutVerifier);
-        await writeJsonFile(userTable, updatedUsers);
+        bufferedUserTable.write(updatedUsers);
 
         resolve({
           status: 200,
@@ -170,8 +168,7 @@ export async function getToken(req: Request): Response<string> {
   assert(typeof input.email === "string");
   assert(typeof input.userClientId === "string");
 
-  const userTable = path.join(process.cwd(), "db", "users.json");
-  const users = JSON.parse((await readFileSafe(userTable)) ?? "[]") as any[];
+  const users = bufferedUserTable.read();
   const user = users.find((user) => user.email === input.email && user.id_token === input.id_token && user.userClientId === input.userClientId);
 
   if (!user) {
@@ -205,10 +202,10 @@ export async function getToken(req: Request): Response<string> {
   }
 
   // HACK: read user table again to reduce chance of race condition
-  const users2 = JSON.parse((await readFileSafe(userTable)) ?? "[]");
+  const users2 = bufferedUserTable.read();
   // roll the refresh token, but keep the old email and id_token
   const updatedUsers = updateUserInTable(users2, { ...response.data, email: input.email, id_token: input.id_token, userClientId: input.userClientId });
-  await writeJsonFile(userTable, updatedUsers);
+  bufferedUserTable.write(updatedUsers);
 
   return {
     status: response.status,
