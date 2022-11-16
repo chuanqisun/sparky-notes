@@ -6,8 +6,8 @@ import Plus from "./assets/FigmaPlus.svg";
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
 
-const showUI = (search: string = "") =>
-  figma.showUI(`<script>window.location.href="${process.env.WEB_URL + search}"</script>`, {
+const showUI = (urlSuffix: string = "") =>
+  figma.showUI(`<script>window.location.href="${process.env.WEB_URL + urlSuffix}"</script>`, {
     height: 800,
     width: 420,
   });
@@ -108,7 +108,14 @@ function Widget() {
       <AutoLayout padding={cssPad(24, 24, 8, 24)}>
         <Input value={cardData.category} width={400} fontSize={24} lineHeight={28} fontWeight={700} onTextEditEnd={setCategory} />
       </AutoLayout>
-      <AutoLayout padding={cssPad(8, 24, 24, 24)}>
+      <AutoLayout
+        padding={cssPad(8, 24, 24, 24)}
+        onClick={() =>
+          new Promise((_resolve) => {
+            showUI(`/card.html?entityId=${cardData.entityId}&entityType=${cardData.entityType}`);
+          })
+        }
+      >
         <Text width={400} fontSize={24} lineHeight={28}>
           {cardData.title}
         </Text>
