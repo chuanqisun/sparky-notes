@@ -39,7 +39,7 @@ window.addEventListener("click", (e) => {
       iframe.src = mutableUrl.toString();
       break;
     case "loadCard":
-      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview}`;
+      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
       break;
   }
 });

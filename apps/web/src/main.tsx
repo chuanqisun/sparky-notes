@@ -51,7 +51,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       case undefined:
         return log("Signing in...");
     }
-  }, [isConnected, isConnected]);
+  }, [isConnected]);
 
   // Handle server events
   // Caution: please keep deps array empty

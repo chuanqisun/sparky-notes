@@ -6,7 +6,7 @@ export interface FindConfig {
   proxy: (payload: any) => Promise<SearchOutput>;
   filter: FilterConfig;
 }
-export async function find({ proxy, filter }: FindConfig): Promise<SearchResultItem | null> {
+export async function searchFirst({ proxy, filter }: FindConfig): Promise<SearchResultItem | null> {
   const payload = getFindPayload({ filter });
   const { results } = await proxy(payload);
   return results[0] ?? null;

@@ -28,6 +28,7 @@ export interface HitsGraphChildNode {
 
 export interface FilterConfig {
   ids?: string[];
+  childIds?: string[];
   entityTypes?: number[];
   productIds?: number[];
   topicIds?: number[];

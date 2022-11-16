@@ -18,9 +18,10 @@ window.focus();
 
 // extract entityId as first step
 const entityId = new URLSearchParams(location.search).get("entityId");
-if (!entityId) {
-  document.getElementById("app")!.innerHTML = "Specify an Id to load the card";
-  throw new Error("Id not found");
+const entityType = parseInt(new URLSearchParams(location.search).get("entityType")!);
+if (!entityId || Number.isNaN(entityType)) {
+  document.getElementById("app")!.innerHTML = "Specify an Type and Id to load the card";
+  throw new Error("Type or Id not found");
 }
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
@@ -40,7 +41,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       case undefined:
         return log("Signing in...");
     }
-  }, [isConnected, isConnected]);
+  }, [isConnected]);
 
   // Figma RPC
   useEffect(() => {
@@ -54,6 +55,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
+
+  // Fetch entity content
+  useEffect(() => {
+    if (!isConnected) return;
+
+    worker.request("getCardData", { config: configValue, entityId: entityId!, entityType: entityType! });
+  }, [isConnected]);
 
   return (
     <>

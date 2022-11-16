@@ -8,7 +8,7 @@ import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modul
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
-import { search } from "./modules/hits/search";
+import { search, searchFirst } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { batchScheduler } from "./utils/batch-scheduler";
 import { identity } from "./utils/identity";
@@ -22,6 +22,7 @@ async function main() {
   const worker = new WorkerServer<WorkerRoutes, WorkerEvents>(self)
     .onRequest("echo", handleEcho)
     .onRequest("fullSync", handleFullSync)
+    .onRequest("getCardData", handleGetCardData)
     .onRequest("incSync", handleIncSync)
     .onRequest("search", handleSearch)
     .onRequest("recent", handleRecent)
@@ -154,6 +155,23 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   updateSyncRecord(await db, new Date(), exportedIndex);
 
   summary.hasError ? emit("installed", "failed") : emit("installed", "success");
+};
+
+const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
+  const config = req.config;
+  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const proxy = getAuthenticatedProxy(accessToken);
+
+  performance.mark("start");
+  const result = await searchFirst({
+    proxy,
+    filter: {
+      ids: [req.entityId],
+    },
+  });
+  console.log(`[get-card-data] ${(performance.measure("duration", "start").duration / 1000).toFixed(2)}ms`, result);
+
+  return { cardData: result?.document ?? null };
 };
 
 const handleUninstall: WorkerRoutes["uninstall"] = async ({ req, emit }) => {

@@ -1,11 +1,13 @@
 import type { HitsFtsNode } from "./modules/fts/fts";
 import type { HitsConfig } from "./modules/hits/config";
+import type { SearchResultDocument } from "./modules/hits/hits";
 import type { SearchProgress } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
 
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
   fullSync: RouteHandler<FullSyncReq, void, WorkerEvents>;
+  getCardData: RouteHandler<GetCardDataReq, GetCardDataRes>;
   incSync: RouteHandler<IncSyncReq, void, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
   recent: RouteHandler<undefined, RecentRes>;
@@ -31,6 +33,16 @@ export interface EchoRes {
 
 export interface FullSyncReq {
   config: HitsConfig;
+}
+
+export interface GetCardDataReq {
+  config: HitsConfig;
+  entityType: number;
+  entityId: string;
+}
+
+export interface GetCardDataRes {
+  cardData: SearchResultDocument | null;
 }
 
 export interface IncSyncReq {
