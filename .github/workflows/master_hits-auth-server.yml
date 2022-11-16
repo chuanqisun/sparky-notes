@@ -27,44 +27,13 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Upload auth server
-        uses: actions/upload-artifact@v2
-        with:
-          name: auth-server
-          path: ./apps/auth-server
-      - name: Upload api proxy
-        uses: actions/upload-artifact@v2
-        with:
-          name: api-proxy
-          path: ./apps/api-proxy
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: "Production"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
-    steps:
-      - name: Download auth-server
-        uses: actions/download-artifact@v2
-        with:
-          name: auth-server
-          path: ./auth-server
-
-      - name: Download api-proxy
-        uses: actions/download-artifact@v2
-        with:
-          name: api-proxy
-          path: ./api-proxy
-
       - name: "Deploy auth server"
         uses: azure/webapps-deploy@v2
         with:
           app-name: "hits-auth-server"
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2D301BEF5A4C48F68617409F8E8D3AEE }}
-          package: ./auth-server
+          package: ./apps/auth-server
 
       - name: "Deploy api proxy"
         uses: azure/webapps-deploy@v2
@@ -72,4 +41,35 @@ jobs:
           app-name: "hits-api-proxy"
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_83BA8BBDC89C4E67BE7D4787C8649135 }}
-          package: ./api-proxy
+          package: ./apps/api-proxy
+
+      # - name: Upload auth server
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: auth-server
+      #     path: ./apps/auth-server
+      # - name: Upload api proxy
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: api-proxy
+      #     path: ./apps/api-proxy
+
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   environment:
+  #     name: "Production"
+  #     url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+  #   steps:
+  #     - name: Download auth-server
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: auth-server
+  #         path: ./auth-server
+
+  #     - name: Download api-proxy
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: api-proxy
+  #         path: ./api-proxy
