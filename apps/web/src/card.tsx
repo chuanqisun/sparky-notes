@@ -6,7 +6,7 @@ import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
-import { sendMessage } from "./utils/figma-rpc";
+import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -36,7 +36,7 @@ interface CardData {
 }
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
-  const notifyFigma = useCallback(sendMessage.bind(null, import.meta.env.VITE_IFRAME_HOST_ORIGIN, import.meta.env.VITE_PLUGIN_ID), []);
+  const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
   const { log, lines } = useLog();
 
   const { worker } = props;
