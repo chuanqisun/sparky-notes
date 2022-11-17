@@ -11,47 +11,43 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/hits/token", async (req, res) => {
+app.post("/hits/token", async (req, res, next) => {
   try {
     const { data, status } = await getToken(req);
     console.log("/hits/token", status);
-    return res.status(status).json(data);
+    res.status(status).json(data);
   } catch (e) {
-    console.error(e);
-    return res.status(500).end();
+    next(e);
   }
 });
 
-app.post("/hits/signinstatus", async (req, res) => {
+app.post("/hits/signinstatus", async (req, res, next) => {
   try {
     const { data, status } = await getInteractiveSignInStatus(req);
     console.log("/hits/signinstatus", status);
-    return res.status(status).json(data);
+    res.status(status).json(data);
   } catch (e) {
-    console.error(e);
-    return res.status(500).end();
+    next(e);
   }
 });
 
-app.post("/hits/signin", async (req, res) => {
+app.post("/hits/signin", async (req, res, next) => {
   try {
     const { data, status } = await signIn(req);
     console.log("/hits/signin", status);
-    return res.status(status).json(data);
+    res.status(status).json(data);
   } catch (e) {
-    console.error(e);
-    return res.status(500).end();
+    next(e);
   }
 });
 
-app.post("/hits/signout", async (req, res) => {
+app.post("/hits/signout", async (req, res, next) => {
   try {
     const { data, status } = await signOut(req);
     console.log("/hits/signout", status);
     return res.status(status).json(data);
   } catch (e) {
-    console.error(e);
-    return res.status(500).end();
+    next(e);
   }
 });
 
