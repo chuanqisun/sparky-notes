@@ -1,9 +1,8 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { constants } from "http2";
-import { getReport } from "./routes/object";
-import { parseJwt } from "./utils/jwt";
+import { requireToken } from "./middleware/require-token";
+import { getReport } from "./routes/report";
 
 dotenv.config();
 
@@ -14,27 +13,9 @@ app.use(express.json());
 app.use(cors());
 
 // shared middleware for validating auth header
-app.use(async (req, res, next) => {
-  const token = req.header("Authorization");
-  if (!token) return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authorization header required");
-  const parsedToken = parseJwt(token);
-  if (parsedToken === null) return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authroization header format is invalid");
-  if (typeof parsedToken["exp"] !== "number") return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authroization header format is invalid");
+app.use(requireToken);
 
-  console.log(parsedToken);
-
-  next();
-});
-
-app.get("/report/:id", async (req, res, next) => {
-  try {
-    const { data, status } = await getReport(req);
-    console.log("/report", status);
-    res.status(status).json(data);
-  } catch (e) {
-    next(e);
-  }
-});
+app.get("/report/:id", getReport);
 
 app.listen(port);
 console.log(`[object-viewer] Listening at port ${port}`);
