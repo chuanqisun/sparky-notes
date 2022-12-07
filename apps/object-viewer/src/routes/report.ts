@@ -10,12 +10,11 @@ export const getReport: RequestHandler = async (req, res, next) => {
     assert(!Number.isNaN(id));
 
     const authorzation = req.header("Authorization")!;
-    console.log(authorzation);
     const proxy = getAuthenticatedProxy(authorzation);
     const searchResult = await findOne({ proxy, filter: { entityId: id.toString() } });
 
-    console.log("[GET] /report", searchResult);
     res.status(constants.HTTP_STATUS_OK).json(searchResult);
+    next();
   } catch (e) {
     next(e);
   }
