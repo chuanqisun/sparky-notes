@@ -18,7 +18,11 @@ app.use(async (req, res, next) => {
   const token = req.header("Authorization");
   if (!token) return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authorization header required");
   const parsedToken = parseJwt(token);
-  if (typeof parsedToken !== "object") return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authroization header format is invalid");
+  if (parsedToken === null) return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authroization header format is invalid");
+  if (typeof parsedToken["exp"] !== "number") return res.status(constants.HTTP_STATUS_FORBIDDEN).send("Authroization header format is invalid");
+
+  console.log(parsedToken);
+
   next();
 });
 
