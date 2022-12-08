@@ -28,6 +28,7 @@ if (!entityId || Number.isNaN(entityType)) {
 
 interface CardData {
   title: string;
+  entityId: string;
   entityType: number;
   updatedOn: Date;
   tags: {
@@ -87,14 +88,16 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     // Assume user is already connected to reduce latency
 
     worker.request("getCardData", { config: configValue, entityId: entityId!, entityType: entityType! }).then((result) => {
-      if (!result.cardData) return;
+      const { cardData } = result;
+      if (!cardData) return;
 
       setCardData({
-        title: result.cardData.title,
-        entityType: result.cardData.entityType,
-        updatedOn: new Date(result.cardData.updatedOn),
-        children: result.cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled" })),
-        tags: [...result.cardData.products.map(toDisplayTag("product")), ...result.cardData.topics.map(toDisplayTag("topic"))],
+        entityId: cardData.id,
+        title: cardData.title,
+        entityType: cardData.entityType,
+        updatedOn: new Date(cardData.updatedOn),
+        children: cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled" })),
+        tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
   }, []);
@@ -124,14 +127,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               ))}
             </ul>
           ) : null}
-          <h1>{cardData.title}</h1>
+          <h1 class="c-card-title">{cardData.entityId === entityId ? <mark>{cardData.title}</mark> : cardData.title}</h1>
           <p>{cardData.updatedOn.toLocaleString()}</p>
           <ul>
             {cardData.children.map((child) => (
-              <li key={child.entityId}>{child.title}</li>
+              <li key={child.entityId}>{child.entityId === entityId ? <mark>{child.title}</mark> : child.title}</li>
             ))}
           </ul>
-          <a target="_blank" href={`https://hits.microsoft.com/${EntityName[cardData.entityType]}/${entityId}`}>
+          <a target="_blank" href={`https://hits.microsoft.com/${EntityName[entityType]}/${entityId}`}>
             Open in browser
           </a>
         </article>
