@@ -2,6 +2,7 @@ import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { EntityName } from "./modules/hits/entity";
+import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
@@ -78,7 +79,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const toDisplayTag = useCallback(
     (typePrefix: string) => (searchTag: SearchResultTag) => ({
       displayName: searchTag.name,
-      url: `https://hits.microsoft.com/${typePrefix}/${searchTag.name.replaceAll(" ", "-")}`, // TODO use real hub URL builder
+      url: `https://hits.microsoft.com/${typePrefix}/${getHubSlug(searchTag.name)}`,
     }),
     []
   );
@@ -120,7 +121,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             <ul class="c-tag-list">
               {cardData.tags.map((tag) => (
                 <li key={tag.url}>
-                  <a class="c-tag" href={tag.url}>
+                  <a class="c-tag" target="_blank" href={tag.url}>
                     {tag.displayName}
                   </a>
                 </li>
