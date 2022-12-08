@@ -22,10 +22,38 @@ ul {
   list-style: initial;
   padding-left: 2rem;
 }
-
+.c-card-article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px;
+}
 .c-card-title {
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 22px;
   font-weight: bold;
+}
+
+.c-child-accordion {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.c-child-entity-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 12px;
+}
+
+.c-child-title {
+  display: inline-block;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 500;
 }
 
 .c-tag-list {

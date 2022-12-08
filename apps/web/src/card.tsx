@@ -1,7 +1,7 @@
 import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { EntityName } from "./modules/hits/entity";
+import { EntityIcon, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
@@ -39,6 +39,7 @@ interface CardData {
   }[];
   children: {
     entityId: string;
+    entityType: number;
     title: string;
     body: string;
   }[];
@@ -107,7 +108,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             .join(" "),
         entityType: cardData.entityType,
         updatedOn: new Date(cardData.updatedOn),
-        children: cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled", body: child.contents ?? "" })),
+        children: cardData.children.map((child) => ({
+          entityId: child.id,
+          entityType: child.entityType,
+          title: child.title ?? "Untitled",
+          body: child.contents ?? "",
+        })),
         tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
@@ -126,7 +132,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         </section>
       )}
       {isConnected === true && cardData && (
-        <article>
+        <article class="c-card-article">
           {cardData.tags ? (
             <ul class="c-tag-list">
               {cardData.tags.map((tag) => (
@@ -141,11 +147,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <h1 class="c-card-title">{cardData.entityId === entityId ? <mark>{cardData.title}</mark> : cardData.title}</h1>
           <p>{cardData.updatedOn.toLocaleString()}</p>
           <p>{cardData.body}</p>
-          <ul>
+          <ul class="c-child-entity-list">
             {cardData.children.map((child) => (
               <li key={child.entityId}>
                 <details>
-                  <summary>{child.entityId === entityId ? <mark>{child.title}</mark> : child.title}</summary>
+                  <summary class="c-child-accordion">
+                    <img src={EntityIcon[child.entityType]} />
+                    <span class="c-child-title">{child.entityId === entityId ? <mark>{child.title}</mark> : child.title}</span>
+                  </summary>
                   <p>{child.body}</p>
                 </details>
               </li>
