@@ -29,6 +29,7 @@ if (!entityId || Number.isNaN(entityType)) {
 
 interface CardData {
   title: string;
+  body: string;
   entityId: string;
   entityType: number;
   updatedOn: Date;
@@ -39,6 +40,7 @@ interface CardData {
   children: {
     entityId: string;
     title: string;
+    body: string;
   }[];
 }
 
@@ -84,6 +86,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     []
   );
 
+  const normalizeWhitespace = useCallback((text: string) => text.trim().replace(/\s+/g, " "), []);
+
   // Fetch entity content
   useEffect(() => {
     // Assume user is already connected to reduce latency
@@ -95,9 +99,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       setCardData({
         entityId: cardData.id,
         title: cardData.title,
+        body:
+          cardData.abstract ??
+          normalizeWhitespace(cardData.contents ?? "")
+            .split(" ")
+            .slice(0, 100)
+            .join(" "),
         entityType: cardData.entityType,
         updatedOn: new Date(cardData.updatedOn),
-        children: cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled" })),
+        children: cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled", body: child.contents ?? "" })),
         tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
@@ -130,9 +140,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           ) : null}
           <h1 class="c-card-title">{cardData.entityId === entityId ? <mark>{cardData.title}</mark> : cardData.title}</h1>
           <p>{cardData.updatedOn.toLocaleString()}</p>
+          <p>{cardData.body}</p>
           <ul>
             {cardData.children.map((child) => (
-              <li key={child.entityId}>{child.entityId === entityId ? <mark>{child.title}</mark> : child.title}</li>
+              <li key={child.entityId}>
+                <details>
+                  <summary>{child.entityId === entityId ? <mark>{child.title}</mark> : child.title}</summary>
+                  <p>{child.body}</p>
+                </details>
+              </li>
             ))}
           </ul>
           <a target="_blank" href={`https://hits.microsoft.com/${EntityName[entityType]}/${entityId}`}>

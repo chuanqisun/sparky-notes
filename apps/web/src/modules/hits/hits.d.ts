@@ -56,6 +56,7 @@ export type HighlightableField = "title" | "contents" | "children/Title" | "chil
 
 export interface SearchResultDocument {
   id: string;
+  abstract: string | null; // Collection only
   contents: string | null;
   entityType: number;
   title: string;
