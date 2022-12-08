@@ -1,5 +1,5 @@
 import type { MessageToUI } from "@h20/types";
-import { render } from "preact";
+import { JSX, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { HitsFtsNode } from "./modules/fts/fts";
 import { HitsArticle } from "./modules/hits/article";
@@ -124,7 +124,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     await worker.request("fullSync", { config: configValue });
   }, [configValue]);
 
-  const handleInputChange = useCallback((event: Event) => {
+  const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
     virtualListRef.current?.scrollTo({ top: 0 });
   }, []);
