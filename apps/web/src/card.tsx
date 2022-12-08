@@ -2,6 +2,7 @@ import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { EntityName } from "./modules/hits/entity";
+import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
@@ -29,6 +30,10 @@ interface CardData {
   title: string;
   entityType: number;
   updatedOn: Date;
+  tags: {
+    displayName: string;
+    url: string;
+  }[];
   children: {
     entityId: string;
     title: string;
@@ -69,6 +74,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  const toDisplayTag = useCallback(
+    (typePrefix: string) => (searchTag: SearchResultTag) => ({
+      displayName: searchTag.name,
+      url: `https://hits.microsoft.com/${typePrefix}/${searchTag.name.replaceAll(" ", "-")}`, // TODO use real hub URL builder
+    }),
+    []
+  );
+
   // Fetch entity content
   useEffect(() => {
     // Assume user is already connected to reduce latency
@@ -81,6 +94,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         entityType: result.cardData.entityType,
         updatedOn: new Date(result.cardData.updatedOn),
         children: result.cardData.children.map((child) => ({ entityId: child.id, title: child.title ?? "Untitled" })),
+        tags: [...result.cardData.products.map(toDisplayTag("product")), ...result.cardData.topics.map(toDisplayTag("topic"))],
       });
     });
   }, []);
@@ -99,6 +113,17 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       )}
       {isConnected === true && cardData && (
         <article>
+          {cardData.tags ? (
+            <ul class="c-tag-list">
+              {cardData.tags.map((tag) => (
+                <li key={tag.url}>
+                  <a class="c-tag" href={tag.url}>
+                    {tag.displayName}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <h1>{cardData.title}</h1>
           <p>{cardData.updatedOn.toLocaleString()}</p>
           <ul>
