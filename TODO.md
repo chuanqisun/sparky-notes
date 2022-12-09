@@ -13,3 +13,4 @@
 - Sign out from all HITS Assistants
 - Handle "/" with custom tokenizer
 - Progressively disclose more non-highlight items
+- Benchmark: Query outline vs. Query children (
