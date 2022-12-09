@@ -32,7 +32,6 @@ export interface NodeSchema {
 }
 
 export interface EdgeSchema {
-  id: string;
   from: string;
   to: string;
   updatedOn: Date;
