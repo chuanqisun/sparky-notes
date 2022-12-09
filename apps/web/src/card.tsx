@@ -193,8 +193,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             · {cardData.updatedOn.toLocaleString()}
           </p>
           <button class="u-reset" onClick={() => setIsBodyExpanded((prev) => !prev)}>
-            <p>
-              <span class="c-card-body" data-overflow={!isBodyExpanded && !!cardData.bodyOverflow}>
+            <p class="c-card-body">
+              <span class="c-card-body__visible" data-overflow={!isBodyExpanded && !!cardData.bodyOverflow}>
                 {cardData.body}
               </span>
               {isBodyExpanded && cardData.bodyOverflow && <span> {cardData.bodyOverflow}</span>}
