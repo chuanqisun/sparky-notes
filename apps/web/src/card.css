@@ -28,6 +28,21 @@ ul {
   gap: 8px;
   padding: 8px 16px;
 }
+
+.c-card-body[data-overflow="true"]::after {
+  content: "...";
+  font-weight: 600;
+  display: inline-flex;
+  background-color: #eee;
+  padding: 0px 8px 4px 8px;
+  height: 10px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  line-height: 0px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
 .c-card-title {
   font-size: 18px;
   line-height: 22px;

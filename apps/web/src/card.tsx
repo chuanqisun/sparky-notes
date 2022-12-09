@@ -1,7 +1,7 @@
 import type { MessageToUI } from "@h20/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { EntityIcon, EntityName } from "./modules/hits/entity";
+import { EntityIcon, EntityName, EntityType } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
@@ -30,6 +30,7 @@ if (!entityId || Number.isNaN(entityType)) {
 interface CardData {
   title: string;
   body: string;
+  bodyOverflow: string;
   entityId: string;
   entityType: number;
   updatedOn: Date;
@@ -44,6 +45,8 @@ interface CardData {
     body: string;
   }[];
 }
+
+const bodyTextOverflowThreshold = 100;
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
@@ -97,23 +100,23 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       const { cardData } = result;
       if (!cardData) return;
 
+      const normalizedBodyWords = normalizeWhitespace(cardData.contents ?? "").split(" ");
+
       setCardData({
         entityId: cardData.id,
         title: normalizeWhitespace(cardData.title),
-        body:
-          cardData.abstract ??
-          normalizeWhitespace(cardData.contents ?? "")
-            .split(" ")
-            .slice(0, 100)
-            .join(" "),
+        body: cardData.abstract ?? normalizedBodyWords.slice(0, bodyTextOverflowThreshold).join(" "),
+        bodyOverflow: cardData.abstract ? "" : normalizedBodyWords.slice(bodyTextOverflowThreshold).join(" "),
         entityType: cardData.entityType,
         updatedOn: new Date(cardData.updatedOn),
-        children: cardData.children.map((child) => ({
-          entityId: child.id,
-          entityType: child.entityType,
-          title: normalizeWhitespace(child.title ?? "Untitled"),
-          body: normalizeWhitespace(child.contents ?? ""),
-        })),
+        children: cardData.children
+          .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
+          .map((child) => ({
+            entityId: child.id,
+            entityType: child.entityType,
+            title: normalizeWhitespace(child.title ?? "Untitled"),
+            body: normalizeWhitespace(child.contents ?? ""),
+          })),
         tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
@@ -122,12 +125,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Auto expand highlighted child entity
   useEffect(() => {
     if (!cardData) return;
-
     const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
     if (!accordion) return;
+
     accordion.open = true;
     accordion.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [cardData]);
+
+  const [isBodyExpanded, setIsBodyExpanded] = useState(false);
 
   return (
     <>
@@ -156,7 +161,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           ) : null}
           <h1 class="c-card-title">{cardData.entityId === entityId ? <mark>{cardData.title}</mark> : cardData.title}</h1>
           <p>{cardData.updatedOn.toLocaleString()}</p>
-          <p>{cardData.body}</p>
+          <button class="u-reset" onClick={() => setIsBodyExpanded((prev) => !prev)}>
+            <p>
+              <span class="c-card-body" data-overflow={!isBodyExpanded && !!cardData.bodyOverflow}>
+                {cardData.body}
+              </span>
+              {isBodyExpanded && cardData.bodyOverflow && <span> {cardData.bodyOverflow}</span>}
+            </p>
+          </button>
           <ul class="c-child-entity-list">
             {cardData.children.map((child) => (
               <li key={child.entityId}>
