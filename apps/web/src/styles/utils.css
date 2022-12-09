@@ -19,3 +19,8 @@
 .u-reset:where(summary)::-webkit-details-marker {
   display: none; /* remove triangle from Safair */
 }
+
+[data-highlight="true"] {
+  color: marktext;
+  background-color: mark;
+}
