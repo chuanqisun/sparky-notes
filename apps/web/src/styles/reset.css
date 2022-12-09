@@ -23,7 +23,6 @@ a {
 }
 a:where(:hover, :focus-visible) {
   text-decoration: underline;
-  text-decoration-thickness: 2px;
 }
 
 body {

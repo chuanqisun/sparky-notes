@@ -1,7 +1,7 @@
 import type { MessageToUI } from "@h20/types";
-import { render } from "preact";
+import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { EntityIcon, EntityName, EntityType } from "./modules/hits/entity";
+import { EntityDisplayName, EntityIcon, EntityName, EntityType } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
@@ -43,6 +43,14 @@ interface CardData {
     entityType: number;
     title: string;
     body: string;
+  }[];
+  group: {
+    displayName: string;
+    url: string;
+  };
+  researchers: {
+    displayName: string;
+    url: string;
   }[];
 }
 
@@ -109,6 +117,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         bodyOverflow: cardData.abstract ? "" : normalizedBodyWords.slice(bodyTextOverflowThreshold).join(" "),
         entityType: cardData.entityType,
         updatedOn: new Date(cardData.updatedOn),
+        group: {
+          displayName: cardData.group.name,
+          url: `https://hits.microsoft.com/group/${getHubSlug(cardData.group.name)}`,
+        },
+        researchers: cardData.researchers.map((researcher) => ({
+          displayName: researcher.name,
+          url: `https://hits.microsoft.com/researcher/${researcher.alias}`,
+        })),
         children: cardData.children
           .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
           .map((child) => ({
@@ -160,7 +176,22 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </ul>
           ) : null}
           <h1 class="c-card-title">{cardData.entityId === entityId ? <mark>{cardData.title}</mark> : cardData.title}</h1>
-          <p>{cardData.updatedOn.toLocaleString()}</p>
+          <p class="c-card-byline">
+            {EntityDisplayName[cardData.entityType]} ·{" "}
+            <a class="c-card-meta-link" href={cardData.group.url} target="_blank">
+              {cardData.group.displayName}
+            </a>{" "}
+            ·{" "}
+            {cardData.researchers.map((researcher, index) => (
+              <Fragment key={researcher.url}>
+                {index > 0 ? ", " : ""}
+                <a class="c-card-meta-link" href={researcher.url} target="_blank">
+                  {researcher.displayName}
+                </a>
+              </Fragment>
+            ))}{" "}
+            · {cardData.updatedOn.toLocaleString()}
+          </p>
           <button class="u-reset" onClick={() => setIsBodyExpanded((prev) => !prev)}>
             <p>
               <span class="c-card-body" data-overflow={!isBodyExpanded && !!cardData.bodyOverflow}>
@@ -182,7 +213,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               </li>
             ))}
           </ul>
-          <a target="_blank" href={`https://hits.microsoft.com/${EntityName[entityType]}/${entityId}`}>
+          <a class="c-card-full-report-link" target="_blank" href={`https://hits.microsoft.com/${EntityName[entityType]}/${entityId}`}>
             Open full report
           </a>
         </article>

@@ -23,7 +23,7 @@ export const EntityDisplayName: Record<number, string> = {
   2: "Study",
   25: "Recommendation",
   32: "Collection",
-  64: "Note",
+  64: "Customer Note",
 };
 
 export const EntityIcon: Record<number, string> = {
