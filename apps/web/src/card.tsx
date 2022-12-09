@@ -99,7 +99,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
       setCardData({
         entityId: cardData.id,
-        title: cardData.title,
+        title: normalizeWhitespace(cardData.title),
         body:
           cardData.abstract ??
           normalizeWhitespace(cardData.contents ?? "")
@@ -111,13 +111,23 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         children: cardData.children.map((child) => ({
           entityId: child.id,
           entityType: child.entityType,
-          title: child.title ?? "Untitled",
-          body: child.contents ?? "",
+          title: normalizeWhitespace(child.title ?? "Untitled"),
+          body: normalizeWhitespace(child.contents ?? ""),
         })),
         tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
   }, []);
+
+  // Auto expand highlighted child entity
+  useEffect(() => {
+    if (!cardData) return;
+
+    const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
+    if (!accordion) return;
+    accordion.open = true;
+    accordion.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [cardData]);
 
   return (
     <>
@@ -150,18 +160,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <ul class="c-child-entity-list">
             {cardData.children.map((child) => (
               <li key={child.entityId}>
-                <details>
-                  <summary class="c-child-accordion">
+                <details class="c-child-accordion__container" data-entity-id={child.entityId} data-has-details={child.body.length > 0}>
+                  <summary class="c-child-accordion__title">
                     <img src={EntityIcon[child.entityType]} />
                     <span class="c-child-title">{child.entityId === entityId ? <mark>{child.title}</mark> : child.title}</span>
                   </summary>
-                  <p>{child.body}</p>
+                  {child.body.length ? <p class="c-child-details">{child.body}</p> : null}
                 </details>
               </li>
             ))}
           </ul>
           <a target="_blank" href={`https://hits.microsoft.com/${EntityName[entityType]}/${entityId}`}>
-            Open in browser
+            Open full report
           </a>
         </article>
       )}

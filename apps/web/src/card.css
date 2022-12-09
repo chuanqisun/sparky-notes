@@ -34,11 +34,30 @@ ul {
   font-weight: bold;
 }
 
-.c-child-accordion {
+.c-child-accordion__title {
   list-style: none;
   display: flex;
   align-items: baseline;
   gap: 8px;
+}
+
+.c-child-accordion__container[data-has-details="true"]:not([open]) .c-child-title::after {
+  content: "...";
+  font-weight: 600;
+  display: inline-flex;
+  background-color: #eee;
+  padding: 0px 8px 4px 8px;
+  height: 10px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  line-height: 0px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.c-child-details {
+  padding-left: 24px;
+  margin-block: 8px;
 }
 
 .c-child-entity-list {
