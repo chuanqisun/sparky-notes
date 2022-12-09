@@ -9,6 +9,16 @@ export interface GraphDBSchema extends DBSchema {
       byUpdatedOn: Date;
     };
   };
+  edge: {
+    value: EdgeSchema;
+    key: string;
+    indexes: {
+      byFromId: string;
+      byToId: string;
+      byFromToIds: [string, string];
+      byUpdatedOn: Date;
+    };
+  };
   syncRecord: {
     value: SyncRecordSchema;
     key: string;
@@ -17,6 +27,14 @@ export interface GraphDBSchema extends DBSchema {
 
 export interface NodeSchema {
   id: string;
+  updatedOn: Date;
+  [key: string]: any;
+}
+
+export interface EdgeSchema {
+  id: string;
+  from: string;
+  to: string;
   updatedOn: Date;
   [key: string]: any;
 }
@@ -42,6 +60,18 @@ async function openAppDB(): Promise<GraphDB> {
 
       if (oldVersion < 2) {
         db.createObjectStore("syncRecord", { autoIncrement: true });
+      }
+
+      if (oldVersion < 3) {
+        // clean up old data
+        transaction.objectStore("node").clear();
+        transaction.objectStore("syncRecord").clear();
+
+        // set up new schema
+        const edgeStore = db.createObjectStore("edge", { autoIncrement: true });
+        edgeStore.createIndex("byFromId", "fromId");
+        edgeStore.createIndex("byToId", "toId");
+        edgeStore.createIndex("byFromToIds", "fromToIds");
       }
     },
     blocked() {
