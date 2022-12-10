@@ -50,7 +50,7 @@ export interface SyncRecordSchema {
 export type GraphDB = IDBPDatabase<GraphDBSchema>;
 
 async function openAppDB(): Promise<GraphDB> {
-  return openDB<GraphDBSchema>("hits-assistant-graph", 2, {
+  return openDB<GraphDBSchema>("hits-assistant-graph", 3, {
     upgrade(db, oldVersion, _newVersion, transaction) {
       if (oldVersion < 1) {
         const nodeStore = db.createObjectStore("node", { keyPath: "id" });
@@ -59,6 +59,12 @@ async function openAppDB(): Promise<GraphDB> {
 
       if (oldVersion < 2) {
         db.createObjectStore("syncRecord", { autoIncrement: true });
+      }
+
+      if (oldVersion < 3) {
+        // Reset data due new column: `isNative`
+        transaction.objectStore("node").clear();
+        transaction.objectStore("syncRecord").clear();
       }
     },
     blocked() {

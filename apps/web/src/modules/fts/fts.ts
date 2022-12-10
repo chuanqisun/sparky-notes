@@ -14,6 +14,19 @@ export const indexConfig: IndexOptionsForDocumentSearch<IndexedItem> = {
   },
 };
 
+// V2
+export const indexV2Config: IndexOptionsForDocumentSearch<IndexedItem, true> = {
+  preset: "default",
+  charset: "latin:simple",
+  tokenize: "forward",
+  stemmer: false,
+  document: {
+    id: "id",
+    index: ["keywords"],
+    store: true,
+  },
+};
+
 export interface IndexedItem {
   id: string;
   keywords: string;
@@ -27,6 +40,11 @@ export interface ExportedIndex {
 }
 
 export const createFtsIndex = () => new FlexDocument(indexConfig);
+
+// V2 Grandular index
+export const createFtsV2Index = () => new FlexDocument(indexV2Config);
+export const queryFtsV2 = (idx: FlexDocument<IndexedItem, true>, query: string) => idx.searchAsync<true>(query, { index: "keywords", enrich: true });
+
 export const addFtsItems = (idx: FlexDocument<IndexedItem>, items: IndexedItem[]) => Promise.all(items.map((item) => idx.addAsync(item.id, item)));
 export const queryFts = (idx: FlexDocument<IndexedItem>, query: string) =>
   idx.searchAsync(query, { index: "keywords" }).then((results) => results[0]?.result ?? []);

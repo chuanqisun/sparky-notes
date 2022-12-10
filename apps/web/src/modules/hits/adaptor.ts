@@ -1,65 +1,6 @@
 import type { IndexedItem } from "../fts/fts";
-import type { EdgeSchema, NodeSchema } from "../graph/db";
 import { EntityName, EntityType } from "./entity";
 import type { HitsGraphChildNode, HitsGraphNode, SearchResultChild, SearchResultDocument } from "./hits";
-
-export interface GraphOperation {
-  upsertNode?: NodeSchema;
-  setOutEdges?: EdgeSchema[];
-}
-
-export function searchResultToGraphOperations(searchResult: SearchResultDocument[]): GraphOperation[] {
-  // TODO switch to outline to improve query performance
-
-  return searchResult.flatMap((document) => {
-    const upsertReportOps: GraphOperation = {
-      upsertNode: {
-        title: document.title.length ? document.title : "Untitled",
-        id: document.id,
-        entityType: document.entityType,
-        updatedOn: new Date(document.updatedOn),
-        researchers: document.researchers.map(getPerson),
-        tags: [...document.products, ...document.topics].map(getTag),
-        group: {
-          id: document.group.id,
-          displayName: document.group.name,
-        },
-      },
-    };
-
-    const qualifiedChildren = document.children.filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType));
-    const upsertClaimOps: GraphOperation[] = qualifiedChildren.map((claim) => ({
-      upsertNode: {
-        title: claim.title?.length ? claim.title : "Untitled",
-        id: claim.id,
-        entityType: claim.entityType,
-        updatedOn: new Date(claim.updatedOn),
-      },
-    }));
-
-    const setReportToClaimEdgeOps: GraphOperation = {
-      setOutEdges: qualifiedChildren.map((child, i) => ({
-        from: document.id,
-        to: child.id,
-        updatedOn:
-          upsertReportOps.upsertNode!.updatedOn > upsertClaimOps[i].upsertNode!.updatedOn
-            ? upsertReportOps.upsertNode!.updatedOn
-            : upsertClaimOps[i].upsertNode!.updatedOn, // the greater of parent and child
-      })),
-    };
-
-    return [
-      // upsert report node
-      upsertReportOps,
-
-      // upsert claim nodes
-      ...upsertClaimOps,
-
-      // set report->claim edges
-      setReportToClaimEdgeOps,
-    ];
-  });
-}
 
 export function searchResultDocumentToGraphNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
   return searchResult.map((document) => {
@@ -93,6 +34,23 @@ export function graphNodeToFtsDocument(node: HitsGraphNode): IndexedItem {
   };
 }
 
+// V2: Granular
+export function graphNodeToFtsDocuments(node: HitsGraphNode): IndexedItem[] {
+  const report: IndexedItem = {
+    id: node.id,
+    keywords: `${EntityName[node.entityType]}; ${node.title}; ${node.group.displayName ?? ""}; ${
+      node.researchers.map((person) => person.displayName).join(", ") ?? ""
+    }; ${new Date(node.updatedOn).toLocaleDateString()}`,
+  };
+
+  const claims: IndexedItem[] = node.children.map((child) => ({
+    id: child.id,
+    keywords: `${EntityName[child.entityType]}; ${child.title}`,
+  }));
+
+  return [report, ...claims];
+}
+
 function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
   return children
     .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
@@ -100,6 +58,7 @@ function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
       title: claim.title?.length ? claim.title : "Untitled",
       id: claim.id,
       entityType: claim.entityType,
+      isNative: claim.isNative,
     }));
 }
 

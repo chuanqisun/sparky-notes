@@ -1,3 +1,4 @@
+- Granular search index for claim nodes with native boost and reuse boost
 - Allow search title + "insight" to browse
 - Ctrl + Click to open in web
 - Deduplicate inc and full sync logic

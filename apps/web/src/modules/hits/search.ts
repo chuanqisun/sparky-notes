@@ -129,6 +129,7 @@ export function getSearchPayload(config: { count: boolean; top: number; skip: nu
       "Children/EntityType",
       "Children/Title",
       "Children/UpdatedOn",
+      "Children/IsNative",
       "Researchers/Id",
       "Researchers/Name",
       "Products/Id",

@@ -5,7 +5,7 @@ export interface HitsGraphNode extends NodeSchema {
   updatedOn: Date;
   title: string;
   entityType: number;
-  group?: {
+  group: {
     id: number;
     displayName: string;
   };
@@ -24,6 +24,7 @@ export interface HitsGraphChildNode {
   id: string;
   title: string;
   entityType: number;
+  isNative: boolean;
 }
 
 export interface FilterConfig {
@@ -104,6 +105,7 @@ export interface SearchResultChild {
   updatedOn: string;
   topics: SearchResultTag[];
   products: SearchResultTag[];
+  isNative: boolean;
 }
 export interface SearchResultChildWithTitle extends SearchResultChild {
   title: string;
