@@ -60,18 +60,6 @@ async function openAppDB(): Promise<GraphDB> {
       if (oldVersion < 2) {
         db.createObjectStore("syncRecord", { autoIncrement: true });
       }
-
-      if (oldVersion < 3) {
-        // clean up old data
-        transaction.objectStore("node").clear();
-        transaction.objectStore("syncRecord").clear();
-
-        // set up new schema
-        const edgeStore = db.createObjectStore("edge", { autoIncrement: true });
-        edgeStore.createIndex("byFromId", "fromId");
-        edgeStore.createIndex("byToId", "toId");
-        edgeStore.createIndex("byFromToIds", "fromToIds");
-      }
     },
     blocked() {
       // …
