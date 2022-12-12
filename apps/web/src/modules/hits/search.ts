@@ -112,6 +112,50 @@ export async function search({ proxy, filter, onProgress, pageSize }: SearchConf
   };
 }
 
+export interface SearchConfigV2 {
+  proxy: (payload: any) => Promise<SearchOutput>;
+  filter: FilterConfig;
+  query: string;
+}
+export async function searchV2({ proxy, query, filter }: SearchConfigV2): Promise<any> {
+  // execute 1st search to get total
+  const payload = getSearchPayloadV2({ query, count: true, top: 10, skip: 0, filter });
+  const { totalCount, results } = await proxy(payload);
+
+  console.log([totalCount, results]);
+}
+
+export function getSearchPayloadV2(config: { query: string; count: boolean; top: number; skip: number; filter: FilterConfig }) {
+  return {
+    count: config.count,
+    top: config.top,
+    skip: config.skip,
+    filter: getFilterString(config.filter),
+    queryType: "Simple",
+    searchText: config.query,
+    searchFields: ["Title", "Child/Title", "Researchers/Name", "Products/Name", "Topics/Name", "Group/Name"],
+    select: [
+      "Id",
+      "EntityType",
+      "Title",
+      "UpdatedOn",
+      "Children/Id",
+      "Children/EntityType",
+      "Children/Title",
+      "Children/UpdatedOn",
+      "Children/IsNative",
+      "Researchers/Id",
+      "Researchers/Name",
+      "Products/Id",
+      "Products/Name",
+      "Topics/Id",
+      "Topics/Name",
+      "Group/Id",
+      "Group/Name",
+    ],
+  };
+}
+
 export function getSearchPayload(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {
   return {
     count: config.count,
