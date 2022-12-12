@@ -34,23 +34,6 @@ export function graphNodeToFtsDocument(node: HitsGraphNode): IndexedItem {
   };
 }
 
-// V2: Granular
-export function graphNodeToFtsDocuments(node: HitsGraphNode): IndexedItem[] {
-  const report: IndexedItem = {
-    id: node.id,
-    keywords: `${EntityName[node.entityType]}; ${node.title}; ${node.group.displayName ?? ""}; ${
-      node.researchers.map((person) => person.displayName).join(", ") ?? ""
-    }; ${new Date(node.updatedOn).toLocaleDateString()}`,
-  };
-
-  const claims: IndexedItem[] = node.children.map((child) => ({
-    id: child.id,
-    keywords: `${EntityName[child.entityType]}; ${child.title}`,
-  }));
-
-  return [report, ...claims];
-}
-
 function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
   return children
     .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))

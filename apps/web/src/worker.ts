@@ -1,21 +1,10 @@
 /// <reference lib="WebWorker" />
 
 import type { Document as FlexDocument } from "flexsearch";
-import {
-  createFtsIndex,
-  createFtsV2Index,
-  exportFtsIndex,
-  getTokens,
-  getTokensPattern,
-  hitsGraphNodeToFtsNode,
-  importFtsIndex,
-  IndexedItem,
-  queryFts,
-  queryFtsV2,
-} from "./modules/fts/fts";
+import { createFtsIndex, exportFtsIndex, getTokens, getTokensPattern, hitsGraphNodeToFtsNode, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
 import { clearAllNodes, clearAllStores, exportAllNodes, getLastSyncRecord, getNodes, getRecentNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
-import { graphNodeToFtsDocument, graphNodeToFtsDocuments, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
+import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
@@ -28,9 +17,6 @@ import { WorkerServer } from "./utils/worker-rpc";
 declare const self: SharedWorkerGlobalScope | DedicatedWorkerGlobalScope;
 
 let activeIndex: FlexDocument<IndexedItem> | undefined = undefined;
-
-// HACK only
-const v2Index = createFtsV2Index();
 
 async function main() {
   const worker = new WorkerServer<WorkerRoutes, WorkerEvents>(self)
@@ -152,8 +138,6 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 
       graphNodes.forEach((node) => {
         draftIndex.add(graphNodeToFtsDocument(node));
-        // HACK v2
-        graphNodeToFtsDocuments(node).forEach((node) => v2Index.add(node));
 
         indexSuccess++;
         if (indexSuccess % 50 === 0 || indexSuccess === progress.total) {
@@ -201,10 +185,6 @@ const handleUninstall: WorkerRoutes["uninstall"] = async ({ req, emit }) => {
 const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
   const db = getDb();
   const ids = (await queryFts(activeIndex!, req.query)) as string[];
-
-  // HACK
-  const idsV2 = await queryFtsV2(v2Index, req.query);
-  console.log("v2Result", idsV2);
 
   // TODO memoize getNodes
   const nodes = await getNodes<HitsGraphNode>(await db, ids);
