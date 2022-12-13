@@ -39,9 +39,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
-  const [installationState, setInstallationState] = useState<"installed" | "new" | "error" | "installing" | "unknown">("unknown");
-  const [installProgress, setInstallProgress] = useState("0.00%");
-  const [indexRev, setIndexRev] = useState(0);
 
   useEffect(() => {
     switch (isConnected) {
@@ -53,44 +50,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         return log("Signing in...");
     }
   }, [isConnected]);
-
-  // Handle server events
-  // Caution: please keep deps array empty
-  useEffect(() => {
-    const subArray = [
-      worker.subscribe("indexChanged", (type) => {
-        setIndexRev((prev) => prev + 1);
-        type === "builtFromIncSync" && log(`Index maintenance... Success`);
-      }),
-      worker.subscribe("fullSyncProgressed", (progress) => {
-        if (progress.total) {
-          const percentage = `${((100 * progress.success) / progress.total).toFixed(2)}%`;
-          log(`Sync... ${progress.success == progress.total ? `Success! ${progress.total} updated` : percentage}`);
-          setInstallProgress(percentage);
-        } else {
-          log(`Sync... No change`);
-        }
-      }),
-      worker.subscribe("incSyncProgressed", (progress) => {
-        const total = progress.existingTotal + progress.newTotal;
-        const indexed = progress.existingIndexed + progress.newIndexed;
-        const isDone = total === indexed;
-        if (total) {
-          log(`Sync... ${isDone ? `Success! ${progress.newTotal} updated | ${progress.existingTotal} existing` : `${((100 * indexed) / total).toFixed(2)}%`}`);
-        } else {
-          log(`Sync... No change`);
-        }
-      }),
-      worker.subscribe("syncFailed", () => log(`Sync... Failed. Please try again or reset the app`)),
-      worker.subscribe("requestInstallation", () => setInstallationState("new")),
-      worker.subscribe("uninstalled", () => location.reload()),
-      worker.subscribe("installed", (status) => {
-        setInstallationState(status === "success" ? "installed" : "error");
-      }),
-    ];
-
-    return () => subArray.map((unsub) => unsub());
-  }, []);
 
   // Figma RPC
   useEffect(() => {
@@ -111,19 +70,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [query, setQuery] = useState("");
   const [ftsNodes, setFtsNodes] = useState<HitsFtsNode[]>([]);
-
-  // Incremental sync on start
-  useEffect(() => void worker.request("incSync", { config: configValue }), []);
-
-  const handleUninstall = useCallback(async () => {
-    worker.request("uninstall");
-    log("Uninstalling...");
-  }, []);
-
-  const handleInstall = useCallback(async () => {
-    setInstallationState("installing");
-    await worker.request("fullSync", { config: configValue });
-  }, [configValue]);
 
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
@@ -175,9 +121,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 </button>
               </>
             )}
-            <button class="u-reset c-app-menu--btn" onClick={handleUninstall}>
-              Uninstall
-            </button>
           </menu>
         )}
       </header>
@@ -189,24 +132,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               <button class="u-reset c-jumbo-button" onClick={signIn}>
                 Sign in
               </button>
-            </div>
-          </section>
-        )}
-        {((isConnected === true && installationState === "new") || installationState === "installing") && (
-          <section class="c-welcome-mat">
-            <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
-            <div class="c-welcome-action-group">
-              {installationState === "new" && (
-                <button class="u-reset c-jumbo-button" onClick={handleInstall}>
-                  <span>Install</span>
-                </button>
-              )}
-              {installationState === "installing" && (
-                <button class="u-reset c-jumbo-button" onClick={handleInstall} disabled>
-                  Installing...<span class="c-jumbo-button__progress">&nbsp;{installProgress}</span>
-                </button>
-              )}
-              <small class="c-welcome-hint">(Will download about 20MB of data)</small>
             </div>
           </section>
         )}
