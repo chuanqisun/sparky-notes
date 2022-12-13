@@ -10,6 +10,7 @@ export type WorkerRoutes = {
   getCardData: RouteHandler<GetCardDataReq, GetCardDataRes>;
   incSync: RouteHandler<IncSyncReq, void, WorkerEvents>;
   search: RouteHandler<SearchReq, SearchRes>;
+  liveSearch: RouteHandler<LiveSearchReq, LiveSearchRes>;
   recent: RouteHandler<undefined, RecentRes>;
   uninstall: RouteHandler<undefined, void>;
 };
@@ -55,6 +56,12 @@ export interface IncSyncProgress {
   newTotal: number;
   newIndexed: number;
 }
+export interface LiveSearchReq {
+  config: HitsConfig;
+  query: string;
+}
+
+export interface LiveSearchRes {}
 
 export interface SearchReq {
   query: string;

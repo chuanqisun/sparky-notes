@@ -8,7 +8,7 @@ import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modul
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
-import { search, searchFirst } from "./modules/hits/search";
+import { search, searchFirst, searchV2 } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { batchScheduler } from "./utils/batch-scheduler";
 import { identity } from "./utils/identity";
@@ -24,6 +24,7 @@ async function main() {
     .onRequest("fullSync", handleFullSync)
     .onRequest("getCardData", handleGetCardData)
     .onRequest("incSync", handleIncSync)
+    .onRequest("liveSearch", handleLiveSearch)
     .onRequest("search", handleSearch)
     .onRequest("recent", handleRecent)
     .onRequest("uninstall", handleUninstall)
@@ -39,6 +40,15 @@ async function main() {
 }
 
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
+
+const handleLiveSearch: WorkerRoutes["liveSearch"] = async ({ req, emit }) => {
+  const config = req.config;
+  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const proxy = getAuthenticatedProxy(accessToken);
+
+  const results = await searchV2({ proxy, query: req.query, filter: {} });
+  return results;
+};
 
 const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   const config = req.config;

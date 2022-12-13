@@ -8,6 +8,7 @@ import { useConfig } from "./modules/hits/use-config";
 import { StatusBar, useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
+import { useDebounce } from "./utils/use-debounce";
 import { useVirtualList } from "./utils/use-virtual-list";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
@@ -128,6 +129,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     setQuery((event.target as any).value);
     virtualListRef.current?.scrollTo({ top: 0 });
   }, []);
+
+  // handle search V2
+  const debouncedQuery = useDebounce(query.trim(), "", 250);
+  const liveSearch = useCallback((query: string) => worker.request("liveSearch", { query, config: configValue }), [configValue]);
+  useEffect(() => {
+    liveSearch(debouncedQuery);
+  }, [debouncedQuery]);
 
   // handle search
   useEffect(() => {

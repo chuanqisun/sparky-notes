@@ -117,12 +117,10 @@ export interface SearchConfigV2 {
   filter: FilterConfig;
   query: string;
 }
-export async function searchV2({ proxy, query, filter }: SearchConfigV2): Promise<any> {
+export async function searchV2({ proxy, query, filter }: SearchConfigV2) {
   // execute 1st search to get total
-  const payload = getSearchPayloadV2({ query, count: true, top: 10, skip: 0, filter });
-  const { totalCount, results } = await proxy(payload);
-
-  console.log([totalCount, results]);
+  const payload = getSearchPayloadV2({ query, count: false, top: 10, skip: 0, filter });
+  return await proxy(payload);
 }
 
 export function getSearchPayloadV2(config: { query: string; count: boolean; top: number; skip: number; filter: FilterConfig }) {
@@ -133,7 +131,8 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
     filter: getFilterString(config.filter),
     queryType: "Simple",
     searchText: config.query,
-    searchFields: ["Title", "Child/Title", "Researchers/Name", "Products/Name", "Topics/Name", "Group/Name"],
+    searchFields: ["Title", "Children/Title"],
+    highlightFields: ["Title", "Children/Title"],
     select: [
       "Id",
       "EntityType",
