@@ -15,8 +15,8 @@ async function main() {
   new WorkerServer<WorkerRoutes, WorkerEvents>(self)
     .onRequest("echo", handleEcho)
     .onRequest("getCardData", handleGetCardData)
-    .onRequest("liveSearch", handleLiveSearch)
-    .onRequest("recentV2", handleRecentV2)
+    .onRequest("search", handleLiveSearch)
+    .onRequest("recent", handleRecentV2)
     .start();
 }
 
@@ -40,7 +40,7 @@ const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
   return { cardData: result?.document ?? null };
 };
 
-const handleLiveSearch: WorkerRoutes["liveSearch"] = async ({ req, emit }) => {
+const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
   const config = req.config;
   const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
@@ -64,7 +64,7 @@ const handleLiveSearch: WorkerRoutes["liveSearch"] = async ({ req, emit }) => {
   };
 };
 
-const handleRecentV2: WorkerRoutes["recentV2"] = async ({ req }) => {
+const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   const config = req.config;
   const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);

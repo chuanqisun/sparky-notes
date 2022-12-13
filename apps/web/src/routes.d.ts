@@ -7,8 +7,8 @@ import type { RouteHandler } from "./utils/worker-rpc";
 export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
   getCardData: RouteHandler<GetCardDataReq, GetCardDataRes>;
-  liveSearch: RouteHandler<LiveSearchReq, LiveSearchRes>;
-  recentV2: RouteHandler<RecentReq, RecentRes>;
+  search: RouteHandler<SearchReq, SearchRes>;
+  recent: RouteHandler<RecentReq, RecentRes>;
 };
 
 export type WorkerEvents = {
@@ -38,12 +38,12 @@ export interface GetCardDataRes {
   cardData: SearchResultDocument | null;
 }
 
-export interface LiveSearchReq {
+export interface SearchReq {
   config: HitsConfig;
   query: string;
 }
 
-export interface LiveSearchRes {
+export interface SearchRes {
   nodes: HitsFtsNode[];
 }
 
