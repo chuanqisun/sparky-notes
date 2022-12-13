@@ -123,6 +123,36 @@ export async function searchV2({ proxy, query, filter }: SearchConfigV2) {
   return await proxy(payload);
 }
 
+export function getRecentPayload(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {
+  return {
+    count: config.count,
+    top: config.top,
+    skip: config.skip,
+    filter: getFilterString(config.filter),
+    queryType: "Simple",
+    searchText: "*",
+    select: [
+      "Id",
+      "EntityType",
+      "Title",
+      "UpdatedOn",
+      "Children/Id",
+      "Children/EntityType",
+      "Children/Title",
+      "Children/UpdatedOn",
+      "Researchers/Id",
+      "Researchers/Name",
+      "Products/Id",
+      "Products/Name",
+      "Topics/Id",
+      "Topics/Name",
+      "Group/Id",
+      "Group/Name",
+    ],
+    orderBy: getOrderBy(getOrderByPublishDateClause()),
+  };
+}
+
 export function getSearchPayloadV2(config: { query: string; count: boolean; top: number; skip: number; filter: FilterConfig }) {
   return {
     count: config.count,
@@ -142,7 +172,6 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
       "Children/EntityType",
       "Children/Title",
       "Children/UpdatedOn",
-      "Children/IsNative",
       "Researchers/Id",
       "Researchers/Name",
       // TODO remove below
