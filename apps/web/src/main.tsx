@@ -5,7 +5,7 @@ import type { HitsFtsNode } from "./modules/fts/fts";
 import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
-import { StatusBar, useLog } from "./modules/status/status-bar";
+import { useLog } from "./modules/status/status-bar";
 import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { useDebounce } from "./utils/use-debounce";
@@ -141,9 +141,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
-      {isConnected && lastSearchTime !== null && lastSearchTime !== timedSearchResult?.time && <div class="c-progress-bar" />}
-      {isConnected === undefined && <div class="c-progress-bar" />}
       <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
+        {isConnected === undefined && <div class="c-progress-bar" />}
+        {isConnected && lastSearchTime !== null && lastSearchTime !== timedSearchResult?.time && <div class="c-progress-bar" />}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -154,7 +154,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
-        {isConnected !== false && (
+        {isConnected && (
           <ul class="c-list" id="js-virtual-list">
             {timedSearchResult?.nodes.map((parentNode, index) => (
               <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
@@ -164,9 +164,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </ul>
         )}
       </main>
-      <footer>
-        <StatusBar lines={lines} />
-      </footer>
     </>
   );
 }
