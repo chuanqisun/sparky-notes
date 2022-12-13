@@ -1,7 +1,7 @@
 /// <reference lib="WebWorker" />
 
 import { getTokens, getTokensPattern, hitsGraphNodeToFtsNode } from "./modules/fts/fts";
-import { searchResultDocumentToDisplayNode } from "./modules/hits/adaptor";
+import { getHighlightDict, isClaimType, searchResultChildToHitsGraphChild, searchResultsDisplayNodes } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { searchFirst, searchRecent, searchV2 } from "./modules/hits/search";
@@ -47,7 +47,16 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
 
   const pattern = getTokensPattern(getTokens(req.query));
   const results = await searchV2({ proxy, query: req.query, filter: {} });
-  const nodes = searchResultDocumentToDisplayNode(results.results.map((result) => result.document));
+
+  const nodes = searchResultsDisplayNodes(results.results, (item) => {
+    const dict = getHighlightDict(item.highlights?.["children/Title"] ?? []);
+    const hasHighlight = (text: string) => dict.some((entry) => entry[0].toLocaleLowerCase() === text.toLocaleLowerCase());
+    return item.document.children
+      .filter(isClaimType)
+      .filter((child) => hasHighlight(child.title ?? ""))
+      .map(searchResultChildToHitsGraphChild);
+  });
+
   const highlighter = pattern
     ? (input: string, onMatch?: () => any) => {
         return input.replaceAll(pattern, (match) => {
@@ -70,7 +79,10 @@ const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   const proxy = getAuthenticatedProxy(accessToken);
 
   const results = await searchRecent({ proxy, query: "*", filter: {} });
-  const nodes = searchResultDocumentToDisplayNode(results.results.map((result) => result.document));
+  const nodes = searchResultsDisplayNodes(
+    results.results,
+    () => [] // omit children
+  );
 
   const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(identity, node));
 

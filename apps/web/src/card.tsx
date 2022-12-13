@@ -1,7 +1,8 @@
 import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { EntityDisplayName, EntityIcon, EntityName, EntityType } from "./modules/hits/entity";
+import { isClaimType } from "./modules/hits/adaptor";
+import { EntityDisplayName, EntityIcon, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
@@ -112,7 +113,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
       const outline = JSON.parse(cardData.outline);
       const flatIds = flatItem(outline)
-        .filter((item) => [EntityType.Insight, EntityType.Recommendation].includes(item.entityType))
+        .filter(isClaimType)
         .map((item) => item.id.toString());
 
       const normalizedBodyWords = normalizeWhitespace(cardData.contents ?? "").split(" ");
@@ -133,7 +134,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           url: `https://hits.microsoft.com/researcher/${researcher.alias}`,
         })),
         children: cardData.children
-          .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
+          .filter(isClaimType)
           .sort((a, b) => flatIds.indexOf(a.id) - flatIds.indexOf(b.id))
           .map((child) => ({
             entityId: child.id,

@@ -11,6 +11,7 @@
   "dependencies": {
     "acs-expression-builder": "^0.0.2",
     "assets": "file:packages/assets",
+    "cheerio": "^1.0.0-rc.12",
     "flexsearch": "0.7.21",
     "idb": "^7.1.0",
     "preact": "^10.11.0"

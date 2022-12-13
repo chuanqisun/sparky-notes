@@ -1,69 +1,41 @@
-import type { IndexedItem } from "../fts/fts";
-import { EntityName, EntityType } from "./entity";
-import type { HitsGraphChildNode, HitsGraphNode, SearchResultChild, SearchResultDocument } from "./hits";
+import { htmlToText } from "../../utils/parser";
+import { EntityType } from "./entity";
+import type { HitsGraphChildNode, HitsGraphNode, SearchResultChild, SearchResultDocument, SearchResultItem } from "./hits";
 
-export function searchResultDocumentToDisplayNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
-  return searchResult.map((document) => {
-    const childNodes = toChildNodes(document.children);
-    const updatedOn = getUpdatedOn(document);
+export function searchResultsDisplayNodes(
+  searchResult: SearchResultItem[],
+  getChildren: (parentNode: SearchResultItem) => HitsGraphChildNode[]
+): HitsGraphNode[] {
+  return searchResult.map((item) => {
+    const { document } = item;
 
     return {
       title: document.title.length ? document.title : "Untitled",
       id: document.id,
       entityType: document.entityType,
-      updatedOn: updatedOn,
+      updatedOn: getUpdatedOn(document),
       researchers: document.researchers.map(getPerson),
       tags: [...document.products, ...document.topics].map(getTag),
       group: {
         id: document.group.id,
         displayName: document.group.name,
       },
-      children: childNodes,
+      children: getChildren(item),
     };
   });
 }
 
-export function searchResultDocumentToGraphNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
-  return searchResult.map((document) => {
-    const childNodes = toChildNodes(document.children);
-    const updatedOn = getUpdatedOn(document);
+export const isClaimType = (item: { entityType: number }) => [EntityType.Insight, EntityType.Recommendation].includes(item.entityType);
 
-    return {
-      title: document.title.length ? document.title : "Untitled",
-      id: document.id,
-      entityType: document.entityType,
-      updatedOn: updatedOn,
-      researchers: document.researchers.map(getPerson),
-      tags: [...document.products, ...document.topics].map(getTag),
-      group: {
-        id: document.group.id,
-        displayName: document.group.name,
-      },
-      children: childNodes,
-    };
-  });
-}
+export const getHighlightDict = (htmlList: string[]) => htmlList.map((html) => [htmlToText(html), html] as [text: string, html: string]);
 
-export function graphNodeToFtsDocument(node: HitsGraphNode): IndexedItem {
-  const keywords = `${EntityName[node.entityType]}; ${node.title}; ${node.group?.displayName ?? ""}; ${
-    node.researchers.map((person) => person.displayName).join(", ") ?? ""
-  }; ${new Date(node.updatedOn).toLocaleDateString()}; ${node.children.map((child) => `${child.entityType}; ${child.title}`).join("; ")}`;
-
+export function searchResultChildToHitsGraphChild(claim: SearchResultChild): HitsGraphChildNode {
   return {
-    id: node.id,
-    keywords,
+    title: claim.title?.length ? claim.title : "Untitled",
+    id: claim.id,
+    entityType: claim.entityType,
+    isNative: claim.isNative,
   };
-}
-
-function toChildNodes(children: SearchResultChild[]): HitsGraphChildNode[] {
-  return children
-    .filter((child) => [EntityType.Insight, EntityType.Recommendation].includes(child.entityType))
-    .map((claim) => ({
-      title: claim.title?.length ? claim.title : "Untitled",
-      id: claim.id,
-      entityType: claim.entityType,
-      isNative: claim.isNative,
-    }));
 }
 
 function getUpdatedOn(document: SearchResultDocument): Date {
