@@ -141,7 +141,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
-      {lastSearchTime !== null && lastSearchTime !== timedSearchResult?.time && <div class="c-progress-bar"></div>}
+      {isConnected && lastSearchTime !== null && lastSearchTime !== timedSearchResult?.time && <div class="c-progress-bar" />}
+      {isConnected === undefined && <div class="c-progress-bar" />}
       <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
         {isConnected === false && (
           <section class="c-welcome-mat">
