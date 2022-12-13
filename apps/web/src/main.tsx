@@ -6,7 +6,7 @@ import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { StatusBar, useLog } from "./modules/status/status-bar";
-import type { WorkerEvents, WorkerRoutes } from "./routes";
+import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { useDebounce } from "./utils/use-debounce";
 import { useVirtualList } from "./utils/use-virtual-list";
@@ -69,7 +69,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const [query, setQuery] = useState("");
-  const [ftsNodes, setFtsNodes] = useState<HitsFtsNode[]>([]);
 
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
@@ -81,15 +80,33 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const search = useCallback((query: string) => worker.request("search", { query, config: configValue }), [configValue]);
   const recentSearch = useCallback(() => worker.request("recent", { config: configValue }), [configValue]);
 
+  const [timedSearchResult, setTimedSearchResult] = useState<{ time: number; nodes: HitsFtsNode[] } | null>(null);
+  const [lastSearchTime, setLastSearchTime] = useState<number | null>(null);
+
+  const keepLatestResult = (startTime: number, result: SearchRes | RecentRes) => {
+    setTimedSearchResult((prev) =>
+      !prev?.time || prev.time < startTime
+        ? {
+            time: startTime,
+            nodes: result.nodes,
+          }
+        : prev
+    );
+  };
+
   useEffect(() => {
     if (!debouncedQuery) return;
-    search(debouncedQuery).then((result) => setFtsNodes(result.nodes));
+    const time = performance.now();
+    setLastSearchTime(time);
+    search(debouncedQuery).then(keepLatestResult.bind(null, time));
   }, [search, debouncedQuery]);
 
   // handle search
   useEffect(() => {
     if (!query.trim()) {
-      recentSearch().then((result) => setFtsNodes(result.nodes));
+      const time = performance.now();
+      setLastSearchTime(time);
+      recentSearch().then(keepLatestResult.bind(null, time));
     }
   }, [query]);
 
@@ -124,6 +141,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
+      {lastSearchTime !== null && lastSearchTime !== timedSearchResult?.time && <div class="c-progress-bar"></div>}
       <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
         {isConnected === false && (
           <section class="c-welcome-mat">
@@ -137,7 +155,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
         {isConnected !== false && (
           <ul class="c-list" id="js-virtual-list">
-            {ftsNodes.map((parentNode, index) => (
+            {timedSearchResult?.nodes.map((parentNode, index) => (
               <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
                 <HitsArticle node={parentNode} isParent={true} sendToFigma={notifyFigma} />
               </VirtualListItem>
