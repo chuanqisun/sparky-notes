@@ -25,7 +25,7 @@ const entityId = new URLSearchParams(location.search).get("entityId");
 const entityType = parseInt(new URLSearchParams(location.search).get("entityType")!);
 if (!entityId || Number.isNaN(entityType)) {
   document.getElementById("app")!.innerHTML = "Specify an Type and Id to load the card";
-  console.warn("Type or Id not found");
+  throw new Error("Missing Type or Id in the URL");
 }
 
 interface CardData {
@@ -65,7 +65,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { isConnected, signIn, signOut } = useAuth();
   const { value: configValue } = useConfig();
 
-  const [cardData, setCardData] = useState<CardData | null>(null);
+  const [cardData, setCardData] = useState<CardData | null | undefined>(undefined);
 
   useEffect(() => {
     switch (isConnected) {
@@ -161,6 +161,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   return (
     <>
+      {isConnected === undefined || (isConnected === true && cardData === undefined && <div class="c-progress-bar" />)}
       {isConnected === false && (
         <section class="c-welcome-mat">
           <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
