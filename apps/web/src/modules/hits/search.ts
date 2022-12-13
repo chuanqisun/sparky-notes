@@ -118,8 +118,12 @@ export interface SearchConfigV2 {
   query: string;
 }
 export async function searchV2({ proxy, query, filter }: SearchConfigV2) {
-  // execute 1st search to get total
   const payload = getSearchPayloadV2({ query, count: false, top: 10, skip: 0, filter });
+  return await proxy(payload);
+}
+
+export async function searchRecent({ proxy, filter }: SearchConfigV2) {
+  const payload = getSearchPayloadV2({ query: "*", count: false, top: 25, skip: 0, filter, orderBy: getOrderBy(getOrderByPublishDateClause()) });
   return await proxy(payload);
 }
 
@@ -153,7 +157,7 @@ export function getRecentPayload(config: { count: boolean; top: number; skip: nu
   };
 }
 
-export function getSearchPayloadV2(config: { query: string; count: boolean; top: number; skip: number; filter: FilterConfig }) {
+export function getSearchPayloadV2(config: { query: string; count: boolean; top: number; skip: number; filter: FilterConfig; orderBy?: string[] }) {
   return {
     count: config.count,
     top: config.top,
@@ -182,6 +186,7 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
       "Group/Id",
       "Group/Name",
     ],
+    orderBy: config.orderBy,
   };
 }
 

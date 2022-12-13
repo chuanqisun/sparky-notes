@@ -12,6 +12,7 @@ export type WorkerRoutes = {
   search: RouteHandler<SearchReq, SearchRes>;
   liveSearch: RouteHandler<LiveSearchReq, LiveSearchRes>;
   recent: RouteHandler<undefined, RecentRes>;
+  recentV2: RouteHandler<RecentReq, RecentRes>;
   uninstall: RouteHandler<undefined, void>;
 };
 
@@ -71,6 +72,10 @@ export interface SearchReq {
 
 export interface SearchRes {
   nodes: HitsFtsNode[];
+}
+
+export interface RecentReq {
+  config: HitsConfig;
 }
 
 export interface RecentRes {

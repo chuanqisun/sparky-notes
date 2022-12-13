@@ -8,7 +8,7 @@ import { graphNodeToFtsDocument, searchResultDocumentToDisplayNode, searchResult
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
-import { search, searchFirst, searchV2 } from "./modules/hits/search";
+import { search, searchFirst, searchRecent, searchV2 } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { batchScheduler } from "./utils/batch-scheduler";
 import { identity } from "./utils/identity";
@@ -27,6 +27,7 @@ async function main() {
     .onRequest("liveSearch", handleLiveSearch)
     .onRequest("search", handleSearch)
     .onRequest("recent", handleRecent)
+    .onRequest("recentV2", handleRecentV2)
     .onRequest("uninstall", handleUninstall)
     .start();
 
@@ -225,6 +226,21 @@ const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
     : identity;
 
   const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(highlighter, node));
+
+  return {
+    nodes: ftsNodes,
+  };
+};
+
+const handleRecentV2: WorkerRoutes["recentV2"] = async ({ req }) => {
+  const config = req.config;
+  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const proxy = getAuthenticatedProxy(accessToken);
+
+  const results = await searchRecent({ proxy, query: "*", filter: {} });
+  const nodes = searchResultDocumentToDisplayNode(results.results.map((result) => result.document));
+
+  const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(identity, node));
 
   return {
     nodes: ftsNodes,

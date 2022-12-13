@@ -133,6 +133,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // handle search V2
   const debouncedQuery = useDebounce(query.trim(), "", 250);
   const liveSearch = useCallback((query: string) => worker.request("liveSearch", { query, config: configValue }), [configValue]);
+  const recentSearch = useCallback(() => worker.request("recentV2", { config: configValue }), [configValue]);
+
   useEffect(() => {
     if (!debouncedQuery) return;
     liveSearch(debouncedQuery).then((result) => setFtsNodes(result.nodes));
@@ -140,12 +142,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // handle search
   useEffect(() => {
-    const trimmed = query.trim();
-    // TODO need switch map
-    if (!trimmed.length) {
-      worker.request("recent").then((recent) => setFtsNodes(recent.nodes));
+    if (!query.trim()) {
+      recentSearch().then((result) => setFtsNodes(result.nodes));
     }
-  }, [indexRev, query]);
+  }, [query]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
