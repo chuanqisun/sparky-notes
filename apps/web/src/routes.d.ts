@@ -61,7 +61,9 @@ export interface LiveSearchReq {
   query: string;
 }
 
-export interface LiveSearchRes {}
+export interface LiveSearchRes {
+  nodes: HitsFtsNode[];
+}
 
 export interface SearchReq {
   query: string;

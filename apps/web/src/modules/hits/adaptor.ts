@@ -2,6 +2,27 @@ import type { IndexedItem } from "../fts/fts";
 import { EntityName, EntityType } from "./entity";
 import type { HitsGraphChildNode, HitsGraphNode, SearchResultChild, SearchResultDocument } from "./hits";
 
+export function searchResultDocumentToDisplayNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
+  return searchResult.map((document) => {
+    const childNodes = toChildNodes(document.children);
+    const updatedOn = getUpdatedOn(document);
+
+    return {
+      title: document.title.length ? document.title : "Untitled",
+      id: document.id,
+      entityType: document.entityType,
+      updatedOn: updatedOn,
+      researchers: document.researchers.map(getPerson),
+      tags: [...document.products, ...document.topics].map(getTag),
+      group: {
+        id: document.group.id,
+        displayName: document.group.name,
+      },
+      children: childNodes,
+    };
+  });
+}
+
 export function searchResultDocumentToGraphNode(searchResult: SearchResultDocument[]): HitsGraphNode[] {
   return searchResult.map((document) => {
     const childNodes = toChildNodes(document.children);

@@ -131,7 +131,7 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
     filter: getFilterString(config.filter),
     queryType: "Simple",
     searchText: config.query,
-    searchFields: ["Title", "Children/Title"],
+    searchFields: ["Title", "Children/Title", "Researchers/Name"],
     highlightFields: ["Title", "Children/Title"],
     select: [
       "Id",
@@ -145,6 +145,7 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
       "Children/IsNative",
       "Researchers/Id",
       "Researchers/Name",
+      // TODO remove below
       "Products/Id",
       "Products/Name",
       "Topics/Id",

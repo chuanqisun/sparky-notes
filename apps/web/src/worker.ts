@@ -4,7 +4,7 @@ import type { Document as FlexDocument } from "flexsearch";
 import { createFtsIndex, exportFtsIndex, getTokens, getTokensPattern, hitsGraphNodeToFtsNode, importFtsIndex, IndexedItem, queryFts } from "./modules/fts/fts";
 import { getDb } from "./modules/graph/db";
 import { clearAllNodes, clearAllStores, exportAllNodes, getLastSyncRecord, getNodes, getRecentNodes, putNodes, updateSyncRecord } from "./modules/graph/graph";
-import { graphNodeToFtsDocument, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
+import { graphNodeToFtsDocument, searchResultDocumentToDisplayNode, searchResultDocumentToGraphNode } from "./modules/hits/adaptor";
 import { getAccessToken } from "./modules/hits/auth";
 import type { HitsGraphNode } from "./modules/hits/hits";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
@@ -40,15 +40,6 @@ async function main() {
 }
 
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
-
-const handleLiveSearch: WorkerRoutes["liveSearch"] = async ({ req, emit }) => {
-  const config = req.config;
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
-  const proxy = getAuthenticatedProxy(accessToken);
-
-  const results = await searchV2({ proxy, query: req.query, filter: {} });
-  return results;
-};
 
 const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   const config = req.config;
@@ -190,6 +181,30 @@ const handleUninstall: WorkerRoutes["uninstall"] = async ({ req, emit }) => {
   const db = getDb();
   await clearAllStores(await db);
   emit("uninstalled");
+};
+
+const handleLiveSearch: WorkerRoutes["liveSearch"] = async ({ req, emit }) => {
+  const config = req.config;
+  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const proxy = getAuthenticatedProxy(accessToken);
+
+  const pattern = getTokensPattern(getTokens(req.query));
+  const results = await searchV2({ proxy, query: req.query, filter: {} });
+  const nodes = searchResultDocumentToDisplayNode(results.results.map((result) => result.document));
+  const highlighter = pattern
+    ? (input: string, onMatch?: () => any) => {
+        return input.replaceAll(pattern, (match) => {
+          onMatch?.();
+          return `<mark>${match}</mark>`;
+        });
+      }
+    : identity;
+
+  const ftsNodes = nodes.map((node) => hitsGraphNodeToFtsNode(highlighter, node));
+
+  return {
+    nodes: ftsNodes,
+  };
 };
 
 const handleSearch: WorkerRoutes["search"] = async ({ req }) => {
