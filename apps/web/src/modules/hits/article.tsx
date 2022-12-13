@@ -1,7 +1,7 @@
 import type { MessageToMain } from "@h20/types";
 import type { HitsFtsNode } from "../fts/fts";
 import "./article.css";
-import { EntityBackgroundColor, EntityDisplayName, EntityIcon, EntityName } from "./entity";
+import { EntityBackgroundColor, EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
 
 export interface HitsCardProps {
   node: HitsFtsNode;
@@ -28,7 +28,7 @@ export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
           }
         >
           <article class="hits-item">
-            <img class="hits-item__icon" src={EntityIcon[node.entityType]} />
+            {EntityIconComponent[node.entityType]()}
             <div class="hits-item__text">
               <span class={`hits-item__title ${isParent ? "hits-item__title--parent" : ""}`} dangerouslySetInnerHTML={{ __html: node.titleHtml }} />{" "}
               {isParent && (

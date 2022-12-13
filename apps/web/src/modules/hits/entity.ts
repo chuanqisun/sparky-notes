@@ -1,6 +1,7 @@
-import documentIconUrl from "./assets/Document.svg";
-import lightbulbIconUrl from "./assets/Lightbulb.svg";
-import thumbupIconUrl from "./assets/Thumbup.svg";
+import type { JSX } from "preact";
+import { DocumentIcon } from "./assets/document-icon";
+import { LightbulbIcon } from "./assets/lightbulb-icon";
+import { ThumbupIcon } from "./assets/thumbup-icon";
 
 export const EntityType = {
   Insight: 1,
@@ -26,12 +27,12 @@ export const EntityDisplayName: Record<number, string> = {
   64: "Customer Note",
 };
 
-export const EntityIcon: Record<number, string> = {
-  1: lightbulbIconUrl,
-  2: documentIconUrl,
-  25: thumbupIconUrl,
-  32: documentIconUrl,
-  64: documentIconUrl,
+export const EntityIconComponent: Record<number, () => JSX.Element> = {
+  1: LightbulbIcon,
+  2: DocumentIcon,
+  25: ThumbupIcon,
+  32: DocumentIcon,
+  64: DocumentIcon,
 };
 
 export const EntityBackgroundColor: Record<number, string> = {

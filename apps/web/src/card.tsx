@@ -2,7 +2,7 @@ import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/hits/adaptor";
-import { EntityDisplayName, EntityIcon, EntityName } from "./modules/hits/entity";
+import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
@@ -216,7 +216,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               <li key={child.entityId}>
                 <details class="c-child-accordion__container" data-entity-id={child.entityId} data-has-details={child.body.length > 0}>
                   <summary class="c-child-accordion__title">
-                    <img src={EntityIcon[child.entityType]} />
+                    {EntityIconComponent[child.entityType]()}
                     <span class="c-child-title" data-highlight={child.entityId === entityId}>
                       {child.title}
                     </span>

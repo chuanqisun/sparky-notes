@@ -78,6 +78,9 @@ ul {
   align-items: baseline;
   gap: 8px;
 }
+.c-child-accordion__title svg {
+  flex: 0 0 auto;
+}
 
 .c-child-details {
   padding-left: 24px;
