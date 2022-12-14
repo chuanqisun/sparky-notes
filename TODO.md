@@ -1,9 +1,7 @@
-- Load more for search result
-- Load more for recent feed
+- Use Cognitive search highlight
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
-- Ctrl + Click to open in web
 - New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
