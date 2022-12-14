@@ -226,7 +226,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             ))}
           </ul>
           <a class="c-card-full-report-link" target="_blank" href={`https://hits.microsoft.com/${EntityName[entityType]}/${entityId}`}>
-            Open full report
+            Full report
           </a>
         </article>
       )}
