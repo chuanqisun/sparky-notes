@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Node.js version
         uses: actions/setup-node@v1
@@ -42,3 +42,18 @@ jobs:
           slot-name: "Production"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_83BA8BBDC89C4E67BE7D4787C8649135 }}
           package: ./apps/api-proxy
+
+      - name: azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_STORAGE_SERVICE_PRINCIPAL_JSON }}
+      - name: "Deploy web frontend"
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az storage blob delete-batch --account-name hitsassistantweb  --auth-mode key --source '$web'
+            az storage blob upload-batch --account-name hitsassistantweb  --auth-mode key -d '$web' -s ./apps/web/dist
+
+      - name: azure logout
+        run: az logout
+        if: always()
