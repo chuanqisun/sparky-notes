@@ -1,6 +1,6 @@
 import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useLayoutEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/hits/adaptor";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
@@ -136,7 +136,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [accessToken]);
 
   // Auto expand highlighted child entity
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!cardData) return;
     const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
     if (!accordion) return;
