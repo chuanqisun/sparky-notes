@@ -58,6 +58,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
     virtualListRef.current?.scrollTo({ top: 0 });
+
+    setSkip(0);
   }, []);
 
   // handle search V2
@@ -67,24 +69,33 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return trimmedQuery ? debouncedQuery : trimmedQuery;
   }, [query, debouncedQuery]);
 
-  const keywordSearch = useCallback((query: string) => worker.request("search", { query, accessToken }), [accessToken]);
-  const recentSearch = useCallback(() => worker.request("recent", { accessToken }), [accessToken]);
-  const anySearch = useCallback((query?: string) => (query ? keywordSearch(query) : recentSearch()), [keywordSearch, recentSearch]);
+  const [skip, setSkip] = useState(0);
+
+  const keywordSearch = useCallback((skip: number, query: string) => worker.request("search", { query, accessToken, skip }), [accessToken]);
+  const recentSearch = useCallback((skip: number) => worker.request("recent", { accessToken, skip }), [accessToken]);
+  const anySearch = useCallback((skip: number, query?: string) => (query ? keywordSearch(skip, query) : recentSearch(skip)), [keywordSearch, recentSearch]);
 
   const { queue, add } = useConcurrentScheduler<SearchRes | RecentRes>();
 
   useEffect(() => {
-    add(effectiveQuery, "TBD", anySearch(effectiveQuery));
-  }, [effectiveQuery]);
+    add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(skip, effectiveQuery) });
+  }, [effectiveQuery, skip]);
 
   const { isSearchPending, isSearchError, resultNodes } = useMemo(
     () => ({
       isSearchPending: queue.some((item) => item.isPending),
       isSearchError: queue.some((item) => item.error),
-      resultNodes: queue.flatMap((item) => item.result?.nodes ?? []),
+      resultNodes: queue
+        .filter((item) => item.result)
+        .sort((a, b) => a.result!.skip - b.result!.skip)
+        .flatMap((item) => item.result!.nodes),
     }),
     [queue]
   );
+
+  useEffect(() => {
+    console.log(queue);
+  }, [queue]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
@@ -118,7 +129,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
-        <button>Load more</button>
         {isConnected === undefined && <div class="c-progress-bar" />}
         {isConnected && isSearchPending && <div class="c-progress-bar" />}
         {isConnected === false && (
@@ -140,6 +150,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             ))}
           </ul>
         )}
+        <button onClick={() => setSkip((prev) => prev + 10)}>Load more</button>
       </main>
     </>
   );

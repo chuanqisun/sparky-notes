@@ -40,17 +40,20 @@ export interface GetCardDataRes {
 export interface SearchReq {
   accessToken: string;
   query: string;
-  skip?: number;
+  skip: number;
 }
 
 export interface SearchRes {
   nodes: HitsFtsNode[];
+  skip: number;
 }
 
 export interface RecentReq {
   accessToken: string;
+  skip: number;
 }
 
 export interface RecentRes {
   nodes: HitsFtsNode[];
+  skip: number;
 }

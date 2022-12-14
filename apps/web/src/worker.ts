@@ -45,7 +45,7 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
 
   const pattern = getTokensPattern(getTokens(req.query));
-  const results = await proxy(getSearchPayloadV2({ query: req.query, count: false, top: 10, skip: 0, filter: {} }));
+  const results = await proxy(getSearchPayloadV2({ query: req.query, count: false, top: 10, skip: req.skip, filter: {} }));
 
   const nodes = searchResultsDisplayNodes(results.results, (item) => {
     const dict = getHighlightDict(item.highlights?.["children/Title"] ?? []);
@@ -69,12 +69,13 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
 
   return {
     nodes: ftsNodes,
+    skip: req.skip,
   };
 };
 
 const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
-  const results = await proxy(getSearchPayloadV2({ query: "*", count: false, top: 25, skip: 0, filter: {} }));
+  const results = await proxy(getSearchPayloadV2({ query: "*", count: false, top: 25, skip: req.skip, filter: {} }));
   const nodes = searchResultsDisplayNodes(
     results.results,
     () => [] // omit children
@@ -84,6 +85,7 @@ const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
 
   return {
     nodes: ftsNodes,
+    skip: req.skip,
   };
 };
 

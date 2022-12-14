@@ -1,7 +1,7 @@
 import { useCallback, useState } from "preact/hooks";
 import { replaceArrayItem } from "./array";
 
-export interface Task<T> {
+interface TaskInternal<T> {
   queueKey: string;
   itemKey: string;
   work: Promise<void>;
@@ -10,8 +10,14 @@ export interface Task<T> {
   error?: any;
 }
 
+export interface Task<T> {
+  queueKey: string;
+  itemKey: string;
+  work: Promise<T>;
+}
+
 export function useConcurrentScheduler<T>() {
-  const [queue, setQueue] = useState<Task<T>[]>([]);
+  const [queue, setQueue] = useState<TaskInternal<T>[]>([]);
 
   const resolve = useCallback((queueKey: string, itemKey: string, result?: any, error?: any) => {
     setQueue((prevQueue) => {
@@ -20,7 +26,7 @@ export function useConcurrentScheduler<T>() {
     });
   }, []);
 
-  const add = useCallback((queueKey: string, itemKey: string, work: Promise<T>) => {
+  const add = useCallback(({ queueKey, itemKey, work }: Task<T>) => {
     setQueue((prevQueue) => {
       // clear queue on key change
       const mutableQueue = prevQueue.some((item) => item.queueKey === queueKey) ? [...prevQueue] : [];
