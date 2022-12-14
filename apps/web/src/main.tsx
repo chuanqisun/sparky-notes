@@ -71,23 +71,20 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [skip, setSkip] = useState(0);
 
-  const keywordSearch = useCallback((skip: number, query: string) => worker.request("search", { query, accessToken, skip }), [accessToken]);
-  const recentSearch = useCallback((skip: number) => worker.request("recent", { accessToken, skip }), [accessToken]);
-  const anySearch = useCallback((skip: number, query?: string) => (query ? keywordSearch(skip, query) : recentSearch(skip)), [keywordSearch, recentSearch]);
+  const keywordSearch = useCallback((top: number, skip: number, query: string) => worker.request("search", { query, accessToken, skip, top }), [accessToken]);
+  const recentSearch = useCallback((top: number, skip: number) => worker.request("recent", { accessToken, skip, top }), [accessToken]);
+  const anySearch = useCallback(
+    (top: number, skip: number, query?: string) => (query ? keywordSearch(top, skip, query) : recentSearch(top, skip)),
+    [keywordSearch, recentSearch]
+  );
 
   const { queue, add } = useConcurrentTasks<SearchRes | RecentRes>();
 
   useEffect(() => {
-    add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(skip, effectiveQuery) });
+    add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(20, skip, effectiveQuery) });
   }, [effectiveQuery, skip]);
 
-  const {
-    isSearchPending,
-    isLoadingMore: isInifiniteScrollPending,
-    isSearchError,
-    hasMore,
-    resultNodes,
-  } = useMemo(
+  const { isSearchPending, isLoadingMore, isSearchError, hasMore, resultNodes } = useMemo(
     () => ({
       isSearchPending: queue.some((item) => item.isPending),
       isLoadingMore: queue.length > 1 && queue[queue.length - 1].isPending,
@@ -101,7 +98,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     [queue]
   );
 
-  console.log(queue[queue.length - 1]);
+  const [cachedResultNodes, setCachedResultNodes] = useState<SearchRes["nodes"]>([]);
+  useEffect(() => {
+    if (!isSearchPending) setCachedResultNodes(resultNodes);
+  }, [isSearchPending, resultNodes]);
+  // This ensures we remove progress bar and add new content in the same tick
+  const isLoadingMoreCacheUpdating = useMemo(
+    () => !isSearchPending && resultNodes.length !== cachedResultNodes.length,
+    [isSearchPending, resultNodes.length, cachedResultNodes.length]
+  );
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
@@ -142,7 +147,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       </header>
       <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
         {isConnected === undefined && <div class="c-progress-bar" />}
-        {isConnected && isSearchPending && !isInifiniteScrollPending && <div class="c-progress-bar" />}
+        {isConnected && isSearchPending && !isLoadingMore && <div class="c-progress-bar" />}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -155,11 +160,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
         {isConnected && !isSearchError && (
           <ul class="c-list">
-            {resultNodes.map((parentNode, index) => (
+            {cachedResultNodes.map((parentNode, index) => (
               <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             ))}
           </ul>
         )}
+        {(isLoadingMore || isLoadingMoreCacheUpdating) && <div class="c-progress-bar c-progress-bar--inline" />}
         <InfiniteScrollBottom />
       </main>
     </>

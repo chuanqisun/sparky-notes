@@ -40,6 +40,7 @@ export interface GetCardDataRes {
 export interface SearchReq {
   accessToken: string;
   query: string;
+  top: number;
   skip: number;
 }
 
@@ -51,6 +52,7 @@ export interface SearchRes {
 
 export interface RecentReq {
   accessToken: string;
+  top: number;
   skip: number;
 }
 

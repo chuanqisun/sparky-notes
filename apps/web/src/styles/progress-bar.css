@@ -5,6 +5,10 @@
   right: 0;
 }
 
+.c-progress-bar--inline {
+  position: static;
+}
+
 .c-progress-bar::before {
   display: block;
   content: " ";
