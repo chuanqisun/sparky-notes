@@ -1,5 +1,6 @@
 - Load more for search result
 - Load more for recent feed
+- In-app click to browse without adding to canvas
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
 - Ctrl + Click to open in web
