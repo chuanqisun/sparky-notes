@@ -7,5 +7,6 @@
 - api-proxy: deploy via GitHub Action.
   - `PORT=5202`
   - `SCM_DO_BUILD_DURING_DEPLOYMENT=false`
-- web: deploy manually via Azure Static Websites on Blob Storage
+- web: deploy via GitHub Action.
+  - Ref: https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-static-site-github-actions
 - figma-pluin: deploy inside Figma via Microsoft Organization plugins
