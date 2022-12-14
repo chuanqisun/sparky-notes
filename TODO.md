@@ -1,3 +1,4 @@
+- Cache token
 - Load more for search result
 - Load more for recent feed
 - Provide feedback menu action

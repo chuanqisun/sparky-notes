@@ -33,7 +33,6 @@ export async function signIn(req: Request): Response<SignInOutput> {
   assert(typeof input.code_verifier === "string");
 
   const { code, code_verifier } = input;
-  const userTable = path.join(process.cwd(), "db", "users.json");
 
   const params = new URLSearchParams({
     client_id: authConfig.AAD_CLIENT_ID,
@@ -159,9 +158,12 @@ export interface GetTokenInput {
   id_token: string;
 }
 
-export type GetTokenOutput = string;
+export type GetTokenOutput = {
+  token: string;
+  expireAt: number; // epoch ms
+};
 
-export async function getToken(req: Request): Response<string> {
+export async function getToken(req: Request): Response<GetTokenOutput | string> {
   const input: GetTokenInput = req.body;
 
   assert(typeof input.id_token === "string");
@@ -209,19 +211,11 @@ export async function getToken(req: Request): Response<string> {
 
   return {
     status: response.status,
-    data: response.data.access_token,
-  };
-}
-
-async function getUser(token: string) {
-  const result = await axios("https://hits.microsoft.com/api/classic/user/findoradduser", {
-    method: "post",
-    headers: {
-      Authorization: `Bearer ${token}`,
+    data: {
+      token: response.data.access_token,
+      expireAt: Date.now() + response.data.expires_in * 1000,
     },
-  });
-
-  return result.data;
+  };
 }
 
 function updateUserInTable<T extends { email: string; userClientId: string }>(table: T[], userToUpdate: T) {
