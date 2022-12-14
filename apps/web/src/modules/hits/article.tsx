@@ -14,17 +14,19 @@ export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
       <li class={`c-list__item`} key={node.id}>
         <button
           class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
-          onClick={() =>
-            sendToFigma({
-              addCard: {
-                category: EntityDisplayName[node.entityType],
-                title: node.title,
-                entityId: node.id,
-                entityType: node.entityType,
-                backgroundColor: EntityBackgroundColor[node.entityType],
-                url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
-              },
-            })
+          onClick={(e) =>
+            e.ctrlKey
+              ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank")
+              : sendToFigma({
+                  addCard: {
+                    category: EntityDisplayName[node.entityType],
+                    title: node.title,
+                    entityId: node.id,
+                    entityType: node.entityType,
+                    backgroundColor: EntityBackgroundColor[node.entityType],
+                    url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
+                  },
+                })
           }
         >
           <article class="hits-item">
