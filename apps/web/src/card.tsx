@@ -1,6 +1,6 @@
 import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
-import { useCallback, useEffect, useLayoutEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/hits/adaptor";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
@@ -136,13 +136,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [accessToken]);
 
   // Auto expand highlighted child entity
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!cardData) return;
     const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
     if (!accordion) return;
 
     accordion.open = true;
-    accordion.scrollIntoView({ behavior: "smooth", block: "center" });
+    accordion.querySelector("summary")!.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [cardData]);
 
   const [isBodyExpanded, setIsBodyExpanded] = useState(false);
