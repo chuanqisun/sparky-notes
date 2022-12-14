@@ -1,5 +1,4 @@
 import type { HitsFtsNode } from "./modules/fts/fts";
-import type { HitsConfig } from "./modules/hits/config";
 import type { SearchResultDocument } from "./modules/hits/hits";
 import type { SearchProgress } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
@@ -29,7 +28,7 @@ export interface EchoRes {
 }
 
 export interface GetCardDataReq {
-  config: HitsConfig;
+  accessToken: string;
   entityType: number;
   entityId: string;
 }
@@ -39,7 +38,7 @@ export interface GetCardDataRes {
 }
 
 export interface SearchReq {
-  config: HitsConfig;
+  accessToken: string;
   query: string;
 }
 
@@ -48,7 +47,7 @@ export interface SearchRes {
 }
 
 export interface RecentReq {
-  config: HitsConfig;
+  accessToken: string;
 }
 
 export interface RecentRes {

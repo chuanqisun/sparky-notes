@@ -2,7 +2,6 @@
 
 import { getTokens, getTokensPattern, hitsGraphNodeToFtsNode } from "./modules/fts/fts";
 import { getHighlightDict, isClaimType, searchResultChildToHitsGraphChild, searchResultsDisplayNodes } from "./modules/hits/adaptor";
-import { getAccessToken } from "./modules/hits/auth";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { searchFirst, searchRecent, searchV2 } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -23,9 +22,7 @@ async function main() {
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
 
 const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
-  const config = req.config;
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
-  const proxy = getAuthenticatedProxy(accessToken);
+  const proxy = getAuthenticatedProxy(req.accessToken);
 
   performance.mark("start");
   const result = await searchFirst({
@@ -41,9 +38,7 @@ const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
 };
 
 const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
-  const config = req.config;
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
-  const proxy = getAuthenticatedProxy(accessToken);
+  const proxy = getAuthenticatedProxy(req.accessToken);
 
   const pattern = getTokensPattern(getTokens(req.query));
   const results = await searchV2({ proxy, query: req.query, filter: {} });
@@ -74,9 +69,7 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
 };
 
 const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
-  const config = req.config;
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
-  const proxy = getAuthenticatedProxy(accessToken);
+  const proxy = getAuthenticatedProxy(req.accessToken);
 
   const results = await searchRecent({ proxy, query: "*", filter: {} });
   const nodes = searchResultsDisplayNodes(

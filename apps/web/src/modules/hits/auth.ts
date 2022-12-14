@@ -1,5 +1,5 @@
 import { authConfig } from "@h20/auth";
-import type { GetTokenInput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/auth-server";
+import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/auth-server";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
 const AUTH_SERVER_HOST = import.meta.env.VITE_AUTH_SERVER_HOST;
@@ -73,7 +73,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
   return result;
 }
 
-export async function getAccessToken(input: GetTokenInput): Promise<string> {
+export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutput> {
   const result = await fetch(`${AUTH_SERVER_HOST}/hits/token`, {
     method: "POST",
     headers: {

@@ -6,7 +6,6 @@ import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hi
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
-import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
@@ -62,8 +61,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { log, lines } = useLog();
 
   const { worker } = props;
-  const { isConnected, signIn, signOut } = useAuth();
-  const { value: configValue } = useConfig();
+  const { isConnected, signIn, accessToken } = useAuth();
 
   const [cardData, setCardData] = useState<CardData | null | undefined>(undefined);
 
@@ -107,7 +105,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   useEffect(() => {
     // Assume user is already connected to reduce latency
 
-    worker.request("getCardData", { config: configValue, entityId: entityId!, entityType: entityType! }).then((result) => {
+    worker.request("getCardData", { accessToken, entityId: entityId!, entityType: entityType! }).then((result) => {
       const { cardData } = result;
       if (!cardData) return;
 

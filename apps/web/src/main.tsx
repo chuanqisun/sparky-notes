@@ -3,7 +3,6 @@ import { JSX, render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
-import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
@@ -34,8 +33,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { log, lines } = useLog();
 
   const { worker } = props;
-  const { isConnected, signIn, signOut } = useAuth();
-  const { value: configValue } = useConfig();
+  const { isConnected, signIn, signOut, accessToken } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
@@ -82,8 +80,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return trimmedQuery ? debouncedQuery : trimmedQuery;
   }, [query, debouncedQuery]);
 
-  const keywordSearch = useCallback((query: string) => worker.request("search", { query, config: configValue }), [configValue]);
-  const recentSearch = useCallback(() => worker.request("recent", { config: configValue }), [configValue]);
+  const keywordSearch = useCallback((query: string) => worker.request("search", { query, accessToken }), [accessToken]);
+  const recentSearch = useCallback(() => worker.request("recent", { accessToken }), [accessToken]);
   const anySearch = useCallback((query?: string) => (query ? keywordSearch(query) : recentSearch()), [keywordSearch, recentSearch]);
   const { task: switchableSearch, data: searchResult, error: searchError, isLoading: isSearching } = useSwitchMap(anySearch);
 

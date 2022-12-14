@@ -160,7 +160,7 @@ export interface GetTokenInput {
 
 export type GetTokenOutput = {
   token: string;
-  expireAt: number; // epoch ms
+  expireIn: number; // Seconds
 };
 
 export async function getToken(req: Request): Response<GetTokenOutput | string> {
@@ -213,7 +213,7 @@ export async function getToken(req: Request): Response<GetTokenOutput | string> 
     status: response.status,
     data: {
       token: response.data.access_token,
-      expireAt: Date.now() + response.data.expires_in * 1000,
+      expireIn: response.data.expires_in,
     },
   };
 }
