@@ -3,7 +3,7 @@
 import { getTokens, getTokensPattern, hitsGraphNodeToFtsNode } from "./modules/fts/fts";
 import { getHighlightDict, isClaimType, searchResultChildToHitsGraphChild, searchResultsDisplayNodes } from "./modules/hits/adaptor";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
-import { searchFirst, searchRecent, searchV2 } from "./modules/hits/search";
+import { getSearchPayloadV2, searchFirst } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { identity } from "./utils/identity";
 import { WorkerServer } from "./utils/worker-rpc";
@@ -45,7 +45,7 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
 
   const pattern = getTokensPattern(getTokens(req.query));
-  const results = await searchV2({ proxy, query: req.query, filter: {} });
+  const results = await proxy(getSearchPayloadV2({ query: req.query, count: false, top: 10, skip: 0, filter: {} }));
 
   const nodes = searchResultsDisplayNodes(results.results, (item) => {
     const dict = getHighlightDict(item.highlights?.["children/Title"] ?? []);
@@ -74,8 +74,7 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
 
 const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
-
-  const results = await searchRecent({ proxy, query: "*", filter: {} });
+  const results = await proxy(getSearchPayloadV2({ query: "*", count: false, top: 25, skip: 0, filter: {} }));
   const nodes = searchResultsDisplayNodes(
     results.results,
     () => [] // omit children

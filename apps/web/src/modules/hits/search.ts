@@ -1,5 +1,4 @@
 import { field, ifAll, ifAny } from "acs-expression-builder";
-import { getPageOffsets } from "../../utils/chunk";
 import type { FilterConfig, SearchOutput, SearchResultItem } from "./hits";
 
 export interface FindConfig {
@@ -57,74 +56,13 @@ export function getFindPayload(config: { filter: FindFilter }) {
   };
 }
 
-export interface SearchConfig {
-  pageSize: number;
-  proxy: (payload: any) => Promise<SearchOutput>;
-  filter: FilterConfig;
-  onProgress?: (progress: SearchProgress) => any;
-}
-export interface SearchProgress {
-  items: SearchResultItem[];
-  total: number;
-  success: number;
-}
-export interface SearchSummary {
-  total: number;
-  success: number;
-  hasError: boolean;
-}
-export async function search({ proxy, filter, onProgress, pageSize }: SearchConfig): Promise<SearchSummary> {
-  // execute 1st search to get total
-  const payload = getSearchPayload({ count: true, top: pageSize, skip: 0, filter });
-  const { totalCount, results } = await proxy(payload);
-
-  let success = results.length;
-  let hasError = false;
-
-  onProgress?.({
-    items: results,
-    total: totalCount,
-    success,
-  });
-
-  const pageOffsets = getPageOffsets(pageSize, totalCount);
-  pageOffsets.shift(); // discard first page which is already available from previous query
-
-  await Promise.all(
-    pageOffsets.map(async (offset) => {
-      const payload = getSearchPayload({ count: false, top: pageSize, skip: offset, filter });
-      return proxy(payload)
-        .then(({ results }) =>
-          onProgress?.({
-            items: results,
-            total: totalCount,
-            success: (success += results.length),
-          })
-        )
-        .catch(() => (hasError = true));
-    })
-  );
-
-  return {
-    total: totalCount,
-    success,
-    hasError,
-  };
-}
-
 export interface SearchConfigV2 {
   proxy: (payload: any) => Promise<SearchOutput>;
   filter: FilterConfig;
+  top?: number;
+  skip?: number;
+  orderBy?: string[];
   query: string;
-}
-export async function searchV2({ proxy, query, filter }: SearchConfigV2) {
-  const payload = getSearchPayloadV2({ query, count: false, top: 10, skip: 0, filter });
-  return await proxy(payload);
-}
-
-export async function searchRecent({ proxy, filter }: SearchConfigV2) {
-  const payload = getSearchPayloadV2({ query: "*", count: false, top: 25, skip: 0, filter, orderBy: getOrderBy(getOrderByPublishDateClause()) });
-  return await proxy(payload);
 }
 
 export function getRecentPayload(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {

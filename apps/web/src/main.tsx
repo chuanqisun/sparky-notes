@@ -106,6 +106,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
+        <button>Load more</button>
         {isConnected === undefined && <div class="c-progress-bar" />}
         {isConnected && isSearching && <div class="c-progress-bar" />}
         {isConnected === false && (
