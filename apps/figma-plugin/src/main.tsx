@@ -6,7 +6,7 @@ import Plus from "./assets/FigmaPlus.svg";
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
 
-const appendCacheBustingString = (url: string) => (url + url.includes("?") ? `&` : `?` + `t=${Date.now()}`);
+const appendCacheBustingString = (url: string) => `${url}${url.includes("?") ? `&` : `?`}t=${Date.now()}}`;
 
 const showUI = (urlSuffix: string = "") =>
   figma.showUI(`<script>window.location.href="${process.env.WEB_URL + appendCacheBustingString(urlSuffix)}"</script>`, {
