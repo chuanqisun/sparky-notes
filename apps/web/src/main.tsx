@@ -1,14 +1,14 @@
 import type { MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
-import type { HitsFtsNode } from "./modules/fts/fts";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import { useConfig } from "./modules/hits/use-config";
 import { useLog } from "./modules/status/status-bar";
-import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
+import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { useDebounce } from "./utils/use-debounce";
+import { useSwitchMap } from "./utils/use-switch-map";
 import { useVirtualList } from "./utils/use-virtual-list";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
@@ -77,38 +77,17 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // handle search V2
   const debouncedQuery = useDebounce(query.trim(), "", 250);
-  const search = useCallback((query: string) => worker.request("search", { query, config: configValue }), [configValue]);
+  const effectiveQuery = useMemo(() => {
+    const trimmedQuery = query.trim();
+    return trimmedQuery ? debouncedQuery : trimmedQuery;
+  }, [query, debouncedQuery]);
+
+  const keywordSearch = useCallback((query: string) => worker.request("search", { query, config: configValue }), [configValue]);
   const recentSearch = useCallback(() => worker.request("recent", { config: configValue }), [configValue]);
+  const anySearch = useCallback((query?: string) => (query ? keywordSearch(query) : recentSearch()), [keywordSearch, recentSearch]);
+  const { task: switchableSearch, data: searchResult, error: searchError, isLoading: isSearching } = useSwitchMap(anySearch);
 
-  const [timedSearchResult, setTimedSearchResult] = useState<{ time: number; nodes: HitsFtsNode[] } | null>(null);
-  const [lastSearchTime, setLastSearchTime] = useState<number | null>(null);
-
-  const keepLatestResult = (startTime: number, result: SearchRes | RecentRes) => {
-    setTimedSearchResult((prev) =>
-      !prev?.time || prev.time < startTime
-        ? {
-            time: startTime,
-            nodes: result.nodes,
-          }
-        : prev
-    );
-  };
-
-  useEffect(() => {
-    if (!debouncedQuery) return;
-    const time = performance.now();
-    setLastSearchTime(time);
-    search(debouncedQuery).then(keepLatestResult.bind(null, time));
-  }, [search, debouncedQuery]);
-
-  // handle search
-  useEffect(() => {
-    if (!query.trim()) {
-      const time = performance.now();
-      setLastSearchTime(time);
-      recentSearch().then(keepLatestResult.bind(null, time));
-    }
-  }, [query]);
+  useEffect(() => void switchableSearch(effectiveQuery), [effectiveQuery, switchableSearch]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
@@ -143,7 +122,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       </header>
       <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
         {isConnected === undefined && <div class="c-progress-bar" />}
-        {isConnected && lastSearchTime !== null && lastSearchTime !== timedSearchResult?.time && <div class="c-progress-bar" />}
+        {isConnected && isSearching && <div class="c-progress-bar" />}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -154,9 +133,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
-        {isConnected && (
+        {isConnected && searchResult && !searchError && (
           <ul class="c-list" id="js-virtual-list">
-            {timedSearchResult?.nodes.map((parentNode, index) => (
+            {searchResult.nodes.map((parentNode, index) => (
               <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
                 <HitsArticle node={parentNode} isParent={true} sendToFigma={notifyFigma} />
               </VirtualListItem>

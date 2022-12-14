@@ -1,16 +1,12 @@
-- Granular search index for claim nodes with native boost and reuse boost
-- Allow search title + "insight" to browse
+- Load more for search result
+- Load more for recent feed
+- Provide feedback menu action
+- Handle permission errors when loading other people's work
 - Ctrl + Click to open in web
-- Deduplicate inc and full sync logic
-- Debounce and throttle search
 - New card positioning improvements
 - Debug ` if (!te.researchers.length) throw new Error("!");`
   - Handle reports without researcher
-- Debug occasional get token 500 error
 - Auto push code update to Figma Widget instance
-- Try Intl.Segmenter as custom tokenizer
-- Timestamp last access token usage
-- One click reset: sign out + DB wipe + code update
-- Sign out from all HITS Assistants
-- Handle "/" with custom tokenizer
+- Auth | Timestamp last access token usage
+- Auth | Sign out from all HITS Assistants
 - Progressively disclose more non-highlight items
