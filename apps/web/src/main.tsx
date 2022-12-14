@@ -1,12 +1,13 @@
 import type { MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useDebounce } from "./utils/use-debounce";
+import { useInfiniteScroll } from "./utils/use-infinite-scroll";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -54,10 +55,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [query, setQuery] = useState("");
 
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
-    scrollAreaRef.current?.scrollTo({ top: 0 });
+    scrollToTop();
 
     setSkip(0);
   }, []);
@@ -81,10 +81,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(skip, effectiveQuery) });
   }, [effectiveQuery, skip]);
 
-  const { isSearchPending, isSearchError, resultNodes } = useMemo(
+  const {
+    isSearchPending,
+    isLoadingMore: isInifiniteScrollPending,
+    isSearchError,
+    hasMore,
+    resultNodes,
+  } = useMemo(
     () => ({
       isSearchPending: queue.some((item) => item.isPending),
+      isLoadingMore: queue.length > 1 && queue[queue.length - 1].isPending,
       isSearchError: queue.some((item) => item.error),
+      hasMore: queue[queue.length - 1]?.result?.hasMore,
       resultNodes: queue
         .filter((item) => item.result)
         .sort((a, b) => a.result!.skip - b.result!.skip)
@@ -93,13 +101,19 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     [queue]
   );
 
-  useEffect(() => {
-    console.log(queue);
-  }, [queue]);
+  console.log(queue[queue.length - 1]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
+
+  const { setScrollContainerRef, shouldLoadMore, scrollToTop, InfiniteScrollBottom } = useInfiniteScroll();
+
+  useEffect(() => {
+    if (shouldLoadMore && hasMore && !isSearchPending) {
+      setSkip((prev) => prev + 10);
+    }
+  }, [hasMore, shouldLoadMore, isSearchPending]);
 
   return (
     <>
@@ -126,9 +140,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
-      <main class="c-app-layout__main u-scroll" ref={scrollAreaRef}>
+      <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
         {isConnected === undefined && <div class="c-progress-bar" />}
-        {isConnected && isSearchPending && <div class="c-progress-bar" />}
+        {isConnected && isSearchPending && !isInifiniteScrollPending && <div class="c-progress-bar" />}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -140,13 +154,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </section>
         )}
         {isConnected && !isSearchError && (
-          <ul class="c-list" id="js-virtual-list">
+          <ul class="c-list">
             {resultNodes.map((parentNode, index) => (
               <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             ))}
           </ul>
         )}
-        <button onClick={() => setSkip((prev) => prev + 10)}>Load more</button>
+        <InfiniteScrollBottom />
       </main>
     </>
   );

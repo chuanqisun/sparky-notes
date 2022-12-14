@@ -46,6 +46,7 @@ export interface SearchReq {
 export interface SearchRes {
   nodes: HitsFtsNode[];
   skip: number;
+  hasMore: boolean;
 }
 
 export interface RecentReq {
@@ -56,4 +57,5 @@ export interface RecentReq {
 export interface RecentRes {
   nodes: HitsFtsNode[];
   skip: number;
+  hasMore: boolean;
 }

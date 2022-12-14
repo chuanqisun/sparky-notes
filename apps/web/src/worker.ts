@@ -70,6 +70,7 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
   return {
     nodes: ftsNodes,
     skip: req.skip,
+    hasMore: ftsNodes.length === 10,
   };
 };
 
@@ -86,6 +87,7 @@ const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   return {
     nodes: ftsNodes,
     skip: req.skip,
+    hasMore: ftsNodes.length === 25,
   };
 };
 
