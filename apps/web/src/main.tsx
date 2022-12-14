@@ -3,7 +3,6 @@ import { JSX, render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
-import { useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { useDebounce } from "./utils/use-debounce";
@@ -30,24 +29,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
-  const { log, lines } = useLog();
 
   const { worker } = props;
   const { isConnected, signIn, signOut, accessToken } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
-
-  useEffect(() => {
-    switch (isConnected) {
-      case false:
-        return log("Signed out");
-      case true:
-        return log("Signed in");
-      case undefined:
-        return log("Signing in...");
-    }
-  }, [isConnected]);
 
   // Figma RPC
   useEffect(() => {
