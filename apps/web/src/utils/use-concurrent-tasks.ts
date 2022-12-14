@@ -16,7 +16,7 @@ export interface Task<T> {
   work: Promise<T>;
 }
 
-export function useConcurrentScheduler<T>() {
+export function useConcurrentTasks<T>() {
   const [queue, setQueue] = useState<TaskInternal<T>[]>([]);
 
   const resolve = useCallback((queueKey: string, itemKey: string, result?: any, error?: any) => {

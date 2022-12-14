@@ -5,7 +5,7 @@ import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
-import { useConcurrentScheduler } from "./utils/use-concurrent-scheduler";
+import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useDebounce } from "./utils/use-debounce";
 import { useVirtualList } from "./utils/use-virtual-list";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -75,7 +75,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const recentSearch = useCallback((skip: number) => worker.request("recent", { accessToken, skip }), [accessToken]);
   const anySearch = useCallback((skip: number, query?: string) => (query ? keywordSearch(skip, query) : recentSearch(skip)), [keywordSearch, recentSearch]);
 
-  const { queue, add } = useConcurrentScheduler<SearchRes | RecentRes>();
+  const { queue, add } = useConcurrentTasks<SearchRes | RecentRes>();
 
   useEffect(() => {
     add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(skip, effectiveQuery) });
