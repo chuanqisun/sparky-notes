@@ -6,7 +6,6 @@ import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hi
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { useAuth } from "./modules/hits/use-auth";
-import { useLog } from "./modules/status/status-bar";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -58,23 +57,11 @@ const bodyTextOverflowThreshold = 100;
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
-  const { log, lines } = useLog();
 
   const { worker } = props;
   const { isConnected, signIn, accessToken } = useAuth();
 
   const [cardData, setCardData] = useState<CardData | null | undefined>(undefined);
-
-  useEffect(() => {
-    switch (isConnected) {
-      case false:
-        return log("Signed out");
-      case true:
-        return log("Signed in");
-      case undefined:
-        return log("Signing in...");
-    }
-  }, [isConnected]);
 
   // Figma RPC
   useEffect(() => {
@@ -107,7 +94,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
     worker.request("getCardData", { accessToken, entityId: entityId!, entityType: entityType! }).then((result) => {
       const { cardData } = result;
-      if (!cardData) return;
+      if (!cardData) {
+        setCardData(null);
+        return;
+      }
 
       const outline = JSON.parse(cardData.outline);
       const flatIds = flatItem(outline)
@@ -143,7 +133,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
-  }, []);
+  }, [accessToken]);
 
   // Auto expand highlighted child entity
   useEffect(() => {
@@ -159,7 +149,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   return (
     <>
-      {isConnected === undefined || (isConnected === true && cardData === undefined && <div class="c-progress-bar" />)}
+      {(isConnected === undefined || (isConnected && cardData === undefined)) && <div class="c-progress-bar" />}
       {isConnected === false && (
         <section class="c-welcome-mat">
           <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>

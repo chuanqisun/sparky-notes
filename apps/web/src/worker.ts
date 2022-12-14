@@ -25,16 +25,20 @@ const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
 
   performance.mark("start");
-  const result = await searchFirst({
-    proxy,
-    filter: {
-      entityId: req.entityId,
-      entityType: req.entityType,
-    },
-  });
-  console.log(`[get-card-data] ${(performance.measure("duration", "start").duration / 1000).toFixed(2)}ms`, result);
+  try {
+    const result = await searchFirst({
+      proxy,
+      filter: {
+        entityId: req.entityId,
+        entityType: req.entityType,
+      },
+    });
+    console.log(`[get-card-data] ${(performance.measure("duration", "start").duration / 1000).toFixed(2)}ms`, result);
 
-  return { cardData: result?.document ?? null };
+    return { cardData: result?.document ?? null };
+  } catch {
+    return { cardData: null };
+  }
 };
 
 const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
