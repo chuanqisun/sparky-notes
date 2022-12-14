@@ -1,13 +1,12 @@
 import type { MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useDebounce } from "./utils/use-debounce";
-import { useVirtualList } from "./utils/use-virtual-list";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -55,9 +54,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [query, setQuery] = useState("");
 
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
-    virtualListRef.current?.scrollTo({ top: 0 });
+    scrollAreaRef.current?.scrollTo({ top: 0 });
 
     setSkip(0);
   }, []);
@@ -101,8 +101,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
 
-  const { VirtualListItem, setVirtualListRef, virtualListRef } = useVirtualList();
-
   return (
     <>
       <header class="c-app-header">
@@ -128,7 +126,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </menu>
         )}
       </header>
-      <main class="c-app-layout__main u-scroll" ref={setVirtualListRef}>
+      <main class="c-app-layout__main u-scroll" ref={scrollAreaRef}>
         {isConnected === undefined && <div class="c-progress-bar" />}
         {isConnected && isSearchPending && <div class="c-progress-bar" />}
         {isConnected === false && (
@@ -144,9 +142,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         {isConnected && !isSearchError && (
           <ul class="c-list" id="js-virtual-list">
             {resultNodes.map((parentNode, index) => (
-              <VirtualListItem key={parentNode.id} forceVisible={index < 15} placeholderClassName="c-list__placeholder">
-                <HitsArticle node={parentNode} isParent={true} sendToFigma={notifyFigma} />
-              </VirtualListItem>
+              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             ))}
           </ul>
         )}
