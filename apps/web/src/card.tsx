@@ -7,6 +7,7 @@ import { useAuth } from "./modules/account/use-auth";
 import { isClaimType } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
+import { ErrorMessage } from "./modules/hits/error";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -98,7 +99,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   useEffect(() => {
     // We skip data fetching until token has valid expiry.
     // Note it is still possible for client to believe token is valid while the server has revoked it.
-    // In that case, we will set the data to null
+    // The background token request will hopefully fetch a valid token for the next round
+    // In that case, we will set the data to null and give user a link to reload the page
     if (isTokenExpired) return;
 
     worker.request("getCardData", { accessToken, entityId: entityId!, entityType: entityType! }).then((result) => {
@@ -171,10 +173,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       )}
       {isConnected === true && cardData === null && (
         <article class="c-card-article">
-          <p>
-            Sorry, the content cannot be loaded. You can <a href={window.location.href}>click here to try again</a>, or visit{" "}
-            <a href="https://hits.microsoft.com">https://hits.microsoft.com</a> for the latest content.
-          </p>
+          <ErrorMessage />
         </article>
       )}
       {isConnected !== false && cardData && (

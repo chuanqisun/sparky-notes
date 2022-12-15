@@ -7,6 +7,7 @@ import { useAuth } from "./modules/account/use-auth";
 import type { HitsDisplayNode } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { HitsArticle } from "./modules/hits/article";
+import { ErrorMessage } from "./modules/hits/error";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { debounce } from "./utils/debounce";
 import { getUniqueFilter } from "./utils/get-unique-filter";
@@ -73,6 +74,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [outputState, setOutputState] = useState({
     showTopLoadingSpinner: false,
     showBottomLoadingSpinner: false,
+    showErrorMessage: false,
     shouldDetectBottom: false,
     nodes: [] as HitsDisplayNode[],
   });
@@ -127,10 +129,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     setOutputState((prevState) => ({
       showTopLoadingSpinner,
       showBottomLoadingSpinner,
+      showErrorMessage: isSearchError,
       shouldDetectBottom,
       nodes: isSearchPending ? prevState.nodes : resultNodes,
     }));
-  }, [isConnected, isSearchPending, isLoadingMore, resultNodes]);
+  }, [isConnected, isSearchPending, isLoadingMore, isSearchError, resultNodes]);
 
   const { setScrollContainerRef, shouldLoadMore, scrollToTop, InfiniteScrollBottom } = useInfiniteScroll();
 
@@ -170,6 +173,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       </header>
       <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
         {outputState.showTopLoadingSpinner && <div class="c-progress-bar" />}
+        {outputState.showErrorMessage && (
+          <section class="c-welcome-mat">
+            <ErrorMessage />
+          </section>
+        )}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -180,7 +188,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
-        {isConnected && !isSearchError && (
+        {isConnected && (
           <ul class="c-list">
             {outputState.nodes.map((parentNode, index) => (
               <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
