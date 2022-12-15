@@ -1,6 +1,8 @@
 import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
+import { getInitialToken, TOKEN_CACHE_KEY, validateToken } from "./modules/account/access-token";
+import { CONFIG_CACHE_KEY, getInitialConfig, validateConfig } from "./modules/account/config";
 import { useAuth } from "./modules/account/use-auth";
 import { isClaimType } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
@@ -8,6 +10,7 @@ import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hi
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
+import { ensureJson } from "./utils/local-storage";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -17,6 +20,9 @@ const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).sta
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
 window.focus();
+
+ensureJson(CONFIG_CACHE_KEY, validateConfig, getInitialConfig);
+ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
 
 // extract entityId as first step
 const entityId = new URLSearchParams(location.search).get("entityId");

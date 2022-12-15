@@ -4,10 +4,16 @@ export interface HitsConfig {
   userClientId: string;
 }
 
-export function getBlankConfig(): HitsConfig {
+export const CONFIG_CACHE_KEY = "hits-config";
+
+export function getInitialConfig(): HitsConfig {
   return {
-    email: "alias@microsoft.com",
-    idToken: "examplehitsdevelopertoken",
-    userClientId: "unassigned",
+    email: "",
+    idToken: "",
+    userClientId: "",
   };
+}
+
+export function validateConfig(maybeConfig: any): maybeConfig is HitsConfig {
+  return maybeConfig && typeof maybeConfig.email === "string" && typeof maybeConfig.idToken === "string" && typeof maybeConfig.userClientId === "string";
 }

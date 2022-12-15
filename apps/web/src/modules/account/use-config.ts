@@ -1,10 +1,10 @@
 import { useLocalStorage } from "../../utils/use-local-storage";
-import { getBlankConfig } from "./config";
+import { CONFIG_CACHE_KEY, getInitialConfig } from "./config";
 
 export function useConfig() {
   const hitsConfig = useLocalStorage({
-    namespace: "hits-config",
-    getInitialValue: getBlankConfig,
+    key: CONFIG_CACHE_KEY,
+    getInitialValue: getInitialConfig,
   });
 
   return hitsConfig;

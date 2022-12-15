@@ -2,17 +2,16 @@ import { useCallback, useRef, useState } from "preact/hooks";
 import { getJson, setJson } from "./local-storage";
 
 export interface UseLocalStorageProps<T = any> {
-  namespace: string;
+  key: string;
   getInitialValue: () => T;
-  validate?: (value: any) => boolean;
 }
 export function useLocalStorage<T = any>(props: UseLocalStorageProps<T>) {
-  const initialConfig = useRef(getJson(props.namespace, props.validate) ?? props.getInitialValue());
+  const initialConfig = useRef(getJson(props.key) ?? props.getInitialValue());
   const [value, setConfig] = useState<T>(initialConfig.current);
 
   const update = useCallback((value: T) => {
     try {
-      setJson(props.namespace, value);
+      setJson(props.key, value);
       setConfig(value);
     } catch {}
   }, []);
@@ -20,7 +19,7 @@ export function useLocalStorage<T = any>(props: UseLocalStorageProps<T>) {
   const reset = useCallback(() => {
     try {
       const config = props.getInitialValue();
-      setJson(props.namespace, config);
+      setJson(props.key, config);
       setConfig(config);
     } catch {}
   }, []);

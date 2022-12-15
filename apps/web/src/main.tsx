@@ -1,6 +1,8 @@
 import type { MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { getInitialToken, TOKEN_CACHE_KEY, validateToken } from "./modules/account/access-token";
+import { CONFIG_CACHE_KEY, getInitialConfig, validateConfig } from "./modules/account/config";
 import { useAuth } from "./modules/account/use-auth";
 import type { HitsDisplayNode } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
@@ -8,6 +10,7 @@ import { HitsArticle } from "./modules/hits/article";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { debounce } from "./utils/debounce";
 import { getUniqueFilter } from "./utils/get-unique-filter";
+import { ensureJson } from "./utils/local-storage";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useInfiniteScroll } from "./utils/use-infinite-scroll";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -20,6 +23,9 @@ const PAGE_SIZE = 20;
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
 window.focus();
+
+ensureJson(CONFIG_CACHE_KEY, validateConfig, getInitialConfig);
+ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   useEffect(() => {

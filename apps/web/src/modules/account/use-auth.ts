@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useLocalStorage } from "../../utils/use-local-storage";
+import { getInitialToken, TOKEN_CACHE_KEY } from "./access-token";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import { useConfig } from "./use-config";
-
-export const TOKEN_CACHE_KEY = "cached-token";
 
 export function useAuth() {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);
@@ -11,17 +10,14 @@ export function useAuth() {
   const hitsConfig = useConfig();
 
   const timedToken = useLocalStorage({
-    namespace: "access-token",
-    getInitialValue: () => ({ token: "", expireIn: 0, expireAt: 0 }),
-    validate: (result) => result && typeof result.token === "string" && typeof result.expireIn === "number" && typeof result.expireAt === "number",
+    key: TOKEN_CACHE_KEY,
+    getInitialValue: getInitialToken,
   });
 
   // 1 minute safety margin
   const isTokenExpired = useMemo(() => Date.now() + 60 * 1000 > timedToken.value.expireAt, [timedToken.value]);
 
   useEffect(() => {
-    if (!hitsConfig.value.email || !hitsConfig.value.idToken) return;
-
     const refreshToken = () =>
       getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId })
         .then((token) => {
