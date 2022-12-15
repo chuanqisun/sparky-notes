@@ -1,13 +1,13 @@
 import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { isClaimType } from "./modules/hits/display-node";
+import { useAuth } from "./modules/account/use-auth";
+import { isClaimType } from "./modules/display/display-node";
+import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
-import { useAuth } from "./modules/hits/use-auth";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
-import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 

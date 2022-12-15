@@ -1,10 +1,10 @@
 import type { MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useAuth } from "./modules/account/use-auth";
+import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { HitsArticle } from "./modules/hits/article";
-import { useAuth } from "./modules/hits/use-auth";
 import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
-import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
 import { getUniqueFilter } from "./utils/get-unique-filter";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useDebounce } from "./utils/use-debounce";
@@ -61,6 +61,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     setQuery((event.target as any).value);
     scrollToTop();
 
+    // TODO this must be synchronized with effectiveQuery, to prevent double querying
     setSkip(0);
   }, []);
 

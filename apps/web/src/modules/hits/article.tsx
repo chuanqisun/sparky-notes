@@ -1,10 +1,10 @@
 import type { MessageToMain } from "@h20/types";
-import type { HitsFtsNode } from "../fts/fts";
+import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityBackgroundColor, EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
 
 export interface HitsCardProps {
-  node: HitsFtsNode;
+  node: HitsDisplayNode;
   isParent?: boolean;
   sendToFigma: (figmaCard: MessageToMain) => void;
 }
@@ -45,7 +45,7 @@ export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
       </li>
       {isParent &&
         node.children.map((childNode) =>
-          childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsFtsNode} sendToFigma={sendToFigma} /> : null
+          childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} sendToFigma={sendToFigma} /> : null
         )}
     </>
   );

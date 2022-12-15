@@ -1,23 +1,15 @@
+import { load } from "cheerio";
 import { getUniqueFilter } from "../../utils/get-unique-filter";
-import { htmlToText } from "../../utils/parser";
-import { EntityType } from "./entity";
-import { getHighlightHtml, getHighlightWords } from "./highlight";
-import type { SearchResultDocument, SearchResultItem } from "./hits";
+import { EntityType } from "../hits/entity";
+import { getHighlightHtml, getHighlightWords } from "../hits/highlight";
+import type { SearchResultDocument, SearchResultItem } from "../hits/hits";
 
 export interface HitsDisplayNode {
   children: HitsDisplayChildNode[];
   entityType: number;
-  group: {
-    id: number;
-    displayName: string;
-  };
   id: string;
   title: string;
   researchers: {
-    id: number;
-    displayName: string;
-  }[];
-  tags: {
     id: number;
     displayName: string;
   }[];
@@ -53,11 +45,6 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
     updatedOn: getUpdatedOn(document),
     researchers,
     researchersHtml,
-    tags: [...document.products, ...document.topics].map(withDisplayName),
-    group: {
-      id: document.group.id,
-      displayName: document.group.name,
-    },
     children: searchResult.document.children
       .filter(isClaimType)
       .filter((claim) => Boolean(claim.title))
@@ -83,6 +70,10 @@ export const isClaimType = (item: { entityType: number }) => [EntityType.Insight
 const uniqueById = getUniqueFilter<{ id: any }>((a, b) => a.id === b.id);
 
 const extractBoldElements = (html: string) => getHighlightWords("b", html);
+
+function htmlToText(html: string): string {
+  return load(html).text();
+}
 
 function getUpdatedOn(document: SearchResultDocument): Date {
   return [...document.children.map((child) => new Date(child.updatedOn)), new Date(document.updatedOn)] // Parent usually has latest timestamp

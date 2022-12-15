@@ -1,4 +1,4 @@
-import { handleOAuthRedirect } from "./modules/hits/auth";
+import { handleOAuthRedirect } from "./modules/account/auth";
 
 handleOAuthRedirect().then((res) => {
   setTimeout(() => {

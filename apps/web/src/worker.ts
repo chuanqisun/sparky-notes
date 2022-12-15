@@ -1,6 +1,6 @@
 /// <reference lib="WebWorker" />
 
-import { formatDisplayNode } from "./modules/hits/display-node";
+import { formatDisplayNode } from "./modules/display/display-node";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { getOrderBy, getOrderByPublishDateClause, getSearchPayloadV2, searchFirst } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";

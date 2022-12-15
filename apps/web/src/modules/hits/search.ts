@@ -65,36 +65,6 @@ export interface SearchConfigV2 {
   query: string;
 }
 
-export function getRecentPayload(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {
-  return {
-    count: config.count,
-    top: config.top,
-    skip: config.skip,
-    filter: getFilterString(config.filter),
-    queryType: "Simple",
-    searchText: "*",
-    select: [
-      "Id",
-      "EntityType",
-      "Title",
-      "UpdatedOn",
-      "Children/Id",
-      "Children/EntityType",
-      "Children/Title",
-      "Children/UpdatedOn",
-      "Researchers/Id",
-      "Researchers/Name",
-      "Products/Id",
-      "Products/Name",
-      "Topics/Id",
-      "Topics/Name",
-      "Group/Id",
-      "Group/Name",
-    ],
-    orderBy: getOrderBy(getOrderByPublishDateClause()),
-  };
-}
-
 export function getSearchPayloadV2(config: { query: string; count: boolean; top: number; skip: number; filter: FilterConfig; orderBy?: string[] }) {
   return {
     count: config.count,
@@ -116,46 +86,8 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
       "Children/UpdatedOn",
       "Researchers/Id",
       "Researchers/Name",
-      // TODO remove below
-      "Products/Id",
-      "Products/Name",
-      "Topics/Id",
-      "Topics/Name",
-      "Group/Id",
-      "Group/Name",
     ],
     orderBy: config.orderBy,
-  };
-}
-
-export function getSearchPayload(config: { count: boolean; top: number; skip: number; filter: FilterConfig }) {
-  return {
-    count: config.count,
-    top: config.top,
-    skip: config.skip,
-    filter: getFilterString(config.filter),
-    queryType: "Simple",
-    searchText: "*",
-    select: [
-      "Id",
-      "EntityType",
-      "Title",
-      "UpdatedOn",
-      "Children/Id",
-      "Children/EntityType",
-      "Children/Title",
-      "Children/UpdatedOn",
-      "Children/IsNative",
-      "Researchers/Id",
-      "Researchers/Name",
-      "Products/Id",
-      "Products/Name",
-      "Topics/Id",
-      "Topics/Name",
-      "Group/Id",
-      "Group/Name",
-    ],
-    orderBy: getOrderBy(getOrderByPublishDateClause()),
   };
 }
 
