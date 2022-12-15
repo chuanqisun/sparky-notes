@@ -104,7 +104,7 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
     queryType: "Simple",
     searchText: config.query,
     searchFields: ["Title", "Children/Title", "Researchers/Name"],
-    highlightFields: ["Title", "Children/Title"],
+    highlightFields: ["Title", "Children/Title", "Researchers/Name"],
     select: [
       "Id",
       "EntityType",

@@ -5,6 +5,7 @@ import { HitsArticle } from "./modules/hits/article";
 import { useAuth } from "./modules/hits/use-auth";
 import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getParentOrigin, sendMessage } from "./utils/figma-rpc";
+import { getUniqueFilter } from "./utils/get-unique-filter";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useDebounce } from "./utils/use-debounce";
 import { useInfiniteScroll } from "./utils/use-infinite-scroll";
@@ -13,6 +14,7 @@ import WebWorker from "./worker?worker";
 
 // start worker ASAP
 const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).start();
+const PAGE_SIZE = 20;
 
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
@@ -81,7 +83,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { queue, add } = useConcurrentTasks<SearchRes | RecentRes>();
 
   useEffect(() => {
-    add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(20, skip, effectiveQuery) });
+    add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(PAGE_SIZE, skip, effectiveQuery) });
   }, [effectiveQuery, skip]);
 
   const { isSearchPending, isLoadingMore, isSearchError, hasMore, resultNodes } = useMemo(
@@ -93,7 +95,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       resultNodes: queue
         .filter((item) => item.result)
         .sort((a, b) => a.result!.skip - b.result!.skip)
-        .flatMap((item) => item.result!.nodes),
+        .flatMap((item) => item.result!.nodes)
+        .filter(getUniqueFilter((a, b) => a.id === b.id)),
     }),
     [queue]
   );
@@ -116,7 +119,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   useEffect(() => {
     if (shouldLoadMore && hasMore && !isSearchPending) {
-      setSkip((prev) => prev + 10);
+      setSkip((prev) => prev + PAGE_SIZE);
     }
   }, [hasMore, shouldLoadMore, isSearchPending]);
 

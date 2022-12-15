@@ -53,7 +53,7 @@ export interface SearchResultItem {
   highlights: null | Record<HighlightableField, string[] | undefined>;
 }
 
-export type HighlightableField = "title" | "contents" | "children/Title" | "children/Contents";
+export type HighlightableField = "title" | "contents" | "children/Title" | "children/Contents" | "researchers/Name";
 
 export interface SearchResultDocument {
   id: string;
