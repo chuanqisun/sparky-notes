@@ -4,9 +4,10 @@ import { getJson, setJson } from "./local-storage";
 export interface UseLocalStorageProps<T = any> {
   namespace: string;
   getInitialValue: () => T;
+  validate?: (value: any) => boolean;
 }
 export function useLocalStorage<T = any>(props: UseLocalStorageProps<T>) {
-  const initialConfig = useRef(getJson(props.namespace) ?? props.getInitialValue());
+  const initialConfig = useRef(getJson(props.namespace, props.validate) ?? props.getInitialValue());
   const [value, setConfig] = useState<T>(initialConfig.current);
 
   const update = useCallback((value: T) => {

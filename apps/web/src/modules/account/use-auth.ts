@@ -13,6 +13,7 @@ export function useAuth() {
   const timedToken = useLocalStorage({
     namespace: "access-token",
     getInitialValue: () => ({ token: "", expireIn: 0, expireAt: 0 }),
+    validate: (result) => result && typeof result.token === "string" && typeof result.expireIn === "number" && typeof result.expireAt === "number",
   });
 
   // 1 minute safety margin

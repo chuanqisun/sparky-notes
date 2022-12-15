@@ -2,10 +2,18 @@ export function setJson(namespace: string, config: any) {
   localStorage.setItem(namespace, JSON.stringify(config));
 }
 
-export function getJson<T = any>(namespace: string): T | null {
+export function getJson<T = any>(namespace: string, validate?: (result: any) => boolean): T | null {
   try {
-    const config = localStorage.getItem(namespace);
-    return config ? JSON.parse(config) : null;
+    const result = localStorage.getItem(namespace);
+
+    const parsed = result ? JSON.parse(result) : null;
+
+    if (validate && !validate(parsed)) {
+      console.log("JSON validation failed");
+      return null;
+    }
+
+    return parsed;
   } catch {
     return null;
   }
