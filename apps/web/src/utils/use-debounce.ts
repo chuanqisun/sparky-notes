@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 
-export const useDebounce = (value: string, initialValue: string, delayInMs: number) => {
-  const [debouncedValue, setDebouncedValue] = useState<string>(initialValue);
+export const useDebounce = <T>(value: T, initialValue: T, delayInMs: number) => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(initialValue);
 
   useEffect(() => {
     const handler = setTimeout(() => {
