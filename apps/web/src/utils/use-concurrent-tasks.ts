@@ -4,7 +4,7 @@ import { replaceArrayItem } from "./array";
 interface TaskInternal<T> {
   queueKey: string;
   itemKey: string;
-  work: Promise<void>;
+  workPromise: Promise<void>;
   isPending: boolean;
   result?: T;
   error?: any;
@@ -13,7 +13,7 @@ interface TaskInternal<T> {
 export interface Task<T> {
   queueKey: string;
   itemKey: string;
-  work: Promise<T>;
+  work: () => Promise<T>;
 }
 
 export function useConcurrentTasks<T>() {
@@ -29,13 +29,13 @@ export function useConcurrentTasks<T>() {
   const add = useCallback(({ queueKey, itemKey, work }: Task<T>) => {
     setQueue((prevQueue) => {
       // clear queue on key change
-      const mutableQueue = prevQueue.some((item) => item.queueKey === queueKey) ? [...prevQueue] : [];
+      const mutableQueue = prevQueue.filter((item) => item.queueKey === queueKey);
       const index = mutableQueue.findIndex((item) => item.itemKey === itemKey);
 
       // do not reschedule existing work
       if (index > -1) return mutableQueue;
 
-      const wrappedWork = work
+      const workPromise = work()
         .then((result) => {
           resolve(queueKey, itemKey, result);
         })
@@ -43,7 +43,7 @@ export function useConcurrentTasks<T>() {
           resolve(queueKey, itemKey, undefined, error);
         });
 
-      return [...mutableQueue, { queueKey, itemKey, work: wrappedWork, isPending: true }];
+      return [...mutableQueue, { queueKey, itemKey, workPromise, isPending: true }];
     });
   }, []);
 

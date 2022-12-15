@@ -38,7 +38,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;
-  const { isConnected, signIn, signOut, accessToken } = useAuth();
+  const { isConnected, signIn, signOut, accessToken, isTokenExpired } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
@@ -92,8 +92,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { queue, add } = useConcurrentTasks<SearchRes>();
 
   useEffect(() => {
-    add({ queueKey: inputState.effectiveQuery, itemKey: `${inputState.skip}`, work: anySearch(PAGE_SIZE, inputState.skip, inputState.effectiveQuery) });
-  }, [inputState.skip, inputState.effectiveQuery]);
+    if (isTokenExpired) return;
+
+    add({ queueKey: inputState.effectiveQuery, itemKey: `${inputState.skip}`, work: () => anySearch(PAGE_SIZE, inputState.skip, inputState.effectiveQuery) });
+  }, [inputState.skip, inputState.effectiveQuery, anySearch, isTokenExpired]);
 
   const { isSearchPending, isLoadingMore, isSearchError, hasMore, resultNodes } = useMemo(
     () => ({

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import { useConfig } from "./use-config";
@@ -12,8 +12,11 @@ export function useAuth() {
 
   const timedToken = useLocalStorage({
     namespace: "access-token",
-    getInitialValue: () => ({ token: "", expireIn: 0 }),
+    getInitialValue: () => ({ token: "", expireIn: 0, expireAt: 0 }),
   });
+
+  // 1 minute safety margin
+  const isTokenExpired = useMemo(() => Date.now() + 60 * 1000 > timedToken.value.expireAt, [timedToken.value]);
 
   useEffect(() => {
     if (!hitsConfig.value.email || !hitsConfig.value.idToken) return;
@@ -57,6 +60,7 @@ export function useAuth() {
 
   return {
     accessToken: timedToken.value.token,
+    isTokenExpired,
     isConnected,
     signIn,
     signOut,
