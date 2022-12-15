@@ -64,7 +64,7 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
       .map((claim) => {
         const childTitle = claim.title?.trim()?.length ? claim.title.trim() : "Untitled";
         const childTitleHtml = getHighlightHtml(childTitleHighlightWords, ["<mark>", "</mark>"], childTitle) ?? htmlToText(childTitle);
-        if (childTitle !== childTitleHtml) console.log([childTitle, childTitleHtml]);
+
         return {
           title: childTitle,
           titleHtml: childTitleHtml,
