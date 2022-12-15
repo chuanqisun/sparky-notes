@@ -59,6 +59,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [query, setQuery] = useState("");
 
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
+    // TODO debounce here
+    // if value is empty, immediately update debounced query and skip
+    // if not empty, wait until debounced
+
     setQuery((event.target as any).value);
     scrollToTop();
 
@@ -68,12 +72,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // handle search V2
   const debouncedQuery = useDebounce(query.trim(), "", 250);
+  const [skip, setSkip] = useState(0);
+
   const effectiveQuery = useMemo(() => {
     const trimmedQuery = query.trim();
     return trimmedQuery ? debouncedQuery : trimmedQuery;
   }, [query, debouncedQuery]);
-
-  const [skip, setSkip] = useState(0);
 
   const keywordSearch = useCallback((top: number, skip: number, query: string) => worker.request("search", { query, accessToken, skip, top }), [accessToken]);
   const recentSearch = useCallback((top: number, skip: number) => worker.request("recent", { accessToken, skip, top }), [accessToken]);
@@ -128,7 +132,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { setScrollContainerRef, shouldLoadMore, scrollToTop, InfiniteScrollBottom } = useInfiniteScroll();
 
   useEffect(() => {
-    if (displayState.nodes.length && shouldLoadMore && hasMore && !isSearchPending) {
+    if (shouldLoadMore && hasMore && !isSearchPending) {
       setSkip((prev) => prev + PAGE_SIZE);
     }
   }, [displayState.nodes, hasMore, shouldLoadMore, isSearchPending]);
