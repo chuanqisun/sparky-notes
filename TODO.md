@@ -1,4 +1,3 @@
-- Refactor: global clean up
 - Fix: duplicated query
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
