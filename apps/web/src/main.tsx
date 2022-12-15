@@ -6,9 +6,9 @@ import type { HitsDisplayNode } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { HitsArticle } from "./modules/hits/article";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
+import { debounce } from "./utils/debounce";
 import { getUniqueFilter } from "./utils/get-unique-filter";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
-import { useDebounce } from "./utils/use-debounce";
 import { useInfiniteScroll } from "./utils/use-infinite-scroll";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
@@ -57,27 +57,24 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const [query, setQuery] = useState("");
+  const [inputState, setInputState] = useState({ effectiveQuery: "", skip: 0 });
+
+  const handleQueryChange = (props: { effectiveQuery: string; skip: number }) => {
+    scrollToTop();
+    setInputState(props);
+  };
+
+  const handleQueryChangeDebounced = debounce(handleQueryChange, 250);
 
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
-    // TODO debounce here
-    // if value is empty, immediately update debounced query and skip
-    // if not empty, wait until debounced
-
     setQuery((event.target as any).value);
-    scrollToTop();
 
-    // TODO this must be synchronized with effectiveQuery, to prevent double querying
-    setSkip(0);
+    const immediateValue = (event.target as any).value.trim();
+    (immediateValue ? handleQueryChangeDebounced : handleQueryChange)({
+      effectiveQuery: immediateValue,
+      skip: 0,
+    });
   }, []);
-
-  // handle search V2
-  const debouncedQuery = useDebounce(query.trim(), "", 250);
-  const [skip, setSkip] = useState(0);
-
-  const effectiveQuery = useMemo(() => {
-    const trimmedQuery = query.trim();
-    return trimmedQuery ? debouncedQuery : trimmedQuery;
-  }, [query, debouncedQuery]);
 
   const keywordSearch = useCallback((top: number, skip: number, query: string) => worker.request("search", { query, accessToken, skip, top }), [accessToken]);
   const recentSearch = useCallback((top: number, skip: number) => worker.request("recent", { accessToken, skip, top }), [accessToken]);
@@ -89,8 +86,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { queue, add } = useConcurrentTasks<SearchRes>();
 
   useEffect(() => {
-    add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(PAGE_SIZE, skip, effectiveQuery) });
-  }, [effectiveQuery, skip]);
+    add({ queueKey: inputState.effectiveQuery, itemKey: `${inputState.skip}`, work: anySearch(PAGE_SIZE, inputState.skip, inputState.effectiveQuery) });
+  }, [inputState.skip, inputState.effectiveQuery]);
 
   const { isSearchPending, isLoadingMore, isSearchError, hasMore, resultNodes } = useMemo(
     () => ({
@@ -133,9 +130,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   useEffect(() => {
     if (shouldLoadMore && hasMore && !isSearchPending) {
-      setSkip((prev) => prev + PAGE_SIZE);
+      setInputState((prev) => ({
+        ...prev,
+        skip: prev.skip + PAGE_SIZE,
+      }));
     }
-  }, [displayState.nodes, hasMore, shouldLoadMore, isSearchPending]);
+  }, [hasMore, shouldLoadMore, isSearchPending]);
 
   return (
     <>
