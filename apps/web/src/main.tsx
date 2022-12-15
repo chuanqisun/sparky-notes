@@ -22,6 +22,10 @@ document.getElementById("app")!.innerHTML = "";
 window.focus();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
+  useEffect(() => {
+    document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
+  }, []);
+
   // Handle URL redirect
   useEffect(() => {
     const openUrl = new URLSearchParams(location.search).get("openUrl");
@@ -58,20 +62,22 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [query, setQuery] = useState("");
   const [inputState, setInputState] = useState({ effectiveQuery: "", skip: 0 });
+  const setInputStateDebounced = debounce(setInputState, 250);
 
-  const handleQueryChange = (props: { effectiveQuery: string; skip: number }) => {
-    scrollToTop();
-    setInputState(props);
-  };
-
-  const handleQueryChangeDebounced = debounce(handleQueryChange, 250);
+  const [outputState, setOutputState] = useState({
+    showTopLoadingSpinner: false,
+    showBottomLoadingSpinner: false,
+    shouldDetectBottom: false,
+    nodes: [] as HitsDisplayNode[],
+  });
 
   const handleInputChange = useCallback((event: JSX.TargetedEvent) => {
     setQuery((event.target as any).value);
+    scrollToTop();
 
-    const immediateValue = (event.target as any).value.trim();
-    (immediateValue ? handleQueryChangeDebounced : handleQueryChange)({
-      effectiveQuery: immediateValue,
+    const trimmedValue = (event.target as any).value.trim();
+    (trimmedValue ? setInputStateDebounced : setInputState)({
+      effectiveQuery: trimmedValue,
       skip: 0,
     });
   }, []);
@@ -104,27 +110,19 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     [queue]
   );
 
-  const [displayState, setDisplayState] = useState({
-    showTopLoadingSpinner: false,
-    showBottomLoadingSpinner: false,
-    nodes: [] as HitsDisplayNode[],
-  });
-
+  // Get output state
   useEffect(() => {
-    // reduce state
     const showTopLoadingSpinner = isConnected === undefined || (isConnected && isSearchPending && !isLoadingMore);
     const showBottomLoadingSpinner = isLoadingMore;
+    const shouldDetectBottom = !!isConnected && !isSearchPending && !isLoadingMore && resultNodes.length > 0;
 
-    setDisplayState((prevState) => ({
+    setOutputState((prevState) => ({
       showTopLoadingSpinner,
       showBottomLoadingSpinner,
+      shouldDetectBottom,
       nodes: isSearchPending ? prevState.nodes : resultNodes,
     }));
   }, [isConnected, isSearchPending, isLoadingMore, resultNodes]);
-
-  useEffect(() => {
-    document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
-  }, []);
 
   const { setScrollContainerRef, shouldLoadMore, scrollToTop, InfiniteScrollBottom } = useInfiniteScroll();
 
@@ -163,7 +161,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
-        {displayState.showTopLoadingSpinner && <div class="c-progress-bar" />}
+        {outputState.showTopLoadingSpinner && <div class="c-progress-bar" />}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -176,13 +174,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
         {isConnected && !isSearchError && (
           <ul class="c-list">
-            {displayState.nodes.map((parentNode, index) => (
+            {outputState.nodes.map((parentNode, index) => (
               <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             ))}
           </ul>
         )}
-        {displayState.showBottomLoadingSpinner && <div class="c-progress-bar c-progress-bar--inline" />}
-        <InfiniteScrollBottom />
+        {outputState.showBottomLoadingSpinner && <div class="c-progress-bar c-progress-bar--inline" />}
+        {outputState.shouldDetectBottom && <InfiniteScrollBottom />}
       </main>
     </>
   );

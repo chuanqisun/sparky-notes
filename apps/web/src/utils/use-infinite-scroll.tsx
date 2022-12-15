@@ -52,6 +52,7 @@ export function useInfiniteScroll() {
 
           return () => {
             observer.unobserve(observeTarget);
+            setShouldLoadMore(false);
           };
         }
       }, [observer]);

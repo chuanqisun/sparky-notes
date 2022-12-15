@@ -1,4 +1,3 @@
-- Fix: duplicated query
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
