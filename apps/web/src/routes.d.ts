@@ -1,4 +1,4 @@
-import type { HitsFtsNode } from "./modules/fts/fts";
+import type { HitsDisplayNode } from "./modules/display/display-node";
 import type { SearchResultDocument } from "./modules/hits/hits";
 import type { SearchProgress } from "./modules/hits/search";
 import type { RouteHandler } from "./utils/worker-rpc";
@@ -7,7 +7,7 @@ export type WorkerRoutes = {
   echo: RouteHandler<EchoReq, EchoRes>;
   getCardData: RouteHandler<GetCardDataReq, GetCardDataRes>;
   search: RouteHandler<SearchReq, SearchRes>;
-  recent: RouteHandler<RecentReq, RecentRes>;
+  recent: RouteHandler<RecentReq, SearchRes>;
 };
 
 export type WorkerEvents = {
@@ -45,7 +45,7 @@ export interface SearchReq {
 }
 
 export interface SearchRes {
-  nodes: HitsFtsNode[];
+  nodes: HitsDisplayNode[];
   skip: number;
   hasMore: boolean;
 }
@@ -54,10 +54,4 @@ export interface RecentReq {
   accessToken: string;
   top: number;
   skip: number;
-}
-
-export interface RecentRes {
-  nodes: HitsFtsNode[];
-  skip: number;
-  hasMore: boolean;
 }

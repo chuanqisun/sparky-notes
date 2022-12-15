@@ -2,9 +2,10 @@ import type { MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useAuth } from "./modules/account/use-auth";
+import type { HitsDisplayNode } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { HitsArticle } from "./modules/hits/article";
-import type { RecentRes, SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
+import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { getUniqueFilter } from "./utils/get-unique-filter";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useDebounce } from "./utils/use-debounce";
@@ -81,7 +82,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     [keywordSearch, recentSearch]
   );
 
-  const { queue, add } = useConcurrentTasks<SearchRes | RecentRes>();
+  const { queue, add } = useConcurrentTasks<SearchRes>();
 
   useEffect(() => {
     add({ queueKey: effectiveQuery, itemKey: `${skip}`, work: anySearch(PAGE_SIZE, skip, effectiveQuery) });
@@ -102,15 +103,23 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     [queue]
   );
 
-  const [cachedResultNodes, setCachedResultNodes] = useState<SearchRes["nodes"]>([]);
+  const [displayState, setDisplayState] = useState({
+    showTopLoadingSpinner: false,
+    showBottomLoadingSpinner: false,
+    nodes: [] as HitsDisplayNode[],
+  });
+
   useEffect(() => {
-    if (!isSearchPending) setCachedResultNodes(resultNodes);
-  }, [isSearchPending, resultNodes]);
-  // This ensures we remove progress bar and add new content in the same tick
-  const isLoadingMoreCacheUpdating = useMemo(
-    () => !isSearchPending && resultNodes.length !== cachedResultNodes.length,
-    [isSearchPending, resultNodes.length, cachedResultNodes.length]
-  );
+    // reduce state
+    const showTopLoadingSpinner = isConnected === undefined || (isConnected && isSearchPending && !isLoadingMore);
+    const showBottomLoadingSpinner = isLoadingMore;
+
+    setDisplayState((prevState) => ({
+      showTopLoadingSpinner,
+      showBottomLoadingSpinner,
+      nodes: isSearchPending ? prevState.nodes : resultNodes,
+    }));
+  }, [isConnected, isSearchPending, isLoadingMore, resultNodes]);
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
@@ -119,10 +128,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { setScrollContainerRef, shouldLoadMore, scrollToTop, InfiniteScrollBottom } = useInfiniteScroll();
 
   useEffect(() => {
-    if (shouldLoadMore && hasMore && !isSearchPending) {
+    if (displayState.nodes.length && shouldLoadMore && hasMore && !isSearchPending) {
       setSkip((prev) => prev + PAGE_SIZE);
     }
-  }, [hasMore, shouldLoadMore, isSearchPending]);
+  }, [displayState.nodes, hasMore, shouldLoadMore, isSearchPending]);
 
   return (
     <>
@@ -150,8 +159,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
       </header>
       <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
-        {isConnected === undefined && <div class="c-progress-bar" />}
-        {isConnected && isSearchPending && !isLoadingMore && <div class="c-progress-bar" />}
+        {displayState.showTopLoadingSpinner && <div class="c-progress-bar" />}
         {isConnected === false && (
           <section class="c-welcome-mat">
             <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -164,12 +172,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         )}
         {isConnected && !isSearchError && (
           <ul class="c-list">
-            {cachedResultNodes.map((parentNode, index) => (
+            {displayState.nodes.map((parentNode, index) => (
               <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
             ))}
           </ul>
         )}
-        {(isLoadingMore || isLoadingMoreCacheUpdating) && <div class="c-progress-bar c-progress-bar--inline" />}
+        {displayState.showBottomLoadingSpinner && <div class="c-progress-bar c-progress-bar--inline" />}
         <InfiniteScrollBottom />
       </main>
     </>
