@@ -15,5 +15,10 @@ export function getInitialConfig(): HitsConfig {
 }
 
 export function validateConfig(maybeConfig: any): maybeConfig is HitsConfig {
-  return maybeConfig && typeof maybeConfig.email === "string" && typeof maybeConfig.idToken === "string" && typeof maybeConfig.userClientId === "string";
+  return (
+    typeof maybeConfig === "object" &&
+    typeof maybeConfig?.email === "string" &&
+    typeof maybeConfig?.idToken === "string" &&
+    typeof maybeConfig?.userClientId === "string"
+  );
 }

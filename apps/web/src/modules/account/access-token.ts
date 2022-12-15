@@ -12,6 +12,9 @@ export function getInitialToken(): AccessToken {
 
 export function validateToken(maybeToken: any): maybeToken is AccessToken {
   return (
-    typeof maybeToken === "object" && typeof maybeToken.token === "string" && typeof maybeToken.expireIn === "number" && typeof maybeToken.expireAt === "number"
+    typeof maybeToken === "object" &&
+    typeof maybeToken?.token === "string" &&
+    typeof maybeToken?.expireIn === "number" &&
+    typeof maybeToken?.expireAt === "number"
   );
 }

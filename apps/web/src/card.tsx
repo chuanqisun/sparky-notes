@@ -65,7 +65,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;
-  const { isConnected, signIn, accessToken } = useAuth();
+  const { isConnected, signIn, accessToken, isTokenExpired } = useAuth();
 
   const [cardData, setCardData] = useState<CardData | null | undefined>(undefined);
 
@@ -96,7 +96,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // Fetch entity content
   useEffect(() => {
-    // Assume user is already connected to reduce latency
+    // We skip data fetching until token has valid expiry.
+    // Note it is still possible for client to believe token is valid while the server has revoked it.
+    // In that case, we will set the data to null
+    if (isTokenExpired) return;
 
     worker.request("getCardData", { accessToken, entityId: entityId!, entityType: entityType! }).then((result) => {
       const { cardData } = result;
