@@ -1,6 +1,6 @@
 /// <reference lib="WebWorker" />
 
-import { formatDisplayNodeV2 } from "./modules/hits/adaptor";
+import { formatDisplayNode } from "./modules/hits/display-node";
 import { getAuthenticatedProxy } from "./modules/hits/proxy";
 import { getOrderBy, getOrderByPublishDateClause, getSearchPayloadV2, searchFirst } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -43,8 +43,7 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
 
   const response = await proxy(getSearchPayloadV2({ query: req.query, count: false, top: req.top, skip: req.skip, filter: {} }));
-  console.log(response);
-  const nodes = response.results.map(formatDisplayNodeV2);
+  const nodes = response.results.map(formatDisplayNode);
 
   return {
     nodes,
@@ -59,7 +58,7 @@ const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   const response = await proxy(
     getSearchPayloadV2({ query: "*", count: false, top: req.top, skip: req.skip, filter: {}, orderBy: getOrderBy(getOrderByPublishDateClause()) })
   );
-  const nodes = response.results.map(formatDisplayNodeV2);
+  const nodes = response.results.map(formatDisplayNode);
 
   return {
     nodes: nodes,

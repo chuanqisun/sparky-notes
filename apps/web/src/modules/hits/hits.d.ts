@@ -1,32 +1,3 @@
-import type { NodeSchema } from "../graph/db";
-
-export interface HitsGraphNode extends NodeSchema {
-  id: string;
-  updatedOn: Date;
-  title: string;
-  entityType: number;
-  group: {
-    id: number;
-    displayName: string;
-  };
-  researchers: {
-    id: number;
-    displayName: string;
-  }[];
-  tags: {
-    id: number;
-    displayName: string;
-  }[];
-  children: HitsGraphChildNode[];
-}
-
-export interface HitsGraphChildNode {
-  id: string;
-  title: string;
-  entityType: number;
-  isNative: boolean;
-}
-
 export interface FilterConfig {
   ids?: string[];
   childIds?: string[];

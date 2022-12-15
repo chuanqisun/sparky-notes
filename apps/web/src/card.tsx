@@ -1,7 +1,7 @@
 import type { MessageToUI } from "@h20/types";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { isClaimType } from "./modules/hits/adaptor";
+import { isClaimType } from "./modules/hits/display-node";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";

@@ -20,11 +20,6 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-export function findHighlightHtml(keywords: string[], tags: [openTag: string, closeTag: string], input: string): string | undefined {
-  const maybeHighlighed = getHighlightHtml(keywords, tags, input);
-  return maybeHighlighed === input ? undefined : maybeHighlighed;
-}
-
 export function getHighlightWords(selector: string, html: string): string[] {
   const $ = load(html);
   const rawWords = $(selector)
