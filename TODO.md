@@ -1,4 +1,5 @@
-- Figma app initial load seems to return blank page very often
+- Figma app icon not loading
+- Figma app initial load always return blank page and throws error
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
