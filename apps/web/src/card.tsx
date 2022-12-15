@@ -142,7 +142,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         tags: [...cardData.products.map(toDisplayTag("product")), ...cardData.topics.map(toDisplayTag("topic"))],
       });
     });
-  }, [accessToken]);
+  }, [isTokenExpired]);
 
   // Auto expand highlighted child entity
   useEffect(() => {
@@ -158,7 +158,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   return (
     <>
-      {(isConnected === undefined || (isConnected && cardData === undefined)) && <div class="c-progress-bar" />}
+      {isConnected !== false && cardData === undefined && <div class="c-progress-bar" />}
       {isConnected === false && (
         <section class="c-welcome-mat">
           <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
@@ -172,11 +172,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       {isConnected === true && cardData === null && (
         <article class="c-card-article">
           <p>
-            Sorry, the content does not exist. Visit <a href="https://hits.microsoft.com">https://hits.microsoft.com</a> for the latest content.
+            Sorry, the content cannot be loaded. You can <a href={window.location.href}>click here to try again</a>, or visit{" "}
+            <a href="https://hits.microsoft.com">https://hits.microsoft.com</a> for the latest content.
           </p>
         </article>
       )}
-      {isConnected === true && cardData && (
+      {isConnected !== false && cardData && (
         <article class="c-card-article">
           {cardData.tags ? (
             <ul class="c-tag-list">
