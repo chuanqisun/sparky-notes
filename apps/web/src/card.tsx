@@ -166,6 +166,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </div>
         </section>
       )}
+      {isConnected === true && cardData === null && (
+        <article class="c-card-article">
+          <p>
+            Sorry, the content does not exist. Visit <a href="https://hits.microsoft.com">https://hits.microsoft.com</a> for the latest content.
+          </p>
+        </article>
+      )}
       {isConnected === true && cardData && (
         <article class="c-card-article">
           {cardData.tags ? (
