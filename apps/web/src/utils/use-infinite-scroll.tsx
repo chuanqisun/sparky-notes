@@ -28,7 +28,7 @@ export function useInfiniteScroll() {
       },
       {
         root: containerNode,
-        rootMargin: "0px 0px 100% 0px", // load 1 more screens beyond visible area
+        rootMargin: "0px 0px 150% 0px", // load 1.5 more screens beyond visible area
         threshold: 0.01,
       }
     );
