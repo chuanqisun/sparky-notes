@@ -1,3 +1,4 @@
+- Add initial json guarantee for access-token and hits-config
 - Figma app icon not loading
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
