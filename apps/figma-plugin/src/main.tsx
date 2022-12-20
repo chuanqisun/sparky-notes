@@ -112,7 +112,7 @@ function Widget() {
           {cardData.title}
         </Text>
       </AutoLayout>
-      <AutoLayout padding={cssPad(4, 28, 24, 28)}>
+      <AutoLayout padding={cssPad(4, 28, 20, 28)}>
         <Text opacity={0.7} width={520} fontSize={20} lineHeight={28} href={cardData!.url}>
           {cardData!.url.replace("https://", "")}
         </Text>
