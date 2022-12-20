@@ -29,7 +29,7 @@ ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
 const entityId = new URLSearchParams(location.search).get("entityId");
 const entityType = parseInt(new URLSearchParams(location.search).get("entityType")!);
 if (!entityId || Number.isNaN(entityType)) {
-  document.getElementById("app")!.innerHTML = "Specify an Type and Id to load the card";
+  document.getElementById("app")!.innerHTML = "Specify Type and Id to load the card";
   throw new Error("Missing Type or Id in the URL");
 }
 
