@@ -22,7 +22,6 @@ function Widget() {
   const widgetId = useWidgetId();
 
   const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
-  const [cardBackground, setCardBackground] = useSyncedState("cardBackground", figmaPalette[0].option);
 
   usePropertyMenu(
     cardData
@@ -40,16 +39,8 @@ function Widget() {
             itemType: "color-selector",
             propertyName: "backgroundColor",
             tooltip: "Background",
-            selectedOption: cardBackground,
+            selectedOption: cardData.backgroundColor,
             options: figmaPalette,
-          },
-          {
-            itemType: "separator",
-          },
-          {
-            itemType: "action",
-            propertyName: "openInBrowser",
-            tooltip: "Open in browser",
           },
         ]
       : [],
@@ -101,25 +92,29 @@ function Widget() {
     };
   });
 
-  const setCategory = (e: TextEditEvent) => setCardData((prevData) => ({ ...prevData!, category: e.characters }));
-
   return cardData === null ? (
     <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((resolve) => showUI())} />
   ) : (
-    <AutoLayout padding={0} direction="vertical" fill={cardData.backgroundColor} cornerRadius={6}>
-      <AutoLayout padding={cssPad(24, 24, 8, 24)}>
-        <Input value={cardData.category} width={400} fontSize={24} lineHeight={28} fontWeight={700} onTextEditEnd={setCategory} />
-      </AutoLayout>
-      <AutoLayout
-        padding={cssPad(8, 24, 24, 24)}
-        onClick={() =>
-          new Promise((_resolve) => {
-            showUI(`/card.html?entityId=${cardData.entityId}&entityType=${cardData.entityType}`);
-          })
-        }
-      >
-        <Text width={400} fontSize={24} lineHeight={28}>
+    <AutoLayout
+      padding={0}
+      direction="vertical"
+      fill={cardData.backgroundColor}
+      cornerRadius={6}
+      strokeWidth={4}
+      onClick={() =>
+        new Promise((_resolve) => {
+          showUI(`/card.html?entityId=${cardData.entityId}&entityType=${cardData.entityType}`);
+        })
+      }
+    >
+      <AutoLayout padding={cssPad(24, 28, 4, 28)}>
+        <Text width={520} fontSize={24} fontWeight={600} lineHeight={32}>
           {cardData.title}
+        </Text>
+      </AutoLayout>
+      <AutoLayout padding={cssPad(4, 28, 24, 28)}>
+        <Text opacity={0.7} width={520} fontSize={20} lineHeight={28} href={cardData!.url}>
+          {cardData!.url.replace("https://", "")}
         </Text>
       </AutoLayout>
     </AutoLayout>
