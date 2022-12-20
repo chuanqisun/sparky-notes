@@ -1,5 +1,3 @@
-import { load } from "cheerio";
-
 export const CONSECUTIVE_WHITE_SPACE_PATTERN = /\s+/g;
 
 export function getHighlightHtml(keywords: string[], tags: [openTag: string, closeTag: string], input: string): string {
@@ -20,11 +18,9 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-export function getHighlightWords(selector: string, html: string): string[] {
-  const $ = load(html);
-  const rawWords = $(selector)
-    .toArray()
-    .map((element) => $(element).text() ?? "")
+export function getHighlightWords(pattern: RegExp, html: string): string[] {
+  const rawWords = [...html.matchAll(pattern)]
+    .map((match) => match[1])
     .map((word) => word.trim().toLocaleLowerCase())
     .flatMap((word) => word.replace(CONSECUTIVE_WHITE_SPACE_PATTERN, " ").split(" "))
     .filter((word) => word);

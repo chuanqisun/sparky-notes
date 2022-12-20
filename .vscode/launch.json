@@ -4,7 +4,7 @@
       "name": "Debug all",
       "request": "launch",
       "runtimeArgs": ["run-script", "dev"],
-      "runtimeVersion": "16",
+      "runtimeVersion": "18",
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
       "type": "node",

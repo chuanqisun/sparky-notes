@@ -1,4 +1,3 @@
-import { load } from "cheerio";
 import { getUniqueFilter } from "../../utils/get-unique-filter";
 import { EntityType } from "../hits/entity";
 import { getHighlightHtml, getHighlightWords } from "../hits/highlight";
@@ -35,11 +34,11 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
   const title = document.title.length ? document.title : "Untitled";
   const researchers = document.researchers.map(withDisplayName);
   const researchersString = researchers.map((r) => r.displayName).join(", ");
-  const researchersHtml = getHighlightHtml(researcherWods, ["<mark>", "</mark>"], researchersString) ?? htmlToText(researchersString);
+  const researchersHtml = getHighlightHtml(researcherWods, ["<mark>", "</mark>"], researchersString) ?? escapeHtml(researchersString);
 
   return {
     title,
-    titleHtml: getHighlightHtml(titleHighlightWords, ["<mark>", "</mark>"], document.title) ?? htmlToText(title),
+    titleHtml: getHighlightHtml(titleHighlightWords, ["<mark>", "</mark>"], document.title) ?? escapeHtml(title),
     id: document.id,
     entityType: document.entityType,
     updatedOn: getUpdatedOn(document),
@@ -50,7 +49,7 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
       .filter((claim) => Boolean(claim.title))
       .map((claim) => {
         const childTitle = claim.title?.trim()?.length ? claim.title.trim() : "Untitled";
-        const childTitleHtml = getHighlightHtml(childTitleHighlightWords, ["<mark>", "</mark>"], childTitle) ?? htmlToText(childTitle);
+        const childTitleHtml = getHighlightHtml(childTitleHighlightWords, ["<mark>", "</mark>"], childTitle) ?? escapeHtml(childTitle);
 
         return {
           title: childTitle,
@@ -69,10 +68,13 @@ export const isClaimType = (item: { entityType: number }) => [EntityType.Insight
 
 const uniqueById = getUniqueFilter<{ id: any }>((a, b) => a.id === b.id);
 
-const extractBoldElements = (html: string) => getHighlightWords("b", html);
+const extractBoldElements = (html: string) => getHighlightWords(/<b>(.*?)<\/b>/g, html);
 
-function htmlToText(html: string): string {
-  return load(html).text();
+/**
+ * Escape HTML entities for display
+ */
+export function escapeHtml(html: string): string {
+  return html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function getUpdatedOn(document: SearchResultDocument): Date {
