@@ -107,13 +107,13 @@ function Widget() {
         })
       }
     >
-      <AutoLayout padding={cssPad(24, 28, 4, 28)}>
-        <Text width={520} fontSize={24} fontWeight={600} lineHeight={32}>
+      <AutoLayout padding={cssPad(20, 24, 6, 24)}>
+        <Text width={500} fontSize={20} fontWeight={600} lineHeight={26}>
           {cardData.title}
         </Text>
       </AutoLayout>
-      <AutoLayout padding={cssPad(4, 28, 20, 28)}>
-        <Text opacity={0.7} width={520} fontSize={20} lineHeight={28} href={cardData!.url}>
+      <AutoLayout padding={cssPad(4, 24, 20, 24)}>
+        <Text opacity={0.7} width={500} fontSize={18} lineHeight={20} href={cardData!.url}>
           {cardData!.url.replace("https://", "")}
         </Text>
       </AutoLayout>
