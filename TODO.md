@@ -1,11 +1,8 @@
-- Handle report not found and token expired when loading Card
-- Figma app icon not loading
+- In-figma button/card hover effect: toggle shadow
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
 - New card positioning improvements
-- Debug ` if (!te.researchers.length) throw new Error("!");`
-  - Handle reports without researcher
 - Auto push code update to Figma Widget instance
 - Auth | Timestamp last access token usage
 - Auth | Sign out from all HITS Assistants
