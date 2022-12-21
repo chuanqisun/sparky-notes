@@ -1,3 +1,4 @@
+- BUG: when last insight was deleted, new insights cannot be added
 - In-figma button/card hover effect: toggle shadow
 - In-app click to browse without adding to canvas
 - Provide feedback menu action
