@@ -9,6 +9,7 @@
     "preview": "vite preview --port 5200"
   },
   "dependencies": {
+    "@microsoft/applicationinsights-web": "^2.8.9",
     "acs-expression-builder": "^0.0.2",
     "assets": "file:packages/assets",
     "preact": "^10.11.0"
