@@ -13,4 +13,7 @@ appInsights.addTelemetryInitializer((item: ITelemetryItem) => {
   item.data = { ...item.data, envMode: import.meta.env.MODE };
 });
 
-appInsights.setAuthenticatedUserContext(getJson<HitsConfig>(CONFIG_CACHE_KEY)?.email ?? "");
+const maybeUserEmail = getJson<HitsConfig>(CONFIG_CACHE_KEY)?.email;
+if (maybeUserEmail) {
+  appInsights.setAuthenticatedUserContext(maybeUserEmail);
+}
