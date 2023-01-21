@@ -10,6 +10,7 @@ import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hi
 import { ErrorMessage } from "./modules/hits/error";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
+import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { ensureJson } from "./utils/local-storage";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -61,6 +62,7 @@ interface CardData {
 }
 
 const bodyTextOverflowThreshold = 100;
+appInsights.trackPageView();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);

@@ -1,4 +1,4 @@
-import type { MessageToMain } from "@h20/types";
+import type { CardData } from "@h20/types";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityBackgroundColor, EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
@@ -6,9 +6,9 @@ import { EntityBackgroundColor, EntityDisplayName, EntityIconComponent, EntityNa
 export interface HitsCardProps {
   node: HitsDisplayNode;
   isParent?: boolean;
-  sendToFigma: (figmaCard: MessageToMain) => void;
+  onClick: (cardData: CardData) => void;
 }
-export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
+export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
   return (
     <>
       <li class={`c-list__item`} key={node.id}>
@@ -17,15 +17,13 @@ export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
           onClick={(e) =>
             e.ctrlKey
               ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank")
-              : sendToFigma({
-                  addCard: {
-                    category: EntityDisplayName[node.entityType],
-                    title: node.title,
-                    entityId: node.id,
-                    entityType: node.entityType,
-                    backgroundColor: EntityBackgroundColor[node.entityType],
-                    url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
-                  },
+              : onClick({
+                  category: EntityDisplayName[node.entityType],
+                  title: node.title,
+                  entityId: node.id,
+                  entityType: node.entityType,
+                  backgroundColor: EntityBackgroundColor[node.entityType],
+                  url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
                 })
           }
         >
@@ -45,7 +43,7 @@ export function HitsArticle({ node, sendToFigma, isParent }: HitsCardProps) {
       </li>
       {isParent &&
         node.children.map((childNode) =>
-          childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} sendToFigma={sendToFigma} /> : null
+          childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onClick={onClick} /> : null
         )}
     </>
   );

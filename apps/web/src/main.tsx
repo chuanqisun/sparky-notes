@@ -1,4 +1,4 @@
-import type { MessageToUI } from "@h20/types";
+import type { CardData, MessageToUI } from "@h20/types";
 import { JSX, render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getInitialToken, TOKEN_CACHE_KEY, validateToken } from "./modules/account/access-token";
@@ -8,6 +8,7 @@ import type { HitsDisplayNode } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
+import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { debounce } from "./utils/debounce";
 import { getUniqueFilter } from "./utils/get-unique-filter";
@@ -27,6 +28,8 @@ window.focus();
 
 ensureJson(CONFIG_CACHE_KEY, validateConfig, getInitialConfig);
 ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
+
+appInsights.trackPageView();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   useEffect(() => {
@@ -95,6 +98,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const anySearch = useCallback(
     (top: number, skip: number, query?: string) => (query ? keywordSearch(top, skip, query) : recentSearch(top, skip)),
     [keywordSearch, recentSearch]
+  );
+
+  // handle send card to figma
+  const handleAddCard = useCallback(
+    (cardData: CardData) => {
+      appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType });
+      notifyFigma({ addCard: cardData });
+    },
+    [notifyFigma]
   );
 
   const { queue, add } = useConcurrentTasks<SearchRes>();
@@ -191,7 +203,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         {isConnected && (
           <ul class="c-list">
             {outputState.nodes.map((parentNode, index) => (
-              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} sendToFigma={notifyFigma} />
+              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onClick={handleAddCard} />
             ))}
           </ul>
         )}
