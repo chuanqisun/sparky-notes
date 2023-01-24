@@ -30,7 +30,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "concurrently": "^7.4.0",
-    "@types/node": "^18.8.1"
+    "concurrently": "^7.6.0",
+    "@types/node": "^18.11.18"
   }
 }

@@ -7,13 +7,25 @@ const envName = isDev ? ".env" : ".env.production";
 dotenv.config({ path: path.join(process.cwd(), envName) });
 
 async function main() {
-  await esbuild.build({
+  const plugins = [
+    {
+      name: "rebuild-plugin",
+      setup(build) {
+        let count = 0;
+        build.onEnd((_result) => {
+          if (count++ === 0) console.log("Build success");
+          else console.log("Incremental build success");
+        });
+      },
+    },
+  ];
+
+  const context = await esbuild.context({
     entryPoints: ["src/main.tsx"],
     bundle: true,
     format: "esm",
     target: "es6", // Figma sandbox seems to miss some ESNext language features
     sourcemap: "inline", // TODO perf?
-    watch: false, // TODO
     minify: false, // TODO
     loader: {
       ".svg": "text",
@@ -21,19 +33,16 @@ async function main() {
     define: {
       "process.env.WEB_URL": `"${process.env.WEB_URL}"`,
     },
-    watch: isDev
-      ? {
-          onRebuild(error) {
-            if (error) {
-              console.error(error);
-            } else {
-              console.log("rebuilt main");
-            }
-          },
-        }
-      : false,
     outdir: "dist",
+    plugins,
   });
+
+  if (isDev) {
+    console.log("watching...");
+    await context.watch();
+  }
+
+  await context.dispose();
 }
 
 main();
