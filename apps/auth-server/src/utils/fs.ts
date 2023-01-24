@@ -60,8 +60,10 @@ export class BufferedJsonFile<T = any> {
     if (this.buffer === null) throw new Error("Cannot flush JSON buffer before it is loaded");
 
     try {
+      await fs.mkdir(path.dirname(this.path), { recursive: true });
       await fs.writeFile(this.path, this.buffer);
-    } catch {
+    } catch (e) {
+      console.log(e);
       throw new Error("Error flushing buffer to disk");
     }
 
