@@ -40,6 +40,9 @@ async function main() {
   if (isDev) {
     console.log("watching...");
     await context.watch();
+  } else {
+    console.log("build once...");
+    context.rebuild();
   }
 
   await context.dispose();
