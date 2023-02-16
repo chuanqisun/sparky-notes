@@ -28,7 +28,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/node": "^18.11.18",
+    "@types/node": "^18.13.0",
     "concurrently": "^7.6.0"
   }
 }

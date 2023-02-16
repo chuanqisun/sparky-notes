@@ -9,14 +9,13 @@
     "preview": "vite preview --port 5200"
   },
   "dependencies": {
-    "@microsoft/applicationinsights-web": "^2.8.9",
+    "@microsoft/applicationinsights-web": "^2.8.10",
     "acs-expression-builder": "^0.0.2",
-    "assets": "file:packages/assets",
-    "preact": "^10.11.3"
+    "preact": "^10.12.1"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.5.0",
-    "typescript": "^4.9.4",
-    "vite": "^3.2.5"
+    "typescript": "^4.9.5",
+    "vite": "^4.1.1"
   }
 }
