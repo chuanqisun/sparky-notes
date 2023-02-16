@@ -8,6 +8,7 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
+    "importsNotUsedAsValues": "error",
     "isolatedModules": true,
     "noEmit": true
   },

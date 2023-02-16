@@ -1,6 +1,6 @@
 import assert from "assert";
 import axios from "axios";
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { constants } from "http2";
 import { performance } from "perf_hooks";
 

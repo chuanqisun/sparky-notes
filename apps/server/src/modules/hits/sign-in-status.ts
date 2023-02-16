@@ -1,6 +1,6 @@
 import assert from "assert";
-import { Request, RequestHandler } from "express";
-import { AsyncResponse } from "./_async-response";
+import type { Request, RequestHandler } from "express";
+import type { AsyncResponse } from "./_async-response";
 import { bufferedUserTable, updateUserInTable } from "./_user-table";
 
 export const hitsSignInStatus: RequestHandler = async (req, res, next) => {

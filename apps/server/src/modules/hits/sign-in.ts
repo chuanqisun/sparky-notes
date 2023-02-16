@@ -2,9 +2,9 @@ import { authConfig } from "@h20/auth";
 import assert from "assert";
 import axios from "axios";
 import crypto from "crypto";
-import { Request, RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 import { parseJwtBody } from "../../utils/jwt";
-import { AsyncResponse } from "./_async-response";
+import type { AsyncResponse } from "./_async-response";
 import { bufferedUserTable, updateUserInTable } from "./_user-table";
 
 export const hitsSignIn: RequestHandler = async (req, res, next) => {
