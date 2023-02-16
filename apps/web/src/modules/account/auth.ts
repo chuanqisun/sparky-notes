@@ -10,7 +10,7 @@ import type {
 } from "../../../../server/src/interface";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
-const HITS_API_HOST = import.meta.env.VITE_HITS_API_HOST;
+const HITS_AUTH_ENDPOINT = import.meta.env.VITE_HITS_AUTH_ENDPIONT;
 const WEB_HOST = import.meta.env.VITE_WEB_HOST;
 
 export async function embeddedSignIn() {
@@ -19,7 +19,7 @@ export async function embeddedSignIn() {
   // TODO, directly navigate to AAD portal. No need to open sign-in.html
   window.open(`${WEB_HOST}/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result: SignInStatusOutput = await fetch(`${HITS_API_HOST}/signinstatus`, {
+  const result: SignInStatusOutput = await fetch(`${HITS_AUTH_ENDPOINT}/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -65,7 +65,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
     code_verifier,
   };
 
-  const result: SignInOutput = await fetch(`${HITS_API_HOST}/signin`, {
+  const result: SignInOutput = await fetch(`${HITS_AUTH_ENDPOINT}/signin`, {
     headers: {
       "content-type": "application/json",
     },
@@ -82,7 +82,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
 }
 
 export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutput> {
-  const result = await fetch(`${HITS_API_HOST}/token`, {
+  const result = await fetch(`${HITS_AUTH_ENDPOINT}/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -96,7 +96,7 @@ export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutp
 }
 
 export async function signOutRemote(input: SignOutInput): Promise<SignOutOutput> {
-  const result = await fetch(`${HITS_API_HOST}/signout`, {
+  const result = await fetch(`${HITS_AUTH_ENDPOINT}/signout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

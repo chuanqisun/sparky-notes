@@ -1,4 +1,4 @@
-const VITE_OPEN_AI_API_HOST = import.meta.env.VITE_OPEN_AI_API_HOST;
+const VITE_OPEN_AI_API_ENDPOINT = import.meta.env.VITE_OPEN_AI_API_ENDPOINT;
 
 export interface OpenAIPromptPayload {
   prompt: string;
@@ -24,7 +24,7 @@ export type OpenAIProxy = (payload: OpenAIPromptPayload) => Promise<OpenAIComple
 
 export function getOpenAIProxy(accessToken: string): OpenAIProxy {
   return async (payload: OpenAIPromptPayload) => {
-    const result = await fetch(`${VITE_OPEN_AI_API_HOST}/completions`, {
+    const result = await fetch(`${VITE_OPEN_AI_API_ENDPOINT}/completions`, {
       method: "post",
       headers: {
         Authorization: `Bearer ${accessToken}`,

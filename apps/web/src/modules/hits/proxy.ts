@@ -1,9 +1,9 @@
 import type { SearchOutput } from "./hits";
 
-const HITS_API_HOST = import.meta.env.VITE_HITS_API_HOST;
+const HITS_PROXY_ENDPOINT = import.meta.env.VITE_HITS_PROXY_ENDPOINT;
 
 export const getAuthenticatedProxy = (accessToken: string) => async (payload: any) => {
-  const result = await fetch(`${HITS_API_HOST}/api/search/index`, {
+  const result = await fetch(`${HITS_PROXY_ENDPOINT}/api/search/index`, {
     method: "post",
     headers: {
       Authorization: `Bearer ${accessToken}`,
