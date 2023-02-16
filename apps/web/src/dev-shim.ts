@@ -41,6 +41,12 @@ window.addEventListener("click", (e) => {
     case "loadCard":
       cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
       break;
+    case "rotate":
+      // select the last iframe on the page and prepend it to the first iframe
+      const lastIframe = [...document.querySelectorAll("iframe")].at(-1)!;
+      const firstIframe = document.querySelector("iframe")!;
+      firstIframe.insertAdjacentElement("beforebegin", lastIframe);
+      break;
   }
 });
 

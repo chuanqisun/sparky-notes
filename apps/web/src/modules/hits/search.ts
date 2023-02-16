@@ -17,6 +17,38 @@ export async function searchFirst({ proxy, filter }: FindConfig): Promise<Search
   return results[0] ?? null;
 }
 
+export function getLanguageModelRawQuery(config: { query?: string; count?: boolean; top?: number; skip?: number; filter?: FilterConfig; orderBy?: string[] }) {
+  return {
+    count: config.count ?? false,
+    top: config.top ?? 10,
+    skip: config.skip ?? 0,
+    filter: getFilterString(config.filter ?? {}),
+    queryType: "Simple",
+    searchText: config.query ?? "*",
+    select: [
+      "Id",
+      "EntityType",
+      "Title",
+      "Abstract",
+      "Contents",
+      "ReportTextContent",
+      "Outline",
+      "Products",
+      "Topics",
+      "Methods",
+      "Researchers/Name",
+      "Researchers/JobTitle",
+      "Children/Id",
+      "Children/EntityType",
+      "Children/Title",
+      "Children/Contents",
+      "Children/Products",
+      "Children/Topics",
+    ],
+    orderBy: config.orderBy,
+  };
+}
+
 export function getFindPayload(config: { filter: FindFilter }) {
   return {
     top: 1,

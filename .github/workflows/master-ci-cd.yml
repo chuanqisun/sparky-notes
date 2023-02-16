@@ -27,21 +27,13 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: "Deploy auth server"
+      - name: "Deploy H2.0 server"
         uses: azure/webapps-deploy@v2
         with:
-          app-name: "hits-auth-server"
+          app-name: "h20-server"
           slot-name: "Production"
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2D301BEF5A4C48F68617409F8E8D3AEE }}
-          package: ./apps/auth-server
-
-      - name: "Deploy api proxy"
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: "hits-api-proxy"
-          slot-name: "Production"
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_83BA8BBDC89C4E67BE7D4787C8649135 }}
-          package: ./apps/api-proxy
+          publish-profile: ${{ secrets.AZURE_H20SERVER_PUBLISHERPROFILE }}
+          package: ./apps/server
 
       - name: azure login
         uses: azure/login@v1

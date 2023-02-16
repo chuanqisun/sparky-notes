@@ -23,7 +23,7 @@ async function main() {
   const context = await esbuild.context({
     entryPoints: ["src/main.tsx"],
     bundle: true,
-    format: "esm",
+    format: "iife",
     target: "es6", // Figma sandbox seems to miss some ESNext language features
     sourcemap: "inline", // TODO perf?
     minify: false, // TODO
@@ -43,9 +43,8 @@ async function main() {
   } else {
     console.log("build once...");
     context.rebuild();
+    await context.dispose();
   }
-
-  await context.dispose();
 }
 
 main();

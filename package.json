@@ -7,12 +7,10 @@
     "build": "concurrently npm:build:*",
     "dev:figma-plugin": "npm run dev -w apps/figma-plugin",
     "dev:web": "npm run dev -w apps/web",
-    "dev:auth-server": "npm run dev -w apps/auth-server",
-    "dev:api-proxy": "npm run dev -w apps/api-proxy",
+    "dev:server": "npm run dev -w apps/server",
     "build:figma-plugin": "npm run build -w apps/figma-plugin",
     "build:web": "npm run build -w apps/web",
-    "build:auth-server": "npm run build -w apps/auth-server",
-    "build:api-proxy": "npm run build -w apps/api-proxy"
+    "build:server": "npm run build -w apps/server"
   },
   "repository": {
     "type": "git",
@@ -30,7 +28,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "concurrently": "^7.6.0",
-    "@types/node": "^18.11.18"
+    "@types/node": "^18.11.18",
+    "concurrently": "^7.6.0"
   }
 }
