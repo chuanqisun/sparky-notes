@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>impromptu</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <fieldset id="action-commands">
+        <legend>Run</legend>
+        <button data-action="start" data-role="toggleStart">Start</button>
+        <button data-action="clear" disabled>Clear</button>
+      </fieldset>
+      <fieldset>
+        <legend>Build</legend>
+        <button data-action="createBox">Box</button>
+        <br />
+        <button data-action="createProgram" data-create-program="prompt">Prompt</button>
+        <button data-action="createProgram" data-create-program="filter">Filter</button>
+        <button data-action="createProgram" data-create-program="categorize">Categorize</button>
+        <br />
+        <button data-action="createProgram" data-create-program="research-insights">Research Insights</button>
+        <button data-action="createProgram" data-create-program="research-recommendations">Research Recommendations</button>
+      </fieldset>
+      <form id="openai-config-form">
+        <fieldset>
+          <legend>OpenAI</legend>
+          <div>
+            <label for="apiKey">API key</label>
+            <br />
+            <input id="apiKey" name="apiKey" type="password" required />
+          </div>
+          <div>
+            <label for="completionEndpoint">Completion endpoint</label>
+            <br />
+            <input id="completionEndpoint" name="completionEndpoint" type="url" />
+          </div>
+        </fieldset>
+      </form>
+      <form id="hits-config-form">
+        <fieldset>
+          <legend>Microsoft HITS</legend>
+          <div>
+            <label for="hitsToken">Access token</label>
+            <br />
+            <input id="hitsToken" name="hitsToken" type="password" required />
+            <br />
+            <label for="hitsToken">Expires at</label> | <a href="https://hits.microsoft.com" target="_blank">Renew</a>
+            <br />
+            <input name="hitsTokenExp" type="text" readonly value="" />
+          </div>
+        </fieldset>
+      </form>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

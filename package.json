@@ -10,7 +10,11 @@
     "dev:server": "npm run dev -w apps/server",
     "build:assistant-plugin": "npm run build -w apps/assistant-plugin",
     "build:assistant-web": "npm run build -w apps/assistant-web",
-    "build:server": "npm run build -w apps/server"
+    "build:server": "npm run build -w apps/server",
+    "dev:impromptu-plugin": "npm run dev -w apps/impromptu-plugin",
+    "dev:impromptu-web": "npm run dev -w apps/impromptu-web",
+    "build:impromptu-plugin": "npm run build -w apps/impromptu-plugin",
+    "build:impromptu-web": "npm run build -w apps/impromptu-web"
   },
   "repository": {
     "type": "git",
@@ -28,7 +32,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/node": "^18.13.0",
+    "@types/node": "^18.14.6",
     "concurrently": "^7.6.0"
   }
 }
