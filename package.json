@@ -5,11 +5,11 @@
   "scripts": {
     "dev": "concurrently npm:dev:*",
     "build": "concurrently npm:build:*",
-    "dev:figma-plugin": "npm run dev -w apps/figma-plugin",
-    "dev:web": "npm run dev -w apps/web",
+    "dev:assistant-plugin": "npm run dev -w apps/assistant-plugin",
+    "dev:assistant-web": "npm run dev -w apps/assistant-web",
     "dev:server": "npm run dev -w apps/server",
-    "build:figma-plugin": "npm run build -w apps/figma-plugin",
-    "build:web": "npm run build -w apps/web",
+    "build:assistant-plugin": "npm run build -w apps/assistant-plugin",
+    "build:assistant-web": "npm run build -w apps/assistant-web",
     "build:server": "npm run build -w apps/server"
   },
   "repository": {

@@ -39,12 +39,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_STORAGE_SERVICE_PRINCIPAL_JSON }}
-      - name: "Deploy web frontend"
+      - name: "Deploy assistant web frontend"
         uses: azure/CLI@v1
         with:
           inlineScript: |
             az storage blob delete-batch --account-name hitsassistantweb  --auth-mode key --source '$web'
-            az storage blob upload-batch --account-name hitsassistantweb  --auth-mode key -d '$web' -s ./apps/web/dist
+            az storage blob upload-batch --account-name hitsassistantweb  --auth-mode key -d '$web' -s ./apps/assistant-web/dist
 
       - name: azure logout
         run: az logout
