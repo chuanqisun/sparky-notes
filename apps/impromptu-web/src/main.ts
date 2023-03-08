@@ -1,11 +1,13 @@
 import { MessageToUI } from "@impromptu/types";
 import "./main.css";
+import { getTokenGenerator } from "./modules/auth/token-generator";
 import { notifyFigma } from "./modules/figma/rpc";
 import { formToHitsConfig, hitsConfigToForm } from "./modules/hits/config";
 import { formToOpenAIConfig, openAIConfigToForm } from "./modules/openai/config";
 import { handleSelectionChange, handleStarted, handleStopped } from "./modules/ui/command-bar";
 
 async function main() {
+  const { start: startTokenGenerator, events: tokenEvents } = getTokenGenerator();
   const openaiConfigForm = document.querySelector<HTMLFormElement>("#openai-config-form")!;
   const hitsConfigForm = document.querySelector<HTMLFormElement>("#hits-config-form")!;
   const appMain = document.querySelector("main")!;
@@ -74,6 +76,7 @@ async function main() {
   openaiConfigForm.addEventListener("change", handleOpenaiConfigChange);
   hitsConfigForm.addEventListener("change", handleHitsConfigChange);
   appMain.addEventListener("click", handleMainClick);
+  tokenEvents.addEventListener("token", console.log);
 
   // initial load
   const openAIConfig = localStorage.getItem("openai-config");
@@ -86,6 +89,8 @@ async function main() {
 
   handleOpenaiConfigChange();
   handleHitsConfigChange();
+
+  startTokenGenerator();
 }
 
 main();

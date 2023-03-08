@@ -2,22 +2,33 @@ import { embeddedSignIn, getAccessToken } from "./auth";
 import { CONFIG_CACHE_KEY, getInitialConfig, type HitsConfig } from "./config";
 import { getJson, setJson } from "./storage";
 
-export async function getTokenGenerator() {
+export function getTokenGenerator() {
+  const events = new EventTarget();
+
+  const emitToken = (token: string) => events.dispatchEvent(new CustomEvent("token", { detail: token }));
+
   const hitsConfig = getJson<HitsConfig>(CONFIG_CACHE_KEY) ?? getInitialConfig();
-  let validToken = await getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
-    .then((res) => res.token)
-    .catch(() =>
-      embeddedSignIn().then((result) => {
-        setJson(CONFIG_CACHE_KEY, { ...hitsConfig, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
-        location.reload();
-      })
-    );
 
-  setInterval(() => {
-    getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId }).then((res) => (validToken = res.token));
-  }, 5 * 60 * 1000); // HACK: 5 min token refresh interval is just magic number. Should use token expire_in
+  const start = async () => {
+    await getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
+      .then((res) => res.token)
+      .then(emitToken)
+      .catch(() =>
+        embeddedSignIn().then((result) => {
+          setJson(CONFIG_CACHE_KEY, { ...hitsConfig, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
+          location.reload();
+        })
+      );
 
-  const getToken = () => validToken!;
+    setInterval(() => {
+      getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
+        .then((res) => res.token)
+        .then(emitToken);
+    }, 5 * 60 * 1000); // HACK: 5 min token refresh interval is just magic number. Should use token expire_in
+  };
 
-  return getToken;
+  return {
+    start,
+    events,
+  };
 }
