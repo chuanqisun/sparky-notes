@@ -4,7 +4,6 @@
   "api": "1.0.0",
   "main": "dist/main.js",
   "editorType": [
-    "figma",
     "figjam"
   ],
   "permissions": []
