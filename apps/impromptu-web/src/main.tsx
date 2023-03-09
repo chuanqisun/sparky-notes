@@ -2,9 +2,8 @@ import { MessageToUI } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import "./main.css";
-import { useAuth } from "./modules/auth/use-auth";
+import { useAuth } from "./modules/account/use-auth";
 import { notifyFigma } from "./modules/figma/rpc";
-import { handleSelectionChange } from "./modules/ui/command-bar";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
@@ -14,10 +13,6 @@ function App() {
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToUI;
-
-      if (message.selectionChangedV2) {
-        handleSelectionChange(message.selectionChangedV2);
-      }
 
       if (message.started) {
         setIsRunning(true);

@@ -182,11 +182,8 @@ const handleUIMessage = async (message: MessageToFigma) => {
     figma.currentPage.selection = allNewNodes;
   }
 
-  if (message.openAIConfig) {
-    completion = getCompletionProxy(message.openAIConfig.completionEndpoint, message.openAIConfig.apiKey);
-  }
-
   if (message.hitsConfig) {
+    completion = getCompletionProxy(message.hitsConfig.accessToken);
     hitsSearch = getSearchProxy(message.hitsConfig.accessToken);
   }
 

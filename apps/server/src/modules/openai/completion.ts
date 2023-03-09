@@ -1,6 +1,6 @@
 import axios from "axios";
 import { assert } from "console";
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 
 // ref: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference
 export interface CompletionInput {
@@ -17,11 +17,12 @@ export interface CompletionInput {
 export const completions: RequestHandler = async (req, res, next) => {
   try {
     let input: CompletionInput = req.body;
+    console.log(JSON.stringify(input));
     assert(typeof input.prompt === "string");
 
     const response = await axios({
       // TODO replace with env
-      url: "https://hits-openai.openai.azure.com/openai/deployments/hits-text-davinci/completions?api-version=2022-12-01",
+      url: process.env.OPENAI_COMPLETION_ENDPOINT,
       method: "post",
       data: input,
       headers: {

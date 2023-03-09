@@ -22,13 +22,13 @@ export type OpenAICompletionResponse = {
 
 export type CompletionProxy = (payload: OpenAICompletionPayload) => Promise<OpenAICompletionResponse>;
 
-export function getCompletionProxy(endpoint: string, apiKey: string): CompletionProxy {
+export function getCompletionProxy(accessToken: string): CompletionProxy {
   const rawProxy = async (payload: OpenAICompletionPayload) => {
-    const result = await fetch(endpoint, {
+    const result = await fetch(process.env.VITE_OPENAI_COMPLETION_ENDPOINT!, {
       method: "post",
       headers: {
-        "api-key": apiKey,
-        "content-type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     }).then((res) => res.json());

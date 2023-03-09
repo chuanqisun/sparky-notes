@@ -9,7 +9,6 @@ export interface MessageToFigma {
   clear?: boolean;
   createProgram?: string;
   hitsConfig?: HitsConfig;
-  openAIConfig?: OpenAIConnection;
   programConfigChanged?: ProgramConfigSummary;
   start?: boolean;
   stop?: boolean;

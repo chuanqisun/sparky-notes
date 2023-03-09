@@ -1,4 +1,4 @@
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { constants } from "http2";
 import { parseJwtBody } from "../../utils/jwt";
 
