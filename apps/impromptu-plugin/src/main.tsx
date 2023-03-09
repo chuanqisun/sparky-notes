@@ -3,6 +3,7 @@ import { getSearchProxy, SearchProxy } from "./hits/proxy";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { CategorizeProgram } from "./programs/categorize";
 import { FilterProgram } from "./programs/filter";
+import { MapProgram } from "./programs/map";
 import { filterToProgramNode, findMatchedProgram, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
@@ -22,7 +23,14 @@ const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>
 let completion: CompletionProxy | null = null;
 let hitsSearch: SearchProxy | null = null;
 
-const programs = [new PromptProgram(), new CategorizeProgram(), new FilterProgram(), new ResearchInsightsProgram(), new ResearchRecommendationsProgram()];
+const programs = [
+  new PromptProgram(),
+  new CategorizeProgram(),
+  new FilterProgram(),
+  new ResearchInsightsProgram(),
+  new ResearchRecommendationsProgram(),
+  new MapProgram(),
+];
 const matchProgram = findMatchedProgram.bind(null, programs);
 
 interface EventLoopContext {

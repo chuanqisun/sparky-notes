@@ -50,6 +50,7 @@ function App() {
           <fieldset onClick={handleCreateProgram}>
             <legend>Build</legend>
             <button data-program="prompt">Prompt</button>
+            <button data-program="map">Map</button>
             <button data-program="filter">Filter</button>
             <button data-program="categorize">Categorize</button>
             <br />

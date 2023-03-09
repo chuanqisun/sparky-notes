@@ -1,0 +1,84 @@
+import { getCompletion } from "../openai/completion";
+import { moveStickiesToSection } from "../utils/edit";
+import { FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { getNextNodes } from "../utils/graph";
+import { filterToType, getInnerStickies } from "../utils/query";
+import { Program, ProgramContext } from "./program";
+
+const { Text, AutoLayout, Input } = figma.widget;
+
+export class MapProgram implements Program {
+  public name = "map";
+
+  public getSummary(node: FrameNode) {
+    return `Map: ${getFieldByLabel("Question", node)!.value.characters}`;
+  }
+
+  public async create() {
+    const node = (await figma.createNodeFromJSXAsync(
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+        <FormTitle>Map</FormTitle>
+        <TextField label="Question" value="Does the statement mention a robot?" />
+        <TextField label="Temperature" value="0.7" />
+        <TextField label="Max tokens" value="60" />
+      </AutoLayout>
+    )) as FrameNode;
+
+    getTextByContent("Map", node)!.locked = true;
+    getFieldByLabel("Question", node)!.label.locked = true;
+
+    const source1 = figma.createSection();
+    source1.name = "Input";
+
+    const target1 = figma.createSection();
+    target1.name = "Output";
+
+    return {
+      programNode: node,
+      sourceNodes: [source1],
+      targetNodes: [target1],
+    };
+  }
+
+  public async onEdit(node: FrameNode) {}
+
+  public async run(context: ProgramContext, node: FrameNode) {
+    while (true && !context.isAborted()) {
+      const question = getFieldByLabel("Question", node)!.value.characters;
+
+      const currentSticky = getInnerStickies(context.sourceNodes).pop();
+      if (!currentSticky) break;
+      const prompt = [
+        currentSticky.getPluginData("additionalContext") ?? "",
+        "Answer the question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
+        "Asnwer: ",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const config = this.getConfig(node);
+      const apiConfig = {
+        temperature: config.temperature,
+        max_tokens: config.maxTokens,
+      };
+
+      const result = (await getCompletion(context.completion, prompt, apiConfig)).choices[0].text.trim();
+
+      // TODO user may have deleted the sticky during completion
+      const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
+      if (!targetNodesAfterCompletion[0]) return;
+
+      currentSticky.text.characters += `\n\n===Answer===\n` + result;
+
+      // TODO: move sticky to matched category
+      moveStickiesToSection([currentSticky], targetNodesAfterCompletion[0]);
+    }
+  }
+
+  private getConfig(node: FrameNode) {
+    return {
+      temperature: parseFloat(getFieldByLabel("Temperature", node)!.value.characters),
+      maxTokens: parseInt(getFieldByLabel("Max tokens", node)!.value.characters),
+    };
+  }
+}
