@@ -10,7 +10,6 @@ export function getSearchProxy(accessToken: string): SearchProxy {
       method: "post",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     }).then((res) => res.json());

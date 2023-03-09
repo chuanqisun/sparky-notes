@@ -21,7 +21,7 @@ export class ResearchInsightsProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Research Insights</FormTitle>
         <TextField label="Query" value="Azure Portal accessibility" />
-        <TextField label="Limit" value="50" />
+        <TextField label="Limit" value="10" />
       </AutoLayout>
     )) as FrameNode;
 

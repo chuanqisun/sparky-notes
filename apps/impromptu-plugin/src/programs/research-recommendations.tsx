@@ -21,7 +21,7 @@ export class ResearchRecommendationsProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Research Recommendations</FormTitle>
         <TextField label="Query" value="Xbox Cloud Gaming" />
-        <TextField label="Limit" value="50" />
+        <TextField label="Limit" value="10" />
       </AutoLayout>
     )) as FrameNode;
 
