@@ -17,7 +17,6 @@ export interface CompletionInput {
 export const completions: RequestHandler = async (req, res, next) => {
   try {
     let input: CompletionInput = req.body;
-    console.log(JSON.stringify(input));
     assert(typeof input.prompt === "string");
 
     const response = await axios({
