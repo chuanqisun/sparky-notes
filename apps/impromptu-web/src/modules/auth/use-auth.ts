@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import { useLocalStorage } from "../../utils/use-local-storage";
 import { getInitialToken, TOKEN_CACHE_KEY } from "./access-token";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import { useConfig } from "./use-config";
+import { useLocalStorage } from "./use-local-storage";
 
 export function useAuth() {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);

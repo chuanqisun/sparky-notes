@@ -1,30 +1,77 @@
+import { MessageToUI } from "@impromptu/types";
 import { render } from "preact";
-import { useState } from "preact/hooks";
-import "./app.css";
+import { useCallback, useEffect, useState } from "preact/hooks";
+import "./main.css";
+import { useAuth } from "./modules/auth/use-auth";
+import { notifyFigma } from "./modules/figma/rpc";
+import { handleSelectionChange } from "./modules/ui/command-bar";
 
-export function App() {
-  const [count, setCount] = useState(0);
+function App() {
+  const { isConnected, signIn, signOut, accessToken } = useAuth();
+
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    const handleMainMessage = async (e: MessageEvent) => {
+      const message = e.data.pluginMessage as MessageToUI;
+
+      if (message.selectionChangedV2) {
+        handleSelectionChange(message.selectionChangedV2);
+      }
+
+      if (message.started) {
+        setIsRunning(true);
+      }
+      if (message.stopped) {
+        setIsRunning(false);
+      }
+    };
+
+    window.addEventListener("message", handleMainMessage);
+    return () => window.removeEventListener("message", handleMainMessage);
+  }, []);
+
+  useEffect(() => {
+    notifyFigma({ hitsConfig: { accessToken } });
+  }, [accessToken]);
+
+  const handleStart = useCallback(() => notifyFigma({ start: true }), []);
+  const handleStop = useCallback(() => notifyFigma({ stop: true }), []);
+  const handleClear = useCallback(() => notifyFigma({ clear: true }), []);
+  const handleCreateProgram = useCallback(
+    (e: Event) => notifyFigma({ createProgram: (e.target as HTMLElement).closest("[data-program]")!.getAttribute("data-program")! }),
+    []
+  );
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://preactjs.com" target="_blank">
-          <img src={preactLogo} class="logo preact" alt="Preact logo" />
-        </a>
-      </div>
-      <h1>Vite + Preact</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-        <p>
-          Edit <code>src/app.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p class="read-the-docs">Click on the Vite and Preact logos to learn more</p>
-    </>
+    <main>
+      {isConnected && (
+        <>
+          <fieldset>
+            <legend>Run</legend>
+            {isRunning ? <button onClick={handleStop}>Stop</button> : <button onClick={handleStart}>Start</button>}
+            <button onClick={handleClear}>Clear</button>
+          </fieldset>
+          <fieldset onClick={handleCreateProgram}>
+            <legend>Build</legend>
+            <button data-program="prompt">Prompt</button>
+            <button data-program="filter">Filter</button>
+            <button data-program="categorize">Categorize</button>
+            <br />
+            <button data-program="research-insights"> ResearchInsights</button>
+            <button data-program="research-recommendations"> ResearchRecommendations</button>
+          </fieldset>
+        </>
+      )}
+      <fieldset>
+        <legend>Account</legend>
+        {isConnected === undefined && <button disabled>Authenticating...</button>}
+        {isConnected === true && <button onClick={signOut}>Sign out</button>}
+        {isConnected === false && <button onClick={signIn}>Sign in</button>}
+      </fieldset>
+    </main>
   );
 }
 
+document.getElementById("app")!.innerHTML = "";
 render(<App />, document.getElementById("app") as HTMLElement);
