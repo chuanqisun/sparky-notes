@@ -2,14 +2,12 @@ import { MessageToUI } from "@impromptu/types";
 import "./main.css";
 import { getTokenGenerator } from "./modules/auth/token-generator";
 import { notifyFigma } from "./modules/figma/rpc";
-import { formToHitsConfig, hitsConfigToForm } from "./modules/hits/config";
 import { formToOpenAIConfig, openAIConfigToForm } from "./modules/openai/config";
 import { handleSelectionChange, handleStarted, handleStopped } from "./modules/ui/command-bar";
 
 async function main() {
   const { start: startTokenGenerator, events: tokenEvents } = getTokenGenerator();
   const openaiConfigForm = document.querySelector<HTMLFormElement>("#openai-config-form")!;
-  const hitsConfigForm = document.querySelector<HTMLFormElement>("#hits-config-form")!;
   const appMain = document.querySelector("main")!;
 
   const handleMainMessage = async (e: MessageEvent) => {
@@ -27,14 +25,8 @@ async function main() {
     }
   };
 
-  const handleHitsConfigChange = () => {
-    const config = formToHitsConfig(hitsConfigForm);
-
-    // loop back to render status
-    hitsConfigToForm(hitsConfigForm, config);
-
-    localStorage.setItem("hits-config", JSON.stringify(config));
-    notifyFigma({ hitsConfig: config });
+  const handleHitsTokenChange = (event: Event) => {
+    notifyFigma({ hitsConfig: { accessToken: (event as CustomEvent<string>).detail } });
   };
 
   const handleOpenaiConfigChange = () => {
@@ -74,22 +66,16 @@ async function main() {
 
   window.addEventListener("message", handleMainMessage);
   openaiConfigForm.addEventListener("change", handleOpenaiConfigChange);
-  hitsConfigForm.addEventListener("change", handleHitsConfigChange);
+  // hitsConfigForm.addEventListener("change", handleHitsConfigChange);
   appMain.addEventListener("click", handleMainClick);
-  tokenEvents.addEventListener("token", console.log);
+  tokenEvents.addEventListener("token", handleHitsTokenChange);
 
   // initial load
   const openAIConfig = localStorage.getItem("openai-config");
   let parsedOpenAIConfig = openAIConfig ? JSON.parse(openAIConfig) : undefined;
   if (openAIConfig) openAIConfigToForm(openaiConfigForm, parsedOpenAIConfig);
 
-  const hitsConfig = localStorage.getItem("hits-config");
-  let parsedHitsConfig = hitsConfig ? JSON.parse(hitsConfig) : undefined;
-  if (hitsConfig) hitsConfigToForm(hitsConfigForm, parsedHitsConfig);
-
   handleOpenaiConfigChange();
-  handleHitsConfigChange();
-
   startTokenGenerator();
 }
 

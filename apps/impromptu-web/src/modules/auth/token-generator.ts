@@ -13,12 +13,7 @@ export function getTokenGenerator() {
     await getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
       .then((res) => res.token)
       .then(emitToken)
-      .catch(() =>
-        embeddedSignIn().then((result) => {
-          setJson(CONFIG_CACHE_KEY, { ...hitsConfig, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
-          location.reload();
-        })
-      );
+      .catch(() => events.dispatchEvent(new CustomEvent("signed-out")));
 
     setInterval(() => {
       getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
@@ -27,8 +22,15 @@ export function getTokenGenerator() {
     }, 5 * 60 * 1000); // HACK: 5 min token refresh interval is just magic number. Should use token expire_in
   };
 
+  const signIn = () =>
+    embeddedSignIn().then((result) => {
+      setJson(CONFIG_CACHE_KEY, { ...hitsConfig, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
+      location.reload();
+    });
+
   return {
     start,
+    signIn,
     events,
   };
 }
