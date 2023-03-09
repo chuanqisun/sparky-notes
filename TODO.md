@@ -1,3 +1,5 @@
+## Assistant
+
 - BUG: when last insight was deleted, new insights cannot be added
 - In-figma button/card hover effect: toggle shadow
 - In-app click to browse without adding to canvas
@@ -8,3 +10,8 @@
 - Auth | Timestamp last access token usage
 - Auth | Sign out from all HITS Assistants
 - Progressively disclose more non-highlight items
+
+## Impromptu
+
+- Server side rate limiting
+- Append/replace mode toggle for map
