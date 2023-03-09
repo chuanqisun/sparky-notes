@@ -49,7 +49,8 @@ export function getRecommendationQuery(config: { query?: string; count?: boolean
     ]).toString(),
     queryType: "Simple",
     searchText: config.query ?? "*",
-    searchFields: ["Title", "Contents", "Children/Title", "Children/Contents"],
+    highlightFields: ["Children/Title", "Children/Contents"],
+    searchFields: ["Children/Title", "Children/Contents"],
     select: ["Id", "EntityType", "Title", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
     orderBy: config.orderBy,
   };

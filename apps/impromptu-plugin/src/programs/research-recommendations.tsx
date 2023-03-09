@@ -1,4 +1,6 @@
+import { getAdditionalContext } from "../hits/additional-context";
 import { EntityName, EntityType } from "../hits/entity";
+import { removeHighlightHtml } from "../hits/highlight";
 import { getRecommendationQuery } from "../hits/search";
 import { moveStickiesToSection, resizeToHugContent } from "../utils/edit";
 import { FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
@@ -68,25 +70,33 @@ export class ResearchRecommendationsProgram implements Program {
       const searchSummary = await context.hitsSearch(getRecommendationQuery({ query, top: pageSize, skip: currentSkip, count: currentSkip === 0 }));
       hasMore = searchSummary.totalCount > currentSkip + pageSize;
 
-      const stickies = await Promise.all(
-        searchSummary.results.flatMap((item) =>
-          item.document.children
-            .filter((child) => child.entityType === EntityType.Insight)
-            .filter((child) => child.title)
-            .map(async (child) => {
-              const sticky = figma.createSticky();
-              sticky.text.characters = child.title!;
-              sticky.text.hyperlink = {
-                type: "URL",
-                value: `https://hits.microsoft.com/${EntityName[child.entityType]}/${child.id}`,
-              };
-              return sticky;
-            })
-        )
-      );
+      for (const report of searchSummary.results) {
+        const children = report.document.children.filter((child) => child.title).filter((child) => child.entityType === EntityType.Insight);
+        const highlights = [...(report.highlights!["children/Title"] ?? []), ...(report.highlights!["children/Contents"] ?? [])].map(removeHighlightHtml);
 
-      resultCount += stickies.length;
-      moveStickiesToSection(stickies, targetNode);
+        for (let highlight of highlights) {
+          const titleMatchedChild = children.find((child) => child.title?.toLocaleLowerCase().includes(highlight.toLocaleLowerCase()));
+          const contentsMatchedChild = children.find((child) => child.contents?.toLocaleLowerCase().includes(highlight.toLocaleLowerCase()));
+          const anyMatchedChild = titleMatchedChild ?? contentsMatchedChild;
+
+          if (anyMatchedChild) {
+            const sticky = figma.createSticky();
+            sticky.text.characters = titleMatchedChild ? highlight : contentsMatchedChild!.title!;
+            sticky.text.hyperlink = {
+              type: "URL",
+              value: `https://hits.microsoft.com/${EntityName[anyMatchedChild.entityType]}/${anyMatchedChild.id}`,
+            };
+
+            const additionalContext = getAdditionalContext(report, anyMatchedChild);
+            sticky.setPluginData("additionalContext", additionalContext);
+
+            resultCount++;
+            moveStickiesToSection([sticky], targetNode);
+          }
+
+          if (resultCount >= limit) return;
+        }
+      }
     }
   }
 }

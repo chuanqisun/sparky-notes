@@ -73,7 +73,7 @@ export class ResearchInsightsProgram implements Program {
       for (const report of searchSummary.results) {
         const children = report.document.children.filter((child) => child.title).filter((child) => child.entityType === EntityType.Insight);
         const highlights = [...(report.highlights!["children/Title"] ?? []), ...(report.highlights!["children/Contents"] ?? [])].map(removeHighlightHtml);
-        console.log(highlights);
+
         for (let highlight of highlights) {
           const titleMatchedChild = children.find((child) => child.title?.toLocaleLowerCase().includes(highlight.toLocaleLowerCase()));
           const contentsMatchedChild = children.find((child) => child.contents?.toLocaleLowerCase().includes(highlight.toLocaleLowerCase()));
@@ -89,7 +89,6 @@ export class ResearchInsightsProgram implements Program {
 
             const additionalContext = getAdditionalContext(report, anyMatchedChild);
             sticky.setPluginData("additionalContext", additionalContext);
-            console.log(additionalContext);
 
             resultCount++;
             moveStickiesToSection([sticky], targetNode);
