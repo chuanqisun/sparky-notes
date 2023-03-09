@@ -1,6 +1,9 @@
 let cancelCallback: undefined | (() => void);
 export function replaceNotification(message: string, options?: NotificationOptions) {
-  cancelCallback?.();
+  try {
+    cancelCallback?.();
+  } catch (e) {}
+
   cancelCallback = figma.notify(message, options).cancel;
 }
 

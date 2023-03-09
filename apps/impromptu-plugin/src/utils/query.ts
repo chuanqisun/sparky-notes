@@ -76,7 +76,7 @@ export interface Layout {
 }
 export function getNextTilePosition(tile: SceneNode, container: SectionNode, layout: Layout = {}): { x: number; y: number } {
   const epsilon = 5;
-  const { wrap = 8000, gap = 16, padding = 40 } = layout;
+  const { wrap = 4000, gap = 16, padding = 40 } = layout;
 
   const lastRowTopEdge = Math.max(Math.max(...container.children.map((child) => child.y)), padding);
   const lastRowMaxX = Math.max(
