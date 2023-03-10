@@ -1,5 +1,3 @@
-import { throttle } from "../utils/throttle";
-
 export interface OpenAICompletionPayload {
   prompt: string;
   temperature: number;
@@ -23,7 +21,7 @@ export type OpenAICompletionResponse = {
 export type CompletionProxy = (payload: OpenAICompletionPayload) => Promise<OpenAICompletionResponse>;
 
 export function getCompletionProxy(accessToken: string): CompletionProxy {
-  const rawProxy = async (payload: OpenAICompletionPayload) => {
+  const proxy = async (payload: OpenAICompletionPayload) => {
     const result = await fetch(process.env.VITE_OPENAI_COMPLETION_ENDPOINT!, {
       method: "post",
       headers: {
@@ -36,9 +34,7 @@ export function getCompletionProxy(accessToken: string): CompletionProxy {
     return result;
   };
 
-  // see rate limit: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/quotas-limits
-  const throttledProxy = throttle(rawProxy, 1);
-  return throttledProxy;
+  return proxy;
 }
 
 export async function getCompletion(proxy: CompletionProxy, prompt: string, config?: Partial<OpenAICompletionPayload>) {
