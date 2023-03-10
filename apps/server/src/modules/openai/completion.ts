@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosRetry from "axios-retry";
 import { assert } from "console";
 import type { RequestHandler } from "express";
 
@@ -14,12 +15,22 @@ export interface CompletionInput {
   stop: null | string | string[];
 }
 
+const axiosInstance = axios.create();
+axiosRetry(axiosInstance, {
+  retries: 3,
+  retryDelay: (count) => {
+    console.log(`openai completion retry: ${count}`);
+    return count * 2000;
+  },
+  retryCondition: (error) => error.response?.status === 429,
+});
+
 export const completions: RequestHandler = async (req, res, next) => {
   try {
     let input: CompletionInput = req.body;
     assert(typeof input.prompt === "string");
 
-    const response = await axios({
+    const response = await axiosInstance({
       // TODO replace with env
       url: process.env.OPENAI_COMPLETION_ENDPOINT,
       method: "post",
