@@ -176,6 +176,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
     }
     const { programNode: node, sourceNodes, targetNodes } = await program.create();
     node.setPluginData(PROGRAME_NAME_KEY, program.name);
+    node.setRelaunchData({ open: "Open Controller UI" });
     figma.currentPage.appendChild(node);
     moveToViewportCenter(node);
 
