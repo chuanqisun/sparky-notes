@@ -21,6 +21,6 @@ async function getSha256(input: string) {
 export const salt = "himalayan";
 
 export const activeCodes = [
-  "e328433c66f353086afb9658a350e7e001f2f0863db31045d19a80f195389a60", // covid
-  "f18a36000e49529a3e836da0b593d9ce2e3b8b8e0b15c24d42006e9cdc6fc70c", // COVID
+  "f6085aeac02aeeb7dd0012f6ffa14fece7a4f6386dcaba61659f30cd208c673b", // monad
+  "b92f8df1c7ed7d53a3311b68eddce3b3d8d77c7bdf1057ca5889151b1775775f", // MONAD
 ];
