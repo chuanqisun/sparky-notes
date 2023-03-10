@@ -18,9 +18,9 @@ async function getSha256(input: string) {
   return hashHex;
 }
 
-export const salt = "pandemic";
+export const salt = "himalayan";
 
 export const activeCodes = [
-  "ebf7e1be27f89754c13c83b6b601f31d89772769076a60ae2026b5d11bc232a2", // covid
-  "1e7f6b76fb63993081fc71a8dd1343bdb4b725e457b37207a20718609fbb6fe8", // COVID
+  "e328433c66f353086afb9658a350e7e001f2f0863db31045d19a80f195389a60", // covid
+  "f18a36000e49529a3e836da0b593d9ce2e3b8b8e0b15c24d42006e9cdc6fc70c", // COVID
 ];
