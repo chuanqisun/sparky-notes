@@ -16,4 +16,5 @@
 - Add relaunch data for discoverability
 - Add URL page input node
 - Add DevOps query node
+- Clear without selection resets the entire canvas
 - Append/replace mode toggle for map
