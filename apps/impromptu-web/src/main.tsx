@@ -54,12 +54,13 @@ function App() {
           <fieldset onClick={handleCreateProgram}>
             <legend>Build</legend>
             <button data-program="prompt">Prompt</button>
-            <button data-program="map">Map</button>
+            <button data-program="completion">Completion</button>
+            <button data-program="answer">Answer</button>
             <button data-program="filter">Filter</button>
             <button data-program="categorize">Categorize</button>
             <br />
-            <button data-program="research-insights"> ResearchInsights</button>
-            <button data-program="research-recommendations"> ResearchRecommendations</button>
+            <button data-program="research-insights"> Research Insights</button>
+            <button data-program="research-recommendations"> Research Recommendations</button>
           </fieldset>
         </>
       )}

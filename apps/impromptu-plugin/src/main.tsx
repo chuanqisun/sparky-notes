@@ -1,9 +1,10 @@
 import { MessageToFigma } from "@impromptu/types";
 import { getSearchProxy, SearchProxy } from "./hits/proxy";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
+import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
+import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
-import { MapProgram } from "./programs/map";
 import { filterToProgramNode, findMatchedProgram, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
@@ -29,7 +30,8 @@ const programs = [
   new FilterProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),
-  new MapProgram(),
+  new AnswerProgram(),
+  new CompletionProgram(),
 ];
 const matchProgram = findMatchedProgram.bind(null, programs);
 
@@ -224,7 +226,14 @@ showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}#build`, { height
 figma.ui.on("message", handleUIMessage);
 
 const eventLoop = new EventLoop();
-eventLoop.on("tick", handleEventLoopTick.bind(null, context, eventLoop));
+eventLoop.on("tick", async () => {
+  try {
+    await handleEventLoopTick(context, eventLoop);
+  } catch (e) {
+    eventLoop.stop();
+    replaceNotification((e as any)?.message ?? "Unknown error", { error: true });
+  }
+});
 eventLoop.on("start", handleEventLoopStart.bind(null, context));
 eventLoop.on("stop", handleEventLoopStop);
 

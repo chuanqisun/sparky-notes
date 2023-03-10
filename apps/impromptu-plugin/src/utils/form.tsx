@@ -34,6 +34,17 @@ export function TextField(props: TextFieldProps) {
   );
 }
 
+export interface DescriptionProps {
+  children: string;
+}
+export function Description(props: DescriptionProps) {
+  return (
+    <Text fill="#ccc" fontSize={16} width={320}>
+      {props.children}
+    </Text>
+  );
+}
+
 export interface Field {
   label: TextNode;
   placeholder: TextNode;

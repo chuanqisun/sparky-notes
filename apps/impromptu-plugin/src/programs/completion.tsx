@@ -1,31 +1,34 @@
 import { getCompletion } from "../openai/completion";
 import { moveStickiesToSection } from "../utils/edit";
-import { FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
-export class MapProgram implements Program {
-  public name = "map";
+export class CompletionProgram implements Program {
+  public name = "completion";
 
   public getSummary(node: FrameNode) {
-    return `Map: ${getFieldByLabel("Question", node)!.value.characters}`;
+    return `Completion: ${getFieldByLabel("Prompt", node)!.value.characters}`;
   }
 
   public async create() {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
-        <FormTitle>Map</FormTitle>
-        <TextField label="Question" value="Does the statement mention a robot?" />
+        <FormTitle>Completion</FormTitle>
+        <Description>Use a prompt to complete each sticky.</Description>
+        <TextField label="Prompt" value="Conclusion:" />
         <TextField label="Temperature" value="0.7" />
         <TextField label="Max tokens" value="60" />
       </AutoLayout>
     )) as FrameNode;
 
-    getTextByContent("Map", node)!.locked = true;
-    getFieldByLabel("Question", node)!.label.locked = true;
+    getTextByContent("Completion", node)!.locked = true;
+    getFieldByLabel("Prompt", node)!.label.locked = true;
+    getFieldByLabel("Temperature", node)!.label.locked = true;
+    getFieldByLabel("Max tokens", node)!.label.locked = true;
 
     const source1 = figma.createSection();
     source1.name = "Input";
@@ -44,17 +47,11 @@ export class MapProgram implements Program {
 
   public async run(context: ProgramContext, node: FrameNode) {
     while (true && !context.isAborted()) {
-      const question = getFieldByLabel("Question", node)!.value.characters;
+      const question = getFieldByLabel("Prompt", node)!.value.characters;
 
       const currentSticky = getInnerStickies(context.sourceNodes).pop();
       if (!currentSticky) break;
-      const prompt = [
-        currentSticky.getPluginData("additionalContext") ?? "",
-        "Answer the question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
-        "Asnwer: ",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
+      const prompt = [currentSticky.getPluginData("additionalContext") ?? "", currentSticky.text.characters, question].filter(Boolean).join("\n\n");
 
       const config = this.getConfig(node);
       const apiConfig = {
@@ -62,13 +59,14 @@ export class MapProgram implements Program {
         max_tokens: config.maxTokens,
       };
 
-      const result = (await getCompletion(context.completion, prompt, apiConfig)).choices[0].text.trim();
+      const result = (await getCompletion(context.completion, prompt, apiConfig)).choices[0].text;
 
       // TODO user may have deleted the sticky during completion
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       if (!targetNodesAfterCompletion[0]) return;
 
-      currentSticky.text.characters += `\n\n===Answer===\n` + result;
+      await figma.loadFontAsync(currentSticky.text.fontName as FontName);
+      currentSticky.text.characters += `\n\n${question}` + result;
 
       // TODO: move sticky to matched category
       moveStickiesToSection([currentSticky], targetNodesAfterCompletion[0]);
