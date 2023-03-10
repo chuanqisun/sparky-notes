@@ -37,7 +37,7 @@ export function getCompletionProxy(accessToken: string): CompletionProxy {
   };
 
   // see rate limit: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/quotas-limits
-  const throttledProxy = throttle(rawProxy, 600);
+  const throttledProxy = throttle(rawProxy, 1);
   return throttledProxy;
 }
 

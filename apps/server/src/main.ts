@@ -11,6 +11,7 @@ import { validateHitsToken } from "./modules/hits/validate-hits-token";
 import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { completions } from "./modules/openai/completion";
+import { rateLimit } from "./modules/rate-limit/require-jwt";
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/openai/completions", [validateHitsToken, completions]);
+app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]);
 
 app.post("/hits/token", hitsToken);
 app.post("/hits/signinstatus", hitsSignInStatus);
