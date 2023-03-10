@@ -72,6 +72,7 @@ function App() {
             <input
               ref={(e) => e?.focus()}
               style={{ width: 80 }}
+              type="password"
               placeholder="Invite code"
               name="invite-code"
               onInput={(e) => setInviteCode((e.target as HTMLInputElement).value)}
