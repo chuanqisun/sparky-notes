@@ -17,8 +17,12 @@ export function rateLimitQueue(rpm: number, margin: number) {
     const task = queue.shift();
     if (task) {
       await task();
+    } else {
+      started = false;
     }
   }
+
+  const throttledTick = throttle(tick, ((1 + margin) * 60 * 1000) / rpm);
 
   function enqueue(task: () => any) {
     queue.push(task);
@@ -29,9 +33,8 @@ export function rateLimitQueue(rpm: number, margin: number) {
 
   async function start() {
     started = true;
-    const throttledTick = throttle(tick, ((1 + margin) * 60 * 1000) / rpm);
 
-    while (true) {
+    while (started) {
       await throttledTick();
     }
   }
