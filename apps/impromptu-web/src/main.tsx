@@ -57,6 +57,7 @@ function App() {
             <button data-program="completion">Completion</button>
             <button data-program="answer">Answer</button>
             <button data-program="filter">Filter</button>
+            <button data-program="filter-by-examples">Filter by examples</button>
             <button data-program="categorize">Categorize</button>
             <br />
             <button data-program="research-insights"> Research Insights</button>

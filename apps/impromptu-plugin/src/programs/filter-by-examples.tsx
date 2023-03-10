@@ -7,23 +7,25 @@ import { Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
-export class FilterProgram implements Program {
-  public name = "filter";
+export class FilterByExamplesProgram implements Program {
+  public name = "filter-by-examples";
 
   public getSummary(node: FrameNode) {
-    return `Filter: ${getFieldByLabel("Yes/No question", node)!.value.characters}`;
+    return `Filter by examples: ${getFieldByLabel("Yes/No question", node)!.value.characters}`;
   }
 
   public async create() {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
-        <FormTitle>Filter</FormTitle>
-        <Description>Ask a Yes/No question to each sticky and move the sticky to the corresponding output section.</Description>
+        <FormTitle>Filter by examples</FormTitle>
+        <Description>
+          Ask a Yes/No question to each sticky and move the sticky to the corresponding output section. Existing output will be used as examples.
+        </Description>
         <TextField label="Yes/No question" value="Does the statement mention a robot?" />
       </AutoLayout>
     )) as FrameNode;
 
-    getTextByContent("Filter", node)!.locked = true;
+    getTextByContent("Filter by examples", node)!.locked = true;
     getFieldByLabel("Yes/No question", node)!.label.locked = true;
 
     const source1 = figma.createSection();
@@ -66,13 +68,14 @@ export class FilterProgram implements Program {
         .slice(0, 7)
         .map((sticky) => sticky.text.characters);
 
-      const prompt = [
-        currentSticky.getPluginData("additionalContext") ?? "",
-        "Answer the Yes/No question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
-        "Asnwer (Yes/No): ",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
+      const prompt =
+        `${positiveSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): Yes`).join("\n\n")}\n\n` +
+        `${negativeSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): No`).join("\n\n")}` +
+        `\n\nUse the following text to answer the following question with Yes/No: ${question}
+
+Text: ${currentSticky.text.characters}
+        
+Answer (Yes/No): `;
 
       const topChoiceResult = (
         await getCompletion(context.completion, prompt, {

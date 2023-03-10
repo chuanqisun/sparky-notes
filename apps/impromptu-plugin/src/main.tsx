@@ -5,6 +5,7 @@ import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
+import { FilterByExamplesProgram } from "./programs/filter-by-examples";
 import { filterToProgramNode, findMatchedProgram, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
@@ -28,6 +29,7 @@ const programs = [
   new PromptProgram(),
   new CategorizeProgram(),
   new FilterProgram(),
+  new FilterByExamplesProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),
   new AnswerProgram(),
