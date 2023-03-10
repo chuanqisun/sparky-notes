@@ -13,5 +13,8 @@
 
 ## Impromptu
 
+- Add relaunch data for discoverability
+- Add URL page input node
+- Add DevOps query node
 - Server side rate limiting
 - Append/replace mode toggle for map
