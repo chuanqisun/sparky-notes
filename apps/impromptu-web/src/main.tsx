@@ -3,6 +3,7 @@ import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
+import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
 
 function App() {
@@ -38,6 +39,9 @@ function App() {
     []
   );
 
+  const [inviteCode, setInviteCode] = useState("");
+  const isInviteCodeValid = useInvitieCode(inviteCode);
+
   return (
     <main>
       {isConnected && (
@@ -63,7 +67,20 @@ function App() {
         <legend>Account</legend>
         {isConnected === undefined && <button disabled>Authenticating...</button>}
         {isConnected === true && <button onClick={signOut}>Sign out</button>}
-        {isConnected === false && <button onClick={signIn}>Sign in</button>}
+        {isConnected === false && (
+          <>
+            <input
+              ref={(e) => e?.focus()}
+              style={{ width: 80 }}
+              placeholder="Invite code"
+              name="invite-code"
+              onInput={(e) => setInviteCode((e.target as HTMLInputElement).value)}
+            />
+            <button onClick={signIn} disabled={!isInviteCodeValid}>
+              Sign in
+            </button>
+          </>
+        )}
       </fieldset>
     </main>
   );
