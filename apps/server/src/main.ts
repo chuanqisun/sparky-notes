@@ -11,7 +11,7 @@ import { validateHitsToken } from "./modules/hits/validate-hits-token";
 import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { completions } from "./modules/openai/completion";
-import { rateLimit } from "./modules/rate-limit/require-jwt";
+import { rateLimit } from "./modules/rate-limit/rate-limit";
 
 dotenv.config();
 
