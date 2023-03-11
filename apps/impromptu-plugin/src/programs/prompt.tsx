@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, sourceNodesToText } from "../utils/query";
 import { Program, ProgramContext } from "./program";
@@ -18,6 +18,7 @@ export class PromptProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Prompt</FormTitle>
+        <Description>Use a prompt to elicit response. Information from the context will be combined and used as prefix to the prompt.</Description>
         <TextField label="Input" value="What is the second law of thermodynamics?" />
         <TextField label="Temperature" value="0.7" />
         <TextField label="Max tokens" value="60" />

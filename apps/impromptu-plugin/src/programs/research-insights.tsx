@@ -3,7 +3,7 @@ import { EntityName, EntityType } from "../hits/entity";
 import { removeHighlightHtml } from "../hits/highlight";
 import { getInsightQuery } from "../hits/search";
 import { moveStickiesToSection, resizeToHugContent } from "../utils/edit";
-import { FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
 import { Program, ProgramContext } from "./program";
@@ -22,6 +22,7 @@ export class ResearchInsightsProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Research Insights</FormTitle>
+        <Description>Insights from HITS.microsoft.com</Description>
         <TextField label="Query" value="Azure Portal accessibility" />
         <TextField label="Limit" value="10" />
       </AutoLayout>

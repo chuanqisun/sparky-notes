@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { moveStickiesToSection } from "../utils/edit";
-import { FormTitle, getTextByContent } from "../utils/form";
+import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { Program, ProgramContext } from "./program";
@@ -24,6 +24,7 @@ export class CategorizeProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Categorize</FormTitle>
+        <Description>Move each sticky into the corresponding category. Categorized stickies will be used as training examples.</Description>
       </AutoLayout>
     )) as FrameNode;
 
