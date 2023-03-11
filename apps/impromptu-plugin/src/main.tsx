@@ -17,7 +17,7 @@ import { getProgramNodeHash } from "./utils/hash";
 import { clearNotification, replaceNotification } from "./utils/notify";
 import { filterToHaveWidgetDataKey, filterToType } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
-import { getSelectedDataNodes, getSelectedProgramNodes } from "./utils/selection";
+import { getAllDataNodes, getSelectedDataNodes, getSelectedProgramNodes } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
 
 const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>window.location.href="${href}"</script>`, options);
@@ -165,7 +165,11 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
 
 const handleUIMessage = async (message: MessageToFigma) => {
   if (message.clear) {
-    const dataNodes = getSelectedDataNodes();
+    let dataNodes = getSelectedDataNodes();
+    if (!dataNodes.length) {
+      dataNodes = getAllDataNodes();
+    }
+
     dataNodes.forEach((node) => {
       node.children.forEach((child) => child.remove());
       resizeToHugContent(node);

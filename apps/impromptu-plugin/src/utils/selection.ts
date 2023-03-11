@@ -17,3 +17,8 @@ export function getSelectedDataNodes() {
   const uniqueDataNodes = dataNodes.filter(filterToUniqe);
   return uniqueDataNodes;
 }
+
+export function getAllDataNodes() {
+  const dataNodes = figma.currentPage.findAll(filterToType<SectionNode>("SECTION")) as SectionNode[];
+  return dataNodes;
+}
