@@ -15,5 +15,6 @@
 
 - Add URL page input node
 - Add DevOps query node
+- Add a quicksort node
 - Summarization node
 - Convert to Widget for relaunch discoverability
