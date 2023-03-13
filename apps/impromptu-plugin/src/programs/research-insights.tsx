@@ -1,4 +1,4 @@
-import { getAdditionalContext } from "../hits/additional-context";
+import { getLongContext, getShortContext } from "../hits/additional-context";
 import { EntityName, EntityType } from "../hits/entity";
 import { removeHighlightHtml } from "../hits/highlight";
 import { getInsightQuery } from "../hits/search";
@@ -88,8 +88,9 @@ export class ResearchInsightsProgram implements Program {
               value: `https://hits.microsoft.com/${EntityName[anyMatchedChild.entityType]}/${anyMatchedChild.id}`,
             };
 
-            const additionalContext = getAdditionalContext(report, anyMatchedChild);
+            const additionalContext = getLongContext(report, anyMatchedChild);
             sticky.setPluginData("additionalContext", additionalContext);
+            sticky.setPluginData("shortContext", getShortContext(report, anyMatchedChild));
 
             resultCount++;
             moveStickiesToSection([sticky], targetNode);

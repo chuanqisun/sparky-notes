@@ -8,5 +8,7 @@ export function replaceNotification(message: string, options?: NotificationOptio
 }
 
 export function clearNotification() {
-  cancelCallback?.();
+  try {
+    cancelCallback?.();
+  } catch (e) {}
 }

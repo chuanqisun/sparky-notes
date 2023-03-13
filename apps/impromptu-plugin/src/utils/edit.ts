@@ -17,6 +17,32 @@ export function moveStickiesToSection(stickies: StickyNode[], parentSection: Sec
   });
 }
 
+export function insertStickyToSection(sticky: StickyNode, reference: { position: "L" | "R"; node: StickyNode } | undefined, section: SectionNode) {
+  if (!reference) {
+    moveStickiesToSection([sticky], section);
+    return;
+  }
+
+  const gap = 16;
+
+  const newNodeWidth = sticky.width;
+  const insertionLeftEdge = reference.position === "L" ? reference.node.x + reference.node.width + gap : reference.node.x;
+
+  // shift all nodes to the right of the insertion zone
+  section.children.forEach((child) => {
+    if (child.x >= insertionLeftEdge) {
+      child.x += newNodeWidth + gap;
+    }
+  });
+
+  // insert the new node
+  section.appendChild(sticky);
+  sticky.x = insertionLeftEdge;
+  sticky.y = reference.node.y;
+
+  resizeToHugContent(section);
+}
+
 export interface Layout {
   padding?: number;
 }

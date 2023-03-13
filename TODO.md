@@ -15,7 +15,13 @@
 
 - Add URL page input node
 - Add DevOps query node
-- Add a quicksort node
 - Summarization node
 - Convert to Widget for relaunch discoverability
 - Fix filter output auto-rename
+
+## Figma runtime pain point
+
+- Progress/status display can be stuck when user force closes the plugin
+- Sticky forbids nesting
+- Lack of interactive form elements on the UI (checkbox, toggle, radio, etc)
+- Difficult to draw links between nodes

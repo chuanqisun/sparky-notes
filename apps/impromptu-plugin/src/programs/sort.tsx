@@ -1,6 +1,9 @@
-import { moveStickiesToSection } from "../utils/edit";
+import { getCompletion } from "../openai/completion";
+import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
+import { insertStickyToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
+import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { Program, ProgramContext } from "./program";
 
@@ -18,7 +21,7 @@ export class SortProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Sort</FormTitle>
         <Description>Stickies will be re-arranged based on what you would like to see on top.</Description>
-        <TextField label="Top sticky description" value="The most counterintuitive" />
+        <TextField label="Top sticky description" value="most counterintuitive" />
       </AutoLayout>
     )) as FrameNode;
 
@@ -41,17 +44,59 @@ export class SortProgram implements Program {
   public async onEdit(node: FrameNode) {}
 
   public async run(context: ProgramContext, node: FrameNode) {
-    while (true && !context.isAborted()) {
-      const sortGoal = getFieldByLabel("Top sticky description", node)!.value.characters;
+    const sortGoal = getFieldByLabel("Top sticky description", node)!.value.characters;
 
-      const inputStickies = getInnerStickies(context.sourceNodes);
-      if (!inputStickies.length) break;
+    const inputStickies = getInnerStickies(context.sourceNodes);
+    if (!inputStickies.length) return;
 
-      // TODO: move sticky to matched category
-      const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
-      if (!targetNodesAfterCompletion.length) return;
+    const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+    targetNode.children.forEach((child) => child.remove());
 
-      moveStickiesToSection(inputStickies, targetNodesAfterCompletion[0]);
-    }
+    const onPivot = (pivot: StickyNode) => {
+      console.log("pivot", pivot);
+      const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
+      if (!latestTargetContainer.length) return;
+      insertStickyToSection(pivot, undefined, latestTargetContainer[0]);
+    };
+
+    const onElement = (e: StickyNode) => {
+      replaceNotification(`Evaluating: ${e.text.characters.trim()}`);
+    };
+
+    const onSettle = (settlement: Settlement<StickyNode>) => {
+      console.log("settle", settlement);
+      const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
+      if (!latestTargetContainer.length) return;
+      if (settlement.left) {
+        insertStickyToSection(settlement.left, { node: settlement.pivot, position: "R" }, latestTargetContainer[0]);
+      } else if (settlement.right) {
+        insertStickyToSection(settlement.right, { node: settlement.pivot, position: "L" }, latestTargetContainer[0]);
+      }
+    };
+
+    const onCompare = async (a: StickyNode, b: StickyNode) => {
+      const contextA = a.getPluginData("shortContext");
+      const contextB = b.getPluginData("shortContext");
+
+      const prompt = `
+Choose between A and B
+
+A: ${a.text.characters.trim() + (contextA ? ` (Context: ${contextA})` : "")}        
+
+B: ${b.text.characters.trim() + (contextB ? ` (Context: ${contextB})` : "")}
+
+The choice must meet the ciritieria: ${sortGoal}
+Choice (A/B): `;
+
+      const topChoiceResult = (
+        await getCompletion(context.completion, prompt, {
+          max_tokens: 3,
+        })
+      ).choices[0].text.trim();
+
+      return topChoiceResult === "A" ? -1 : 1;
+    };
+
+    await asyncQuicksort(inputStickies, onCompare, onElement, onPivot, onSettle, () => context.isAborted());
   }
 }

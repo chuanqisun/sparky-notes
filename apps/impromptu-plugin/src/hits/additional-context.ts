@@ -1,7 +1,7 @@
 import { combineWhitespace, shortenToWordCount } from "../utils/text";
 import { SearchResultChild, SearchResultItem } from "./hits";
 
-export function getAdditionalContext(reportContext: SearchResultItem, claimContext: SearchResultChild) {
+export function getLongContext(reportContext: SearchResultItem, claimContext: SearchResultChild) {
   return [
     combineWhitespace(reportContext.document.title),
     shortenToWordCount(1000, combineWhitespace(reportContext.document.contents ?? "")),
@@ -10,4 +10,8 @@ export function getAdditionalContext(reportContext: SearchResultItem, claimConte
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+export function getShortContext(reportContext: SearchResultItem, claimContext: SearchResultChild) {
+  return [combineWhitespace(claimContext.title ?? ""), shortenToWordCount(250, combineWhitespace(claimContext.contents ?? ""))].filter(Boolean).join(" ");
 }
