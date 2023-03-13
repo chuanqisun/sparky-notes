@@ -18,3 +18,4 @@
 - Add a quicksort node
 - Summarization node
 - Convert to Widget for relaunch discoverability
+- Fix filter output auto-rename

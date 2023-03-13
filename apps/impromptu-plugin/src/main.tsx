@@ -10,6 +10,7 @@ import { filterToProgramNode, findMatchedProgram, ProgramContext, PROGRAME_NAME_
 import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
+import { SortProgram } from "./programs/sort";
 import { joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
@@ -34,6 +35,7 @@ const programs = [
   new ResearchRecommendationsProgram(),
   new AnswerProgram(),
   new CompletionProgram(),
+  new SortProgram(),
 ];
 const matchProgram = findMatchedProgram.bind(null, programs);
 
