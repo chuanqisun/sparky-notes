@@ -13,6 +13,8 @@
 
 ## Impromptu
 
+- Add a web search node
+- Add a pairing node
 - Add URL page input node
 - Add DevOps query node
 - Summarization node
