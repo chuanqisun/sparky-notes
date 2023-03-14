@@ -1,7 +1,8 @@
 import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { cloneSticky, createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
+import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { CreationContext, Program, ProgramContext } from "./program";
 
@@ -18,7 +19,7 @@ export class FilterProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Filter</FormTitle>
-        <Description>Ask a Yes/No question to each sticky and move the sticky to the corresponding output section.</Description>
+        <Description>Ask a Yes/No question to each sticky. Lock an output sticky to use as training example.</Description>
         <TextField label="Yes/No question" value="Does the statement mention a robot?" />
       </AutoLayout>
     )) as FrameNode;
@@ -44,15 +45,14 @@ export class FilterProgram implements Program {
   public async onEdit(node: FrameNode) {}
 
   public async run(context: ProgramContext, node: FrameNode) {
-    while (true && !context.isAborted()) {
-      const question = getFieldByLabel("Yes/No question", node)!.value.characters;
+    const inputStickies = getInnerStickies(context.sourceNodes);
+    const question = getFieldByLabel("Yes/No question", node)!.value.characters;
 
-      const currentSticky = getInnerStickies(context.sourceNodes).pop();
-      if (!currentSticky) break;
+    for (const currentSticky of inputStickies) {
       const targetNodes = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
 
       if (targetNodes.length < 2) {
-        // TODO zero shot mode
+        replaceNotification("Filter requires 2 output sections.", { error: true });
         break;
       }
       targetNodes[0].name = "Yes";
@@ -65,13 +65,14 @@ export class FilterProgram implements Program {
         .slice(0, 7)
         .map((sticky) => sticky.text.characters);
 
-      const prompt = [
-        currentSticky.getPluginData("longContext") ?? "",
-        "Answer the Yes/No question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
-        "Asnwer (Yes/No): ",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
+      const prompt =
+        `${positiveSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): Yes`).join("\n\n")}\n\n` +
+        `${negativeSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): No`).join("\n\n")}` +
+        `\n\nUse the following text to answer the following question with Yes/No: ${question}
+
+Text: ${currentSticky.text.characters}
+        
+Answer (Yes/No): `;
 
       const topChoiceResult = (
         await getCompletion(context.completion, prompt, {
@@ -79,7 +80,10 @@ export class FilterProgram implements Program {
         })
       ).choices[0].text.trim();
 
-      // TODO user may have deleted the sticky during completion
+      if (!figma.getNodeById(currentSticky.id)) continue;
+      if (context.isAborted() || context.isChanged()) return;
+      const newSticky = cloneSticky(currentSticky);
+
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       const isPositive = topChoiceResult.toLocaleLowerCase().includes("yes");
       const isNegative = topChoiceResult.toLocaleLowerCase().includes("no");
@@ -87,8 +91,7 @@ export class FilterProgram implements Program {
         break;
       }
 
-      // TODO: move sticky to matched category
-      moveStickiesToSection([currentSticky], isPositive ? targetNodesAfterCompletion[0] : targetNodesAfterCompletion[1]);
+      moveStickiesToSection([newSticky], isPositive ? targetNodesAfterCompletion[0] : targetNodesAfterCompletion[1]);
     }
   }
 }

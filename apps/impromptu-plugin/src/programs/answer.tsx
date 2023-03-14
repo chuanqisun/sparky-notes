@@ -68,15 +68,12 @@ export class AnswerProgram implements Program {
       if (!figma.getNodeById(currentSticky.id)) continue;
       if (context.isAborted() || context.isChanged()) return;
 
-      // TODO user may have deleted the sticky during completion
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       if (!targetNodesAfterCompletion[0]) return;
 
       const newSticky = currentSticky.clone();
-      await figma.loadFontAsync(newSticky.text.fontName as FontName);
       newSticky.text.characters = result;
 
-      // TODO: move sticky to matched category
       moveStickiesToSection([newSticky], targetNodesAfterCompletion[0]);
     }
   }

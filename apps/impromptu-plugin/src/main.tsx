@@ -5,7 +5,6 @@ import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
-import { FilterByExamplesProgram } from "./programs/filter-by-examples";
 import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
@@ -15,6 +14,7 @@ import { SummarizeProgram } from "./programs/summarize";
 import { WebSearchProgram } from "./programs/web-search";
 import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
+import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
 import { clearNotification, replaceNotification } from "./utils/notify";
 import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash } from "./utils/query";
@@ -26,6 +26,8 @@ import { getWebSearchProxy, WebSearchProxy } from "./web/search";
 
 const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>window.location.href="${href}"</script>`, options);
 
+let fontInitPromise = ensureStickyFont();
+
 let completion!: CompletionProxy;
 let hitsSearch!: SearchProxy;
 let webSearch: WebSearchProxy;
@@ -35,7 +37,6 @@ const programs: Program[] = [
   new PromptProgram(),
   new CategorizeProgram(),
   new FilterProgram(),
-  new FilterByExamplesProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),
   new AnswerProgram(),
@@ -94,6 +95,8 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
   }
 
   const currentNodeId = context.queue.shift()!;
+
+  await fontInitPromise;
 
   const currentNode = figma.getNodeById(currentNodeId) as FrameNode | null;
   if (!currentNode) return;
