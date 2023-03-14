@@ -59,6 +59,7 @@ function App() {
             <button data-program="categorize">Categorize</button>
             <button data-program="sort">Sort</button>
             <button data-program="summarize">Summarize</button>
+            <button data-program="correlate">Correlate</button>
             <button data-program="web-search">Web search</button>
             <button data-program="research-insights"> Research Insights</button>
             <button data-program="research-recommendations"> Research Recommendations</button>

@@ -4,6 +4,7 @@ import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
+import { CorrelateProgram } from "./programs/correlate";
 import { FilterProgram } from "./programs/filter";
 import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { ResearchInsightsProgram } from "./programs/research-insights";
@@ -33,12 +34,13 @@ let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
 
 const programs: Program[] = [
+  new AnswerProgram(),
   new CategorizeProgram(),
+  new CompletionProgram(),
+  new CorrelateProgram(),
   new FilterProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),
-  new AnswerProgram(),
-  new CompletionProgram(),
   new SortProgram(),
   new SummarizeProgram(),
   new WebSearchProgram(),
