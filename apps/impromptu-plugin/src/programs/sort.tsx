@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
-import { cloneSticky, createOrUseSourceNodes, insertStickyToSection } from "../utils/edit";
+import { createOrUseSourceNodes, insertStickyToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -9,24 +9,29 @@ import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
+export interface InMemorySticky {
+  vId: string;
+  text: string;
+}
+
 export class SortProgram implements Program {
   public name = "sort";
 
   public getSummary(node: FrameNode) {
-    return `Sort: ${getFieldByLabel("Top sticky description", node)!.value.characters}`;
+    return `Sort: ${getFieldByLabel("What to promote", node)!.value.characters}`;
   }
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Sort</FormTitle>
-        <Description>Stickies will be re-arranged based on what you would like to see on top.</Description>
-        <TextField label="Top sticky description" value="most counterintuitive" />
+        <Description>Stickies will be re-arranged based on what you would like to promote. Sorting will speed up as it progresses.</Description>
+        <TextField label="What to promote" value="most counterintuitive" />
       </AutoLayout>
     )) as FrameNode;
 
     getTextByContent("Sort", node)!.locked = true;
-    getFieldByLabel("Top sticky description", node)!.label.locked = true;
+    getFieldByLabel("What to promote", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Pre-sorted"], context.selectedOutputNodes);
 
@@ -41,7 +46,9 @@ export class SortProgram implements Program {
   }
 
   public async run(context: ProgramContext, node: FrameNode) {
-    const sortGoal = getFieldByLabel("Top sticky description", node)!.value.characters;
+    const virtualToRealIdMap = new Map<string, string>();
+
+    const sortGoal = getFieldByLabel("What to promote", node)!.value.characters;
 
     const inputStickies = getInnerStickies(context.sourceNodes);
     if (!inputStickies.length) return;
@@ -49,43 +56,59 @@ export class SortProgram implements Program {
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetNode) return;
 
-    const clonedInputStickies = inputStickies.map(cloneSticky);
+    const inMemoryStickies: InMemorySticky[] = inputStickies.map((sticky) => ({
+      vId: sticky.id,
+      text: sticky.text.characters,
+    }));
 
-    const onPivot = (pivot: StickyNode) => {
+    const onPivot = (pivot: InMemorySticky) => {
       console.log("pivot", pivot);
+      const realSticky = figma.createSticky();
+      realSticky.text.characters = pivot.text;
+      virtualToRealIdMap.set(pivot.vId, realSticky.id);
       const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       if (!latestTargetContainer.length) return;
-      insertStickyToSection(pivot, undefined, latestTargetContainer[0]);
+      insertStickyToSection(realSticky, undefined, latestTargetContainer[0]);
     };
 
-    const onElement = (e: StickyNode) => {
-      replaceNotification(`Evaluating: ${e.text.characters.trim()}`);
+    const onElement = (e: InMemorySticky) => {
+      replaceNotification(`Evaluating: ${e.text.trim()}`);
     };
 
-    const onSettle = (settlement: Settlement<StickyNode>) => {
+    const onSettle = (settlement: Settlement<InMemorySticky>) => {
       console.log("settle", settlement);
-      const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
-      if (!latestTargetContainer.length) return;
+      const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+      if (!latestTargetContainer) return;
+      const realSticky = figma.createSticky();
       if (settlement.left) {
-        insertStickyToSection(settlement.left, { node: settlement.pivot, position: "R" }, latestTargetContainer[0]);
+        realSticky.text.characters = settlement.left.text;
+        virtualToRealIdMap.set(settlement.left.vId, realSticky.id);
+        const realPivot = figma.getNodeById(virtualToRealIdMap.get(settlement.pivot.vId)!) as StickyNode;
+        if (!realPivot) return;
+
+        insertStickyToSection(realSticky, { node: realPivot, position: "R" }, latestTargetContainer);
       } else if (settlement.right) {
-        insertStickyToSection(settlement.right, { node: settlement.pivot, position: "L" }, latestTargetContainer[0]);
+        realSticky.text.characters = settlement.right.text;
+        virtualToRealIdMap.set(settlement.right.vId, realSticky.id);
+        const realPivot = figma.getNodeById(virtualToRealIdMap.get(settlement.pivot.vId)!) as StickyNode;
+        if (!realPivot) return;
+
+        insertStickyToSection(realSticky, { node: realPivot, position: "L" }, latestTargetContainer);
       }
     };
 
-    const onCompare = async (a: StickyNode, b: StickyNode) => {
+    const onCompare = async (a: InMemorySticky, b: InMemorySticky) => {
       // const contextA = a.getPluginData("shortContext");
       // const contextB = b.getPluginData("shortContext");
 
       const prompt = `
-Choose between A and B
 
-A: ${a.text.characters.trim()}
+A: ${a.text.trim()}
 
-B: ${b.text.characters.trim()}
+B: ${b.text.trim()}
 
-Choose the one that better satisfies the requirement: ${sortGoal}
-Choice (A/B): `;
+Question: between A and B, which one is ${sortGoal}
+Ansower (A/B): `;
 
       const topChoiceResult = (
         await getCompletion(context.completion, prompt, {
@@ -96,6 +119,6 @@ Choice (A/B): `;
       return topChoiceResult === "A" ? -1 : 1;
     };
 
-    await asyncQuicksort(clonedInputStickies, onCompare, onElement, onPivot, onSettle, () => context.isAborted() || context.isChanged());
+    await asyncQuicksort(inMemoryStickies, onCompare, onElement, onPivot, onSettle, () => context.isAborted() || context.isChanged());
   }
 }

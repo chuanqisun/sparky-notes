@@ -18,7 +18,7 @@ export class AnswerProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Answer</FormTitle>
-        <Description>Ask a question and get the answer for each sticky.</Description>
+        <Description>For each sticky, generate a new sticky that contains the answer to the question.</Description>
         <TextField label="Question" value="Does the statement mention a robot?" />
         <TextField label="Temperature" value="0.7" />
         <TextField label="Max tokens" value="60" />

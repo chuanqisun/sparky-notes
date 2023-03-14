@@ -22,7 +22,7 @@ export class ResearchInsightsProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Research Insights</FormTitle>
-        <Description>Insights from HITS.microsoft.com</Description>
+        <Description>Get UX research insights from HITS.microsoft.com</Description>
         <TextField label="Query" value="Azure Portal accessibility" />
         <TextField label="Limit" value="10" />
       </AutoLayout>

@@ -18,7 +18,7 @@ export class CompletionProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Completion</FormTitle>
-        <Description>Use a prompt to complete each sticky.</Description>
+        <Description>For each sticky, append the prompt and the response to that prompt.</Description>
         <TextField label="Prompt" value="Conclusion:" />
         <TextField label="Temperature" value="0.7" />
         <TextField label="Max tokens" value="60" />

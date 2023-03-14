@@ -24,7 +24,9 @@ export class CategorizeProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Categorize</FormTitle>
-        <Description>Lock an output sticky to use it as training example.</Description>
+        <Description>
+          Group stickies into predefined categories. Rename categories to improve accuracy. Lock an output sticky for use as training example.
+        </Description>
       </AutoLayout>
     )) as FrameNode;
 

@@ -19,7 +19,7 @@ export class FilterProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Filter</FormTitle>
-        <Description>Ask a Yes/No question to each sticky. Lock an output sticky to use as training example.</Description>
+        <Description>For each sticky, determine where it belongs based on a Yes/No question. Lock an output sticky for use as training example.</Description>
         <TextField label="Yes/No question" value="Does the statement mention a robot?" />
       </AutoLayout>
     )) as FrameNode;
