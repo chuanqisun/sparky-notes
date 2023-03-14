@@ -46,10 +46,10 @@ export class SortProgram implements Program {
     const inputStickies = getInnerStickies(context.sourceNodes);
     if (!inputStickies.length) return;
 
-    const clonedInputStickies = inputStickies.map(cloneSticky);
-
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
-    targetNode.children.forEach((child) => child.remove());
+    if (!targetNode) return;
+
+    const clonedInputStickies = inputStickies.map(cloneSticky);
 
     const onPivot = (pivot: StickyNode) => {
       console.log("pivot", pivot);

@@ -47,8 +47,6 @@ export class WebSearchProgram implements Program {
     const query = getFieldByLabel("Query", node)!.value.characters.trim();
     const limit = parseInt(getFieldByLabel("Limit", node)!.value.characters.trim());
 
-    targetNode.children.forEach((child) => child.remove());
-
     const { pages: items } = await context.webSearch({ q: query });
     if (context.isChanged() || context.isAborted()) return;
     console.log(`[search] ${items.length} urls found`);

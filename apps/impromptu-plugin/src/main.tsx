@@ -11,7 +11,7 @@ import { ResearchRecommendationsProgram } from "./programs/research-recommendati
 import { SortProgram } from "./programs/sort";
 import { SummarizeProgram } from "./programs/summarize";
 import { WebSearchProgram } from "./programs/web-search";
-import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
+import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
 import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
@@ -194,10 +194,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
       dataNodes = getAllDataNodes();
     }
 
-    dataNodes.forEach((node) => {
-      node.children.forEach((child) => child.remove());
-      resizeToHugContent(node);
-    });
+    emptySections(dataNodes);
   }
 
   if (message.createProgram) {
