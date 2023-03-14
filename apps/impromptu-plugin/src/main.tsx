@@ -11,6 +11,7 @@ import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
+import { WebSearchProgram } from "./programs/web-search";
 import { joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
@@ -20,11 +21,15 @@ import { filterToHaveWidgetDataKey, filterToType } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
 import { getAllDataNodes, getSelectedDataNodes, getSelectedProgramNodes } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
+import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
+import { getWebSearchProxy, WebSearchProxy } from "./web/search";
 
 const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>window.location.href="${href}"</script>`, options);
 
-let completion: CompletionProxy | null = null;
-let hitsSearch: SearchProxy | null = null;
+let completion!: CompletionProxy;
+let hitsSearch!: SearchProxy;
+let webSearch: WebSearchProxy;
+let webCrawl: WebCrawlProxy;
 
 const programs = [
   new PromptProgram(),
@@ -36,6 +41,7 @@ const programs = [
   new AnswerProgram(),
   new CompletionProgram(),
   new SortProgram(),
+  new WebSearchProgram(),
 ];
 const matchProgram = findMatchedProgram.bind(null, programs);
 
@@ -116,13 +122,8 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
     });
 
     // run matching program
-    if (!completion) {
-      eventLoop.stop("Open AI Completion is not setup yet.");
-      return;
-    }
-    if (!hitsSearch) {
-      // TODO report token validity
-      eventLoop.stop("HITS Search is not setup yet.");
+    if (![completion, hitsSearch, webCrawl, webSearch].every(Boolean)) {
+      eventLoop.stop("Event loop complex setup error");
       return;
     }
 
@@ -132,6 +133,8 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
       sourceNodes: getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION")),
       hitsSearch,
       completion,
+      webCrawl,
+      webSearch,
       isAborted: () => eventLoop.isAborted(),
     };
     await program.run(programContext, currentNode);
@@ -204,6 +207,8 @@ const handleUIMessage = async (message: MessageToFigma) => {
   if (message.hitsConfig) {
     completion = getCompletionProxy(message.hitsConfig.accessToken);
     hitsSearch = getSearchProxy(message.hitsConfig.accessToken);
+    webSearch = getWebSearchProxy(message.hitsConfig.accessToken);
+    webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken);
   }
 
   if (message.start) {

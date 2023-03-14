@@ -1,9 +1,13 @@
 import { SearchProxy } from "../hits/proxy";
 import { CompletionProxy } from "../openai/completion";
+import { WebCrawlProxy } from "../web/crawl";
+import { WebSearchProxy } from "../web/search";
 
 export interface ProgramContext {
   completion: CompletionProxy;
   hitsSearch: SearchProxy;
+  webCrawl: WebCrawlProxy;
+  webSearch: WebSearchProxy;
   isAborted: () => boolean;
   sourceNodes: SectionNode[];
 }

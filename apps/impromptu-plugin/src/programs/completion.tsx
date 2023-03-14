@@ -51,7 +51,7 @@ export class CompletionProgram implements Program {
 
       const currentSticky = getInnerStickies(context.sourceNodes).pop();
       if (!currentSticky) break;
-      const prompt = [currentSticky.getPluginData("additionalContext") ?? "", currentSticky.text.characters, question].filter(Boolean).join("\n\n");
+      const prompt = [currentSticky.getPluginData("longContext") ?? "", currentSticky.text.characters, question].filter(Boolean).join("\n\n");
 
       const config = this.getConfig(node);
       const apiConfig = {

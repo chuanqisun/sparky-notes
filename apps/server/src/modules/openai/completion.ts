@@ -1,6 +1,6 @@
+import assert from "assert";
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import { assert } from "console";
 import type { RequestHandler } from "express";
 
 // ref: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference

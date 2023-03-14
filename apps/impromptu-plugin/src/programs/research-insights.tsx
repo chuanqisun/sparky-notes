@@ -88,8 +88,8 @@ export class ResearchInsightsProgram implements Program {
               value: `https://hits.microsoft.com/${EntityName[anyMatchedChild.entityType]}/${anyMatchedChild.id}`,
             };
 
-            const additionalContext = getLongContext(report, anyMatchedChild);
-            sticky.setPluginData("additionalContext", additionalContext);
+            const longContext = getLongContext(report, anyMatchedChild);
+            sticky.setPluginData("longContext", longContext);
             sticky.setPluginData("shortContext", getShortContext(report, anyMatchedChild));
 
             resultCount++;

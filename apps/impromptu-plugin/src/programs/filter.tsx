@@ -67,7 +67,7 @@ export class FilterProgram implements Program {
         .map((sticky) => sticky.text.characters);
 
       const prompt = [
-        currentSticky.getPluginData("additionalContext") ?? "",
+        currentSticky.getPluginData("longContext") ?? "",
         "Answer the Yes/No question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
         "Asnwer (Yes/No): ",
       ]

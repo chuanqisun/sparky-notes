@@ -12,6 +12,8 @@ import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { completions } from "./modules/openai/completion";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
+import { webCrawl } from "./modules/web/crawl";
+import { webSearch } from "./modules/web/search";
 
 dotenv.config();
 
@@ -22,6 +24,9 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]);
+
+app.post("/web/search", [validateHitsToken, webSearch]);
+app.post("/web/crawl", [validateHitsToken, webCrawl]);
 
 app.post("/hits/token", hitsToken);
 app.post("/hits/signinstatus", hitsSignInStatus);

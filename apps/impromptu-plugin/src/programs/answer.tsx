@@ -52,7 +52,7 @@ export class AnswerProgram implements Program {
       const currentSticky = getInnerStickies(context.sourceNodes).pop();
       if (!currentSticky) break;
       const prompt = [
-        currentSticky.getPluginData("additionalContext") ?? "",
+        currentSticky.getPluginData("longContext") ?? "",
         "Answer the question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
         "Asnwer: ",
       ]
