@@ -13,7 +13,7 @@ import { ResearchRecommendationsProgram } from "./programs/research-recommendati
 import { SortProgram } from "./programs/sort";
 import { SummarizeProgram } from "./programs/summarize";
 import { WebSearchProgram } from "./programs/web-search";
-import { joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
+import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
 import { clearNotification, replaceNotification } from "./utils/notify";
@@ -146,6 +146,9 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
         return false;
       },
     };
+
+    const targetContainers = getNextNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
+    emptySections(targetContainers);
     await program.run(programContext, currentNode);
 
     if (changeDetected) {

@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, emptySections, moveStickiesToSection } from "../utils/edit";
+import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -18,7 +18,7 @@ export class AnswerProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Answer</FormTitle>
-        <Description>Ask a question to each sticky and replace its content with the answer.</Description>
+        <Description>Ask a question and get the answer for each sticky.</Description>
         <TextField label="Question" value="Does the statement mention a robot?" />
         <TextField label="Temperature" value="0.7" />
         <TextField label="Max tokens" value="60" />
@@ -48,14 +48,7 @@ export class AnswerProgram implements Program {
     const inputStickies = getInnerStickies(context.sourceNodes);
     const question = getFieldByLabel("Question", node)!.value.characters;
 
-    const targetContainers = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
-    if (!targetContainers[0]) return;
-    emptySections(targetContainers);
-
     for (let currentSticky of inputStickies) {
-      if (!figma.getNodeById(currentSticky.id)) continue;
-      if (context.isAborted() || context.isChanged()) return;
-
       const prompt = [
         currentSticky.getPluginData("longContext") ?? "",
         "Answer the question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,

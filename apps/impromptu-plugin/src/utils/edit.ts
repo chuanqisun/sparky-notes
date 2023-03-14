@@ -7,7 +7,7 @@ export function cloneSticky(sticky: StickyNode) {
 
 export function emptySections(sections: SectionNode[]) {
   sections.forEach((section) => {
-    section.children.forEach((child) => child.remove());
+    section.children.forEach((child) => !child.locked && child.remove());
     resizeToHugContent(section);
   });
 }

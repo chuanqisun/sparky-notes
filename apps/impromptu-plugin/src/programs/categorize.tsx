@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { cloneSticky, createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -24,7 +24,7 @@ export class CategorizeProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Categorize</FormTitle>
-        <Description>Move each sticky into the corresponding category. Categorized stickies will be used as training examples.</Description>
+        <Description>Lock a sticky to use it as training example.</Description>
       </AutoLayout>
     )) as FrameNode;
 
@@ -48,9 +48,9 @@ export class CategorizeProgram implements Program {
   public async onEdit(node: FrameNode) {}
 
   public async run(context: ProgramContext, node: FrameNode) {
-    while (true && !context.isAborted()) {
-      const currentSticky = getInnerStickies(context.sourceNodes).pop();
-      if (!currentSticky) break;
+    const inputStickies = getInnerStickies(context.sourceNodes);
+
+    for (const currentSticky of inputStickies) {
       const targetNodes = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
 
       const trainingSamples = targetNodes.flatMap((targetNode) =>
@@ -78,15 +78,22 @@ Classified category: `;
         })
       ).choices[0].text.trim();
 
+      if (!figma.getNodeById(currentSticky.id)) continue;
+      if (context.isAborted() || context.isChanged()) return;
+
       // TODO user may have deleted the sticky during completion
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
-      const matchedCategory = targetNodesAfterCompletion.find((targetNode) => targetNode.name.toLocaleLowerCase() === topChoiceResult.toLocaleLowerCase());
+      const matchedCategory = targetNodesAfterCompletion.find(
+        (targetNode) =>
+          targetNode.name.toLocaleLowerCase().includes(topChoiceResult.toLocaleLowerCase()) ||
+          topChoiceResult.toLocaleLowerCase().includes(targetNode.name.toLocaleLowerCase())
+      );
 
       // exit loop when no category is matched
       if (!matchedCategory) break;
 
       // TODO: move sticky to matched category
-      moveStickiesToSection([currentSticky], matchedCategory);
+      moveStickiesToSection([cloneSticky(currentSticky)], matchedCategory);
     }
   }
 }

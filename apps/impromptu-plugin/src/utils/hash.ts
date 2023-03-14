@@ -1,5 +1,5 @@
 export function getProgramNodeGraphHash(programNode: FrameNode, sourceNodes: SectionNode[], targetNodes: SectionNode[]): string {
-  return hashCode([programNode, ...sourceNodes].map((node) => getNodeText(node)).join("")).toString() + targetNodes.map((node) => node.id).join("");
+  return hashCode([programNode, ...sourceNodes].map((node) => getNodeText(node)).join("")).toString() + targetNodes.map((node) => node.id + node.name).join("");
 }
 
 export function getNodeText(node: SceneNode): string {
@@ -12,7 +12,7 @@ export function getNodeText(node: SceneNode): string {
   }
 
   if ((node as ChildrenMixin).children) {
-    return (node as ChildrenMixin).children.map((child) => getNodeText(child)).join("");
+    return node.name + (node as ChildrenMixin).children.map((child) => getNodeText(child)).join("");
   }
 
   return "";

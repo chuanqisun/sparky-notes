@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { cloneSticky, createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -45,11 +45,10 @@ export class CompletionProgram implements Program {
   public async onEdit(node: FrameNode) {}
 
   public async run(context: ProgramContext, node: FrameNode) {
-    while (true && !context.isAborted()) {
-      const question = getFieldByLabel("Prompt", node)!.value.characters;
+    const inputStickies = getInnerStickies(context.sourceNodes);
+    const question = getFieldByLabel("Prompt", node)!.value.characters;
 
-      const currentSticky = getInnerStickies(context.sourceNodes).pop();
-      if (!currentSticky) break;
+    for (const currentSticky of inputStickies) {
       const prompt = [currentSticky.getPluginData("longContext") ?? "", currentSticky.text.characters, question].filter(Boolean).join("\n\n");
 
       const config = this.getConfig(node);
@@ -60,15 +59,18 @@ export class CompletionProgram implements Program {
 
       const result = (await getCompletion(context.completion, prompt, apiConfig)).choices[0].text;
 
+      if (!figma.getNodeById(currentSticky.id)) continue;
+      if (context.isAborted() || context.isChanged()) return;
+      const newSticky = cloneSticky(currentSticky);
+
       // TODO user may have deleted the sticky during completion
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       if (!targetNodesAfterCompletion[0]) return;
 
-      await figma.loadFontAsync(currentSticky.text.fontName as FontName);
-      currentSticky.text.characters += `\n\n${question}` + result;
+      newSticky.text.characters += `\n\n${question}` + result;
 
       // TODO: move sticky to matched category
-      moveStickiesToSection([currentSticky], targetNodesAfterCompletion[0]);
+      moveStickiesToSection([newSticky], targetNodesAfterCompletion[0]);
     }
   }
 
