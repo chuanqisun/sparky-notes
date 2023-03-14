@@ -1,10 +1,9 @@
 import { getCompletion } from "../openai/completion";
-import { arrayToBulletList, responseToArray, responseToBulletList } from "../openai/format";
+import { responseToArray } from "../openai/format";
 import { moveStickiesToSection, resizeToHugContent } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
-import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
 import { Program, ProgramContext } from "./program";
@@ -63,7 +62,7 @@ export class SummarizeProgram implements Program {
 
     const getInitSummary = async () => {
       // initially, use superficial titles
-      const allTitles = inputStickies.map((sticky) => `- ${sticky.text.characters}`).join("\n");
+      const allTitles = inputStickies.map((sticky) => `- ${sticky.text.characters.replace(/\s+/g, " ")}`).join("\n");
       const safeTitles = shortenToWordCount(2000, allTitles);
       const initPrompt = `
 Summarize the full list into a concise list with up to ${maxItemCount} items, 10 words per item.
@@ -74,7 +73,7 @@ ${safeTitles}
 Concise list (bullet list, up to ${maxItemCount} items):
 - `;
 
-      return responseToBulletList(
+      return responseToArray(
         (
           await getCompletion(context.completion, initPrompt, {
             max_tokens: Math.max(500, Math.min(maxItemCount * 50, 200)),
@@ -87,50 +86,17 @@ Concise list (bullet list, up to ${maxItemCount} items):
 
     if (this.abortCurrentRun || context.isAborted()) return;
 
-    for (let inputSticky of inputStickies) {
-      replaceNotification(`Summarize: incorporating "${inputSticky.text.characters}"`);
+    const newStickies = rollingSummary.map((item) => {
+      const sticky = figma.createSticky();
+      sticky.text.characters = item;
+      return sticky;
+    });
 
-      const optionalContext = inputSticky.getPluginDataKeys().includes("shortContext") ? inputSticky.getPluginData("shortContext") : "";
-
-      const prompt = `
-Summary (bullet list):
-${rollingSummary}
-
-New information:
-${inputSticky.text.characters} ${optionalContext}
-
-Use the new information to adjust the summary. Update only if the new information is significantly different from the summary so far.
-
-Updated summary (bullet list, up to ${maxItemCount} items, 10 words per item):
-- `;
-
-      const rollingSummaryItems = responseToArray(
-        (
-          await getCompletion(context.completion, prompt, {
-            max_tokens: Math.max(500, Math.min(maxItemCount * 50, 200)),
-          })
-        ).choices[0].text
-      );
-
-      if (this.abortCurrentRun || context.isAborted()) return;
-
-      if (!rollingSummaryItems.length) continue;
-
-      rollingSummary = arrayToBulletList(rollingSummaryItems);
-
-      const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
-      targetNode.children.forEach((child) => child.remove()); // todo recycle nodes
-
-      const newStickies = rollingSummaryItems.map((item) => {
-        const sticky = figma.createSticky();
-        sticky.text.characters = item;
-        return sticky;
-      });
-
-      moveStickiesToSection(newStickies, targetNode);
-      const inputContainer = inputSticky.parent;
-      inputSticky.remove();
-      resizeToHugContent(inputContainer as any);
-    }
+    context.sourceNodes.forEach((sourceContainer) => {
+      console.log(sourceContainer);
+      sourceContainer.children.forEach((child) => child.remove());
+      resizeToHugContent(sourceContainer);
+    });
+    moveStickiesToSection(newStickies, targetNode);
   }
 }
