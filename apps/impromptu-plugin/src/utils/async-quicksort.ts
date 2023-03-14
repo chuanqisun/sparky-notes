@@ -24,9 +24,9 @@ export async function asyncQuicksort<T>(
   const right: T[] = [];
 
   for (const element of rest) {
-    if (shouldAbort?.()) return [];
     onElement(element);
     const comparison = await compare(element, pivot);
+    if (shouldAbort?.()) return [];
     if (comparison < 0) {
       left.push(element);
     } else {

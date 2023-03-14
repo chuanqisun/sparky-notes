@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
-import { createOrUseSourceNodes, insertStickyToSection } from "../utils/edit";
+import { cloneSticky, createOrUseSourceNodes, insertStickyToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -47,6 +47,8 @@ export class SortProgram implements Program {
 
     const inputStickies = getInnerStickies(context.sourceNodes);
     if (!inputStickies.length) return;
+
+    const clonedInputStickies = inputStickies.map(cloneSticky);
 
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     targetNode.children.forEach((child) => child.remove());
@@ -96,6 +98,6 @@ Choice (A/B): `;
       return topChoiceResult === "A" ? -1 : 1;
     };
 
-    await asyncQuicksort(inputStickies, onCompare, onElement, onPivot, onSettle, () => context.isAborted());
+    await asyncQuicksort(clonedInputStickies, onCompare, onElement, onPivot, onSettle, () => context.isAborted() || context.isChanged());
   }
 }
