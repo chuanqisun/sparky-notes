@@ -6,7 +6,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { AutoLayout } = figma.widget;
 
@@ -18,13 +18,13 @@ export class WebSearchProgram implements Program {
     return ` Web search: "${input.value.characters}"`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Web search</FormTitle>
         <Description>Get itemized results from DuckDuckGo</Description>
         <TextField label="Query" value="2023 Small Business trends" />
-        <TextField label="Limit" value="30" />
+        <TextField label="Limit" value="10" />
       </AutoLayout>
     )) as FrameNode;
 

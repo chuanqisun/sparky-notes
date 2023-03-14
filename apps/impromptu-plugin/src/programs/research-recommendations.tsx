@@ -7,7 +7,7 @@ import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { AutoLayout } = figma.widget;
 
@@ -19,7 +19,7 @@ export class ResearchRecommendationsProgram implements Program {
     return ` Find UX Insights: "${input.value.characters}"`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Research Recommendations</FormTitle>

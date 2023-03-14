@@ -1,8 +1,9 @@
 import { getCompletion } from "../openai/completion";
+import { createOrUseSourceNodes } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, sourceNodesToText } from "../utils/query";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { AutoLayout } = figma.widget;
 
@@ -14,7 +15,7 @@ export class PromptProgram implements Program {
     return `Prompt: "${input.value.characters}"`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Prompt</FormTitle>
@@ -30,15 +31,13 @@ export class PromptProgram implements Program {
     getFieldByLabel("Temperature", node)!.label.locked = true;
     getFieldByLabel("Max tokens", node)!.label.locked = true;
 
-    const source1 = figma.createSection();
-    source1.name = "Context";
-
+    const sources = createOrUseSourceNodes(["Context"], context.selectedOutputNodes);
     const target1 = figma.createSection();
     target1.name = "Output";
 
     return {
       programNode: node,
-      sourceNodes: [source1],
+      sourceNodes: sources,
       targetNodes: [target1],
     };
   }

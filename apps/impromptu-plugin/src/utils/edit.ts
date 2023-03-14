@@ -101,3 +101,26 @@ export function moveToDownstreamPosition(nodes: SceneNode[], reference: SceneNod
     return acc + node.width + horizontalGap;
   }, startX);
 }
+
+export function createOrUseSourceNodes(names: string[], selectedOutputNodes: SectionNode[]) {
+  const sources = names.map((name, index) => {
+    let source = selectedOutputNodes[index];
+    if (!source) {
+      source = figma.createSection();
+      source.name = name;
+    }
+
+    return source;
+  });
+
+  if (selectedOutputNodes.length) {
+    const outputBottom = Math.max(...sources.map((node) => node.y + node.height));
+    const outputXCenter = sources.reduce((acc, node) => acc + node.x + node.width / 2, 0) / sources.length;
+    figma.viewport.center = {
+      x: outputXCenter,
+      y: outputBottom + 400,
+    };
+  }
+
+  return sources;
+}

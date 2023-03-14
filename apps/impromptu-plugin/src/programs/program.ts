@@ -11,12 +11,17 @@ export interface ProgramContext {
   isAborted: () => boolean;
   sourceNodes: SectionNode[];
 }
+
 export interface Program {
   name: string;
   getSummary: (node: FrameNode) => string;
   onEdit?: (node: FrameNode) => any;
-  create: () => Promise<ProgramView>;
+  create: (context: CreationContext) => Promise<ProgramView>;
   run: (context: ProgramContext, node: FrameNode) => Promise<void>;
+}
+
+export interface CreationContext {
+  selectedOutputNodes: SectionNode[];
 }
 
 export interface ProgramView {

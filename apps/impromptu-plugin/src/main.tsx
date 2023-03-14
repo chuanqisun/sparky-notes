@@ -6,7 +6,7 @@ import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
 import { FilterByExamplesProgram } from "./programs/filter-by-examples";
-import { filterToProgramNode, findMatchedProgram, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
+import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
@@ -32,7 +32,7 @@ let hitsSearch!: SearchProxy;
 let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
 
-const programs = [
+const programs: Program[] = [
   new PromptProgram(),
   new CategorizeProgram(),
   new FilterProgram(),
@@ -189,7 +189,28 @@ const handleUIMessage = async (message: MessageToFigma) => {
       replaceNotification(`Program "${message.createProgram}" does not exist.`, { error: true });
       return;
     }
-    const { programNode: node, sourceNodes, targetNodes } = await program.create();
+
+    const selectedDataNodes = getSelectedDataNodes();
+    const selectedProgramNodes = getSelectedProgramNodes(filterToProgramNode);
+    const inferredDataNodes = selectedProgramNodes.flatMap(getNextNodes).filter(filterToType<SectionNode>("SECTION"));
+    const allNodes = [...selectedDataNodes, ...inferredDataNodes, ...selectedProgramNodes];
+    const allDataNodeIds = [...selectedDataNodes, ...inferredDataNodes].map((node) => node.id);
+    let selectedOutputNodes: SectionNode[] = [];
+    if (allNodes.length) {
+      const executionList = getExecutionOrder(allNodes, allNodes[0].id);
+      selectedOutputNodes = executionList
+        .map((id) => figma.getNodeById(id)!)
+        .reverse()
+        .filter((node) => allDataNodeIds.includes(node.id)) as SectionNode[];
+    }
+
+    const {
+      programNode: node,
+      sourceNodes,
+      targetNodes,
+    } = await program.create({
+      selectedOutputNodes,
+    });
     node.setPluginData(PROGRAME_NAME_KEY, program.name);
     node.setRelaunchData({ open: "Open Controller UI" });
     figma.currentPage.appendChild(node);

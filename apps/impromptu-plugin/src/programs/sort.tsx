@@ -1,11 +1,11 @@
 import { getCompletion } from "../openai/completion";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
-import { insertStickyToSection } from "../utils/edit";
+import { createOrUseSourceNodes, insertStickyToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -16,7 +16,7 @@ export class SortProgram implements Program {
     return `Sort: ${getFieldByLabel("Top sticky description", node)!.value.characters}`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Sort</FormTitle>
@@ -28,15 +28,14 @@ export class SortProgram implements Program {
     getTextByContent("Sort", node)!.locked = true;
     getFieldByLabel("Top sticky description", node)!.label.locked = true;
 
-    const source1 = figma.createSection();
-    source1.name = "Unsorted items";
+    const sources = createOrUseSourceNodes(["Pre-sorted"], context.selectedOutputNodes);
 
     const target1 = figma.createSection();
     target1.name = "Sorted";
 
     return {
       programNode: node,
-      sourceNodes: [source1],
+      sourceNodes: sources,
       targetNodes: [target1],
     };
   }

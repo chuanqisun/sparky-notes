@@ -1,12 +1,12 @@
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
-import { moveStickiesToSection, resizeToHugContent } from "../utils/edit";
+import { createOrUseSourceNodes, moveStickiesToSection, resizeToHugContent } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -17,7 +17,7 @@ export class SummarizeProgram implements Program {
     return `Summarize: reduce to ${getFieldByLabel("Max item count", node)!.value.characters} items.`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Summarize</FormTitle>
@@ -29,15 +29,14 @@ export class SummarizeProgram implements Program {
     getTextByContent("Summarize", node)!.locked = true;
     getFieldByLabel("Max item count", node)!.label.locked = true;
 
-    const source1 = figma.createSection();
-    source1.name = "Full list";
+    const sources = createOrUseSourceNodes(["Full list"], context.selectedOutputNodes);
 
     const target1 = figma.createSection();
     target1.name = "Summarized list";
 
     return {
       programNode: node,
-      sourceNodes: [source1],
+      sourceNodes: sources,
       targetNodes: [target1],
     };
   }

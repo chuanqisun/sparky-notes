@@ -1,9 +1,9 @@
 import { getCompletion } from "../openai/completion";
-import { moveStickiesToSection } from "../utils/edit";
+import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -14,7 +14,7 @@ export class FilterByExamplesProgram implements Program {
     return `Filter by examples: ${getFieldByLabel("Yes/No question", node)!.value.characters}`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Filter by examples</FormTitle>
@@ -28,8 +28,7 @@ export class FilterByExamplesProgram implements Program {
     getTextByContent("Filter by examples", node)!.locked = true;
     getFieldByLabel("Yes/No question", node)!.label.locked = true;
 
-    const source1 = figma.createSection();
-    source1.name = "All items";
+    const sources = createOrUseSourceNodes(["All items"], context.selectedOutputNodes);
 
     const target1 = figma.createSection();
     target1.name = "Yes";
@@ -39,7 +38,7 @@ export class FilterByExamplesProgram implements Program {
 
     return {
       programNode: node,
-      sourceNodes: [source1],
+      sourceNodes: sources,
       targetNodes: [target1, target2],
     };
   }

@@ -13,8 +13,6 @@
 
 ## Impromptu
 
-- Auto upgrade all nodes on canvas
-- Add summarization node
 - Add a pairing node
   - Colorize sticky and juxtopose them
   - Left input is key, right input is values

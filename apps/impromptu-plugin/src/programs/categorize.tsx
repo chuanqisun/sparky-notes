@@ -1,9 +1,9 @@
 import { getCompletion } from "../openai/completion";
-import { moveStickiesToSection } from "../utils/edit";
+import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
-import { Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -20,7 +20,7 @@ export class CategorizeProgram implements Program {
     return `Categorize: ${targetNodeNames}`;
   }
 
-  public async create() {
+  public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Categorize</FormTitle>
@@ -30,8 +30,7 @@ export class CategorizeProgram implements Program {
 
     getTextByContent("Categorize", node)!.locked = true;
 
-    const source1 = figma.createSection();
-    source1.name = "Uncategorized";
+    const sources = createOrUseSourceNodes(["Uncategorized"], context.selectedOutputNodes);
 
     const target1 = figma.createSection();
     target1.name = "Category A";
@@ -41,7 +40,7 @@ export class CategorizeProgram implements Program {
 
     return {
       programNode: node,
-      sourceNodes: [source1],
+      sourceNodes: sources,
       targetNodes: [target1, target2],
     };
   }
