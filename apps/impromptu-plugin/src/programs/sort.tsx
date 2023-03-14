@@ -75,15 +75,15 @@ export class SortProgram implements Program {
     };
 
     const onCompare = async (a: StickyNode, b: StickyNode) => {
-      const contextA = a.getPluginData("shortContext");
-      const contextB = b.getPluginData("shortContext");
+      // const contextA = a.getPluginData("shortContext");
+      // const contextB = b.getPluginData("shortContext");
 
       const prompt = `
 Choose between A and B
 
-A: ${a.text.characters.trim() + (contextA ? ` (Context: ${contextA})` : "")}        
+A: ${a.text.characters.trim()}
 
-B: ${b.text.characters.trim() + (contextB ? ` (Context: ${contextB})` : "")}
+B: ${b.text.characters.trim()}
 
 Choose the one that better satisfies the requirement: ${sortGoal}
 Choice (A/B): `;

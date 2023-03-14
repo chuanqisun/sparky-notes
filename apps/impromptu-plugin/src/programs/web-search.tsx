@@ -1,6 +1,7 @@
 import { getCompletion } from "../openai/completion";
-import { toList } from "../openai/format";
+import { responseToArray } from "../openai/format";
 import { moveStickiesToSection } from "../utils/edit";
+import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -57,9 +58,7 @@ export class WebSearchProgram implements Program {
 
     targetNode.children.forEach((child) => child.remove());
 
-    const dummyStikcy = figma.createSticky();
-    await figma.loadFontAsync(dummyStikcy.text.fontName as FontName);
-    dummyStikcy.remove();
+    await ensureStickyFont();
 
     const { pages: items } = await context.webSearch({ q: query });
     console.log(`[search] ${items.length} pages found`);
@@ -104,7 +103,7 @@ Response (bullet list of 3 - 5 items): -  `;
       }).then((response) => response.choices[0].text);
       if (this.abortCurrentSearch || context.isAborted()) return;
 
-      const listItems = toList(response);
+      const listItems = responseToArray(response);
 
       for (let listItem of listItems) {
         const sticky = figma.createSticky();
@@ -114,6 +113,7 @@ Response (bullet list of 3 - 5 items): -  `;
           value: item.url,
         };
         sticky.setPluginData("longContext", shortenToWordCount(1500, crawledText));
+        sticky.setPluginData("shortContext", shortenToWordCount(255, crawledText));
 
         resultCount++;
         moveStickiesToSection([sticky], targetNode);

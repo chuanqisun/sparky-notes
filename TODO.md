@@ -13,11 +13,14 @@
 
 ## Impromptu
 
-- Add a web search node
+- Auto upgrade all nodes on canvas
+- Add summarization node
 - Add a pairing node
+  - Colorize sticky and juxtopose them
+  - Left input is key, right input is values
+  - Inject values as context into key stickies
 - Add URL page input node
 - Add DevOps query node
-- Summarization node
 - Convert to Widget for relaunch discoverability
 - Fix filter output auto-rename
 

@@ -3,6 +3,7 @@ import { EntityName, EntityType } from "../hits/entity";
 import { removeHighlightHtml } from "../hits/highlight";
 import { getRecommendationQuery } from "../hits/search";
 import { moveStickiesToSection, resizeToHugContent } from "../utils/edit";
+import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -60,9 +61,7 @@ export class ResearchRecommendationsProgram implements Program {
     let hasMore = true;
     this.abortCurrentSearch = false;
 
-    const dummyStikcy = figma.createSticky();
-    await figma.loadFontAsync(dummyStikcy.text.fontName as FontName);
-    dummyStikcy.remove();
+    await ensureStickyFont();
 
     targetNode.children.forEach((child) => child.remove());
     resizeToHugContent(targetNode);

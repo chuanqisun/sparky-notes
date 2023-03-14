@@ -1,4 +1,8 @@
-export function toList(rawText: string) {
+export function arrayToBulletList(arr: string[]) {
+  return arr.map((item) => `- ${item}`).join("\n");
+}
+
+export function responseToArray(rawText: string) {
   return rawText
     .split("\n")
     .map((line) =>
@@ -10,4 +14,8 @@ export function toList(rawText: string) {
         .trim()
     )
     .filter(Boolean);
+}
+
+export function responseToBulletList(response: string) {
+  return arrayToBulletList(responseToArray(response));
 }

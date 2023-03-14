@@ -11,6 +11,7 @@ import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
+import { SummarizeProgram } from "./programs/summarize";
 import { WebSearchProgram } from "./programs/web-search";
 import { joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
@@ -41,6 +42,7 @@ const programs = [
   new AnswerProgram(),
   new CompletionProgram(),
   new SortProgram(),
+  new SummarizeProgram(),
   new WebSearchProgram(),
 ];
 const matchProgram = findMatchedProgram.bind(null, programs);
