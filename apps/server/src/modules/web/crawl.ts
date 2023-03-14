@@ -16,13 +16,7 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
 
     const $ = cheerio.load(response.data);
 
-    $("script").remove();
-    $("iframe").remove();
-    $("style").remove();
-    $("img").remove();
-    $("form").remove();
-    $("nav").remove();
-    $("footer").remove();
+    $("script,noscript,svg,iframe,style,img,form,nav,footer").remove();
 
     let mainText = $("main").text();
     if (!mainText) mainText = $("body").text();
@@ -39,7 +33,7 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
 
     next();
   } catch (e) {
-    console.log(`[web-crawl] error ${req.body.url}`, e);
+    console.log(`[web-crawl] error ${req.body.url} ${(e as any).name} ${(e as any).message}`);
     res.status(200).json({
       text: "",
     });

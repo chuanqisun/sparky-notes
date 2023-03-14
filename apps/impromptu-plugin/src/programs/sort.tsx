@@ -85,7 +85,7 @@ A: ${a.text.characters.trim() + (contextA ? ` (Context: ${contextA})` : "")}
 
 B: ${b.text.characters.trim() + (contextB ? ` (Context: ${contextB})` : "")}
 
-The choice must meet the ciritieria: ${sortGoal}
+Choose the one that better satisfies the requirement: ${sortGoal}
 Choice (A/B): `;
 
       const topChoiceResult = (
