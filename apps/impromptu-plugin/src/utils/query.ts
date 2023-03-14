@@ -127,7 +127,7 @@ export function sourceNodesToText(nodes: SectionNode[]): string {
 }
 
 export function getInnerStickies(nodes: SectionNode[]): StickyNode[] {
-  return nodes.flatMap((node) => node.children.filter(filterToType("STICKY")) as StickyNode[]);
+  return nodes.flatMap((node) => node.children.filter(filterToType("STICKY")) as StickyNode[]).reverse(); // reverse so it's left to right
 }
 
 export function sourceNodeToText(node: SectionNode): string {
