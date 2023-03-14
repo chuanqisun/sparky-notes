@@ -1,7 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
-import { createOrUseSourceNodes, moveStickiesToSection, resizeToHugContent } from "../utils/edit";
-import { ensureStickyFont } from "../utils/font";
+import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -41,23 +40,14 @@ export class SummarizeProgram implements Program {
     };
   }
 
-  private abortCurrentRun = false;
-
-  public async onEdit(node: FrameNode) {
-    this.abortCurrentRun = true;
-  }
-
   public async run(context: ProgramContext, node: FrameNode) {
-    this.abortCurrentRun = false;
     const maxItemCount = parseInt(getFieldByLabel("Max item count", node)!.value.characters);
 
     const inputStickies = getInnerStickies(context.sourceNodes);
     if (!inputStickies.length) return;
 
-    await ensureStickyFont();
-
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
-    targetNode.children.forEach((child) => child.remove());
+    if (!targetNode) return;
 
     const getInitSummary = async () => {
       // initially, use superficial titles
@@ -81,21 +71,16 @@ Concise list (bullet list, up to ${maxItemCount} items):
       );
     };
 
-    let rollingSummary = await getInitSummary();
+    const summarizedItems = await getInitSummary();
 
-    if (this.abortCurrentRun || context.isAborted()) return;
+    if (context.isChanged() || context.isAborted()) return;
 
-    const newStickies = rollingSummary.map((item) => {
+    const newStickies = summarizedItems.map((item) => {
       const sticky = figma.createSticky();
       sticky.text.characters = item;
       return sticky;
     });
 
-    context.sourceNodes.forEach((sourceContainer) => {
-      console.log(sourceContainer);
-      sourceContainer.children.forEach((child) => child.remove());
-      resizeToHugContent(sourceContainer);
-    });
     moveStickiesToSection(newStickies, targetNode);
   }
 }

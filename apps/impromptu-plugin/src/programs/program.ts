@@ -16,7 +16,6 @@ export interface ProgramContext {
 export interface Program {
   name: string;
   getSummary: (node: FrameNode) => string;
-  onEdit?: (node: FrameNode) => any;
   create: (context: CreationContext) => Promise<ProgramView>;
   run: (context: ProgramContext, node: FrameNode) => Promise<void>;
 }

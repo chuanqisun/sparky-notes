@@ -41,8 +41,6 @@ export class ResearchRecommendationsProgram implements Program {
     };
   }
 
-  public async onEdit(node: FrameNode) {}
-
   public async run(context: ProgramContext, node: FrameNode) {
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetNode) return;

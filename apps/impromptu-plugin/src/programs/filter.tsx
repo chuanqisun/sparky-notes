@@ -42,8 +42,6 @@ export class FilterProgram implements Program {
     };
   }
 
-  public async onEdit(node: FrameNode) {}
-
   public async run(context: ProgramContext, node: FrameNode) {
     const inputStickies = getInnerStickies(context.sourceNodes);
     const question = getFieldByLabel("Yes/No question", node)!.value.characters;

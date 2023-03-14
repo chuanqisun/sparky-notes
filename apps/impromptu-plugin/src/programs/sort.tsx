@@ -40,8 +40,6 @@ export class SortProgram implements Program {
     };
   }
 
-  public async onEdit(node: FrameNode) {}
-
   public async run(context: ProgramContext, node: FrameNode) {
     const sortGoal = getFieldByLabel("Top sticky description", node)!.value.characters;
 

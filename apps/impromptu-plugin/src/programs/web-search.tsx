@@ -1,7 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
 import { moveStickiesToSection } from "../utils/edit";
-import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -41,12 +40,6 @@ export class WebSearchProgram implements Program {
     };
   }
 
-  public async onEdit(node: FrameNode) {
-    this.abortCurrentSearch = true;
-  }
-
-  private abortCurrentSearch = false;
-
   public async run(context: ProgramContext, node: FrameNode) {
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetNode) return;
@@ -54,19 +47,17 @@ export class WebSearchProgram implements Program {
     const query = getFieldByLabel("Query", node)!.value.characters.trim();
     const limit = parseInt(getFieldByLabel("Limit", node)!.value.characters.trim());
 
-    this.abortCurrentSearch = false;
-
     targetNode.children.forEach((child) => child.remove());
 
-    await ensureStickyFont();
-
     const { pages: items } = await context.webSearch({ q: query });
-    console.log(`[search] ${items.length} pages found`);
+    if (context.isChanged() || context.isAborted()) return;
+    console.log(`[search] ${items.length} urls found`);
 
     let resultCount = 0;
 
     for (const item of items) {
       const crawledText = (await context.webCrawl({ url: item.url })).text;
+      if (context.isChanged() || context.isAborted()) return;
 
       const binaryCheck = `
 Context: ###
@@ -78,10 +69,10 @@ Check if the context contains a list of items for the following query.
 Query: ${query}
 Does the context contain a list of items for the query (Yes/No)? `;
 
-      if (this.abortCurrentSearch || context.isAborted()) return;
       const binaryResponse = await getCompletion(context.completion, binaryCheck, {
         max_tokens: 3,
       });
+      if (context.isChanged() || context.isAborted()) return;
 
       if (!binaryResponse.choices[0].text?.toLocaleLowerCase().includes("yes")) {
         continue;
@@ -97,11 +88,10 @@ Use the context above, respond to the query with a bullet list of 3 - 5 items.
 Query: ${query}
 Response (bullet list of 3 - 5 items): -  `;
 
-      if (this.abortCurrentSearch || context.isAborted()) return;
       const response = await getCompletion(context.completion, prompt, {
         max_tokens: 100,
       }).then((response) => response.choices[0].text);
-      if (this.abortCurrentSearch || context.isAborted()) return;
+      if (context.isChanged() || context.isAborted()) return;
 
       const listItems = responseToArray(response);
 

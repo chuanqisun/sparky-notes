@@ -42,8 +42,6 @@ export class CompletionProgram implements Program {
     };
   }
 
-  public async onEdit(node: FrameNode) {}
-
   public async run(context: ProgramContext, node: FrameNode) {
     const inputStickies = getInnerStickies(context.sourceNodes);
     const question = getFieldByLabel("Prompt", node)!.value.characters;

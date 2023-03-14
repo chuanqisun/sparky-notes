@@ -6,7 +6,6 @@ import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
 import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
-import { PromptProgram } from "./programs/prompt";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
@@ -34,7 +33,6 @@ let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
 
 const programs: Program[] = [
-  new PromptProgram(),
   new CategorizeProgram(),
   new FilterProgram(),
   new ResearchInsightsProgram(),
@@ -265,8 +263,6 @@ const handleUIMessage = async (message: MessageToFigma) => {
 const handleSelectionChange = () => {
   const programNodes = getSelectedProgramNodes(filterToProgramNode);
   const dataNodes = getSelectedDataNodes();
-
-  programNodes.map(matchProgram).forEach((program, index) => program?.onEdit?.(programNodes[index]));
 
   notifyUI({
     selectionChangedV2: {
