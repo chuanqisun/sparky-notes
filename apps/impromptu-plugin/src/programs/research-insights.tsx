@@ -2,8 +2,7 @@ import { getLongContext, getShortContext } from "../hits/additional-context";
 import { EntityName, EntityType } from "../hits/entity";
 import { removeHighlightHtml } from "../hits/highlight";
 import { getInsightQuery } from "../hits/search";
-import { moveStickiesToSection, resizeToHugContent } from "../utils/edit";
-import { ensureStickyFont } from "../utils/font";
+import { moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -42,11 +41,7 @@ export class ResearchInsightsProgram implements Program {
     };
   }
 
-  public async onEdit(node: FrameNode) {
-    this.abortCurrentSearch = true;
-  }
-
-  private abortCurrentSearch = false;
+  public async onEdit(node: FrameNode) {}
 
   public async run(context: ProgramContext, node: FrameNode) {
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
@@ -59,16 +54,12 @@ export class ResearchInsightsProgram implements Program {
     let resultCount = 0;
     const pageSize = 5;
     let hasMore = true;
-    this.abortCurrentSearch = false;
 
-    await ensureStickyFont();
-
-    targetNode.children.forEach((child) => child.remove());
-    resizeToHugContent(targetNode);
-
-    while (hasMore && resultCount < limit && !context.isAborted() && !this.abortCurrentSearch) {
+    while (hasMore && resultCount < limit) {
       const searchSummary = await context.hitsSearch(getInsightQuery({ query, top: pageSize, skip: currentSkip, count: currentSkip === 0 }));
       hasMore = searchSummary.totalCount > currentSkip + pageSize;
+
+      if (context.isAborted() || context.isChanged()) return;
 
       for (const report of searchSummary.results) {
         const children = report.document.children.filter((child) => child.title).filter((child) => child.entityType === EntityType.Insight);

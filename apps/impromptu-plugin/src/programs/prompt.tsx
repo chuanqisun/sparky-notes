@@ -59,9 +59,10 @@ export class PromptProgram implements Program {
 
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetNode) return;
-    const text = figma.createText();
-    await figma.loadFontAsync(text.fontName as FontName);
 
+    if (context.isAborted() || context.isChanged()) return;
+
+    const text = figma.createText();
     targetNode.children.forEach((child) => child.remove());
     text.characters = normalizedResult;
     targetNode.appendChild(text);
