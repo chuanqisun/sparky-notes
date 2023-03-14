@@ -1,3 +1,6 @@
+import { getNextNodes, getPrevNodes } from "./graph";
+import { getProgramNodeGraphHash } from "./hash";
+
 export function closest<T extends BaseNode>(predicate: (node: BaseNode) => boolean, node: BaseNode): T | null {
   if (!node.parent) return null;
 
@@ -159,4 +162,11 @@ ${textItems
   })
   .join("\n\n")}
 ###`.trim();
+}
+
+export function getProgramNodeHash(currentNode: FrameNode) {
+  const sourceNodes = getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
+  const targetNodes = getNextNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
+  const latestHash = getProgramNodeGraphHash(currentNode, sourceNodes, targetNodes);
+  return latestHash;
 }

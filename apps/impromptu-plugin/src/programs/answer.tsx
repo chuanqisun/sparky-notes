@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { createOrUseSourceNodes, emptySections, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -45,11 +45,17 @@ export class AnswerProgram implements Program {
   public async onEdit(node: FrameNode) {}
 
   public async run(context: ProgramContext, node: FrameNode) {
-    while (true && !context.isAborted()) {
-      const question = getFieldByLabel("Question", node)!.value.characters;
+    const inputStickies = getInnerStickies(context.sourceNodes);
+    const question = getFieldByLabel("Question", node)!.value.characters;
 
-      const currentSticky = getInnerStickies(context.sourceNodes).pop();
-      if (!currentSticky) break;
+    const targetContainers = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
+    if (!targetContainers[0]) return;
+    emptySections(targetContainers);
+
+    for (let currentSticky of inputStickies) {
+      if (!figma.getNodeById(currentSticky.id)) continue;
+      if (context.isAborted() || context.isChanged()) return;
+
       const prompt = [
         currentSticky.getPluginData("longContext") ?? "",
         "Answer the question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
@@ -66,15 +72,19 @@ export class AnswerProgram implements Program {
 
       const result = (await getCompletion(context.completion, prompt, apiConfig)).choices[0].text.trim();
 
+      if (!figma.getNodeById(currentSticky.id)) continue;
+      if (context.isAborted() || context.isChanged()) return;
+
       // TODO user may have deleted the sticky during completion
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       if (!targetNodesAfterCompletion[0]) return;
 
-      await figma.loadFontAsync(currentSticky.text.fontName as FontName);
-      currentSticky.text.characters = result;
+      const newSticky = currentSticky.clone();
+      await figma.loadFontAsync(newSticky.text.fontName as FontName);
+      newSticky.text.characters = result;
 
       // TODO: move sticky to matched category
-      moveStickiesToSection([currentSticky], targetNodesAfterCompletion[0]);
+      moveStickiesToSection([newSticky], targetNodesAfterCompletion[0]);
     }
   }
 

@@ -16,9 +16,8 @@ import { WebSearchProgram } from "./programs/web-search";
 import { joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition, resizeToHugContent } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
-import { getProgramNodeHash } from "./utils/hash";
 import { clearNotification, replaceNotification } from "./utils/notify";
-import { filterToHaveWidgetDataKey, filterToType } from "./utils/query";
+import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
 import { getAllDataNodes, getSelectedDataNodes, getSelectedProgramNodes } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
@@ -100,9 +99,7 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
   if (!currentNode) return;
 
   // check if there is any change on the input
-  const sourceNodes = getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
-  const targetNodes = getNextNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
-  const latestHash = getProgramNodeHash(currentNode, sourceNodes, targetNodes);
+  const latestHash = getProgramNodeHash(currentNode);
   const existingHash = currentNode.getPluginData("hash");
   if (latestHash !== existingHash) {
     const program = matchProgram(currentNode);
@@ -131,6 +128,7 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
 
     // run program only if input has changed
     currentNode.setPluginData("hash", latestHash);
+    let changeDetected = false;
     const programContext: ProgramContext = {
       sourceNodes: getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION")),
       hitsSearch,
@@ -138,8 +136,23 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
       webCrawl,
       webSearch,
       isAborted: () => eventLoop.isAborted(),
+      isChanged: () => {
+        const latestHash = getProgramNodeHash(currentNode);
+        const existingHash = currentNode.getPluginData("hash");
+        if (latestHash !== existingHash) {
+          changeDetected = true;
+          return true;
+        }
+        return false;
+      },
     };
     await program.run(programContext, currentNode);
+
+    if (changeDetected) {
+      // rerun current node if changed
+      context.queue.unshift(currentNodeId);
+      return;
+    }
   } else {
     // prevent event loop blocking
     replaceNotification("Waiting for changes...", {

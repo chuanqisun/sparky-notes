@@ -1,5 +1,17 @@
 import { getNextTilePosition } from "./query";
 
+export function cloneSticky(sticky: StickyNode) {
+  // TODO check if plugin data is cloned
+  return sticky.clone();
+}
+
+export function emptySections(sections: SectionNode[]) {
+  sections.forEach((section) => {
+    section.children.forEach((child) => child.remove());
+    resizeToHugContent(section);
+  });
+}
+
 export function moveStickiesToSection(stickies: StickyNode[], parentSection: SectionNode) {
   // todo combine into single iteration
 

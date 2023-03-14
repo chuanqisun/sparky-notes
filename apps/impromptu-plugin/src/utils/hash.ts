@@ -1,4 +1,4 @@
-export function getProgramNodeHash(programNode: FrameNode, sourceNodes: SectionNode[], targetNodes: SectionNode[]): string {
+export function getProgramNodeGraphHash(programNode: FrameNode, sourceNodes: SectionNode[], targetNodes: SectionNode[]): string {
   return hashCode([programNode, ...sourceNodes].map((node) => getNodeText(node)).join("")).toString() + targetNodes.map((node) => node.id).join("");
 }
 

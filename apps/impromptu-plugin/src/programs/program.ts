@@ -9,6 +9,7 @@ export interface ProgramContext {
   webCrawl: WebCrawlProxy;
   webSearch: WebSearchProxy;
   isAborted: () => boolean;
+  isChanged: () => boolean;
   sourceNodes: SectionNode[];
 }
 
