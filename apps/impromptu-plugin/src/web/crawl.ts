@@ -25,7 +25,7 @@ export function getWebCrawlProxy(accessToken: string): WebCrawlProxy {
   return proxy;
 }
 
-export async function webSearch(proxy: WebCrawlProxy, payload: WebCrawlPayload) {
+export async function webCrawl(proxy: WebCrawlProxy, payload: WebCrawlPayload) {
   const result = await proxy(payload);
   return result;
 }
