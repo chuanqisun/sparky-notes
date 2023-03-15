@@ -4,9 +4,9 @@ import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
-import { RelateProgram } from "./programs/correlate";
 import { FilterProgram } from "./programs/filter";
 import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
+import { RelateProgram } from "./programs/relate";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
@@ -37,8 +37,8 @@ const programs: Program[] = [
   new AnswerProgram(),
   new CategorizeProgram(),
   new CompletionProgram(),
-  new RelateProgram(),
   new FilterProgram(),
+  new RelateProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),
   new SortProgram(),

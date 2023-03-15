@@ -29,6 +29,7 @@ export const webSearch: RequestHandler = async (req, res, next) => {
 
     next();
   } catch (e) {
+    console.log(`[web-search] error ${`https://html.duckduckgo.com/html/?q=${encodeURIComponent(req.body.q)}`} ${(e as any).name} ${(e as any).message}`);
     next(e);
   }
 };
