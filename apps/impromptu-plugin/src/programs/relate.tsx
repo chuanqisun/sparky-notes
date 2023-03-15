@@ -51,10 +51,8 @@ export class RelateProgram implements Program {
     }
 
     const keyNodes = getInnerStickies(sources.slice(0, 1));
-    const keyGroupName = sources[0].name;
 
     const valueNodes = getInnerStickies(sources.slice(1, 2));
-    const valueGroupName = sources[1].name;
 
     for (const keyNode of keyNodes) {
       const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
@@ -68,7 +66,7 @@ export class RelateProgram implements Program {
 Question: is it probable?
 Answer (Yes/No): `;
 
-        const binaryAnswer = await (await getCompletion(context.completion, prompt, { max_tokens: 3 })).choices[0].text.trim();
+        const binaryAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 3 })).choices[0].text.trim();
 
         if (context.isAborted() || context.isChanged()) return;
 
@@ -87,7 +85,7 @@ Answer (Yes/No): `;
 Question: why the statement might be true?
 Answer: `;
 
-          const fullAnswer = await (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();
+          const fullAnswer = (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();
 
           if (context.isAborted() || context.isChanged()) return;
 
