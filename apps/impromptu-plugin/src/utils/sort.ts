@@ -43,3 +43,14 @@ export function topologicalSort(nodeIds: string[], edges: SortableEdge[]): Topol
     edges,
   };
 }
+
+export function sortFPattern(a: SceneNode, b: SceneNode) {
+  const epsilon = 5;
+  const yDiff = a.y - b.y;
+  if (Math.abs(yDiff) >= epsilon) return yDiff;
+  return a.x - b.x;
+}
+
+export function sortLeftToRight(a: SceneNode, b: SceneNode) {
+  return a.x - b.x;
+}

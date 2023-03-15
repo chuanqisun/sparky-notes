@@ -13,10 +13,6 @@
 
 ## Impromptu
 
-- Add a pairing node
-  - Colorize sticky and juxtopose them
-  - Left input is key, right input is values
-  - Inject values as context into key stickies
 - Add a 2D quadrant mapping node
 - Add URL page input node
 - Add DevOps query node

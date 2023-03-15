@@ -1,5 +1,6 @@
 import { getNextNodes, getPrevNodes } from "./graph";
 import { getProgramNodeGraphHash } from "./hash";
+import { sortFPattern } from "./sort";
 
 export function closest<T extends BaseNode>(predicate: (node: BaseNode) => boolean, node: BaseNode): T | null {
   if (!node.parent) return null;
@@ -101,6 +102,32 @@ export function getNextTilePosition(tile: SceneNode, container: SectionNode, lay
   }
 }
 
+export function getNextTilePositionNewLine(tile: SceneNode, container: SectionNode, layout: Layout = {}): { x: number; y: number } {
+  const { gap = 16, padding = 40 } = layout;
+
+  const maxChildY = Math.max(...container.children.map((child) => child.y + child.height), 0 - gap + padding);
+  return {
+    x: padding,
+    y: maxChildY + gap,
+  };
+}
+
+export function getNextTilePositionNoWrap(tile: SceneNode, container: SectionNode, layout: Layout = {}): { x: number; y: number } {
+  const epsilon = 5;
+  const { gap = 16, padding = 40 } = layout;
+
+  const lastRowTopEdge = Math.max(Math.max(...container.children.map((child) => child.y)), padding);
+  const lastRowMaxX = Math.max(
+    Math.max(...container.children.filter((child) => Math.abs(child.y - lastRowTopEdge) < epsilon).map((child) => child.x + child.width)),
+    padding - gap
+  );
+
+  return {
+    x: lastRowMaxX + gap,
+    y: lastRowTopEdge,
+  };
+}
+
 export function getInnerTextNodeGroups(node: SectionNode) {
   const sortedChildren = [...node.children].sort((a, b) => a.y - b.y);
   return sortedChildren.reduce((prev, current) => {
@@ -127,17 +154,7 @@ export function sourceNodesToText(nodes: SectionNode[]): string {
 }
 
 export function getInnerStickies(nodes: SectionNode[]): StickyNode[] {
-  const epsilon = 5;
-  return nodes.flatMap(
-    (node) =>
-      [...node.children]
-        .sort((a, b) => {
-          const yDiff = a.y - b.y;
-          if (Math.abs(yDiff) >= epsilon) return yDiff;
-          return a.x - b.x;
-        })
-        .filter(filterToType("STICKY")) as StickyNode[]
-  );
+  return nodes.flatMap((node) => [...node.children].sort(sortFPattern).filter(filterToType("STICKY")) as StickyNode[]);
 }
 
 export function sourceNodeToText(node: SectionNode): string {

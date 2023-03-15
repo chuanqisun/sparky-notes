@@ -1,4 +1,5 @@
-import { getNextTilePosition } from "./query";
+import { getSolidFill } from "./colors";
+import { getNextTilePosition, getNextTilePositionNewLine, getNextTilePositionNoWrap } from "./query";
 
 export function cloneSticky(sticky: StickyNode) {
   // TODO check if plugin data is cloned
@@ -17,6 +18,36 @@ export function moveStickiesToSection(stickies: StickyNode[], parentSection: Sec
 
   stickies.forEach((stickyNode) => {
     const { x, y } = getNextTilePosition(stickyNode, parentSection);
+
+    const originalParent = stickyNode.parent;
+    if (originalParent && originalParent.type === "SECTION") resizeToHugContent(originalParent);
+    parentSection.appendChild(stickyNode);
+
+    stickyNode.x = x;
+    stickyNode.y = y;
+
+    resizeToHugContent(parentSection);
+  });
+}
+
+export function moveStickiesToSectionNewLine(stickies: StickyNode[], parentSection: SectionNode) {
+  stickies.forEach((stickyNode, index) => {
+    const { x, y } = index === 0 ? getNextTilePositionNewLine(stickyNode, parentSection) : getNextTilePosition(stickyNode, parentSection);
+
+    const originalParent = stickyNode.parent;
+    if (originalParent && originalParent.type === "SECTION") resizeToHugContent(originalParent);
+    parentSection.appendChild(stickyNode);
+
+    stickyNode.x = x;
+    stickyNode.y = y;
+
+    resizeToHugContent(parentSection);
+  });
+}
+
+export function moveStickiesToSectionNoWrap(stickies: StickyNode[], parentSection: SectionNode) {
+  stickies.forEach((stickyNode, index) => {
+    const { x, y } = getNextTilePositionNoWrap(stickyNode, parentSection);
 
     const originalParent = stickyNode.parent;
     if (originalParent && originalParent.type === "SECTION") resizeToHugContent(originalParent);
@@ -135,4 +166,8 @@ export function createOrUseSourceNodes(names: string[], selectedOutputNodes: Sec
   }
 
   return sources;
+}
+
+export function setStickyColor(color: RGB, node: StickyNode) {
+  node.fills = [getSolidFill(color)];
 }

@@ -1,32 +1,38 @@
-import { createOrUseSourceNodes } from "../utils/edit";
+import { getCompletion } from "../openai/completion";
+import { stickyColors } from "../utils/colors";
+import { createOrUseSourceNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setStickyColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { getNextNodes } from "../utils/graph";
+import { replaceNotification } from "../utils/notify";
+import { filterToType, getInnerStickies } from "../utils/query";
+import { sortLeftToRight } from "../utils/sort";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
-export class CorrelateProgram implements Program {
-  public name = "correlate";
+export class RelateProgram implements Program {
+  public name = "relate";
 
   public getSummary(node: FrameNode) {
-    return `Correlate: ${getFieldByLabel("Condition", node)!.value.characters}`;
+    return `Relate: ${getFieldByLabel("Relation (left to right)", node)!.value.characters}`;
   }
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
-        <FormTitle>Correlate</FormTitle>
-        <Description>For each sticky on the left, correlate with any stickies on the right that meet the condition.</Description>
-        <TextField label="Condition" value="The right sticky describes a solution to the problem in the left sticky." />
+        <FormTitle>Relate</FormTitle>
+        <Description>For each sticky in the left section, use the relation to find stickies in the right section.</Description>
+        <TextField label="Relation (left to right)" value="can be solved by" />
       </AutoLayout>
     )) as FrameNode;
 
-    getTextByContent("Correlate", node)!.locked = true;
-    getFieldByLabel("Condition", node)!.label.locked = true;
+    getTextByContent("Relate", node)!.locked = true;
+    getFieldByLabel("Relation (left to right)", node)!.label.locked = true;
 
-    const sources = createOrUseSourceNodes(["Left", "Right"], context.selectedOutputNodes);
+    const sources = createOrUseSourceNodes(["Group A", "Group B"], context.selectedOutputNodes);
 
     const target1 = figma.createSection();
-    target1.name = "Correlated";
+    target1.name = "Output";
 
     return {
       programNode: node,
@@ -36,7 +42,67 @@ export class CorrelateProgram implements Program {
   }
 
   public async run(context: ProgramContext, node: FrameNode) {
-    return;
+    const sources = context.sourceNodes.sort(sortLeftToRight);
+    const relation = getFieldByLabel("Relation (left to right)", node)!.value.characters.trim();
+
+    if (sources.length !== 2) {
+      replaceNotification("Relate requires 2 input sections");
+      return;
+    }
+
+    const keyNodes = getInnerStickies(sources.slice(0, 1));
+    const keyGroupName = sources[0].name;
+
+    const valueNodes = getInnerStickies(sources.slice(1, 2));
+    const valueGroupName = sources[1].name;
+
+    for (const keyNode of keyNodes) {
+      const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+      if (!targetSection) return;
+      const newKeyNode = keyNode.clone();
+      setStickyColor(stickyColors.Yellow, newKeyNode);
+      moveStickiesToSectionNewLine([newKeyNode], targetSection);
+
+      for (const valueNode of valueNodes) {
+        const prompt = `Statement: ${keyNode.text.characters.replace(/\s+/g, " ")} ${relation} ${valueNode.text.characters.replace(/\s+/g, " ")}
+Question: is it probable?
+Answer (Yes/No): `;
+
+        const binaryAnswer = await (await getCompletion(context.completion, prompt, { max_tokens: 3 })).choices[0].text.trim();
+
+        if (context.isAborted() || context.isChanged()) return;
+
+        if (binaryAnswer.toLocaleLowerCase().includes("no")) {
+          const combinedSticky = figma.createSticky();
+          combinedSticky.text.characters = `${valueNode.text.characters}
+=== Not related ===
+`;
+
+          const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+          if (!targetSection) return;
+          setStickyColor(stickyColors.LightGray, combinedSticky);
+          moveStickiesToSectionNoWrap([combinedSticky], targetSection);
+        } else {
+          const followupPrompt = `Statement: ${keyNode.text.characters.replace(/\s+/g, " ")} ${relation} ${valueNode.text.characters.replace(/\s+/g, " ")}
+Question: why the statement might be true?
+Answer: `;
+
+          const fullAnswer = await (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();
+
+          if (context.isAborted() || context.isChanged()) return;
+
+          const combinedSticky = figma.createSticky();
+          combinedSticky.text.characters = `${valueNode.text.characters}
+=== Explanation ===
+${fullAnswer}`;
+
+          const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+          if (!targetSection) return;
+          setStickyColor(stickyColors.Green, combinedSticky);
+          moveStickiesToSectionNoWrap([combinedSticky], targetSection);
+        }
+      }
+    }
   }
 
   private getConfig(node: FrameNode) {
