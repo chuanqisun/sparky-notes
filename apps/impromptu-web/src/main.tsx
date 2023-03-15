@@ -16,7 +16,6 @@ function App() {
 
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
-      console.log(e);
       const message = e.data.pluginMessage as MessageToUI;
 
       if (message.started) {
@@ -53,8 +52,6 @@ function App() {
 
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
-
-  console.log(completionLogItems);
 
   return (
     <main>
