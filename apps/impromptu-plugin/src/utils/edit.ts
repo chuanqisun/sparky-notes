@@ -168,6 +168,16 @@ export function createOrUseSourceNodes(names: string[], selectedOutputNodes: Sec
   return sources;
 }
 
+export function createTargetNodes(names: string[]) {
+  const targets = names.map((name) => {
+    const target = figma.createSection();
+    target.name = name;
+    return target;
+  });
+
+  return targets;
+}
+
 export function setStickyColor(color: RGB, node: StickyNode) {
   node.fills = [getSolidFill(color)];
 }

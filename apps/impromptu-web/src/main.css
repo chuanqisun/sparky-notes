@@ -1,3 +1,37 @@
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  overflow-y: scroll;
+}
+
+menu {
+  margin: 0;
+  padding: 0;
+}
+
+fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+details {
+  white-space: pre;
+  font-size: 14px;
+  overflow-x: auto;
+}
+
+summary {
+  text-overflow: ellipsis;
+  font-weight: 600;
+
+  /* Needed to make it work */
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.log__prompt {
+  opacity: 0.625;
+}
+.log__completion {
+  background-color: lightgreen;
 }

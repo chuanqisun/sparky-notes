@@ -1,6 +1,7 @@
 import { MessageToFigma } from "@impromptu/types";
 import { getSearchProxy, SearchProxy } from "./hits/proxy";
-import { CompletionProxy, getCompletionProxy } from "./openai/completion";
+import { CompletionLogger, CompletionProxy, getCompletionProxy } from "./openai/completion";
+import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
@@ -34,6 +35,7 @@ let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
 
 const programs: Program[] = [
+  new AgentProgram(),
   new AnswerProgram(),
   new CategorizeProgram(),
   new CompletionProgram(),
@@ -244,7 +246,12 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.hitsConfig) {
-    completion = getCompletionProxy(message.hitsConfig.accessToken);
+    const completionLogger: CompletionLogger = {
+      info: (item) => notifyUI({ logCompletionInfo: item }),
+      error: (item) => notifyUI({ logCompletionError: item }),
+    };
+
+    completion = getCompletionProxy(message.hitsConfig.accessToken, completionLogger);
     hitsSearch = getSearchProxy(message.hitsConfig.accessToken);
     webSearch = getWebSearchProxy(message.hitsConfig.accessToken);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken);

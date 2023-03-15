@@ -1,8 +1,12 @@
+import { CompletionErrorItem, CompletionInfoItem } from "../../apps/impromptu-plugin/src/openai/completion";
+
 export interface MessageToUI {
   selectionChanged?: SelectionSummary;
   selectionChangedV2?: SelectionSummaryV2;
   started?: boolean;
   stopped?: boolean;
+  logCompletionInfo?: CompletionInfoItem;
+  logCompletionError?: CompletionErrorItem;
 }
 
 export interface MessageToFigma {
