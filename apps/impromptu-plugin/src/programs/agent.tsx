@@ -1,7 +1,9 @@
-import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, createTargetNodes } from "../utils/edit";
+import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, moveStickiesToSectionNewLine } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
+import { filterToType } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
 import { CreationContext, Program, ProgramContext } from "./program";
 
@@ -39,6 +41,9 @@ export class AgentProgram implements Program {
   public async run(context: ProgramContext, node: FrameNode) {
     const sources = context.sourceNodes.sort(sortLeftToRight);
 
+    let iteration = 0;
+    let isCompleted = false;
+
     if (sources.length < 1) {
       replaceNotification("Agent requires both the Input and the Tools section to perform tasks.");
       return;
@@ -46,21 +51,74 @@ export class AgentProgram implements Program {
 
     const question = getFieldByLabel("Question", node)!.value.characters;
 
-    const prompt = getToolsPrompt({ question });
+    let memory = "";
 
-    await getCompletion(context.completion, prompt, {
-      max_tokens: 2000,
-    });
+    while (iteration < 10 && !isCompleted) {
+      const prompt = getAgentPrompt({ question, memory });
+      const response = (await getCompletion(context.completion, ...prompt)).choices[0].text;
+
+      const finalAnswer = response.split("\n").find((line) => line.startsWith("Final Answer:"));
+      if (finalAnswer) {
+        isCompleted = true;
+        const sticky = figma.createSticky();
+        sticky.text.characters = finalAnswer.trim();
+        const outputContainer = getNextNodes(node)
+          .filter(filterToType<SectionNode>("SECTION"))
+          .find((item) => item.name === "Output");
+        if (!outputContainer) return;
+
+        moveStickiesToSection([sticky], outputContainer);
+        return;
+      }
+
+      const thoughts = response.split("\n").filter((line) => line.startsWith("Thought:"));
+
+      thoughts.forEach((thought) => {
+        const sticky = figma.createSticky();
+        sticky.text.characters = thought.trim();
+        const thoughtsContainer = getNextNodes(node)
+          .filter(filterToType<SectionNode>("SECTION"))
+          .find((item) => item.name === "Thoughts");
+        if (!thoughtsContainer) return;
+        moveStickiesToSectionNewLine([sticky], thoughtsContainer);
+      });
+
+      const action = response.split("\n").find((line) => line.startsWith("Action:"));
+      const actionInput = response.split("\n").find((line) => line.startsWith("Action Input:"));
+      if (!action || !actionInput) {
+        memory += response;
+        memory += "Observation: I need to continue.";
+        iteration++;
+        continue;
+      }
+
+      console.log(`[action]`, [action, actionInput]);
+      const observation = await act({ action, actionInput });
+      const dummyObservation = `Observation: ${observation}\n`;
+
+      memory += response;
+      memory += dummyObservation;
+
+      iteration++;
+    }
   }
 }
 
-export function getToolsPrompt(input: { question: string }) {
-  return `
+export async function act(input: { action: string; actionInput: string; context?: string }) {
+  if (input.action.includes("Web search")) {
+    return "Azure Portal is difficult to use for new users";
+  } else if (input.action.includes("Find research insights")) {
+    return "No research has been performed on Azure Portal yet";
+  } else {
+    return "Tool not available";
+  }
+}
+
+export function getAgentPrompt(input: { question: string; memory: string }) {
+  const prompt = `
 Answer the following questions as best you can. You have access to the following tools:
 
 Web search: Find articles on the internet. Give this tool only a simple text query
-
-Get clarification: Ask the person who asked the question for more information
 
 Find research insights: Find usability problems and solutions on software products
 
@@ -76,6 +134,12 @@ Thought: I now know the final answer
 Final Answer: the final answer to the original input question
 Begin!
 
-Question: ${input.question}
-`.trim();
+Question: ${input.question}${input.memory}`.trimStart();
+
+  const config: Partial<OpenAICompletionPayload> = {
+    max_tokens: 2000,
+    stop: ["Observation"],
+  };
+
+  return [prompt, config] as const;
 }
