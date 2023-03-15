@@ -34,7 +34,7 @@ export class AgentProgram implements Program {
         <Description>Answer a question with the provided tools.</Description>
         <TextField
           label="Question"
-          value="I am a UX researcher who just joined Microsoft. My team needs generative research to help propose a new product for Office 365. The new product must go viral on social media and appeal to remote workers, especially gen Z. Help me propose a research plan."
+          value="I am a UX researcher who just joined Microsoft. My team needs generative research to help propose a new product for Office 365. The PM wants the new product go viral on social media and appeal to remote workers, especially gen Z. What should my research plan include?"
         />
       </AutoLayout>
     )) as FrameNode;
