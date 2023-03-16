@@ -27,7 +27,7 @@ export class WebBrowseProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Web browse</FormTitle>
         <Description>What are the opportunities for a small business owner?</Description>
-        <TextField label="Question" value="What is the best practice in Web3 app design?" />
+        <TextField label="Question" value="What should a small business owner do in 2023?" />
         <TextField label="Max depth" value="3" />
         <TextField label="Max page view" value="100" />
       </AutoLayout>
