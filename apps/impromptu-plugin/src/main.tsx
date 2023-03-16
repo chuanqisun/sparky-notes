@@ -289,6 +289,7 @@ eventLoop.on("tick", async () => {
     await handleEventLoopTick(context, eventLoop);
   } catch (e) {
     eventLoop.stop();
+    console.log(e);
     replaceNotification((e as any)?.message ?? "Unknown error", { error: true });
   }
 });

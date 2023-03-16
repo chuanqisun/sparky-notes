@@ -16,7 +16,7 @@ export interface GenericLogData {
 export class Logger {
   private currentId = 0;
 
-  log<T>(data: T, type: LogEntry["type"] = "info") {
+  log<T extends GenericLogData>(data: T, type: LogEntry["type"] = "info") {
     if (++this.currentId === Number.MAX_SAFE_INTEGER) {
       this.currentId = 1;
     }

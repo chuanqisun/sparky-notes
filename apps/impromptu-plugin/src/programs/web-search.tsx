@@ -54,7 +54,7 @@ export class WebSearchProgram implements Program {
     let resultCount = 0;
 
     for (const item of items) {
-      const crawledText = (await context.webCrawl({ url: item.url })).text;
+      const crawledText = (await context.webCrawl({ url: item.url })).markdown;
       if (context.isChanged() || context.isAborted()) return;
 
       const binaryCheck = `

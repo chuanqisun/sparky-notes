@@ -2,14 +2,7 @@ import { EntityType } from "../hits/entity";
 import { getInsightQuery, getRecommendationQuery } from "../hits/search";
 import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
-import {
-  createOrUseSourceNodes,
-  createTargetNodes,
-  moveStickiesToSection,
-  moveStickiesToSectionNewLine,
-  moveStickiesToSectionNoWrap,
-  setStickyColor,
-} from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
@@ -167,42 +160,6 @@ export function getFirstOutput(node: FrameNode): SectionNode | null {
     .find((item) => item.name === "Output");
   return outputContainer ?? null;
 }
-export function printStickyNewLine(node: FrameNode, text: string, color?: RGB): boolean {
-  const outputContainer = getFirstOutput(node);
-  if (outputContainer) {
-    const textChunks = getTextChunks(text, 50);
-    textChunks.forEach((chunk, index) => {
-      const sticky = figma.createSticky();
-      if (color) {
-        setStickyColor(color, sticky);
-      }
-      sticky.text.characters = chunk;
-      (index === 0 ? moveStickiesToSectionNewLine : moveStickiesToSectionNoWrap)([sticky], outputContainer);
-    });
-
-    return true;
-  } else {
-    return false;
-  }
-}
-export function printStickyNoWrap(node: FrameNode, text: string, color?: RGB) {
-  const outputContainer = getFirstOutput(node);
-  if (outputContainer) {
-    const textChunks = getTextChunks(text, 50);
-    for (const chunk of textChunks) {
-      const sticky = figma.createSticky();
-      if (color) {
-        setStickyColor(color, sticky);
-      }
-      sticky.text.characters = chunk;
-      moveStickiesToSectionNoWrap([sticky], outputContainer);
-    }
-
-    return true;
-  } else {
-    return false;
-  }
-}
 
 export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string }) {
   if (input.action.toLocaleLowerCase().includes("web search")) {
@@ -222,7 +179,7 @@ export async function act(input: { action: string; actionInput: string; programC
     const url = input.actionInput.slice(input.actionInput.indexOf("http"));
     try {
       const crawlResults = await input.programContext.webCrawl({ url });
-      return shortenToWordCount(200, crawlResults.text.replace(/\s+/g, " ")); // TODO use GPT summarize
+      return shortenToWordCount(200, crawlResults.markdown); // TODO use GPT summarize
     } catch (e) {
       return "The URL is broken.";
     }

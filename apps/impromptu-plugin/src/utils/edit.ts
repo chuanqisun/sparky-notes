@@ -1,3 +1,4 @@
+import { getFirstOutput, getTextChunks } from "../programs/agent";
 import { getSolidFill } from "./colors";
 import { getNextTilePosition, getNextTilePositionNewLine, getNextTilePositionNoWrap } from "./query";
 
@@ -11,6 +12,43 @@ export function emptySections(sections: SectionNode[]) {
     section.children.forEach((child) => !child.locked && child.remove());
     resizeToHugContent(section);
   });
+}
+
+export function printStickyNewLine(node: FrameNode, text: string, color?: RGB): boolean {
+  const outputContainer = getFirstOutput(node);
+  if (outputContainer) {
+    const textChunks = getTextChunks(text, 50);
+    textChunks.forEach((chunk, index) => {
+      const sticky = figma.createSticky();
+      if (color) {
+        setStickyColor(color, sticky);
+      }
+      sticky.text.characters = chunk;
+      (index === 0 ? moveStickiesToSectionNewLine : moveStickiesToSectionNoWrap)([sticky], outputContainer);
+    });
+
+    return true;
+  } else {
+    return false;
+  }
+}
+export function printStickyNoWrap(node: FrameNode, text: string, color?: RGB) {
+  const outputContainer = getFirstOutput(node);
+  if (outputContainer) {
+    const textChunks = getTextChunks(text, 50);
+    for (const chunk of textChunks) {
+      const sticky = figma.createSticky();
+      if (color) {
+        setStickyColor(color, sticky);
+      }
+      sticky.text.characters = chunk;
+      moveStickiesToSectionNoWrap([sticky], outputContainer);
+    }
+
+    return true;
+  } else {
+    return false;
+  }
 }
 
 export function moveStickiesToSection(stickies: StickyNode[], parentSection: SectionNode) {

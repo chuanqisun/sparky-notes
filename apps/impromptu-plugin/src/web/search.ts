@@ -27,7 +27,7 @@ export function getWebSearchProxy(accessToken: string, logger: Logger): WebSearc
 
     logger?.log<GenericLogData>({
       title: `Search ${payload.q}`,
-      message: (result as WebSearchResponse).pages.map((page, index) => `Result ${index + 1}\n${page.title}\n${page.url}\n${page.snippet}`).join("\n===\n"),
+      message: (result as WebSearchResponse).pages.map((page, index) => `Result ${index + 1}\n${page.title}\n${page.url}\n${page.snippet}`).join("\n\n===\n\n"),
     });
 
     return result;
