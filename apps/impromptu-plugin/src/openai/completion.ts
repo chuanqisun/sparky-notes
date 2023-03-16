@@ -1,3 +1,4 @@
+import { CompletionErrorItem, CompletionInfoItem } from "@impromptu/types";
 import { Logger } from "../utils/logger";
 
 export interface OpenAICompletionPayload {
@@ -21,19 +22,6 @@ export type OpenAICompletionResponse = {
 };
 
 export type CompletionProxy = (payload: OpenAICompletionPayload) => Promise<OpenAICompletionResponse>;
-
-export interface CompletionInfoItem {
-  title: string;
-  prompt: string;
-  completion: string;
-  tokenUsage: number;
-}
-
-export interface CompletionErrorItem {
-  title: string;
-  prompt: string;
-  error: string;
-}
 
 export function getCompletionProxy(accessToken: string, logger?: Logger): CompletionProxy {
   const proxy = async (payload: OpenAICompletionPayload) => {

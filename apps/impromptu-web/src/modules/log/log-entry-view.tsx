@@ -1,5 +1,4 @@
-import { CompletionErrorItem, CompletionInfoItem } from "../../../../impromptu-plugin/src/openai/completion";
-import { LogEntry } from "../../../../impromptu-plugin/src/utils/logger";
+import { CompletionErrorItem, CompletionInfoItem, LogEntry } from "@impromptu/types";
 import "./log-entry-view.css";
 
 export function LogEntryView(props: { entry: LogEntry }) {

@@ -1,7 +1,6 @@
-import { MessageToUI } from "@impromptu/types";
+import { LogEntry, MessageToUI } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { LogEntry } from "../../impromptu-plugin/src/utils/logger";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";

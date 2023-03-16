@@ -1,17 +1,5 @@
+import { GenericLogData, LogEntry } from "@impromptu/types";
 import { notifyUI } from "./rpc";
-
-export interface LogEntry {
-  id: number;
-  timestamp: number;
-  type: "info" | "error";
-  data: GenericLogData;
-}
-
-export interface GenericLogData {
-  title: string;
-  message?: string;
-  [key: string]: any;
-}
 
 export class Logger {
   private currentId = 0;

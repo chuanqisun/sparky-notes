@@ -1,5 +1,3 @@
-import { CompletionErrorItem, CompletionInfoItem, LogItem } from "../../apps/impromptu-plugin/src/openai/completion";
-
 export interface MessageToUI {
   selectionChanged?: SelectionSummary;
   selectionChangedV2?: SelectionSummaryV2;
@@ -7,7 +5,7 @@ export interface MessageToUI {
   stopped?: boolean;
   logCompletionInfo?: CompletionInfoItem;
   logCompletionError?: CompletionErrorItem;
-  log?: LogItem;
+  log?: LogEntry;
 }
 
 export interface MessageToFigma {
@@ -17,6 +15,32 @@ export interface MessageToFigma {
   programConfigChanged?: ProgramConfigSummary;
   start?: boolean;
   stop?: boolean;
+}
+
+export interface LogEntry {
+  id: number;
+  timestamp: number;
+  type: "info" | "error";
+  data: GenericLogData;
+}
+
+export interface GenericLogData {
+  title: string;
+  message?: string;
+  [key: string]: any;
+}
+
+export interface CompletionInfoItem {
+  title: string;
+  prompt: string;
+  completion: string;
+  tokenUsage: number;
+}
+
+export interface CompletionErrorItem {
+  title: string;
+  prompt: string;
+  error: string;
 }
 
 export interface ProgramConfigSummary {
