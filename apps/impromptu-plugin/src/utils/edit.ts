@@ -14,10 +14,38 @@ export function emptySections(sections: SectionNode[]) {
   });
 }
 
-export function printStickyNewLine(node: FrameNode, text: string, color?: RGB): boolean {
+export interface StickyConfig {
+  color?: RGB;
+  wordPerSticky?: number;
+}
+
+export function printSticky(node: FrameNode, text: string, config?: StickyConfig) {
+  const { color, wordLimit } = { ...config, wordLimit: Infinity };
+
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
-    const textChunks = getTextChunks(text, 50);
+    const textChunks = getTextChunks(text, wordLimit);
+    for (const chunk of textChunks) {
+      const sticky = figma.createSticky();
+      if (color) {
+        setStickyColor(color, sticky);
+      }
+      sticky.text.characters = chunk;
+      moveStickiesToSection([sticky], outputContainer);
+    }
+
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export function printStickyNewLine(node: FrameNode, text: string, config?: StickyConfig): boolean {
+  const { color, wordLimit } = { ...config, wordLimit: Infinity };
+
+  const outputContainer = getFirstOutput(node);
+  if (outputContainer) {
+    const textChunks = getTextChunks(text, wordLimit);
     textChunks.forEach((chunk, index) => {
       const sticky = figma.createSticky();
       if (color) {
@@ -32,10 +60,12 @@ export function printStickyNewLine(node: FrameNode, text: string, color?: RGB): 
     return false;
   }
 }
-export function printStickyNoWrap(node: FrameNode, text: string, color?: RGB) {
+export function printStickyNoWrap(node: FrameNode, text: string, config?: StickyConfig) {
+  const { color, wordLimit } = { ...config, wordLimit: Infinity };
+
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
-    const textChunks = getTextChunks(text, 50);
+    const textChunks = getTextChunks(text, wordLimit);
     for (const chunk of textChunks) {
       const sticky = figma.createSticky();
       if (color) {

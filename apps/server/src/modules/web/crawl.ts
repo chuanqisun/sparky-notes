@@ -6,6 +6,7 @@ import type { RequestHandler } from "express";
 
 export interface WebCrawlResult {
   markdown: string;
+  text: string;
   links: WebCrawlLink[];
 }
 
@@ -26,6 +27,7 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
     }
 
     const parsedMarkdown = await parse(url, { contentType: "markdown", html: response.data });
+    const parsedText = await parse(url, { contentType: "text", html: response.data });
     const parsedHTML = await parse(url, { contentType: "html", html: response.data });
     const $ = load(parsedHTML.content ?? "");
     const links: { title: string; href: string }[] = [];
@@ -38,7 +40,8 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
     });
 
     res.status(200).json({
-      markdown: parsedMarkdown.content ?? "",
+      markdown: (parsedMarkdown.content ?? "").replace(/\n+/g, "\n"),
+      text: (parsedText.content ?? "").replace(/\n+/g, "\n"),
       links,
     });
 
@@ -46,7 +49,9 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
   } catch (e) {
     console.log(`[web-crawl] error ${req.body.url} ${(e as any).name} ${(e as any).message}`);
     res.status(200).json({
+      markdown: "",
       text: "",
+      links: [],
     });
   }
 };

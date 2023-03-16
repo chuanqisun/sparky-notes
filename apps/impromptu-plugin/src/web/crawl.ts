@@ -6,6 +6,7 @@ export interface WebCrawlPayload {
 
 export interface WebCrawlResult {
   markdown: string;
+  text: string;
   links: WebCrawlLink[];
 }
 

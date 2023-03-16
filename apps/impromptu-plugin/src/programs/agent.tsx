@@ -98,7 +98,7 @@ export class AgentProgram implements Program {
 
         if (context.isAborted() || context.isChanged()) return;
       } else if (finalAnswer) {
-        printStickyNewLine(node, "Thought: I now know the final answer", stickyColors.Yellow);
+        printStickyNewLine(node, "Thought: I now know the final answer", { color: stickyColors.Yellow, wordPerSticky: 50 });
         // continue for a bit longer
         let token = FINAL_ANSWER_LENGTH;
         while (!isCompleted && token > INTERMEDIATE_ANSWER_LENGTH) {
@@ -112,14 +112,14 @@ export class AgentProgram implements Program {
 
             if (context.isAborted() || context.isChanged()) return;
             isCompleted = true;
-            printStickyNoWrap(node, "Final Answer: " + extendedResponse.trim(), stickyColors.Green);
+            printStickyNoWrap(node, "Final Answer: " + extendedResponse.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
           } catch (e) {
             token -= 100;
           }
         }
         if (!isCompleted) {
           // print the original answer
-          printStickyNoWrap(node, finalAnswer.trim(), stickyColors.Green);
+          printStickyNoWrap(node, finalAnswer.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
         }
         break;
       }
@@ -130,9 +130,9 @@ export class AgentProgram implements Program {
         .filter(Boolean)
         .forEach((line) => {
           if (line.startsWith("Thought:")) {
-            printStickyNewLine(node, line, stickyColors.Yellow);
+            printStickyNewLine(node, line, { color: stickyColors.Yellow, wordPerSticky: 50 });
           } else {
-            printStickyNoWrap(node, line, stickyColors.LightGray);
+            printStickyNoWrap(node, line, { color: stickyColors.LightGray, wordPerSticky: 50 });
           }
         });
 
@@ -148,7 +148,7 @@ export class AgentProgram implements Program {
       if (context.isAborted() || context.isChanged()) return;
       const observationText = `Observation: ${observation}`;
       memory.push(response + observationText);
-      printStickyNoWrap(node, observationText.trim(), stickyColors.LightGray);
+      printStickyNoWrap(node, observationText.trim(), { color: stickyColors.LightGray, wordPerSticky: 50 });
       iteration++;
     }
   }
@@ -306,7 +306,7 @@ Question: ${input.question}${rollingMemory.join("")}\n`.trimStart();
   return [prompt, config] as const;
 }
 
-export function getTextChunks(longText: string, chunkSize: 50) {
+export function getTextChunks(longText: string, chunkSize: number) {
   const chunks: string[] = [];
   let remainingWords = longText.split(" ");
   while (remainingWords.length) {
