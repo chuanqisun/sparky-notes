@@ -1,6 +1,5 @@
+import { parse } from "@postlight/parser";
 import assert from "assert";
-import axios from "axios";
-import * as cheerio from "cheerio";
 import type { RequestHandler } from "express";
 
 export const webCrawl: RequestHandler = async (req, res, next) => {
@@ -8,27 +7,10 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
     const { url } = req.body;
     assert(typeof url === "string");
 
-    const response = await axios.request({ url });
+    const parsedPage = await parse(url, { contentType: "markdown" });
 
-    if (!response.headers["content-type"]?.toString().toLocaleLowerCase().includes("text/html")) {
-      throw new Error(`Invalid content type for crawler ${response.headers["content-type"]}`);
-    }
-
-    const $ = cheerio.load(response.data);
-
-    $("script,noscript,svg,iframe,style,img,form,nav,footer").remove();
-
-    let mainText = $("main").text();
-    if (!mainText) mainText = $("body").text();
-
-    const cleanedText = mainText
-      .split("\n")
-      .map((line) => line.replace(/\s+/g, " ").trim())
-      .filter(Boolean)
-      .join("\n");
-
-    res.status(response.status).json({
-      text: cleanedText,
+    res.status(200).json({
+      text: parsedPage.content ?? "",
     });
 
     next();

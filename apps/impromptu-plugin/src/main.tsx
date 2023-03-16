@@ -12,6 +12,7 @@ import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
 import { SummarizeProgram } from "./programs/summarize";
+import { WebBrowseProgram } from "./programs/web-browse";
 import { WebSearchProgram } from "./programs/web-search";
 import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
@@ -45,6 +46,7 @@ const programs: Program[] = [
   new ResearchRecommendationsProgram(),
   new SortProgram(),
   new SummarizeProgram(),
+  new WebBrowseProgram(),
   new WebSearchProgram(),
 ];
 const matchProgram = findMatchedProgram.bind(null, programs);

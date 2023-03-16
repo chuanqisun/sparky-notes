@@ -102,6 +102,8 @@ export class AgentProgram implements Program {
               stop: ["Observation", "Thought", "Final Answer"],
             })
           ).choices[0].text;
+
+        if (context.isAborted() || context.isChanged()) return;
       } else if (finalAnswer) {
         printStickyNewLine(node, "Thought: I now know the final answer", stickyColors.Yellow);
         // continue for a bit longer
