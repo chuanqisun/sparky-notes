@@ -1,3 +1,5 @@
+import { Logger } from "../utils/logger";
+
 export interface OpenAICompletionPayload {
   prompt: string;
   temperature: number;
@@ -20,34 +22,21 @@ export type OpenAICompletionResponse = {
 
 export type CompletionProxy = (payload: OpenAICompletionPayload) => Promise<OpenAICompletionResponse>;
 
-export interface CompletionLogger {
-  info: (item: CompletionInfoItem) => void;
-  error: (item: CompletionErrorItem) => void;
-}
-
 export interface CompletionInfoItem {
-  id: number;
-  timestamp: number;
+  title: string;
   prompt: string;
   completion: string;
   tokenUsage: number;
 }
 
 export interface CompletionErrorItem {
-  id: number;
-  timestamp: number;
+  title: string;
   prompt: string;
   error: string;
 }
 
-let currentId = 0;
-
-export function getCompletionProxy(accessToken: string, logger?: CompletionLogger): CompletionProxy {
+export function getCompletionProxy(accessToken: string, logger?: Logger): CompletionProxy {
   const proxy = async (payload: OpenAICompletionPayload) => {
-    if (++currentId === Number.MAX_SAFE_INTEGER) {
-      currentId = 1;
-    }
-
     try {
       const result = await fetch(process.env.VITE_OPENAI_COMPLETION_ENDPOINT!, {
         method: "post",
@@ -58,11 +47,23 @@ export function getCompletionProxy(accessToken: string, logger?: CompletionLogge
         body: JSON.stringify(payload),
       }).then((res) => res.json());
 
-      logger?.info({ id: currentId, timestamp: Date.now(), prompt: payload.prompt, completion: result.choices[0].text, tokenUsage: result.usage.total_tokens });
+      logger?.log<CompletionInfoItem>({
+        title: `Completion ${result.usage.total_tokens} tokens`,
+        prompt: payload.prompt,
+        completion: result.choices[0].text,
+        tokenUsage: result.usage.total_tokens,
+      });
 
       return result;
     } catch (e) {
-      logger?.error({ id: currentId, timestamp: Date.now(), prompt: payload.prompt, error: `${(e as Error).name} ${(e as Error).message}` });
+      logger?.log<CompletionErrorItem>(
+        {
+          title: `Completion error`,
+          prompt: payload.prompt,
+          error: `${(e as Error).name} ${(e as Error).message}`,
+        },
+        "error"
+      );
       throw e;
     }
   };

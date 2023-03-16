@@ -1,18 +1,19 @@
 import { MessageToUI } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { CompletionErrorItem, CompletionInfoItem } from "../../impromptu-plugin/src/openai/completion";
+import { LogEntry } from "../../impromptu-plugin/src/utils/logger";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
+import { LogEntryView } from "./modules/log/log-entry-view";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
 
   const [isRunning, setIsRunning] = useState(false);
 
-  const [completionLogItems, setCompletionLogItems] = useState<(CompletionInfoItem | CompletionErrorItem)[]>([]);
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
 
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
@@ -25,11 +26,8 @@ function App() {
         setIsRunning(false);
       }
 
-      if (message.logCompletionInfo) {
-        setCompletionLogItems((prev) => [message.logCompletionInfo!, ...prev].slice(0, 25));
-      }
-      if (message.logCompletionError) {
-        setCompletionLogItems((prev) => [message.logCompletionError!, ...prev].slice(0, 25));
+      if (message.log) {
+        setLogEntries((prev) => [message.log!, ...prev].slice(0, 25));
       }
     };
 
@@ -48,7 +46,7 @@ function App() {
     (e: Event) => notifyFigma({ createProgram: (e.target as HTMLElement).closest("[data-program]")!.getAttribute("data-program")! }),
     []
   );
-  const handleClearLog = useCallback(() => setCompletionLogItems([]), []);
+  const handleClearLog = useCallback(() => setLogEntries([]), []);
 
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
@@ -111,14 +109,8 @@ function App() {
           <menu>
             <button onClick={handleClearLog}>Clear</button>
           </menu>
-          {completionLogItems.map((item) => (
-            <details key={item.id}>
-              <summary>
-                {new Date(item.timestamp).toLocaleTimeString()} {item.prompt}
-              </summary>
-              <span class="log__prompt">{item.prompt}</span>
-              <span class="log__completion">{(item as CompletionInfoItem).completion ?? (item as CompletionErrorItem).error}</span>
-            </details>
+          {logEntries.map((entry) => (
+            <LogEntryView entry={entry} key={entry.id} />
           ))}
         </fieldset>
       )}

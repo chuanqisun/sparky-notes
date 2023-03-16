@@ -1,6 +1,6 @@
 import { MessageToFigma } from "@impromptu/types";
 import { getSearchProxy, SearchProxy } from "./hits/proxy";
-import { CompletionLogger, CompletionProxy, getCompletionProxy } from "./openai/completion";
+import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
 import { CategorizeProgram } from "./programs/categorize";
@@ -18,6 +18,7 @@ import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstr
 import { EventLoop } from "./utils/event-loop";
 import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
+import { Logger } from "./utils/logger";
 import { clearNotification, replaceNotification } from "./utils/notify";
 import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
@@ -49,6 +50,9 @@ const programs: Program[] = [
   new WebBrowseProgram(),
   new WebSearchProgram(),
 ];
+
+const logger = new Logger();
+
 const matchProgram = findMatchedProgram.bind(null, programs);
 
 interface EventLoopContext {
@@ -248,15 +252,10 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.hitsConfig) {
-    const completionLogger: CompletionLogger = {
-      info: (item) => notifyUI({ logCompletionInfo: item }),
-      error: (item) => notifyUI({ logCompletionError: item }),
-    };
-
-    completion = getCompletionProxy(message.hitsConfig.accessToken, completionLogger);
-    hitsSearch = getSearchProxy(message.hitsConfig.accessToken);
-    webSearch = getWebSearchProxy(message.hitsConfig.accessToken);
-    webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken);
+    completion = getCompletionProxy(message.hitsConfig.accessToken, logger);
+    hitsSearch = getSearchProxy(message.hitsConfig.accessToken, logger);
+    webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
+    webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
   }
 
   if (message.start) {

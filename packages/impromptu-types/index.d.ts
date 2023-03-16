@@ -1,4 +1,4 @@
-import { CompletionErrorItem, CompletionInfoItem } from "../../apps/impromptu-plugin/src/openai/completion";
+import { CompletionErrorItem, CompletionInfoItem, LogItem } from "../../apps/impromptu-plugin/src/openai/completion";
 
 export interface MessageToUI {
   selectionChanged?: SelectionSummary;
@@ -7,6 +7,7 @@ export interface MessageToUI {
   stopped?: boolean;
   logCompletionInfo?: CompletionInfoItem;
   logCompletionError?: CompletionErrorItem;
+  log?: LogItem;
 }
 
 export interface MessageToFigma {

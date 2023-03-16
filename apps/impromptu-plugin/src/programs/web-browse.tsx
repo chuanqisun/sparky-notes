@@ -73,7 +73,7 @@ export class WebBrowseProgram implements Program {
       const crawledText = (await context.webCrawl({ url: link.url })).text;
 
       // 1. See if the text answer the question, if so, extract answer, generate deep link, and output stick
-      console.log(crawledText);
+      // console.log(crawledText);
 
       // 2. Put all links and titles into the queue for next round
     }

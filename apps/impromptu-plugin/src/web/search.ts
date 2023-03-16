@@ -1,3 +1,5 @@
+import { GenericLogData, Logger } from "../utils/logger";
+
 export interface WebSearchPayload {
   q: string;
 }
@@ -12,7 +14,7 @@ export type WebSearchResponse = {
 
 export type WebSearchProxy = (payload: WebSearchPayload) => Promise<WebSearchResponse>;
 
-export function getWebSearchProxy(accessToken: string): WebSearchProxy {
+export function getWebSearchProxy(accessToken: string, logger: Logger): WebSearchProxy {
   const proxy = async (payload: WebSearchPayload) => {
     const result = await fetch(process.env.VITE_WEB_SEARCH_ENDPOINT!, {
       method: "post",
@@ -22,6 +24,11 @@ export function getWebSearchProxy(accessToken: string): WebSearchProxy {
       },
       body: JSON.stringify(payload),
     }).then((res) => res.json());
+
+    logger?.log<GenericLogData>({
+      title: `Search ${payload.q}`,
+      message: (result as WebSearchResponse).pages.map((page, index) => `Result ${index + 1}\n${page.title}\n${page.url}\n${page.snippet}`).join("\n===\n"),
+    });
 
     return result;
   };
