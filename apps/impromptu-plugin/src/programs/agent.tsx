@@ -1,3 +1,4 @@
+import { EntityType } from "../hits/entity";
 import { getInsightQuery, getRecommendationQuery } from "../hits/search";
 import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
@@ -20,6 +21,12 @@ import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
+const MIN_ITER = 5;
+const MAX_ITER = 25;
+const FINAL_ANSWER_LENGTH = 1000;
+const INTERMEDIATE_ANSWER_LENGTH = 400;
+const MEM_WINDOW = 2000;
+
 export class AgentProgram implements Program {
   public name = "agent";
 
@@ -34,7 +41,7 @@ export class AgentProgram implements Program {
         <Description>Answer a question with the provided tools.</Description>
         <TextField
           label="Question"
-          value="I am a UX researcher who just joined Microsoft. My team needs generative research to help propose a new product for Office 365. The PM wants the new product go viral on social media and appeal to remote workers, especially gen Z. What should my research plan include?"
+          value="I’m new to the Azure Network Manager product. Summarize existing research and help me come up with suggestions to the product design team."
         />
       </AutoLayout>
     )) as FrameNode;
@@ -77,18 +84,29 @@ export class AgentProgram implements Program {
 
     let memory: string[] = [];
 
-    while (iteration < 25 && !isCompleted) {
+    while (iteration < MAX_ITER && !isCompleted) {
       const prompt = getAgentPrompt({ question, memory, tools });
-      const response = (await getCompletion(context.completion, ...prompt)).choices[0].text;
+      let response = (await getCompletion(context.completion, ...prompt)).choices[0].text;
 
       if (context.isAborted() || context.isChanged()) return;
 
       const finalAnswer = response.split("\n").find((line) => line.startsWith("Final Answer:"));
-      if (finalAnswer) {
+      if (finalAnswer && iteration < MIN_ITER) {
+        // premature conclusion. Nudge to more research
+        const nudgePrompt = prompt[0] + "\nThought: I need more information";
+        response =
+          "\nThought: I need more information" +
+          (
+            await getCompletion(context.completion, nudgePrompt, {
+              max_tokens: INTERMEDIATE_ANSWER_LENGTH,
+              stop: ["Observation", "Thought", "Final Answer"],
+            })
+          ).choices[0].text;
+      } else if (finalAnswer) {
         printStickyNewLine(node, "Thought: I now know the final answer", stickyColors.Yellow);
         // continue for a bit longer
-        let token = 1000;
-        while (!isCompleted && token > 400) {
+        let token = FINAL_ANSWER_LENGTH;
+        while (!isCompleted && token > INTERMEDIATE_ANSWER_LENGTH) {
           try {
             const extendedPrompt = prompt[0] + "\nThought: I now know the final answer\nFinal Answer: ";
             const extendedResponse = (
@@ -191,12 +209,12 @@ export async function act(input: { action: string; actionInput: string; programC
       const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
       const searchResults = await input.programContext.webSearch({ q: normalizedQuery });
       const observation = searchResults.pages
-        .slice(0, 3)
+        .slice(0, 4)
         .map((page, index) => `Result ${index + 1}: ${page.title} ${page.snippet}`)
         .join(" ");
       return observation;
     } catch (e) {
-      return "The search engine returned error";
+      return "No results found.";
     }
   } else if (input.action.includes("Read web page")) {
     const url = input.actionInput.slice(input.actionInput.indexOf("http"));
@@ -204,15 +222,15 @@ export async function act(input: { action: string; actionInput: string; programC
       const crawlResults = await input.programContext.webCrawl({ url });
       return shortenToWordCount(200, crawlResults.text.replace(/\s+/g, " ")); // TODO use GPT summarize
     } catch (e) {
-      return "The URL is broken";
+      return "The URL is broken.";
     }
-  } else if (input.action.toLocaleLowerCase().includes("find ux insights")) {
+  } else if (input.action.toLocaleLowerCase().includes("research insights")) {
     const query = input.actionInput.replace("Action Input:", "").trim();
     const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
     try {
       const searchSummary = await input.programContext.hitsSearch(getInsightQuery({ query: normalizedQuery, top: 3 }));
       if (!searchSummary.results.length) {
-        return "No research found.";
+        return "No results found.";
       }
 
       const observation =
@@ -221,14 +239,15 @@ export async function act(input: { action: string; actionInput: string; programC
             result.document.children
               .slice(0, 5)
               .filter((child) => child.title?.trim())
+              .filter((child) => child.entityType === EntityType.Insight)
               .map((child, claimIndex) => `${reportIndex + 1}.${claimIndex + 1} ${shortenToWordCount(50, child.title!)}`)
           )
           .join(" ") + "...";
       return observation;
     } catch (e) {
-      return "No research found.";
+      return "No results found.";
     }
-  } else if (input.action.toLocaleLowerCase().includes("find ux recommendations")) {
+  } else if (input.action.toLocaleLowerCase().includes("research recommendations")) {
     const query = input.actionInput.replace("Action Input:", "").trim();
     const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
     try {
@@ -243,6 +262,7 @@ export async function act(input: { action: string; actionInput: string; programC
             result.document.children
               .slice(0, 5)
               .filter((child) => child.title?.trim())
+              .filter((child) => child.entityType === EntityType.Recommendation)
               .map((child, claimIndex) => `${reportIndex + 1}.${claimIndex + 1} ${shortenToWordCount(50, child.title!)}`)
           )
           .join(" ") + "...";
@@ -253,7 +273,7 @@ export async function act(input: { action: string; actionInput: string; programC
   } else {
     const observation = (
       await getCompletion(input.programContext.completion, input.pretext + "Observation: ", {
-        max_tokens: 400,
+        max_tokens: INTERMEDIATE_ANSWER_LENGTH,
         stop: ["Thought", "Action", "Final Answer"],
       })
     ).choices[0].text;
@@ -270,13 +290,14 @@ export async function getDefaultTools() {
   await ensureStickyFont();
 
   return [
-    { name: "Find UX Insights", description: "Search knowledge base for usability issues. Only use simple keyword query" },
-    { name: "Find UX Recommendations", description: "Search knowledge base for suggested solutions. Only use simple keyword query" },
+    { name: "Research Insights", description: "Search knowledge base for usability issues. Give this tool 2-5 words as input" },
+    { name: "Research Recommendations", description: "Search knowledge base for suggested solutions. Give this tool 2-5 words as input" },
     { name: "Web Search", description: "Search the internet for general ideas" },
     { name: "Deduction", description: "Get specific conclusions from general ideas" },
     { name: "Induction", description: "Get general conclusions from specific observations" },
     { name: "Form Hypothesis", description: "Propose an idea that can be validated" },
     { name: "Examine Assumptions", description: "Speak out what assumptions were made" },
+    // { name: "Rephrase Query", description: "Change the query when no results are found" },
     // { name: "Design Experiment", description: "Design an Experiment that produce evidence" },
     // { name: "Run Experiment", description: "Run an Experiment to gather observations" },
   ].map((tool) => {
@@ -294,12 +315,12 @@ export function getAgentPrompt(input: { question: string; memory: string[]; tool
   while (usableMemory.length) {
     const nextItem = usableMemory.pop()!;
     const nextItemWc = nextItem.split(" ").length;
-    if ((wc += nextItemWc) > 2000) break;
+    if ((wc += nextItemWc) > MEM_WINDOW) break;
     rollingMemory.unshift(nextItem);
   }
 
   const prompt = `
-Answer the following questions as best you can. You have access to the following tools:
+Use research insights, research recommendations, and critical thinking to answer the following questions as best you can. You have access to the following tools:
 
 ${input.tools.map((tool) => `${tool.name}: ${tool.description}`).join("\n\n")}
 
@@ -316,12 +337,10 @@ Final Answer: the final answer to the original input question
 Explanation: a detailed explanation on the Final Answer
 Begin!
 
-Question: ${input.question}${rollingMemory.join(
-    ""
-  )} I will use critical reasoning, research insights, research recommendations, and web search results.`.trimStart();
+Question: ${input.question}${rollingMemory.join("")}\n`.trimStart();
 
   const config: Partial<OpenAICompletionPayload> = {
-    max_tokens: 400,
+    max_tokens: INTERMEDIATE_ANSWER_LENGTH,
     stop: ["Observation"],
   };
 
