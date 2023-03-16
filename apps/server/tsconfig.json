@@ -10,7 +10,8 @@
     "resolveJsonModule": true,
     "importsNotUsedAsValues": "error",
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "alwaysStrict": false
   },
   "include": ["src"]
 }
