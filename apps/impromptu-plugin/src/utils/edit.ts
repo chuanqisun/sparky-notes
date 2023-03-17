@@ -21,7 +21,7 @@ export interface StickyConfig {
 }
 
 export function printSticky(node: FrameNode, text: string, config?: StickyConfig) {
-  const { color, wordPerSticky, href } = { ...config, wordPerSticky: Infinity };
+  const { color, wordPerSticky, href } = { wordPerSticky: Infinity, ...config } satisfies StickyConfig;
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
@@ -46,11 +46,11 @@ export function printSticky(node: FrameNode, text: string, config?: StickyConfig
 }
 
 export function printStickyNewLine(node: FrameNode, text: string, config?: StickyConfig): boolean {
-  const { color, wordLimit } = { ...config, wordLimit: Infinity };
+  const { color, wordPerSticky } = { wordPerSticky: Infinity, ...config } satisfies StickyConfig;
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
-    const textChunks = getTextChunks(text, wordLimit);
+    const textChunks = getTextChunks(text, wordPerSticky);
     textChunks.forEach((chunk, index) => {
       const sticky = figma.createSticky();
       if (color) {
@@ -66,11 +66,11 @@ export function printStickyNewLine(node: FrameNode, text: string, config?: Stick
   }
 }
 export function printStickyNoWrap(node: FrameNode, text: string, config?: StickyConfig) {
-  const { color, wordLimit } = { ...config, wordLimit: Infinity };
+  const { color, wordPerSticky } = { wordPerSticky: Infinity, ...config } satisfies StickyConfig;
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
-    const textChunks = getTextChunks(text, wordLimit);
+    const textChunks = getTextChunks(text, wordPerSticky);
     for (const chunk of textChunks) {
       const sticky = figma.createSticky();
       if (color) {

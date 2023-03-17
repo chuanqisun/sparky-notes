@@ -11,10 +11,11 @@ export interface ArxivSearchRequest {
 
 export const arxivSearch: RequestHandler = async (req, res, next) => {
   try {
-    const { q, limit } = { ...req.body, q: "", limit: 10 };
+    const { q, limit } = req.body;
     assert(typeof q === "string");
+    assert(typeof limit === "number");
 
-    const url = `http://export.arxiv.org/api/query?search_query=${q}&max_results=${limit}`;
+    const url = `https://export.arxiv.org/api/query?search_query=${q}&max_results=${limit}`;
 
     // crawl duckduckgo html results
     const response = await axios.request({ url });
@@ -35,7 +36,7 @@ export const arxivSearch: RequestHandler = async (req, res, next) => {
 
     next();
   } catch (e) {
-    console.log(`[web-search] error ${`https://html.duckduckgo.com/html/?q=${encodeURIComponent(req.body.q)}`} ${(e as any).name} ${(e as any).message}`);
+    console.log(`[arxiv-search] query "${req.body.q}" ${(e as any).name} ${(e as any).message}`);
     next(e);
   }
 };

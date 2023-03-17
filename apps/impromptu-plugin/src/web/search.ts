@@ -1,4 +1,5 @@
-import { GenericLogData, Logger } from "../utils/logger";
+import { GenericLogData } from "@impromptu/types";
+import { Logger } from "../utils/logger";
 
 export interface WebSearchPayload {
   q: string;

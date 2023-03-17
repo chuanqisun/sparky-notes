@@ -10,6 +10,8 @@ import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
 import { shortenToWordCount } from "../utils/text";
+import { BaseTool } from "./agent-tools/base-tool";
+import { WebSearchTool } from "./agent-tools/web-search";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -48,7 +50,7 @@ export class AgentProgram implements Program {
     // add default tools
     const tools = await getDefaultTools();
     moveStickiesToSection(tools, sources[0]);
-    tools.forEach((tool) => (tool.locked = true));
+    // tools.forEach((tool) => (tool.locked = true));
 
     return {
       programNode: node,
@@ -161,21 +163,16 @@ export function getFirstOutput(node: FrameNode): SectionNode | null {
   return outputContainer ?? null;
 }
 
+const agentTools: BaseTool[] = [new WebSearchTool()];
+
 export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string }) {
-  if (input.action.toLocaleLowerCase().includes("web search")) {
-    try {
-      const query = input.actionInput.replace("Action Input:", "").trim();
-      const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
-      const searchResults = await input.programContext.webSearch({ q: normalizedQuery });
-      const observation = searchResults.pages
-        .slice(0, 4)
-        .map((page, index) => `Result ${index + 1}: ${page.title} ${page.snippet}`)
-        .join(" ");
-      return observation;
-    } catch (e) {
-      return "No results found.";
-    }
-  } else if (input.action.includes("Read web page")) {
+  const actionName = input.action.toLocaleLowerCase();
+  const tool = agentTools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName));
+  if (tool) {
+    return (await tool.run(input)).observation;
+  }
+
+  if (input.action.includes("Read web page")) {
     const url = input.actionInput.slice(input.actionInput.indexOf("http"));
     try {
       const crawlResults = await input.programContext.webCrawl({ url });
@@ -249,8 +246,9 @@ export async function getDefaultTools() {
   await ensureStickyFont();
 
   return [
-    { name: "Research Insights", description: "Search knowledge base for usability issues. Give this tool 2-5 words as input" },
-    { name: "Research Recommendations", description: "Search knowledge base for suggested solutions. Give this tool 2-5 words as input" },
+    // { name: "Research Insights", description: "Search knowledge base for usability issues. Give this tool 2-5 words as input" },
+    // { name: "Research Recommendations", description: "Search knowledge base for suggested solutions. Give this tool 2-5 words as input" },
+    { name: "arXiv Search", description: "Search academic scientific papers. Give this tool keywords only" },
     { name: "Web Search", description: "Search the internet for general ideas" },
     { name: "Deduction", description: "Get specific conclusions from general ideas" },
     { name: "Induction", description: "Get general conclusions from specific observations" },

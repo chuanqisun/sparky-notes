@@ -17,6 +17,7 @@
 - Add wikipedia search
 - Add interactive task break down maybe a separate tool: for each task, interactively/progressive break down to smaller tasks
 - Add quick input/output draw. Select a program node to add input/output. Otherwise draw with connection semi-attached
+- Force agent conclusion after max_iter
 - Reimplement URL crawl as an agent with tools
 - Improve crawler queue priority management
 - Auto reduce prompt size when token limit exceeded
