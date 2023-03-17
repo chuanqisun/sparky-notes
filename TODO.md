@@ -13,6 +13,10 @@
 
 ## Impromptu
 
+- Add arxiv paper search as agent and/or program node
+- Add wikipedia search
+- Add interactive task break down maybe a separate tool: for each task, interactively/progressive break down to smaller tasks
+- Add quick input/output draw. Select a program node to add input/output. Otherwise draw with connection semi-attached
 - Reimplement URL crawl as an agent with tools
 - Improve crawler queue priority management
 - Auto reduce prompt size when token limit exceeded
@@ -27,3 +31,16 @@
 - Sticky forbids nesting
 - Lack of interactive form elements on the UI (checkbox, toggle, radio, etc)
 - Difficult to draw links between nodes
+
+## Demo ideas
+
+- Demo fractal concept
+  - Bottom level: program node
+  - Mid level: agent node
+  - Fractal level 0: agent node consume static sticky
+  - Fractal level 1: agent node consume program node
+  - Fractal level 2: agent node consume agent node
+  - Fractal level 3: agent node produces agent node
+- Interactively/progressive break down UX for problem solving at any scale
+  - How to solve Seattle traffic congestion?
+  - How to solve Seattle Homeless problem?
