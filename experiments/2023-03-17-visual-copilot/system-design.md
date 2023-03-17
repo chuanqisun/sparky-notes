@@ -32,4 +32,4 @@
 - Human-in-the-loop tool requires user input/selection/verification/clarification/real world task executation
 - Human can be considered an Agent who blocks execution until user input is provided
 - A higher-order Agent can coordinate the communication among child Agents to accomplish a task
-- Multi-agent coordination takes insipiration from concensus protocol in distributed computing
+- Multi-agent coordination takes inspiration from consensus protocol in distributed computing
