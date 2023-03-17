@@ -18,6 +18,25 @@ export async function searchFirst({ proxy, filter }: FindConfig): Promise<Search
   return results[0] ?? null;
 }
 
+export function getClaimQuery(config: { query?: string; count?: boolean; top?: number; skip?: number; filter?: FilterConfig; orderBy?: string[] }) {
+  return {
+    count: config.count ?? false,
+    top: config.top ?? 10,
+    skip: config.skip ?? 0,
+    filter: ifAll([
+      field("IsActive").eq(true),
+      field("EntityType").eq(EntityType.Study),
+      field("Children").any((item) => ifAny([item("EntityType").eq(EntityType.Insight), item("EntityType").eq(EntityType.Recommendation)])),
+    ]).toString(),
+    queryType: "Simple",
+    searchText: config.query ?? "*",
+    highlightFields: ["Children/Title", "Children/Contents"],
+    searchFields: ["Children/Title", "Children/Contents"],
+    select: ["Id", "EntityType", "Title", "Contents", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
+    orderBy: config.orderBy,
+  };
+}
+
 export function getInsightQuery(config: { query?: string; count?: boolean; top?: number; skip?: number; filter?: FilterConfig; orderBy?: string[] }) {
   return {
     count: config.count ?? false,

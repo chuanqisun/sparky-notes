@@ -1,5 +1,3 @@
-import { EntityType } from "../hits/entity";
-import { getInsightQuery, getRecommendationQuery } from "../hits/search";
 import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap } from "../utils/edit";
@@ -9,8 +7,13 @@ import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
-import { shortenToWordCount } from "../utils/text";
+import { AssumptionTool } from "./agent-tools/assume";
 import { BaseTool } from "./agent-tools/base-tool";
+import { DeductionTool } from "./agent-tools/deduction";
+import { FallbackTool } from "./agent-tools/fallback-tool";
+import { HypothesisTool } from "./agent-tools/hypothesize";
+import { InductionTool } from "./agent-tools/induction";
+import { UxInsightTool } from "./agent-tools/ux-insights";
 import { WebSearchTool } from "./agent-tools/web-search";
 import { CreationContext, Program, ProgramContext } from "./program";
 
@@ -19,7 +22,7 @@ const { Text, AutoLayout, Input } = figma.widget;
 const MIN_ITER = 5;
 const MAX_ITER = 25;
 const FINAL_ANSWER_LENGTH = 1000;
-const INTERMEDIATE_ANSWER_LENGTH = 400;
+export const INTERMEDIATE_ANSWER_LENGTH = 400;
 const MEM_WINDOW = 2000;
 
 export class AgentProgram implements Program {
@@ -163,78 +166,14 @@ export function getFirstOutput(node: FrameNode): SectionNode | null {
   return outputContainer ?? null;
 }
 
-const agentTools: BaseTool[] = [new WebSearchTool()];
+const agentTools: BaseTool[] = [new WebSearchTool(), new UxInsightTool(), new DeductionTool(), new InductionTool(), new HypothesisTool(), new AssumptionTool()];
+const fallbackTool = new FallbackTool(agentTools);
 
 export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string }) {
   const actionName = input.action.toLocaleLowerCase();
-  const tool = agentTools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName));
-  if (tool) {
-    return (await tool.run(input)).observation;
-  }
-
-  if (input.action.includes("Read web page")) {
-    const url = input.actionInput.slice(input.actionInput.indexOf("http"));
-    try {
-      const crawlResults = await input.programContext.webCrawl({ url });
-      return shortenToWordCount(200, crawlResults.markdown); // TODO use GPT summarize
-    } catch (e) {
-      return "The URL is broken.";
-    }
-  } else if (input.action.toLocaleLowerCase().includes("research insights")) {
-    const query = input.actionInput.replace("Action Input:", "").trim();
-    const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
-    try {
-      const searchSummary = await input.programContext.hitsSearch(getInsightQuery({ query: normalizedQuery, top: 3 }));
-      if (!searchSummary.results.length) {
-        return "No results found.";
-      }
-
-      const observation =
-        searchSummary.results
-          .flatMap((result, reportIndex) =>
-            result.document.children
-              .slice(0, 5)
-              .filter((child) => child.title?.trim())
-              .filter((child) => child.entityType === EntityType.Insight)
-              .map((child, claimIndex) => `${reportIndex + 1}.${claimIndex + 1} ${shortenToWordCount(50, child.title!)}`)
-          )
-          .join(" ") + "...";
-      return observation;
-    } catch (e) {
-      return "No results found.";
-    }
-  } else if (input.action.toLocaleLowerCase().includes("research recommendations")) {
-    const query = input.actionInput.replace("Action Input:", "").trim();
-    const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
-    try {
-      const searchSummary = await input.programContext.hitsSearch(getRecommendationQuery({ query: normalizedQuery, top: 3 }));
-      if (!searchSummary.results.length) {
-        return "No research found.";
-      }
-
-      const observation =
-        searchSummary.results
-          .flatMap((result, reportIndex) =>
-            result.document.children
-              .slice(0, 5)
-              .filter((child) => child.title?.trim())
-              .filter((child) => child.entityType === EntityType.Recommendation)
-              .map((child, claimIndex) => `${reportIndex + 1}.${claimIndex + 1} ${shortenToWordCount(50, child.title!)}`)
-          )
-          .join(" ") + "...";
-      return observation;
-    } catch (e) {
-      return "No research found.";
-    }
-  } else {
-    const observation = (
-      await getCompletion(input.programContext.completion, input.pretext + "Observation: ", {
-        max_tokens: INTERMEDIATE_ANSWER_LENGTH,
-        stop: ["Thought", "Action", "Final Answer"],
-      })
-    ).choices[0].text;
-    return observation;
-  }
+  const tool =
+    agentTools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName)) ?? fallbackTool;
+  return (await tool.run(input)).observation;
 }
 
 export interface AgentTool {
@@ -245,19 +184,7 @@ export interface AgentTool {
 export async function getDefaultTools() {
   await ensureStickyFont();
 
-  return [
-    // { name: "Research Insights", description: "Search knowledge base for usability issues. Give this tool 2-5 words as input" },
-    // { name: "Research Recommendations", description: "Search knowledge base for suggested solutions. Give this tool 2-5 words as input" },
-    { name: "arXiv Search", description: "Search academic scientific papers. Give this tool keywords only" },
-    { name: "Web Search", description: "Search the internet for general ideas" },
-    { name: "Deduction", description: "Get specific conclusions from general ideas" },
-    { name: "Induction", description: "Get general conclusions from specific observations" },
-    { name: "Form Hypothesis", description: "Propose an idea that can be validated" },
-    { name: "Examine Assumptions", description: "Speak out what assumptions were made" },
-    // { name: "Rephrase Query", description: "Change the query when no results are found" },
-    // { name: "Design Experiment", description: "Design an Experiment that produce evidence" },
-    // { name: "Run Experiment", description: "Run an Experiment to gather observations" },
-  ].map((tool) => {
+  return agentTools.map((tool) => {
     const sticky = figma.createSticky();
     sticky.text.characters = `${tool.name}: ${tool.description}`;
     return sticky;
@@ -294,7 +221,7 @@ Final Answer: the final answer to the original input question
 Explanation: a detailed explanation on the Final Answer
 Begin!
 
-Question: ${input.question}${rollingMemory.join("")}\n`.trimStart();
+Question: ${input.question}${rollingMemory.join("")}`.trimStart();
 
   const config: Partial<OpenAICompletionPayload> = {
     max_tokens: INTERMEDIATE_ANSWER_LENGTH,
