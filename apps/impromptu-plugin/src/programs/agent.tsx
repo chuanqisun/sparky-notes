@@ -230,7 +230,7 @@ Final Answer: the final answer to the original input question
 Explanation: a detailed explanation on the Final Answer
 Begin!
 
-Question: ${input.question}${rollingMemory.join("")}\n`.trimStart();
+Question: ${input.question}${rollingMemory.join("").replace(/\n+/g, "\n")}\n`.trimStart();
 
   const config: Partial<OpenAICompletionPayload> = {
     max_tokens: INTERMEDIATE_ANSWER_LENGTH,
