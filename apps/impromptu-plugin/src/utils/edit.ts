@@ -17,20 +17,25 @@ export function emptySections(sections: SectionNode[]) {
 export interface StickyConfig {
   color?: RGB;
   wordPerSticky?: number;
+  href?: string;
 }
 
 export function printSticky(node: FrameNode, text: string, config?: StickyConfig) {
-  const { color, wordLimit } = { ...config, wordLimit: Infinity };
+  const { color, wordPerSticky, href } = { ...config, wordPerSticky: Infinity };
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
-    const textChunks = getTextChunks(text, wordLimit);
+    const textChunks = getTextChunks(text, wordPerSticky);
     for (const chunk of textChunks) {
       const sticky = figma.createSticky();
+      sticky.text.characters = chunk;
+
+      if (href) {
+        setStickyHref(href, sticky);
+      }
       if (color) {
         setStickyColor(color, sticky);
       }
-      sticky.text.characters = chunk;
       moveStickiesToSection([sticky], outputContainer);
     }
 
@@ -248,4 +253,11 @@ export function createTargetNodes(names: string[]) {
 
 export function setStickyColor(color: RGB, node: StickyNode) {
   node.fills = [getSolidFill(color)];
+}
+
+export function setStickyHref(href: string, node: StickyNode) {
+  node.text.hyperlink = {
+    type: "URL",
+    value: href,
+  };
 }

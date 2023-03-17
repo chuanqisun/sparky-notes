@@ -20,7 +20,7 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
     const { url } = req.body;
     assert(typeof url === "string");
 
-    const response = await axios.request({ url });
+    const response = await axios.request({ url, timeout: 10000 });
 
     if (!response.headers["content-type"]?.toString().toLocaleLowerCase().includes("text/html")) {
       throw new Error(`Invalid content type for crawler ${response.headers["content-type"]}`);
@@ -32,16 +32,25 @@ export const webCrawl: RequestHandler = async (req, res, next) => {
     const $ = load(parsedHTML.content ?? "");
     const links: { title: string; href: string }[] = [];
     $("a[href]").each((index, link) => {
-      const parsedLink = $(link);
-      links.push({
-        title: $(link).text(),
-        href: $(link).attr("href")!,
-      });
+      try {
+        const parsedLink = $(link);
+        const parsedURL = new URL(parsedLink.attr("href") ?? "");
+        if (!parsedURL.protocol.startsWith("http")) {
+          throw new Error(`Invalida URL ${parsedURL.href}`);
+        }
+
+        links.push({
+          title: parsedLink.text(),
+          href: parsedLink.attr("href")!,
+        });
+      } catch (e) {
+        console.log(`Invalid href`, e);
+      }
     });
 
     res.status(200).json({
-      markdown: (parsedMarkdown.content ?? "").replace(/\n+/g, "\n"),
-      text: (parsedText.content ?? "").replace(/\n+/g, "\n"),
+      markdown: (parsedMarkdown.content ?? "").replace(/\n+/g, "\n").trim(),
+      text: (parsedText.content ?? "").replace(/\n+/g, "\n").trim(),
       links,
     });
 

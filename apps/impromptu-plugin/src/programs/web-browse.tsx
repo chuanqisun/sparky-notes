@@ -2,6 +2,7 @@ import { getCompletion } from "../openai/completion";
 import { createOrUseSourceNodes, createTargetNodes, printSticky } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
+import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
@@ -26,17 +27,15 @@ export class WebBrowseProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
         <FormTitle>Web browse</FormTitle>
-        <Description>What are the opportunities for a small business owner?</Description>
+        <Description>Use linked stickies as starting point, browse the web to collect answers to your question.</Description>
         <TextField label="Question" value="What should a small business owner do in 2023?" />
-        <TextField label="Max depth" value="3" />
-        <TextField label="Max page view" value="100" />
+        <TextField label="Limit" value="20" />
       </AutoLayout>
     )) as FrameNode;
 
     getTextByContent("Web browse", node)!.locked = true;
     getFieldByLabel("Question", node)!.label.locked = true;
-    getFieldByLabel("Max depth", node)!.label.locked = true;
-    getFieldByLabel("Max page view", node)!.label.locked = true;
+    getFieldByLabel("Limit", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Input"], context.selectedOutputNodes);
     const targets = createTargetNodes(["Output"]);
@@ -53,9 +52,8 @@ export class WebBrowseProgram implements Program {
     if (!targetNode) return;
 
     const question = getFieldByLabel("Question", node)!.value.characters.trim();
-    const maxDepth = parseInt(getFieldByLabel("Max depth", node)!.value.characters.trim());
-    const maxViewCount = parseInt(getFieldByLabel("Max page view", node)!.value.characters.trim());
-    let currentViewCount = 0;
+    const limit = parseInt(getFieldByLabel("Limit", node)!.value.characters.trim());
+    let currentResultCount = 0;
 
     const inputStickies = getInnerStickies(context.sourceNodes);
     if (!inputStickies.length) return;
@@ -74,14 +72,22 @@ export class WebBrowseProgram implements Program {
       }));
 
     console.log(linkUrls);
-    const queue: QueueItem[] = linkUrls;
+    let queue: QueueItem[] = this.deduplicateQueue(linkUrls);
+    let visitedUrls: string[] = [];
 
-    while (queue.length) {
+    while (queue.length && currentResultCount < limit) {
       const link = await this.getNextItemToCrawl(context, queue, question);
+      if (context.isAborted() || context.isChanged()) return;
       if (!link) return;
       queue.splice(queue.indexOf(link), 1);
 
+      visitedUrls.push(link.url);
+      replaceNotification(`Web browse: ${link.url}`, { timeout: Infinity });
+      console.log(`[crawl progress] ${link.url} at depth ${link.depth}, queue size ${queue.length}`);
       const { text, links } = await context.webCrawl({ url: link.url });
+
+      if (!text) continue;
+
       if (context.isAborted() || context.isChanged()) return;
 
       // 1. See if the text answer the question, if so, extract answer, generate deep link, and output stick
@@ -115,16 +121,13 @@ Answer (Yes/No): `.trimStart();
       if (context.isAborted() || context.isChanged()) return;
 
       if (binaryAnswer.choices[0].text.toLocaleLowerCase().includes("yes")) {
-        printSticky(node, responseText, { wordPerSticky: 50 });
+        printSticky(node, `${responseText}\n\nSource: ${link.url}`, { href: link.url });
+        currentResultCount++;
       }
-
-      // 2. put more links to crawl back into the queue
-      if (link.depth === maxDepth) continue;
-      if (++currentViewCount === maxViewCount) return;
 
       queue.push(
         ...links
-          .filter((webLink) => webLink.href.length < 255)
+          .filter((webLink) => webLink.href.length < 255 && !visitedUrls.includes(webLink.href))
           .map((webLink) => ({
             // avoid long URLs to reduce token waste
             title: webLink.title,
@@ -132,6 +135,7 @@ Answer (Yes/No): `.trimStart();
             depth: link!.depth + 1,
           }))
       );
+      queue = this.deduplicateQueue(queue);
     }
   }
 
@@ -167,5 +171,9 @@ The picked URL is: http`;
 
     // pick the top of the list
     return queue[0] ?? null;
+  }
+
+  private deduplicateQueue(queue: QueueItem[]) {
+    return queue.filter((item, index, array) => index === array.findIndex((maybeDupe) => maybeDupe.title === item.title && maybeDupe.url === item.url));
   }
 }

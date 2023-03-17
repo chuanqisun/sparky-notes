@@ -13,9 +13,8 @@
 
 ## Impromptu
 
-- Add URL page input node
-- Add logging for crawl and search
 - Reimplement URL crawl as an agent with tools
+- Improve crawler queue priority management
 - Add a 2D quadrant mapping node
 - Add DevOps query node
 - Convert to Widget for relaunch discoverability

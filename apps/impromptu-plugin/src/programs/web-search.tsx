@@ -3,6 +3,7 @@ import { responseToArray } from "../openai/format";
 import { moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
+import { replaceNotification } from "../utils/notify";
 import { filterToType } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
@@ -54,7 +55,8 @@ export class WebSearchProgram implements Program {
     let resultCount = 0;
 
     for (const item of items) {
-      const crawledText = (await context.webCrawl({ url: item.url })).markdown;
+      replaceNotification(`Web search: evaluating ${item.url}`);
+      const crawledText = (await context.webCrawl({ url: item.url })).text;
       if (context.isChanged() || context.isAborted()) return;
 
       const binaryCheck = `
