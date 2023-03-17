@@ -13,7 +13,6 @@
 
 ## Impromptu
 
-- Add arxiv paper search as agent and/or program node
 - Add wikipedia search
 - Add interactive task break down maybe a separate tool: for each task, interactively/progressive break down to smaller tasks
 - Add quick input/output draw. Select a program node to add input/output. Otherwise draw with connection semi-attached
