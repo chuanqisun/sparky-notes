@@ -1,4 +1,4 @@
-import { getCompletion } from "../openai/completion";
+import { getCompletion, OpenAICompletionResponse } from "../openai/completion";
 import { createOrUseSourceNodes, createTargetNodes, printSticky } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
@@ -96,13 +96,18 @@ export class WebBrowseProgram implements Program {
 Read the following web page carefully and answer the question.
 
 web page """ 
-${shortenToWordCount(1500, text)}
+${shortenToWordCount(1200, text)}
 """
 
 Question: ${question}
 Answer: `;
 
-      const extractionResponse = await getCompletion(context.completion, extractionPrompt, { max_tokens: 300 });
+      let extractionResponse: OpenAICompletionResponse;
+      try {
+        extractionResponse = await getCompletion(context.completion, extractionPrompt, { max_tokens: 255 });
+      } catch (e) {
+        continue;
+      }
       if (context.isAborted() || context.isChanged()) return;
       const responseText = extractionResponse.choices[0].text.trim();
       const binaryPrompt = `
