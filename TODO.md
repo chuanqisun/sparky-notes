@@ -15,6 +15,7 @@
 
 - Reimplement URL crawl as an agent with tools
 - Improve crawler queue priority management
+- Auto reduce prompt size when token limit exceeded
 - Add a 2D quadrant mapping node
 - Add DevOps query node
 - Convert to Widget for relaunch discoverability
