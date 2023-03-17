@@ -40,3 +40,6 @@
   - Fractal level 1: agent node consume program node
   - Fractal level 2: agent node consume agent node
   - Fractal level 3: agent node produces agent node
+- Interactively/progressive break down UX for problem solving at any scale
+  - How to solve Seattle traffic congestion?
+  - How to solve Seattle Homeless problem?
