@@ -4,6 +4,7 @@ import { getSearchProxy, SearchProxy } from "./hits/proxy";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
+import { ArxivSearchProgram } from "./programs/arxiv-search";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
@@ -41,6 +42,7 @@ let webCrawl: WebCrawlProxy;
 const programs: Program[] = [
   new AgentProgram(),
   new AnswerProgram(),
+  new ArxivSearchProgram(),
   new CategorizeProgram(),
   new CompletionProgram(),
   new FilterProgram(),
