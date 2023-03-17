@@ -1,4 +1,5 @@
 import { MessageToFigma } from "@impromptu/types";
+import { ArxivSearchProxy, getArxivSearchProxy } from "./arxiv/search";
 import { getSearchProxy, SearchProxy } from "./hits/proxy";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
@@ -31,6 +32,7 @@ const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>
 
 let fontInitPromise = ensureStickyFont();
 
+let arxivSearch: ArxivSearchProxy;
 let completion!: CompletionProxy;
 let hitsSearch!: SearchProxy;
 let webSearch: WebSearchProxy;
@@ -132,7 +134,7 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
     });
 
     // run matching program
-    if (![completion, hitsSearch, webCrawl, webSearch].every(Boolean)) {
+    if (![completion, hitsSearch, webCrawl, webSearch, arxivSearch].every(Boolean)) {
       eventLoop.stop("Event loop complex setup error");
       return;
     }
@@ -142,6 +144,7 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
     let changeDetected = false;
     const programContext: ProgramContext = {
       sourceNodes: getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION")),
+      arxivSearch,
       hitsSearch,
       completion,
       webCrawl,
@@ -256,6 +259,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
     hitsSearch = getSearchProxy(message.hitsConfig.accessToken, logger);
     webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
+    arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
   }
 
   if (message.start) {

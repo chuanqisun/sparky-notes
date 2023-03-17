@@ -7,10 +7,11 @@ import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
+import { ArxivSearchTool } from "./agent-tools/arxiv-search";
 import { AssumptionTool } from "./agent-tools/assume";
 import { BaseTool } from "./agent-tools/base-tool";
+import { CatchAllTool } from "./agent-tools/catch-all-tool";
 import { DeductionTool } from "./agent-tools/deduction";
-import { FallbackTool } from "./agent-tools/fallback-tool";
 import { HypothesisTool } from "./agent-tools/hypothesize";
 import { InductionTool } from "./agent-tools/induction";
 import { UxInsightTool } from "./agent-tools/ux-insights";
@@ -24,6 +25,16 @@ const MAX_ITER = 25;
 const FINAL_ANSWER_LENGTH = 1000;
 export const INTERMEDIATE_ANSWER_LENGTH = 400;
 const MEM_WINDOW = 2000;
+
+const allTools: BaseTool[] = [
+  new ArxivSearchTool(),
+  new WebSearchTool(),
+  new UxInsightTool(),
+  new DeductionTool(),
+  new InductionTool(),
+  new HypothesisTool(),
+  new AssumptionTool(),
+];
 
 export class AgentProgram implements Program {
   public name = "agent";
@@ -51,7 +62,7 @@ export class AgentProgram implements Program {
     const targets = createTargetNodes(["Output"]);
 
     // add default tools
-    const tools = await getDefaultTools();
+    const tools = await getDefaultTools(allTools);
     moveStickiesToSection(tools, sources[0]);
     // tools.forEach((tool) => (tool.locked = true));
 
@@ -65,10 +76,12 @@ export class AgentProgram implements Program {
   public async run(context: ProgramContext, node: FrameNode) {
     const sources = context.sourceNodes.sort(sortLeftToRight);
 
-    const tools: AgentTool[] = getInnerStickies([sources[0]]).map((sticky) => {
+    const stickyTools: AgentTool[] = getInnerStickies([sources[0]]).map((sticky) => {
       const [name, description] = sticky.text.characters.trim().split(": ");
       return { name, description };
     });
+
+    const runtimeTools: BaseTool[] = [...allTools, new CatchAllTool(stickyTools.map((tool) => tool.name))];
 
     let iteration = 0;
     let isCompleted = false;
@@ -83,7 +96,7 @@ export class AgentProgram implements Program {
     let memory: string[] = [];
 
     while (iteration < MAX_ITER && !isCompleted) {
-      const prompt = getAgentPrompt({ question, memory, tools });
+      const prompt = getAgentPrompt({ question, memory, tools: stickyTools });
       let response = (await getCompletion(context.completion, ...prompt)).choices[0].text;
 
       if (context.isAborted() || context.isChanged()) return;
@@ -149,7 +162,7 @@ export class AgentProgram implements Program {
         continue;
       }
 
-      const observation = await act({ action, actionInput, programContext: context, pretext: prompt[0] + response });
+      const observation = await act({ action, actionInput, programContext: context, pretext: prompt[0] + response, tools: runtimeTools });
       if (context.isAborted() || context.isChanged()) return;
       const observationText = `Observation: ${observation}`;
       memory.push(response + observationText);
@@ -166,13 +179,9 @@ export function getFirstOutput(node: FrameNode): SectionNode | null {
   return outputContainer ?? null;
 }
 
-const agentTools: BaseTool[] = [new WebSearchTool(), new UxInsightTool(), new DeductionTool(), new InductionTool(), new HypothesisTool(), new AssumptionTool()];
-const fallbackTool = new FallbackTool(agentTools);
-
-export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string }) {
+export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string; tools: BaseTool[] }) {
   const actionName = input.action.toLocaleLowerCase();
-  const tool =
-    agentTools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName)) ?? fallbackTool;
+  const tool = input.tools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName))!;
   return (await tool.run(input)).observation;
 }
 
@@ -181,10 +190,10 @@ export interface AgentTool {
   description: string;
 }
 
-export async function getDefaultTools() {
+export async function getDefaultTools(tools: BaseTool[]) {
   await ensureStickyFont();
 
-  return agentTools.map((tool) => {
+  return tools.map((tool) => {
     const sticky = figma.createSticky();
     sticky.text.characters = `${tool.name}: ${tool.description}`;
     return sticky;
@@ -221,7 +230,7 @@ Final Answer: the final answer to the original input question
 Explanation: a detailed explanation on the Final Answer
 Begin!
 
-Question: ${input.question}${rollingMemory.join("")}`.trimStart();
+Question: ${input.question}${rollingMemory.join("")}\n`.trimStart();
 
   const config: Partial<OpenAICompletionPayload> = {
     max_tokens: INTERMEDIATE_ANSWER_LENGTH,

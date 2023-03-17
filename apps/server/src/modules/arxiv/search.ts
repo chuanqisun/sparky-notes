@@ -16,6 +16,7 @@ export const arxivSearch: RequestHandler = async (req, res, next) => {
     assert(typeof limit === "number");
 
     const url = `https://export.arxiv.org/api/query?search_query=${q}&max_results=${limit}`;
+    console.log(`[arxiv-search] ${url}`);
 
     // crawl duckduckgo html results
     const response = await axios.request({ url });

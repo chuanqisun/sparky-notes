@@ -18,7 +18,7 @@ export type ArxivSearchProxy = (payload: ArxivSearchPayload) => Promise<ArxivSea
 
 export function getArxivSearchProxy(accessToken: string, logger: Logger): ArxivSearchProxy {
   const proxy = async (payload: ArxivSearchPayload) => {
-    const result = await fetch(process.env.VITE_WEB_SEARCH_ENDPOINT!, {
+    const result = await fetch(process.env.VITE_ARXIV_SEARCH_ENDPOINT!, {
       method: "post",
       headers: {
         Authorization: `Bearer ${accessToken}`,

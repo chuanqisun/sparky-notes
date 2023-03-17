@@ -5,7 +5,7 @@ import { BaseTool, ToolRunInput, ToolRunOutput } from "./base-tool";
 
 export class UxInsightTool extends BaseTool {
   name = "UX Insights";
-  description = "Search usability issues and solultions for any Microsoft product. Give the tool only keywords";
+  description = "Search usability issues and solultions for any Microsoft product. Give this tool only keywords";
 
   async run(input: ToolRunInput): Promise<ToolRunOutput> {
     const query = input.actionInput.replace("Action Input:", "").trim();
