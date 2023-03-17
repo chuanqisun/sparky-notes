@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { arxivSearch } from "./modules/arxiv/search";
 import { requireJwt } from "./modules/auth/require-jwt";
 import { hitsApi } from "./modules/hits/api";
 import { hitsSignIn } from "./modules/hits/sign-in";
@@ -27,6 +28,8 @@ app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]
 
 app.post("/web/search", [validateHitsToken, webSearch]);
 app.post("/web/crawl", [validateHitsToken, webCrawl]);
+
+app.post("/arxiv/search", [validateHitsToken, arxivSearch]);
 
 app.post("/hits/token", hitsToken);
 app.post("/hits/signinstatus", hitsSignInStatus);
