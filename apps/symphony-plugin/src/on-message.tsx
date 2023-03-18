@@ -1,7 +1,7 @@
 import type { MessageToFigma } from "@symphony/types";
 import type { InjectedContext } from "./main";
 
-declare var context: any;
+declare var context: InjectedContext;
 declare var message: MessageToFigma;
 
 async function handleMessage(context: InjectedContext, message: MessageToFigma) {
