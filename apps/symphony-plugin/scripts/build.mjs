@@ -26,8 +26,8 @@ async function main() {
       .map(([key, value]) => [`process.env.${key}`, `"${value}"`])
   );
 
-  const context = await esbuild.context({
-    entryPoints: ["src/main.tsx"],
+  const pluginContext = await esbuild.context({
+    entryPoints: ["src/main.tsx", "src/on-message.tsx", "src/on-selection.tsx"],
     bundle: true,
     format: "iife",
     target: "es6", // Figma sandbox seems to miss some ESNext language features
@@ -43,11 +43,11 @@ async function main() {
 
   if (isDev) {
     console.log("watching...");
-    await context.watch();
+    await pluginContext.watch();
   } else {
     console.log("build once...");
-    context.rebuild();
-    await context.dispose();
+    pluginContext.rebuild();
+    await pluginContext.dispose();
   }
 }
 

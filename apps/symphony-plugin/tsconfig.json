@@ -5,6 +5,7 @@
     "jsxFragmentFactory": "figma.widget.Fragment",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "importsNotUsedAsValues": "error",
     "resolveJsonModule": true,
     "target": "es6",
     "lib": ["es6"],

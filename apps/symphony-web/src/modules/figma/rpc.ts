@@ -1,4 +1,4 @@
-import type { MessageToFigma, MessageToUI } from "@impromptu/types";
+import type { MessageToFigma, MessageToUI } from "@symphony/types";
 const ALLOWED_ORIGINS = ["https://www.figma.com", import.meta.env.VITE_WEB_HOST];
 
 export const notifyFigma = sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID);

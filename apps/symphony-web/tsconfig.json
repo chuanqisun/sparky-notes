@@ -17,6 +17,6 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact"
   },
-  "include": ["src"],
+  "include": ["src", "../symphony-plugin/dist/inject.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
