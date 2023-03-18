@@ -1,43 +1,20 @@
-import type { MessageToFigma } from "@symphony/types";
+import { cssPadding } from "./utils/css-padding";
+import { useInjectedRuntime } from "./utils/injected-runtime";
 
 const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>window.location.href="${href}"</script>`, options);
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
 
-export type InjectedContext = {};
-
-let injectedMessageHandler: any;
-let injectedSelectionChangeHandler: any;
-let injectedContext: InjectedContext = {};
-
-function resetContext() {
-  for (const x in injectedContext) if (injectedContext.hasOwnProperty(x)) delete (injectedContext as any)[x];
-}
-
-async function bootstrapHandler(message: MessageToFigma) {
-  if (message.injectMessageHandler) {
-    figma.ui.off("message", injectedMessageHandler);
-    resetContext();
-    injectedMessageHandler = new Function("context", "message", message.injectMessageHandler).bind(null, injectedContext);
-    figma.ui.on("message", injectedMessageHandler as any);
-  }
-  if (message.injectSelectionHandler) {
-    figma.off("selectionchange", injectedSelectionChangeHandler);
-    resetContext();
-    injectedSelectionChangeHandler = new Function("context", "message", message.injectSelectionHandler).bind(null, injectedContext);
-    figma.on("selectionchange", injectedSelectionChangeHandler as any);
-  }
-}
-
-figma.ui.on("message", bootstrapHandler);
-
 function Widget() {
+  useInjectedRuntime();
+
   return (
     <AutoLayout
-      padding={0}
+      padding={cssPadding(80, 40, 80, 40)}
       direction="vertical"
-      cornerRadius={6}
+      cornerRadius={20}
+      fill={"#333333"}
       strokeWidth={4}
       onClick={() =>
         new Promise((_resolve) => {
@@ -45,7 +22,7 @@ function Widget() {
         })
       }
     >
-      <Text fontSize={80} fontWeight={700}>
+      <Text fontSize={80} fontWeight={700} fill="#ffffff">
         Open Composer
       </Text>
     </AutoLayout>

@@ -1,4 +1,4 @@
-import { notifyFigma } from "../figma/rpc";
+import { requestFigma } from "../figma/rpc";
 
 export async function updateRuntime() {
   const [messageHandlerString, selectionHandlerString] = await Promise.all([
@@ -6,8 +6,10 @@ export async function updateRuntime() {
     import("@symphony/figma/dist/on-selection.js?raw").then((f) => f.default),
   ]);
 
-  notifyFigma({
-    injectMessageHandler: messageHandlerString,
-    injectSelectionHandler: selectionHandlerString,
+  return requestFigma({
+    requestRuntimeUpdate: {
+      messageHandler: messageHandlerString,
+      selectionHandler: selectionHandlerString,
+    },
   });
 }

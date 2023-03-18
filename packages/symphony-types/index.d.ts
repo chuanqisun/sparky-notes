@@ -1,7 +1,17 @@
-export interface MessageToUI {}
+export interface MessageToUI {
+  graphSelection?: GraphSelection;
+  respondRuntimeUpdate?: boolean;
+}
 
 export interface MessageToFigma {
   injectContext?: any;
-  injectMessageHandler?: string;
-  injectSelectionHandler?: string;
+  requestRuntimeUpdate?: {
+    messageHandler: string;
+    selectionHandler: string;
+  };
+  requestGraphSelection?: boolean;
+}
+
+export interface GraphSelection {
+  nodeName: string;
 }
