@@ -90,7 +90,7 @@ export function moveStickiesToSection(stickies: StickyNode[], parentSection: Sec
   // todo combine into single iteration
 
   stickies.forEach((stickyNode) => {
-    const { x, y } = getNextTilePosition(stickyNode, parentSection);
+    const { x, y } = getNextTilePosition(stickyNode, parentSection, { wrap: 99999 });
 
     const originalParent = stickyNode.parent;
     if (originalParent && originalParent.type === "SECTION") resizeToHugContent(originalParent);
@@ -164,12 +164,10 @@ export interface Layout {
 }
 export function resizeToHugContent(targetNode: SectionNode, layout: Layout = {}) {
   const { padding = 40 } = layout;
-  const originalWidth = targetNode.width;
   const childMaxX = Math.max(padding, Math.max(...targetNode.children.map((child) => child.x + child.width)));
   const childMaxY = Math.max(padding, Math.max(...targetNode.children.map((child) => child.y + child.height)));
 
   targetNode.resizeWithoutConstraints(childMaxX + padding, childMaxY + padding);
-  targetNode.x += (originalWidth - targetNode.width) / 2;
 }
 
 export function joinWithConnector(source: SceneNode, target: SceneNode) {
@@ -193,8 +191,7 @@ export function moveToUpstreamPosition(nodes: SceneNode[], reference: SceneNode,
 
   const { horizontalGap = 100, verticalGap = 200 } = layout;
 
-  const totalWidth = nodes.reduce((acc, node) => acc + node.width, 0) + horizontalGap * (nodes.length - 1);
-  let startX = reference.x + reference.width / 2 - totalWidth / 2;
+  let startX = reference.x;
 
   nodes.reduce((acc, node) => {
     node.x = acc;
@@ -208,8 +205,7 @@ export function moveToDownstreamPosition(nodes: SceneNode[], reference: SceneNod
 
   const { horizontalGap = 100, verticalGap = 200 } = layout;
 
-  const totalWidth = nodes.reduce((acc, node) => acc + node.width, 0) + horizontalGap * (nodes.length - 1);
-  let startX = reference.x + reference.width / 2 - totalWidth / 2;
+  let startX = reference.x;
 
   nodes.reduce((acc, node) => {
     node.x = acc;

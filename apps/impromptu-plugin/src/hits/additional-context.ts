@@ -13,5 +13,5 @@ export function getLongContext(reportContext: SearchResultItem, claimContext: Se
 }
 
 export function getShortContext(reportContext: SearchResultItem, claimContext: SearchResultChild) {
-  return [combineWhitespace(claimContext.title ?? ""), shortenToWordCount(250, combineWhitespace(claimContext.contents ?? ""))].filter(Boolean).join(" ");
+  return [shortenToWordCount(250, combineWhitespace(claimContext.contents ?? ""))].filter(Boolean).join(" ");
 }

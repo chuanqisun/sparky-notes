@@ -1,5 +1,5 @@
 import { getCompletion, OpenAICompletionResponse } from "../openai/completion";
-import { createOrUseSourceNodes, createTargetNodes, printSticky } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, printStickyNoWrap } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -126,7 +126,7 @@ Answer (Yes/No): `.trimStart();
       if (context.isAborted() || context.isChanged()) return;
 
       if (binaryAnswer.choices[0].text.toLocaleLowerCase().includes("yes")) {
-        printSticky(node, `${responseText}\n\nSource: ${link.url}`, { href: link.url });
+        printStickyNoWrap(node, `${responseText}\n\nSource: ${link.url}`, { href: link.url });
         currentResultCount++;
       }
 

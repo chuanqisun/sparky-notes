@@ -15,7 +15,6 @@
 
 - Restore the chatbot agent
 - Pre-demo feedback
-  - Section should expand to right
   - Default section and sticky color
 - Add wikipedia search
 - Add interactive task break down maybe a separate tool: for each task, interactively/progressive break down to smaller tasks
@@ -37,6 +36,7 @@
 - Difficult to draw links between nodes
 - Widget mode has difficult dev inner loop because widget code cannot be easily hot-reloaded
 - "Load more" requires interactive canvas buttons. How does this work with hundreds of items
+- 2D layout tradeoff: chainable vs. resizable
 
 ## Demo ideas
 

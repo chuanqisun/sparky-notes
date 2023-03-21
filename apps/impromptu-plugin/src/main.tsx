@@ -245,7 +245,11 @@ const handleUIMessage = async (message: MessageToFigma) => {
     node.setPluginData(PROGRAME_NAME_KEY, program.name);
     node.setRelaunchData({ open: "Open Controller UI" });
     figma.currentPage.appendChild(node);
-    moveToViewportCenter(node);
+    if (selectedOutputNodes.length) {
+      moveToDownstreamPosition([node], selectedOutputNodes[0]);
+    } else {
+      moveToViewportCenter(node);
+    }
 
     moveToUpstreamPosition(sourceNodes, node);
     sourceNodes.forEach((sourceNode) => joinWithConnector(sourceNode, node));

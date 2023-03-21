@@ -62,7 +62,7 @@ Issues: <the # of the issue, e.g. 8,1,9>
 FORMAT END
 
 The following usability issues were found across a set of usability studies conducted on Microsoft's Azure Portal experience.
-${inputNodes.map((node, index) => `Issue #${index + 1}: ${node.text.characters.trim()}`).join("\n")}
+${inputNodes.map((node, index) => `Issue #${index + 1}: ${node.text.characters.trim()} ${node.getPluginData("shortContext")}`).join("\n")}
 
 Theme:`;
 
