@@ -31,7 +31,6 @@ export function getClaimQuery(config: { query?: string; count?: boolean; top?: n
     queryType: "Simple",
     searchText: config.query ?? "*",
     highlightFields: ["Children/Title", "Children/Contents"],
-    searchFields: ["Children/Title", "Children/Contents"],
     select: ["Id", "EntityType", "Title", "Contents", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
     orderBy: config.orderBy,
   };
@@ -50,7 +49,6 @@ export function getInsightQuery(config: { query?: string; count?: boolean; top?:
     queryType: "Simple",
     searchText: config.query ?? "*",
     highlightFields: ["Children/Title", "Children/Contents"],
-    searchFields: ["Children/Title", "Children/Contents"],
     select: ["Id", "EntityType", "Title", "Contents", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
     orderBy: config.orderBy,
   };

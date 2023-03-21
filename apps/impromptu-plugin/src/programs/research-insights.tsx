@@ -45,7 +45,7 @@ export class ResearchInsightsProgram implements Program {
     const targetNode = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetNode) return;
 
-    const query = getFieldByLabel("Query", node)!.value.characters.trim();
+    const query = getFieldByLabel("Query", node)!.value.characters.trim().replace(/“|”/g, `"`); // convert figma typographer quote to basic double quote
     const limit = parseInt(getFieldByLabel("Limit", node)!.value.characters.trim());
 
     let currentSkip = 0;
