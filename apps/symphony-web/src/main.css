@@ -13,3 +13,9 @@ fieldset {
   display: grid;
   gap: 4px;
 }
+
+ul {
+  margin: 0;
+  padding: 0;
+  padding-inline-start: 20px;
+}

@@ -73,8 +73,20 @@ Plan: `);
       {isConnected ? (
         <>
           <fieldset>
-            <legend>Current node</legend>
-            <div>{selectedPrograms.length} programs</div>
+            <legend>Menu</legend>
+            <menu>
+              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>Add question</button>
+              <button>Add task</button>
+              <button onClick={handleAnalyze} disabled={!selectedPrograms.length}>
+                Analyze
+              </button>
+              <button onClick={handleRun} disabled={!selectedPrograms.some((program) => program.subtype === "Task")}>
+                Run
+              </button>
+            </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Context</legend>
             <ul>
               {selectedPrograms.map((program) => (
                 <li key={program.id}>
@@ -82,15 +94,6 @@ Plan: `);
                 </li>
               ))}
             </ul>
-          </fieldset>
-          <fieldset>
-            <legend>Menu</legend>
-            <menu>
-              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>New question</button>
-              <button>New task</button>
-              <button onClick={handleAnalyze}>Analyze question</button>
-              <button onClick={handleRun}>Run task</button>
-            </menu>
           </fieldset>
         </>
       ) : null}
