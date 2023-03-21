@@ -41,6 +41,8 @@ function App() {
     const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
     const activeProgram = respondSelectedPrograms![0];
     if (!activeProgram) return;
+    figmaProxy.notify({ requestRemoveDownstreamNode: activeProgram.id });
+
     // todo run selected program
     const partialList = await runContext.getCompletion(
       `

@@ -1,3 +1,4 @@
+import { getReachableGraph } from "./graph";
 import { closest } from "./query";
 
 class FigmaQuery {
@@ -53,6 +54,45 @@ class FigmaQuery {
     return this;
   }
 
+  connect(arrowDirection: "right" | "down" | "up") {
+    let startMagnet: "RIGHT" | "BOTTOM" | "TOP";
+    let endMagnet: "LEFT" | "TOP" | "BOTTOM";
+    switch (arrowDirection) {
+      case "right":
+        startMagnet = "RIGHT";
+        endMagnet = "LEFT";
+        break;
+      case "down":
+        startMagnet = "BOTTOM";
+        endMagnet = "TOP";
+        break;
+      case "up":
+        startMagnet = "TOP";
+        endMagnet = "BOTTOM";
+        break;
+    }
+
+    this.nodes.reduce((previousNode, node) => {
+      const connector = figma.createConnector();
+      connector.connectorStart = {
+        endpointNodeId: previousNode.id,
+        magnet: startMagnet,
+      };
+      connector.connectorEnd = {
+        endpointNodeId: node.id,
+        magnet: endMagnet,
+      };
+      return node;
+    });
+
+    return this;
+  }
+
+  filter(predicate: (node: SceneNode) => boolean) {
+    const consequentNodes = this.nodes.filter(predicate);
+    return new FigmaQuery(consequentNodes);
+  }
+
   first() {
     return new FigmaQuery(this.nodes.slice(0, 1));
   }
@@ -69,21 +109,8 @@ class FigmaQuery {
     return this;
   }
 
-  connect(direction: "left-to-right") {
-    this.nodes.reduce((previousNode, node) => {
-      const connector = figma.createConnector();
-      connector.connectorStart = {
-        endpointNodeId: previousNode.id,
-        magnet: "RIGHT",
-      };
-      connector.connectorEnd = {
-        endpointNodeId: node.id,
-        magnet: "LEFT",
-      };
-      return node;
-    });
-
-    return this;
+  last() {
+    return new FigmaQuery(this.nodes.slice(-1));
   }
 
   moveToViewCenter() {
@@ -93,6 +120,38 @@ class FigmaQuery {
     });
 
     return this;
+  }
+
+  moveToBottomCenter(target: SceneNode, gap: number) {
+    if (!this.nodes.length) return this;
+
+    const boundingMinX = Math.min(...this.nodes.map((node) => node.x));
+    const boundingMaxX = Math.max(...this.nodes.map((node) => node.x + node.width));
+    const boundingMidX = (boundingMaxX - boundingMinX) / 2;
+    const boundingMinY = Math.min(...this.nodes.map((node) => node.y));
+
+    const targetMidX = target.x + target.width / 2;
+    const targetY = target.y + target.height + gap;
+
+    const deltaX = targetMidX - boundingMidX;
+    const deltaY = targetY - boundingMinY;
+
+    this.nodes.forEach((node) => {
+      node.x += deltaX;
+      node.y += deltaY;
+    });
+
+    return this;
+  }
+
+  reachableGraphNodes() {
+    const graph = getReachableGraph(this.nodes);
+    return new FigmaQuery(graph.nodes);
+  }
+
+  remove() {
+    this.nodes.forEach((node) => node.remove());
+    return new FigmaQuery([]);
   }
 
   select() {

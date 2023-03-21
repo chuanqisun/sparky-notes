@@ -9,6 +9,7 @@ export interface MessageToFigma {
   requestCreateProgramNode?: boolean;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
   requestGraphSelection?: boolean;
+  requestRemoveDownstreamNode?: string;
   requestRuntimeUpdate?: {
     messageHandler: string;
     selectionHandler: string;

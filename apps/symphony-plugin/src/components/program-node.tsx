@@ -5,8 +5,8 @@ export interface QuestionNodeProps {
 }
 export function QuestionNode(props: QuestionNodeProps) {
   return (
-    <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} width={400} fill="#9747FF">
-      <AutoLayout direction="vertical" spacing={8} width="fill-parent">
+    <AutoLayout direction="vertical" spacing={8} padding={12} cornerRadius={12} width={400} fill="#9747FF">
+      <AutoLayout direction="vertical" spacing={4} width="fill-parent">
         <Text fill="#fff" fontWeight={700} fontSize={16} width="fill-parent">
           Question
         </Text>
@@ -28,8 +28,8 @@ export interface TaskNodeProps {
 }
 export function TaskNode(props: TaskNodeProps) {
   return (
-    <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} width={400} fill="#0D99FF">
-      <AutoLayout direction="vertical" spacing={8} width="fill-parent">
+    <AutoLayout direction="vertical" spacing={8} padding={12} cornerRadius={12} width={400} fill="#0D99FF">
+      <AutoLayout direction="vertical" spacing={4} width="fill-parent">
         <Text fill="#fff" fontWeight={700} fontSize={16} width="fill-parent">
           Task
         </Text>
