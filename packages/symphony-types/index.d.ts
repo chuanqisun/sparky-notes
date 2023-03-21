@@ -7,6 +7,7 @@ export interface MessageToUI {
 export interface MessageToFigma {
   injectContext?: any;
   requestCreateProgramNode?: boolean;
+  requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
   requestGraphSelection?: boolean;
   requestRuntimeUpdate?: {
     messageHandler: string;
@@ -22,4 +23,9 @@ export interface GraphSelection {
 export interface SelectedProgram {
   id: string;
   input: string;
+}
+
+export interface CreateSerialTaskNodesInput {
+  parentId: string;
+  taskDescriptions: string[];
 }

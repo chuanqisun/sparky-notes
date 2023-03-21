@@ -6,6 +6,7 @@ import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { getCompletion } from "./modules/openai/completion";
+import { responseToArray } from "./modules/openai/format";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToUI>(import.meta.env.VITE_PLUGIN_ID);
 
@@ -36,12 +37,37 @@ function App() {
 
   useEffect(() => figmaProxy.notify({ requestGraphSelection: true }), []);
 
+  const handleAnalyze = useCallback(async () => {
+    const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
+    const activeProgram = respondSelectedPrograms![0];
+    if (!activeProgram) return;
+    // todo run selected program
+    const partialList = await runContext.getCompletion(
+      `
+Make a step-by-step plan to answer the following question. 
+Question: "${activeProgram.input}"
+Step by step plan (one line per step): `,
+      { max_tokens: 200 }
+    );
+
+    const steps = responseToArray(partialList.choices[0].text);
+    figmaProxy.request({
+      requestCreateSerialTaskNodes: {
+        parentId: activeProgram.id,
+        taskDescriptions: steps,
+      },
+    });
+  }, [runContext]);
+
   const handleRun = useCallback(async () => {
     const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
     const activeProgram = respondSelectedPrograms![0];
     if (!activeProgram) return;
     // todo run selected program
-    const partialList = await runContext.getCompletion(`Goal: ${activeProgram.input}\nSteps:\n1. `);
+    const partialList = await runContext.getCompletion(`
+Make a plan to accomplish the following goal.
+Goal: "${activeProgram.input}"
+Plan: `);
   }, [runContext]);
 
   return (
@@ -55,8 +81,10 @@ function App() {
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>New</button>
-              <button onClick={handleRun}>Run</button>
+              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>New question</button>
+              <button>New task</button>
+              <button onClick={handleAnalyze}>Analyze question</button>
+              <button onClick={handleRun}>Run task</button>
             </menu>
           </fieldset>
         </>

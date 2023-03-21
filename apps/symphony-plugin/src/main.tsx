@@ -1,6 +1,6 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma } from "@symphony/types";
-import { ProgramNode } from "./components/program-node";
+import { QuestionNode, TaskNode } from "./components/program-node";
 import { getFieldByLabel } from "./components/text-field";
 import { $ } from "./utils/fq";
 import { getNodesDisplayName } from "./utils/query";
@@ -26,8 +26,10 @@ async function handleMessage(message: MessageToFigma) {
     handleSelection(figma.currentPage.selection);
   }
   if (message.requestCreateProgramNode) {
-    const node = await figma.createNodeFromJSXAsync(<ProgramNode />);
-    $([node]).first().setPluginData({ type: "programNode" }).appendTo(figma.currentPage).center().fit();
+    const node = await figma.createNodeFromJSXAsync(
+      <QuestionNode input="How to conduct a literature review on usability issues with the “Create new link” pattern?" />
+    );
+    $([node]).first().setPluginData({ type: "programNode", subType: "question" }).appendTo(figma.currentPage).moveToViewCenter().fitInView().select();
   }
   if (message.requestSelectedPrograms) {
     const programNodes = $(figma.currentPage.selection)
@@ -37,9 +39,23 @@ async function handleMessage(message: MessageToFigma) {
 
     const selectedPrograms = programNodes.map((node) => ({
       id: node.id,
-      input: getFieldByLabel("Input", node)!.value.characters.trim(),
+      input: getFieldByLabel("Question", node)!.value.characters.trim(),
     }));
 
     webProxy.respond(message, { respondSelectedPrograms: selectedPrograms });
+  }
+  if (message.requestCreateSerialTaskNodes) {
+    const taskNodes = await Promise.all(
+      message.requestCreateSerialTaskNodes.taskDescriptions.map((input) => figma.createNodeFromJSXAsync(<TaskNode input={input} />))
+    );
+    $(taskNodes)
+      .setPluginData({ type: "programNode", subType: "task" })
+      .appendTo(figma.currentPage)
+      .moveToViewCenter()
+      .distribute("left-to-right", 100)
+      .connect("left-to-right")
+      .align("vertical-center")
+      .fitInView()
+      .select();
   }
 }
