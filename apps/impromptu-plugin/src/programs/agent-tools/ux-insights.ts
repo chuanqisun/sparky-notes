@@ -8,7 +8,7 @@ export class UxInsightTool extends BaseTool {
   description = "Search usability issues and solultions for any Microsoft product. Give this tool only keywords";
 
   async run(input: ToolRunInput): Promise<ToolRunOutput> {
-    const query = input.actionInput.replace("Action Input:", "").trim();
+    const query = input.actionInput.replace("Action Input:", "").trim().replace(/“|”/g, `"`); // convert figma typographer quote to basic double quote
     const normalizedQuery = query.startsWith(`"`) && query.endsWith(`"`) ? query.slice(1, -1) : query;
     try {
       const searchSummary = await input.programContext.hitsSearch(getClaimQuery({ query: normalizedQuery, top: 3 }));

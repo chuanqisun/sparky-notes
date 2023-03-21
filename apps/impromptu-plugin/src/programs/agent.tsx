@@ -64,7 +64,7 @@ export class AgentProgram implements Program {
     // add default tools
     const tools = await getDefaultTools(allTools);
     moveStickiesToSection(tools, sources[0]);
-    // tools.forEach((tool) => (tool.locked = true));
+    tools.forEach((tool) => (tool.locked = true));
 
     return {
       programNode: node,
