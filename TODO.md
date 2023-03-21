@@ -32,6 +32,7 @@
 - Lack of interactive form elements on the UI (checkbox, toggle, radio, etc)
 - Difficult to draw links between nodes
 - Widget mode has difficult dev inner loop because widget code cannot be easily hot-reloaded
+- "Load more" requires interactive canvas buttons
 
 ## Demo ideas
 
