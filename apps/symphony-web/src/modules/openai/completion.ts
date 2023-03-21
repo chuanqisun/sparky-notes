@@ -32,7 +32,7 @@ export async function getCompletion(accessToken: string, prompt: string, config?
   };
 
   try {
-    const result = await fetch(process.env.VITE_OPENAI_COMPLETION_ENDPOINT!, {
+    const result = await fetch(import.meta.env.VITE_OPENAI_COMPLETION_ENDPOINT!, {
       method: "post",
       headers: {
         Authorization: `Bearer ${accessToken}`,

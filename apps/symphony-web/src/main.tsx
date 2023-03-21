@@ -39,7 +39,9 @@ function App() {
   const handleRun = useCallback(async () => {
     const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
     const activeProgram = respondSelectedPrograms![0];
+    if (!activeProgram) return;
     // todo run selected program
+    const partialList = await runContext.getCompletion(`Goal: ${activeProgram.input}\nSteps:\n1. `);
   }, [runContext]);
 
   return (
