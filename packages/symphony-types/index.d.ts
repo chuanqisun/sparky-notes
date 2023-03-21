@@ -1,5 +1,5 @@
-export interface MessageToUI {
-  graphSelection?: GraphSelection;
+export interface MessageToWeb {
+  programSelectionChanged?: SelectedProgram[];
   respondRuntimeUpdate?: boolean;
   respondSelectedPrograms?: SelectedProgram[];
 }
@@ -8,7 +8,7 @@ export interface MessageToFigma {
   injectContext?: any;
   requestCreateProgramNode?: boolean;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
-  requestGraphSelection?: boolean;
+  requestProgramSelection?: boolean;
   requestRemoveDownstreamNode?: string;
   requestRuntimeUpdate?: {
     messageHandler: string;
@@ -23,6 +23,7 @@ export interface GraphSelection {
 
 export interface SelectedProgram {
   id: string;
+  subtype: string;
   input: string;
 }
 

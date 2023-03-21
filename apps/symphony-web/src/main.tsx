@@ -1,5 +1,5 @@
 import { getFigmaProxy } from "@h20/figma-relay";
-import { MessageToFigma, MessageToUI } from "@symphony/types";
+import { MessageToFigma, MessageToWeb, SelectedProgram } from "@symphony/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
@@ -8,12 +8,13 @@ import { useInvitieCode } from "./modules/account/use-invite-code";
 import { getCompletion } from "./modules/openai/completion";
 import { responseToArray } from "./modules/openai/format";
 
-const figmaProxy = getFigmaProxy<MessageToFigma, MessageToUI>(import.meta.env.VITE_PLUGIN_ID);
+const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
+  const [selectedPrograms, setSelectedPrograms] = useState<SelectedProgram[]>([]);
 
   const runContext = useMemo(
     () => ({
@@ -22,12 +23,12 @@ function App() {
     [accessToken]
   );
 
-  const [selectionName, setSelectionName] = useState("");
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
-      const message = e.data.pluginMessage as MessageToUI;
-      if (message.graphSelection) {
-        setSelectionName(message.graphSelection!.nodeName);
+      const message = e.data.pluginMessage as MessageToWeb;
+
+      if (message.programSelectionChanged) {
+        setSelectedPrograms(message.programSelectionChanged);
       }
     };
 
@@ -35,15 +36,11 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  useEffect(() => figmaProxy.notify({ requestGraphSelection: true }), []);
-
   const handleAnalyze = useCallback(async () => {
-    const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
-    const activeProgram = respondSelectedPrograms![0];
+    const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
     figmaProxy.notify({ requestRemoveDownstreamNode: activeProgram.id });
 
-    // todo run selected program
     const partialList = await runContext.getCompletion(
       `
 Make a step-by-step plan to answer the following question. 
@@ -59,18 +56,17 @@ Step by step plan (one line per step): `,
         taskDescriptions: steps,
       },
     });
-  }, [runContext]);
+  }, [runContext, selectedPrograms]);
 
   const handleRun = useCallback(async () => {
-    const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
-    const activeProgram = respondSelectedPrograms![0];
+    const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
     // todo run selected program
     const partialList = await runContext.getCompletion(`
 Make a plan to accomplish the following goal.
 Goal: "${activeProgram.input}"
 Plan: `);
-  }, [runContext]);
+  }, [runContext, selectedPrograms]);
 
   return (
     <main>
@@ -78,7 +74,14 @@ Plan: `);
         <>
           <fieldset>
             <legend>Current node</legend>
-            <div>{selectionName}</div>
+            <div>{selectedPrograms.length} programs</div>
+            <ul>
+              {selectedPrograms.map((program) => (
+                <li key={program.id}>
+                  {program.subtype}: {program.input}{" "}
+                </li>
+              ))}
+            </ul>
           </fieldset>
           <fieldset>
             <legend>Menu</legend>

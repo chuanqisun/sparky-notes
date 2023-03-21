@@ -1,9 +1,8 @@
 import { getWebProxy } from "@h20/figma-relay";
-import type { MessageToFigma } from "@symphony/types";
+import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, TaskNode } from "./components/program-node";
 import { getFieldByLabel } from "./components/text-field";
 import { $ } from "./utils/fq";
-import { getNodesDisplayName } from "./utils/query";
 import { showUI } from "./utils/show-ui";
 
 async function main() {
@@ -15,22 +14,31 @@ async function main() {
 
 main();
 
-const webProxy = getWebProxy();
+const webProxy = getWebProxy<MessageToWeb, MessageToFigma>();
 
 function handleSelection(nodes: readonly SceneNode[]) {
-  webProxy.notify({ graphSelection: { nodeName: getNodesDisplayName(nodes) } });
+  const programNodes = $(nodes)
+    .closest((node) => node.getPluginData("type") === "programNode")
+    .toNodes<FrameNode>();
+
+  const selectedPrograms = programNodes.map((node) => {
+    const subtype = node.getPluginData("subtype");
+    return {
+      id: node.id,
+      subtype,
+      input: getFieldByLabel(subtype, node)!.value.characters.trim(),
+    };
+  });
+
+  webProxy.notify({ programSelectionChanged: selectedPrograms });
 }
 
 async function handleMessage(message: MessageToFigma) {
-  if (message.requestGraphSelection) {
-    handleSelection(figma.currentPage.selection);
-  }
-
   if (message.requestCreateProgramNode) {
     const node = await figma.createNodeFromJSXAsync(
       <QuestionNode input="How to conduct a literature review on usability issues with the “Create new link” pattern?" />
     );
-    $([node]).first().setPluginData({ type: "programNode", subType: "question" }).appendTo(figma.currentPage).moveToViewCenter().fitInView().select();
+    $([node]).first().setPluginData({ type: "programNode", subtype: "Question" }).appendTo(figma.currentPage).moveToViewCenter().fitInView().select();
   }
 
   if (message.requestRemoveDownstreamNode) {
@@ -42,20 +50,6 @@ async function handleMessage(message: MessageToFigma) {
       .remove();
   }
 
-  if (message.requestSelectedPrograms) {
-    const programNodes = $(figma.currentPage.selection)
-      .closest((node) => node.getPluginData("type") === "programNode")
-      .first()
-      .toNodes<FrameNode>();
-
-    const selectedPrograms = programNodes.map((node) => ({
-      id: node.id,
-      input: getFieldByLabel("Question", node)!.value.characters.trim(),
-    }));
-
-    webProxy.respond(message, { respondSelectedPrograms: selectedPrograms });
-  }
-
   if (message.requestCreateSerialTaskNodes) {
     const parentNode = figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode;
     if (!parentNode) return;
@@ -65,7 +59,7 @@ async function handleMessage(message: MessageToFigma) {
     );
 
     $(taskNodes)
-      .setPluginData({ type: "programNode", subType: "task" })
+      .setPluginData({ type: "programNode", subtype: "Task" })
       .appendTo(figma.currentPage)
       .distribute("left-to-right", 100)
       .connect("right")
