@@ -53,9 +53,12 @@ export class ResearchInsightsProgram implements Program {
     const pageSize = 5;
     let hasMore = true;
 
+    const foundClaimIds = new Set();
+
     while (hasMore && resultCount < limit) {
       const searchSummary = await context.hitsSearch(getInsightQuery({ query, top: pageSize, skip: currentSkip, count: currentSkip === 0 }));
       hasMore = searchSummary.totalCount > currentSkip + pageSize;
+      console.log(searchSummary);
 
       if (context.isAborted() || context.isChanged()) return;
 
@@ -68,7 +71,8 @@ export class ResearchInsightsProgram implements Program {
           const contentsMatchedChild = children.find((child) => child.contents?.toLocaleLowerCase().includes(highlight.toLocaleLowerCase()));
           const anyMatchedChild = titleMatchedChild ?? contentsMatchedChild;
 
-          if (anyMatchedChild) {
+          if (anyMatchedChild && !foundClaimIds.has(anyMatchedChild.id)) {
+            foundClaimIds.add(anyMatchedChild.id);
             const sticky = figma.createSticky();
             sticky.text.characters = titleMatchedChild ? highlight : contentsMatchedChild!.title!;
             sticky.text.hyperlink = {

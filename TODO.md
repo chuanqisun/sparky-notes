@@ -15,7 +15,6 @@
 
 - Restore the chatbot agent
 - Pre-demo feedback
-  - Duplicated search result
   - Section should expand to right
   - Default section and sticky color
 - Add wikipedia search

@@ -30,7 +30,7 @@ export function getClaimQuery(config: { query?: string; count?: boolean; top?: n
     ]).toString(),
     queryType: "Simple",
     searchText: config.query ?? "*",
-    highlightFields: ["Children/Title", "Children/Contents"],
+    highlightFields: ["Children/Title-100", "Children/Contents-100"], // increase highlight limit to 100
     select: ["Id", "EntityType", "Title", "Contents", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
     orderBy: config.orderBy,
   };
@@ -48,7 +48,7 @@ export function getInsightQuery(config: { query?: string; count?: boolean; top?:
     ]).toString(),
     queryType: "Simple",
     searchText: config.query ?? "*",
-    highlightFields: ["Children/Title", "Children/Contents"],
+    highlightFields: ["Children/Title-100", "Children/Contents-100"], // increase highlight limit to 100
     select: ["Id", "EntityType", "Title", "Contents", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
     orderBy: config.orderBy,
   };
@@ -66,7 +66,7 @@ export function getRecommendationQuery(config: { query?: string; count?: boolean
     ]).toString(),
     queryType: "Simple",
     searchText: config.query ?? "*",
-    highlightFields: ["Children/Title", "Children/Contents"],
+    highlightFields: ["Children/Title-100", "Children/Contents-100"], // increase highlight limit to 100
     searchFields: ["Children/Title", "Children/Contents"],
     select: ["Id", "EntityType", "Title", "Children/Id", "Children/EntityType", "Children/Title", "Children/Contents"],
     orderBy: config.orderBy,
