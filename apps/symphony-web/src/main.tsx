@@ -26,6 +26,10 @@ function App() {
 
   useEffect(() => notifyFigma({ requestGraphSelection: true }), []);
 
+  useEffect(() => {
+    window.addEventListener("keydown", (e) => console.log(e));
+  }, []);
+
   return (
     <main>
       {isConnected ? (
@@ -35,9 +39,10 @@ function App() {
             <div>{selectionName}</div>
           </fieldset>
           <fieldset>
-            <legend>Build</legend>
+            <legend>Menu</legend>
             <menu>
-              <button onClick={() => notifyFigma({ requestCreateProgramNode: true })}>Create</button>
+              <button onClick={() => notifyFigma({ requestCreateProgramNode: true })}>New</button>
+              <button>Run</button>
             </menu>
           </fieldset>
         </>
