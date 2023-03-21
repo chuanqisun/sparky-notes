@@ -14,6 +14,7 @@ import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
 import { SummarizeProgram } from "./programs/summarize";
+import { ThemeProgram } from "./programs/theme";
 import { WebBrowseProgram } from "./programs/web-browse";
 import { WebSearchProgram } from "./programs/web-search";
 import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
@@ -51,6 +52,7 @@ const programs: Program[] = [
   new ResearchRecommendationsProgram(),
   new SortProgram(),
   new SummarizeProgram(),
+  new ThemeProgram(),
   new WebBrowseProgram(),
   new WebSearchProgram(),
 ];
