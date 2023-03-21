@@ -37,7 +37,7 @@ function App() {
           <fieldset>
             <legend>Build</legend>
             <menu>
-              <button>Create</button>
+              <button onClick={() => notifyFigma({ requestCreateProgramNode: true })}>Create</button>
             </menu>
           </fieldset>
         </>

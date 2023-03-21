@@ -10,6 +10,7 @@ export interface MessageToFigma {
     selectionHandler: string;
   };
   requestGraphSelection?: boolean;
+  requestCreateProgramNode?: boolean;
 }
 
 export interface GraphSelection {
