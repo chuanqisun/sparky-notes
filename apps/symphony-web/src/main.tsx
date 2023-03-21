@@ -5,7 +5,6 @@ import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
-import { updateRuntime } from "./modules/updater/update-runtime";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
@@ -13,7 +12,6 @@ function App() {
   const isInviteCodeValid = useInvitieCode(inviteCode);
 
   const [selectionName, setSelectionName] = useState("");
-
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToUI;
@@ -26,9 +24,7 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  useEffect(() => {
-    updateRuntime().then(() => notifyFigma({ requestGraphSelection: true }));
-  }, []);
+  useEffect(() => notifyFigma({ requestGraphSelection: true }), []);
 
   return (
     <main>
@@ -46,12 +42,6 @@ function App() {
           </fieldset>
         </>
       ) : null}
-      <fieldset>
-        <legend>Devtool</legend>
-        <menu>
-          <button onClick={updateRuntime}>Update widget</button>
-        </menu>
-      </fieldset>
       <fieldset>
         <legend>Account</legend>
         <menu>

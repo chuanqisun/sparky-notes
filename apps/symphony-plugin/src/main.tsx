@@ -1,32 +1,23 @@
-import { cssPadding } from "./utils/css-padding";
-import { useInjectedRuntime } from "./utils/injected-runtime";
+import type { MessageToFigma } from "@symphony/types";
+import { getNodesDisplayName } from "./utils/query";
+import { notifyUI } from "./utils/rpc";
+import { showUI } from "./utils/show-ui";
 
-const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>window.location.href="${href}"</script>`, options);
+async function main() {
+  figma.on("selectionchange", () => handleSelection(figma.currentPage.selection));
+  figma.ui.on("message", handleMessage);
 
-const { widget } = figma;
-const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
-
-function Widget() {
-  useInjectedRuntime();
-
-  return (
-    <AutoLayout
-      padding={cssPadding(80, 40, 80, 40)}
-      direction="vertical"
-      cornerRadius={20}
-      fill={"#333333"}
-      strokeWidth={4}
-      onClick={() =>
-        new Promise((_resolve) => {
-          showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 600, width: 420 });
-        })
-      }
-    >
-      <Text fontSize={80} fontWeight={700} fill="#ffffff">
-        Open Composer
-      </Text>
-    </AutoLayout>
-  );
+  showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 600, width: 420 });
 }
 
-widget.register(Widget);
+main();
+
+function handleSelection(nodes: readonly SceneNode[]) {
+  notifyUI({ graphSelection: { nodeName: getNodesDisplayName(nodes) } });
+}
+
+async function handleMessage(message: MessageToFigma) {
+  if (message.requestGraphSelection) {
+    handleSelection(figma.currentPage.selection);
+  }
+}
