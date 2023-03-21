@@ -1,18 +1,25 @@
 export interface MessageToUI {
   graphSelection?: GraphSelection;
   respondRuntimeUpdate?: boolean;
+  respondSelectedPrograms?: SelectedProgram[];
 }
 
 export interface MessageToFigma {
   injectContext?: any;
+  requestCreateProgramNode?: boolean;
+  requestGraphSelection?: boolean;
   requestRuntimeUpdate?: {
     messageHandler: string;
     selectionHandler: string;
   };
-  requestGraphSelection?: boolean;
-  requestCreateProgramNode?: boolean;
+  requestSelectedPrograms?: boolean;
 }
 
 export interface GraphSelection {
   nodeName: string;
+}
+
+export interface SelectedProgram {
+  id: string;
+  input: string;
 }

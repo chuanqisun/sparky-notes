@@ -27,7 +27,7 @@ async function main() {
   );
 
   const pluginContext = await esbuild.context({
-    entryPoints: ["src/main.tsx", "src/on-message.tsx", "src/on-selection.tsx"],
+    entryPoints: ["src/main.tsx"],
     bundle: true,
     format: "iife",
     target: "es6", // Figma sandbox seems to miss some ESNext language features

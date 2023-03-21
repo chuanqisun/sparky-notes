@@ -1,8 +1,9 @@
+import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma } from "@symphony/types";
 import { ProgramNode } from "./components/program-node";
+import { getFieldByLabel } from "./components/text-field";
 import { $ } from "./utils/fq";
 import { getNodesDisplayName } from "./utils/query";
-import { notifyUI } from "./utils/rpc";
 import { showUI } from "./utils/show-ui";
 
 async function main() {
@@ -14,8 +15,10 @@ async function main() {
 
 main();
 
+const webProxy = getWebProxy();
+
 function handleSelection(nodes: readonly SceneNode[]) {
-  notifyUI({ graphSelection: { nodeName: getNodesDisplayName(nodes) } });
+  webProxy.notify({ graphSelection: { nodeName: getNodesDisplayName(nodes) } });
 }
 
 async function handleMessage(message: MessageToFigma) {
@@ -23,6 +26,20 @@ async function handleMessage(message: MessageToFigma) {
     handleSelection(figma.currentPage.selection);
   }
   if (message.requestCreateProgramNode) {
-    (await $(<ProgramNode />)).first().appendTo(figma.currentPage).center().fit();
+    const node = await figma.createNodeFromJSXAsync(<ProgramNode />);
+    $([node]).first().setPluginData({ type: "programNode" }).appendTo(figma.currentPage).center().fit();
+  }
+  if (message.requestSelectedPrograms) {
+    const programNodes = $(figma.currentPage.selection)
+      .closest((node) => node.getPluginData("type") === "programNode")
+      .first()
+      .toNodes<FrameNode>();
+
+    const selectedPrograms = programNodes.map((node) => ({
+      id: node.id,
+      input: getFieldByLabel("Input", node)!.value.characters.trim(),
+    }));
+
+    webProxy.respond(message, { respondSelectedPrograms: selectedPrograms });
   }
 }

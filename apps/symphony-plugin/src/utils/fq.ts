@@ -1,14 +1,18 @@
-class FigmaQuery {
-  static async createFromJsx(jsx: any) {
-    const node = await figma.createNodeFromJSXAsync(jsx);
+import { closest } from "./query";
 
-    return new FigmaQuery([node]);
+class FigmaQuery {
+  static createFromNodes(nodes: readonly SceneNode[]) {
+    return new FigmaQuery(nodes);
   }
 
-  constructor(private nodes: any[]) {}
+  constructor(private nodes: readonly SceneNode[]) {}
 
   first() {
     return new FigmaQuery(this.nodes.slice(0, 1));
+  }
+
+  toNodes<T extends SceneNode>() {
+    return [...this.nodes] as T[];
   }
 
   appendTo(parent: ChildrenMixin) {
@@ -36,6 +40,16 @@ class FigmaQuery {
 
     return this;
   }
+
+  setPluginData(dict: Record<string, any>) {
+    this.nodes.forEach((node) => Object.entries(dict).forEach(([key, value]) => node.setPluginData(key, value)));
+    return this;
+  }
+
+  closest(predicate: (node: SceneNode) => boolean) {
+    const foundNodes = this.nodes.map((node) => closest(predicate, node)).filter(Boolean) as SceneNode[];
+    return new FigmaQuery(foundNodes);
+  }
 }
 
-export const $ = FigmaQuery.createFromJsx;
+export const $ = FigmaQuery.createFromNodes;

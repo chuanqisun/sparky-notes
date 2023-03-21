@@ -1,15 +1,25 @@
-import { MessageToUI } from "@symphony/types";
+import { getFigmaProxy } from "@h20/figma-relay";
+import { MessageToFigma, MessageToUI } from "@symphony/types";
 import { render } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { notifyFigma } from "./modules/figma/rpc";
+import { getCompletion } from "./modules/openai/completion";
+
+const figmaProxy = getFigmaProxy<MessageToFigma, MessageToUI>(import.meta.env.VITE_PLUGIN_ID);
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
+
+  const runContext = useMemo(
+    () => ({
+      getCompletion: getCompletion.bind(null, accessToken),
+    }),
+    [accessToken]
+  );
 
   const [selectionName, setSelectionName] = useState("");
   useEffect(() => {
@@ -24,11 +34,13 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  useEffect(() => notifyFigma({ requestGraphSelection: true }), []);
+  useEffect(() => figmaProxy.notify({ requestGraphSelection: true }), []);
 
-  useEffect(() => {
-    window.addEventListener("keydown", (e) => console.log(e));
-  }, []);
+  const handleRun = useCallback(async () => {
+    const { respondSelectedPrograms } = await figmaProxy.request({ requestSelectedPrograms: true });
+    const activeProgram = respondSelectedPrograms![0];
+    // todo run selected program
+  }, [runContext]);
 
   return (
     <main>
@@ -41,8 +53,8 @@ function App() {
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button onClick={() => notifyFigma({ requestCreateProgramNode: true })}>New</button>
-              <button>Run</button>
+              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>New</button>
+              <button onClick={handleRun}>Run</button>
             </menu>
           </fieldset>
         </>
