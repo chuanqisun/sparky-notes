@@ -5,10 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { getCompletion } from "./modules/openai/completion";
-import { responseToArray } from "./modules/openai/format";
+import { getCompletion, OpenAICompletionPayload, OpenAICompletionResponse } from "./modules/openai/completion";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
+
+export interface RunContext {
+  getCompletion: (prompt: string, config: Partial<OpenAICompletionPayload>) => Promise<OpenAICompletionResponse>;
+}
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
@@ -16,7 +19,7 @@ function App() {
   const isInviteCodeValid = useInvitieCode(inviteCode);
   const [selectedPrograms, setSelectedPrograms] = useState<SelectedProgram[]>([]);
 
-  const runContext = useMemo(
+  const runContext = useMemo<RunContext>(
     () => ({
       getCompletion: getCompletion.bind(null, accessToken),
     }),
@@ -51,49 +54,9 @@ function App() {
       .join("\n");
   };
 
-  const handleAnalyze = useCallback(async () => {
-    const activeProgram = selectedPrograms[0];
-    if (!activeProgram) return;
+  const handleThinkStep = useCallback(async () => {}, [runContext, selectedPrograms]);
 
-    figmaProxy.notify({ requestRemoveDownstreamNode: activeProgram.id });
-
-    if (activeProgram.subtype === "Question") {
-      const partialList = await runContext.getCompletion(
-        `
-Make a step-by-step plan to answer the following question. 
-Question: "${activeProgram.input}"
-Step by step plan (one line per step): `,
-        { max_tokens: 200 }
-      );
-
-      const steps = responseToArray(partialList.choices[0].text);
-      figmaProxy.request({
-        requestCreateSerialTaskNodes: {
-          parentId: activeProgram.id,
-          taskDescriptions: steps,
-        },
-      });
-    } else if (activeProgram.subtype === "Task") {
-      const context = await summarizeContext(activeProgram.id);
-      const allContextItems = context.split("\n");
-      const partialList = await runContext.getCompletion(
-        `
-${allContextItems.join("\n")}
-${allContextItems[allContextItems.length - 1].split(":")[0]}.1: `,
-        { max_tokens: 200 }
-      );
-
-      const steps = responseToArray(partialList.choices[0].text);
-      figmaProxy.request({
-        requestCreateSerialTaskNodes: {
-          parentId: activeProgram.id,
-          taskDescriptions: steps,
-        },
-      });
-    }
-  }, [runContext, selectedPrograms]);
-
-  const handleRun = useCallback(async () => {
+  const handleActStep = useCallback(async () => {
     const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
 
@@ -108,14 +71,14 @@ ${allContextItems[allContextItems.length - 1].split(":")[0]}.1: `,
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>Add question</button>
-              <button>Add task</button>
-              <button onClick={handleAnalyze} disabled={!selectedPrograms.length}>
-                Analyze
+              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>Ask</button>{" "}
+              <button onClick={handleThinkStep} disabled={!selectedPrograms.length}>
+                Think
               </button>
-              <button onClick={handleRun} disabled={!selectedPrograms.some((program) => program.subtype === "Task")}>
-                Run
-              </button>
+              <button onClick={handleActStep} disabled={!selectedPrograms.some((program) => program.subtype === "Task")}>
+                Act
+              </button>{" "}
+              <button disabled={true}>Auto-run</button>
             </menu>
           </fieldset>
           <fieldset>

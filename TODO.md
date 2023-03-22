@@ -28,7 +28,19 @@
 
 ## Symphony
 
-- Explore left edge tree auto-layout
+- Category design
+  - Nouns: Question, Thought, Action plan, Observation, Answer, Mixed
+  - Verb: Think, Act, Conclude, Step, Auto-run
+- Workflow design
+  - Workflow starts with Question, expand into Thoughts, Action plans, Observations, and Answers
+  - Applying Think to Question leads to Thoughts, Action plans, or Answers
+  - Applying Act to Action plans leads to Observations
+  - Applying Think to Observations leads to Thoughts, Action plans, or Answers
+  - Applying Conclude to anything leads to Answers
+- Causally connected steps are joined by directed edge
+  - No cycle allowed
+  - All nodes along the path to the root are collectively considered "Context"
+  - When selection is mixed, context is topological sort of the superset of all paths
 
 ## Figma runtime pain point
 
