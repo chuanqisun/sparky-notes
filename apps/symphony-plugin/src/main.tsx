@@ -38,14 +38,14 @@ async function handleMessage(message: MessageToFigma) {
     const node = await figma.createNodeFromJSXAsync(
       <QuestionNode input="How to conduct a literature review on usability issues with the “Create new link” pattern?" />
     );
-    $([node]).first().setPluginData({ type: "programNode", subtype: "Question" }).appendTo(figma.currentPage).moveToViewCenter().fitInView().select();
+    $([node]).first().setPluginData({ type: "programNode", subtype: "Question" }).appendTo(figma.currentPage).moveToViewCenter().zoomOutViewToFit().select();
   }
 
   if (message.requestRemoveDownstreamNode) {
     const parentNode = figma.getNodeById(message.requestRemoveDownstreamNode) as SceneNode;
     if (!parentNode) return;
     $([parentNode])
-      .reachableGraphNodes()
+      .downstreamGraphNodes()
       .filter((node) => node.id !== parentNode.id)
       .remove();
   }
@@ -64,10 +64,9 @@ async function handleMessage(message: MessageToFigma) {
       .distribute("left-to-right", 100)
       .connect("right")
       .align("vertical-center")
-      .moveToBottomCenter(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
-      .fitInView();
+      .moveToBottomLeft(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
+      .zoomOutViewToFit();
 
     $([parentNode, ...$(taskNodes).first().toNodes()]).connect("down");
-    $([...$(taskNodes).last().toNodes(), parentNode]).connect("up");
   }
 }

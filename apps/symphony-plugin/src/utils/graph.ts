@@ -38,7 +38,7 @@ export function getReachableGraph(sources: readonly SceneNode[]): Graph {
 
 function getInEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
-    .filter(filterToAttachedConnector)
+    .filter(filterToAttachedMagnetConnector)
     .filter((connector) => connector.connectorEnd.endpointNodeId === node.id)
     .map((connector) => ({
       id: connector.id,
@@ -49,7 +49,7 @@ function getInEdges(node: SceneNode): Edge[] {
 
 function getOutEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
-    .filter(filterToAttachedConnector)
+    .filter(filterToAttachedMagnetConnector)
     .filter((connector) => connector.connectorStart.endpointNodeId === node.id)
     .map((connector) => ({
       id: connector.id,
@@ -75,12 +75,12 @@ export function getNextNodes(currentNode: SceneNode): SceneNode[] {
 }
 
 export interface AttachedConnector extends ConnectorNode {
-  connectorStart: ConnectorEndpointEndpointNodeIdAndMagnet | ConnectorEndpointPositionAndEndpointNodeId;
-  connectorEnd: ConnectorEndpointEndpointNodeIdAndMagnet | ConnectorEndpointPositionAndEndpointNodeId;
+  connectorStart: ConnectorEndpointEndpointNodeIdAndMagnet;
+  connectorEnd: ConnectorEndpointEndpointNodeIdAndMagnet;
 }
 
-export function filterToAttachedConnector(node: ConnectorNode): node is AttachedConnector {
-  if (!(node.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet).endpointNodeId) return false;
-  if (!(node.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet).endpointNodeId) return false;
+export function filterToAttachedMagnetConnector(node: ConnectorNode): node is AttachedConnector {
+  if (!(node.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet).magnet) return false;
+  if (!(node.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet).magnet) return false;
   return true;
 }

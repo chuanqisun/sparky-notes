@@ -1,5 +1,5 @@
 import { getReachableGraph } from "./graph";
-import { closest } from "./query";
+import { closest, getAbsoluteBoundingRect, isInnerOuter } from "./query";
 
 class FigmaQuery {
   static createFromNodes(nodes: readonly SceneNode[]) {
@@ -42,18 +42,6 @@ class FigmaQuery {
     return new FigmaQuery(foundNodes);
   }
 
-  distribute(direction = "left-to-right", gap: number) {
-    this.nodes.reduce<number | undefined>((topLeftX, node) => {
-      if (topLeftX) {
-        node.x = topLeftX;
-      }
-
-      return node.x + node.width + gap;
-    }, undefined);
-
-    return this;
-  }
-
   connect(arrowDirection: "right" | "down" | "up") {
     let startMagnet: "RIGHT" | "BOTTOM" | "TOP";
     let endMagnet: "LEFT" | "TOP" | "BOTTOM";
@@ -88,6 +76,23 @@ class FigmaQuery {
     return this;
   }
 
+  distribute(direction = "left-to-right", gap: number) {
+    this.nodes.reduce<number | undefined>((topLeftX, node) => {
+      if (topLeftX) {
+        node.x = topLeftX;
+      }
+
+      return node.x + node.width + gap;
+    }, undefined);
+
+    return this;
+  }
+
+  downstreamGraphNodes() {
+    const graph = getReachableGraph(this.nodes);
+    return new FigmaQuery(graph.nodes);
+  }
+
   filter(predicate: (node: SceneNode) => boolean) {
     const consequentNodes = this.nodes.filter(predicate);
     return new FigmaQuery(consequentNodes);
@@ -97,43 +102,20 @@ class FigmaQuery {
     return new FigmaQuery(this.nodes.slice(0, 1));
   }
 
-  fitInView() {
-    const previousZoom = figma.viewport.zoom;
-    figma.viewport.scrollAndZoomIntoView(this.nodes);
-
-    // only allow zoom out
-    if (figma.viewport.zoom > previousZoom) {
-      figma.viewport.zoom = previousZoom;
-    }
-
-    return this;
-  }
-
   last() {
     return new FigmaQuery(this.nodes.slice(-1));
   }
 
-  moveToViewCenter() {
-    this.nodes.forEach((node) => {
-      node.x = figma.viewport.center.x - node.width / 2;
-      node.y = figma.viewport.center.y - node.height / 2;
-    });
-
-    return this;
-  }
-
-  moveToBottomCenter(target: SceneNode, gap: number) {
+  moveToBottomLeft(target: SceneNode, gap: number) {
     if (!this.nodes.length) return this;
 
     const boundingMinX = Math.min(...this.nodes.map((node) => node.x));
-    const boundingMaxX = Math.max(...this.nodes.map((node) => node.x + node.width));
-    const boundingMidX = (boundingMaxX - boundingMinX) / 2;
     const boundingMinY = Math.min(...this.nodes.map((node) => node.y));
 
-    const targetMidX = target.x + target.width / 2;
+    const targetMinX = target.x;
     const targetY = target.y + target.height + gap;
 
-    const deltaX = targetMidX - boundingMidX;
+    const deltaX = targetMinX - boundingMinX;
     const deltaY = targetY - boundingMinY;
 
     this.nodes.forEach((node) => {
@@ -144,9 +126,13 @@ class FigmaQuery {
     return this;
   }
 
-  reachableGraphNodes() {
-    const graph = getReachableGraph(this.nodes);
-    return new FigmaQuery(graph.nodes);
+  moveToViewCenter() {
+    this.nodes.forEach((node) => {
+      node.x = figma.viewport.center.x - node.width / 2;
+      node.y = figma.viewport.center.y - node.height / 2;
+    });
+
+    return this;
   }
 
   remove() {
@@ -166,6 +152,19 @@ class FigmaQuery {
 
   toNodes<T extends SceneNode>() {
     return [...this.nodes] as T[];
+  }
+
+  zoomOutViewToFit() {
+    if (!this.nodes.length) return this;
+
+    const boundingBox = getAbsoluteBoundingRect(this.nodes);
+    const viewportBox = figma.viewport.bounds;
+
+    if (isInnerOuter(boundingBox, viewportBox)) return this;
+
+    figma.viewport.scrollAndZoomIntoView(this.nodes);
+
+    return this;
   }
 }
 
