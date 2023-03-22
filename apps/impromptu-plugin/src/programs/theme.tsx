@@ -55,7 +55,7 @@ export class ThemeProgram implements Program {
     const inputNodes = getInnerStickies(sources);
 
     const prompt = `
-Using the following format, identify ${themeCount} or more themes across the following ${itemType} list,
+Using the following format, identify ${themeCount} or more themes across the following ${itemType} list
 Provide the relevant ${itemType} id numbers after each theme.
 
 ${itemType} list:
@@ -87,8 +87,6 @@ Theme:`;
           .map((position) => parseInt(position[0]) - 1)
           .map((itemIndex) => inputNodes[itemIndex]);
 
-        console.log(themeItems);
-        // .filter(Boolean) as StickyNode[];
         return {
           name: themeName,
           items: themeItems,
