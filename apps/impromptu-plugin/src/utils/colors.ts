@@ -16,6 +16,14 @@ export const stickyColors = {
   },
 } satisfies Record<string, RGB>;
 
+export const sectionColors = {
+  Yellow: {
+    r: 1,
+    g: 0.970588207244873,
+    b: 0.8741176724433899,
+  },
+};
+
 export function getSolidFill(rgb: RGB): SolidPaint {
   return {
     type: "SOLID",

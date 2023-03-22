@@ -15,9 +15,7 @@ export class ArxivSearchTool extends BaseTool {
         .map((word) => `all:${word}`)
         .join("+OR+");
       const searchResults = await input.programContext.arxivSearch({ q: normalizedQuery, limit: 3 });
-      const observation = searchResults.entries
-        .map((entry, index) => `Result ${index + 1}: ${entry.title} ${shortenToWordCount(50, entry.summary)}...`)
-        .join(" ");
+      const observation = searchResults.entries.map((entry, index) => `Result ${index + 1}: ${entry.title} ${shortenToWordCount(50, entry.summary)}`).join(" ");
       return { observation };
     } catch (e) {
       return { observation: "No results found." };

@@ -1,6 +1,7 @@
 import { getCompletion } from "../openai/completion";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
-import { createOrUseSourceNodes, createTargetNodes, insertStickyToSection } from "../utils/edit";
+import { stickyColors } from "../utils/colors";
+import { createOrUseSourceNodes, createTargetNodes, insertStickyToSection, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -62,6 +63,7 @@ export class SortProgram implements Program {
     const onPivot = (pivot: InMemorySticky) => {
       console.log("pivot", pivot);
       const realSticky = figma.createSticky();
+      setFillColor(stickyColors.Yellow, realSticky);
       realSticky.text.characters = pivot.text;
       virtualToRealIdMap.set(pivot.vId, realSticky.id);
       const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
@@ -78,6 +80,7 @@ export class SortProgram implements Program {
       const latestTargetContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
       if (!latestTargetContainer) return;
       const realSticky = figma.createSticky();
+      setFillColor(stickyColors.Yellow, realSticky);
       if (settlement.left) {
         realSticky.text.characters = settlement.left.text;
         virtualToRealIdMap.set(settlement.left.vId, realSticky.id);

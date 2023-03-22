@@ -1,6 +1,7 @@
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
-import { createTargetNodes, moveStickiesToSection } from "../utils/edit";
+import { stickyColors } from "../utils/colors";
+import { createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -95,6 +96,7 @@ Response (bullet list of 3 - 5 items): -  `;
 
       for (let listItem of listItems) {
         const sticky = figma.createSticky();
+        setFillColor(stickyColors.Yellow, sticky);
         sticky.text.characters = listItem;
         sticky.text.hyperlink = {
           type: "URL",

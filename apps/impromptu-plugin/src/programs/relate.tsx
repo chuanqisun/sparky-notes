@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
-import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setStickyColor } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -56,7 +56,7 @@ export class RelateProgram implements Program {
       const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
       if (!targetSection) return;
       const newKeyNode = keyNode.clone();
-      setStickyColor(stickyColors.Yellow, newKeyNode);
+      setFillColor(stickyColors.Yellow, newKeyNode);
       moveStickiesToSectionNewLine([newKeyNode], targetSection);
 
       for (const valueNode of valueNodes) {
@@ -76,7 +76,7 @@ Answer (Yes/No): `;
 
           const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
           if (!targetSection) return;
-          setStickyColor(stickyColors.LightGray, combinedSticky);
+          setFillColor(stickyColors.LightGray, combinedSticky);
           moveStickiesToSectionNoWrap([combinedSticky], targetSection);
         } else {
           const followupPrompt = `Statement: ${keyNode.text.characters.replace(/\s+/g, " ")} ${relation} ${valueNode.text.characters.replace(/\s+/g, " ")}
@@ -94,7 +94,7 @@ ${fullAnswer}`;
 
           const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
           if (!targetSection) return;
-          setStickyColor(stickyColors.Green, combinedSticky);
+          setFillColor(stickyColors.Green, combinedSticky);
           moveStickiesToSectionNoWrap([combinedSticky], targetSection);
         }
       }

@@ -48,13 +48,24 @@ export class FilterProgram implements Program {
         replaceNotification("Filter requires 2 output sections.", { error: true });
         break;
       }
-      targetNodes[0].name = "Yes";
-      targetNodes[1].name = "No";
 
-      const positiveSamples = getInnerStickies([targetNodes[0]])
+      const positiveContainer =
+        targetNodes.find((node) => node.name === "Yes") ??
+        (() => {
+          targetNodes[0].name = "Yes";
+          return targetNodes[0];
+        })();
+      const negativeContainer =
+        targetNodes.find((node) => node.name === "No") ??
+        (() => {
+          targetNodes[1].name = "No";
+          return targetNodes[1];
+        })();
+
+      const positiveSamples = getInnerStickies([positiveContainer])
         .slice(0, 7)
         .map((sticky) => sticky.text.characters);
-      const negativeSamples = getInnerStickies([targetNodes[1]])
+      const negativeSamples = getInnerStickies([negativeContainer])
         .slice(0, 7)
         .map((sticky) => sticky.text.characters);
 
@@ -78,13 +89,15 @@ Answer (Yes/No): `;
       const newSticky = cloneSticky(currentSticky);
 
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
+      const [positiveContainerAfter, negativeContainerAfter] =
+        targetNodesAfterCompletion[0].name === "Yes" ? targetNodesAfterCompletion : targetNodesAfterCompletion.reverse();
       const isPositive = topChoiceResult.toLocaleLowerCase().includes("yes");
       const isNegative = topChoiceResult.toLocaleLowerCase().includes("no");
       if (!isPositive && !isNegative) {
         break;
       }
 
-      moveStickiesToSection([newSticky], isPositive ? targetNodesAfterCompletion[0] : targetNodesAfterCompletion[1]);
+      moveStickiesToSection([newSticky], isPositive ? positiveContainerAfter : negativeContainerAfter);
     }
   }
 }

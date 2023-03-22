@@ -1,6 +1,7 @@
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
-import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
+import { stickyColors } from "../utils/colors";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -75,6 +76,7 @@ Concise list (bullet list, up to ${maxItemCount} items):
 
     const newStickies = summarizedItems.map((item) => {
       const sticky = figma.createSticky();
+      setFillColor(stickyColors.Yellow, sticky);
       sticky.text.characters = item;
       return sticky;
     });

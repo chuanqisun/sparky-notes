@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
-import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setStickyColor } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -100,13 +100,13 @@ Theme:`;
     for (const theme of themes) {
       const themeSticky = figma.createSticky();
       themeSticky.text.characters = theme.name;
-      setStickyColor(stickyColors.Green, themeSticky);
+      setFillColor(stickyColors.Green, themeSticky);
       moveStickiesToSectionNewLine([themeSticky], targetSection);
 
       for (const item of theme.items) {
         const itemSticky = figma.createSticky();
         itemSticky.text.characters = item.text.characters;
-        setStickyColor(stickyColors.Yellow, itemSticky);
+        setFillColor(stickyColors.Yellow, itemSticky);
         moveStickiesToSectionNoWrap([itemSticky], targetSection);
       }
     }

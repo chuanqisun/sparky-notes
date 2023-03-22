@@ -1,7 +1,9 @@
-import { createTargetNodes, moveStickiesToSection } from "../utils/edit";
+import { stickyColors } from "../utils/colors";
+import { createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
+import { shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { AutoLayout } = figma.widget;
@@ -56,11 +58,13 @@ export class ArxivSearchProgram implements Program {
 
     for (const item of items) {
       const sticky = figma.createSticky();
-      sticky.text.characters = `${item.title}\n\n${item.summary}`;
+      setFillColor(stickyColors.Yellow, sticky);
+      sticky.text.characters = `${item.title}\n\n${shortenToWordCount(50, item.summary)}`;
       sticky.text.hyperlink = {
         type: "URL",
         value: item.url,
       };
+      sticky.setPluginData("shortContext", item.summary);
 
       resultCount++;
       moveStickiesToSection([sticky], targetNode);

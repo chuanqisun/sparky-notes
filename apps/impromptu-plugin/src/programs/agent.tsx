@@ -1,6 +1,6 @@
 import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
-import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap, setFillColor } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
@@ -20,7 +20,7 @@ import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
-const MIN_ITER = 5;
+const MIN_ITER = 3;
 const MAX_ITER = 25;
 const FINAL_ANSWER_LENGTH = 1000;
 export const INTERMEDIATE_ANSWER_LENGTH = 400;
@@ -195,6 +195,7 @@ export async function getDefaultTools(tools: BaseTool[]) {
 
   return tools.map((tool) => {
     const sticky = figma.createSticky();
+    setFillColor(stickyColors.Yellow, sticky);
     sticky.text.characters = `${tool.name}: ${tool.description}`;
     return sticky;
   });

@@ -1,5 +1,5 @@
 import { getFirstOutput, getTextChunks } from "../programs/agent";
-import { getSolidFill } from "./colors";
+import { getSolidFill, sectionColors, stickyColors } from "./colors";
 import { getNextTilePosition, getNextTilePositionNewLine, getNextTilePositionNoWrap } from "./query";
 
 export function cloneSticky(sticky: StickyNode) {
@@ -21,7 +21,7 @@ export interface StickyConfig {
 }
 
 export function printSticky(node: FrameNode, text: string, config?: StickyConfig) {
-  const { color, wordPerSticky, href } = { wordPerSticky: Infinity, ...config } satisfies StickyConfig;
+  const { color, wordPerSticky, href } = { color: stickyColors.Yellow, wordPerSticky: Infinity, ...config } satisfies StickyConfig;
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
@@ -34,7 +34,7 @@ export function printSticky(node: FrameNode, text: string, config?: StickyConfig
         setStickyHref(href, sticky);
       }
       if (color) {
-        setStickyColor(color, sticky);
+        setFillColor(color, sticky);
       }
       moveStickiesToSection([sticky], outputContainer);
     }
@@ -46,7 +46,7 @@ export function printSticky(node: FrameNode, text: string, config?: StickyConfig
 }
 
 export function printStickyNewLine(node: FrameNode, text: string, config?: StickyConfig): boolean {
-  const { color, wordPerSticky } = { wordPerSticky: Infinity, ...config } satisfies StickyConfig;
+  const { color, wordPerSticky } = { color: stickyColors.Yellow, wordPerSticky: Infinity, ...config } satisfies StickyConfig;
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
@@ -54,7 +54,7 @@ export function printStickyNewLine(node: FrameNode, text: string, config?: Stick
     textChunks.forEach((chunk, index) => {
       const sticky = figma.createSticky();
       if (color) {
-        setStickyColor(color, sticky);
+        setFillColor(color, sticky);
       }
       sticky.text.characters = chunk;
       (index === 0 ? moveStickiesToSectionNewLine : moveStickiesToSectionNoWrap)([sticky], outputContainer);
@@ -66,7 +66,7 @@ export function printStickyNewLine(node: FrameNode, text: string, config?: Stick
   }
 }
 export function printStickyNoWrap(node: FrameNode, text: string, config?: StickyConfig) {
-  const { color, wordPerSticky } = { wordPerSticky: Infinity, ...config } satisfies StickyConfig;
+  const { color, wordPerSticky } = { color: stickyColors.Yellow, wordPerSticky: Infinity, ...config } satisfies StickyConfig;
 
   const outputContainer = getFirstOutput(node);
   if (outputContainer) {
@@ -74,7 +74,7 @@ export function printStickyNoWrap(node: FrameNode, text: string, config?: Sticky
     for (const chunk of textChunks) {
       const sticky = figma.createSticky();
       if (color) {
-        setStickyColor(color, sticky);
+        setFillColor(color, sticky);
       }
       sticky.text.characters = chunk;
       moveStickiesToSectionNoWrap([sticky], outputContainer);
@@ -226,6 +226,7 @@ export function createOrUseSourceNodes(names: string[], selectedOutputNodes: Sec
       source = figma.createSection();
       source.name = name;
       source.resizeWithoutConstraints(DEFAULT_SECTION_DIMENSION, DEFAULT_STICKY_DIMENSION + 80);
+      setFillColor(sectionColors.Yellow, source);
     }
 
     return source;
@@ -248,13 +249,14 @@ export function createTargetNodes(names: string[]) {
     const target = figma.createSection();
     target.name = name;
     target.resizeWithoutConstraints(DEFAULT_SECTION_DIMENSION, DEFAULT_STICKY_DIMENSION + 80);
+    setFillColor(sectionColors.Yellow, target);
     return target;
   });
 
   return targets;
 }
 
-export function setStickyColor(color: RGB, node: StickyNode) {
+export function setFillColor(color: RGB, node: StickyNode | SectionNode) {
   node.fills = [getSolidFill(color)];
 }
 

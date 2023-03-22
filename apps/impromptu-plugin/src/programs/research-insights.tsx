@@ -2,7 +2,8 @@ import { getLongContext, getShortContext } from "../hits/additional-context";
 import { EntityName, EntityType } from "../hits/entity";
 import { removeHighlightHtml } from "../hits/highlight";
 import { getInsightQuery } from "../hits/search";
-import { createTargetNodes, moveStickiesToSection } from "../utils/edit";
+import { stickyColors } from "../utils/colors";
+import { createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -72,6 +73,7 @@ export class ResearchInsightsProgram implements Program {
           if (anyMatchedChild && !foundClaimIds.has(anyMatchedChild.id)) {
             foundClaimIds.add(anyMatchedChild.id);
             const sticky = figma.createSticky();
+            setFillColor(stickyColors.Yellow, sticky);
             sticky.text.characters = titleMatchedChild ? highlight : contentsMatchedChild!.title!;
             sticky.text.hyperlink = {
               type: "URL",
