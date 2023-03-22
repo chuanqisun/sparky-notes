@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { cloneSticky, createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -17,7 +17,7 @@ export class FilterProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Filter</FormTitle>
         <Description>For each sticky, determine where it belongs based on a Yes/No question. Lock an output sticky for use as training example.</Description>
         <TextField label="Yes/No question" value="Does the statement mention a robot?" />
@@ -28,17 +28,12 @@ export class FilterProgram implements Program {
     getFieldByLabel("Yes/No question", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["All items"], context.selectedOutputNodes);
-
-    const target1 = figma.createSection();
-    target1.name = "Yes";
-
-    const target2 = figma.createSection();
-    target2.name = "No";
+    const targets = createTargetNodes(["Yes", "No"]);
 
     return {
       programNode: node,
       sourceNodes: sources,
-      targetNodes: [target1, target2],
+      targetNodes: targets,
     };
   }
 

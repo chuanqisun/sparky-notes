@@ -18,7 +18,7 @@ export class ThemeProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Theme</FormTitle>
         <Description>Identify common themes across stickies and group them accordingly.</Description>
         <TextField label="Instruction" value="You are a UX researcher with deep exerience in Usability Engineering and analyzing usability studies." />

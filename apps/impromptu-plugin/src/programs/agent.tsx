@@ -45,7 +45,7 @@ export class AgentProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Agent</FormTitle>
         <Description>Answer a question with the provided tools.</Description>
         <TextField

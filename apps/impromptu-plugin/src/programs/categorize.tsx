@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { cloneSticky, createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -22,7 +22,7 @@ export class CategorizeProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Categorize</FormTitle>
         <Description>
           Group stickies into predefined categories. Rename categories to improve accuracy. Lock an output sticky for use as training example.
@@ -33,17 +33,12 @@ export class CategorizeProgram implements Program {
     getTextByContent("Categorize", node)!.locked = true;
 
     const sources = createOrUseSourceNodes(["Uncategorized"], context.selectedOutputNodes);
-
-    const target1 = figma.createSection();
-    target1.name = "Category A";
-
-    const target2 = figma.createSection();
-    target2.name = "Category B";
+    const targets = createTargetNodes(["Category A", "Category B"]);
 
     return {
       programNode: node,
       sourceNodes: sources,
-      targetNodes: [target1, target2],
+      targetNodes: targets,
     };
   }
 

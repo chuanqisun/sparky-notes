@@ -2,7 +2,7 @@ import { getLongContext, getShortContext } from "../hits/additional-context";
 import { EntityName, EntityType } from "../hits/entity";
 import { removeHighlightHtml } from "../hits/highlight";
 import { getRecommendationQuery } from "../hits/search";
-import { moveStickiesToSection } from "../utils/edit";
+import { createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -20,7 +20,7 @@ export class ResearchRecommendationsProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Research Recommendations</FormTitle>
         <Description>Get UX research recommendations from HITS.microsoft.com</Description>
         <TextField label="Query" value="Xbox Cloud Gaming" />
@@ -30,14 +30,12 @@ export class ResearchRecommendationsProgram implements Program {
 
     getTextByContent("Research Recommendations", node)!.locked = true;
     getFieldByLabel("Query", node)!.label.locked = true;
-
-    const target1 = figma.createSection();
-    target1.name = "Recommendations";
+    const targets = createTargetNodes(["Recommendations"]);
 
     return {
       programNode: node,
       sourceNodes: [],
-      targetNodes: [target1],
+      targetNodes: targets,
     };
   }
 

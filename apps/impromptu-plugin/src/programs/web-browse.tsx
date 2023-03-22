@@ -25,7 +25,7 @@ export class WebBrowseProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Web browse</FormTitle>
         <Description>Use linked stickies as starting point, browse the web to collect answers to your question.</Description>
         <TextField label="Question" value="What should a small business owner do in 2023?" />

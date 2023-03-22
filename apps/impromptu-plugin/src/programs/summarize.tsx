@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
-import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -18,7 +18,7 @@ export class SummarizeProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Summarize</FormTitle>
         <Description>Reduce a full list of stickies to a more concise list of stickies.</Description>
         <TextField label="Max item count" value="5" />
@@ -29,14 +29,12 @@ export class SummarizeProgram implements Program {
     getFieldByLabel("Max item count", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Full list"], context.selectedOutputNodes);
-
-    const target1 = figma.createSection();
-    target1.name = "Summarized list";
+    const targets = createTargetNodes(["Summarized list"]);
 
     return {
       programNode: node,
       sourceNodes: sources,
-      targetNodes: [target1],
+      targetNodes: targets,
     };
   }
 

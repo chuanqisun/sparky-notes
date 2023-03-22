@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { createOrUseSourceNodes, moveStickiesToSection } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -16,7 +16,7 @@ export class AnswerProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Answer</FormTitle>
         <Description>For each sticky, generate a new sticky that contains the answer to the question.</Description>
         <TextField label="Question" value="Does the statement mention a robot?" />
@@ -31,14 +31,12 @@ export class AnswerProgram implements Program {
     getFieldByLabel("Max tokens", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Input"], context.selectedOutputNodes);
-
-    const target1 = figma.createSection();
-    target1.name = "Output";
+    const targets = createTargetNodes(["Output"]);
 
     return {
       programNode: node,
       sourceNodes: sources,
-      targetNodes: [target1],
+      targetNodes: targets,
     };
   }
 

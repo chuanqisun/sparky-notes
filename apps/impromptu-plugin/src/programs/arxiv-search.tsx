@@ -1,4 +1,4 @@
-import { moveStickiesToSection } from "../utils/edit";
+import { createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
@@ -16,7 +16,7 @@ export class ArxivSearchProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>arXiv search</FormTitle>
         <Description>Find acamedic papers from arXiv.org</Description>
         <TextField label="Query" value="Nuclear fusion" />
@@ -26,14 +26,12 @@ export class ArxivSearchProgram implements Program {
 
     getTextByContent("arXiv search", node)!.locked = true;
     getFieldByLabel("Query", node)!.label.locked = true;
-
-    const target1 = figma.createSection();
-    target1.name = "Search results";
+    const targets = createTargetNodes(["Search results"]);
 
     return {
       programNode: node,
       sourceNodes: [],
-      targetNodes: [target1],
+      targetNodes: targets,
     };
   }
 

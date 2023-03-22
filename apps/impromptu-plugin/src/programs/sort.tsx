@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
-import { createOrUseSourceNodes, insertStickyToSection } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, insertStickyToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -23,7 +23,7 @@ export class SortProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Sort</FormTitle>
         <Description>Stickies will be re-arranged based on what you would like to promote. Sorting will speed up as it progresses.</Description>
         <TextField label="What to promote" value="most counterintuitive" />
@@ -34,14 +34,12 @@ export class SortProgram implements Program {
     getFieldByLabel("What to promote", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Pre-sorted"], context.selectedOutputNodes);
-
-    const target1 = figma.createSection();
-    target1.name = "Sorted";
+    const targets = createTargetNodes(["Sorted"]);
 
     return {
       programNode: node,
       sourceNodes: sources,
-      targetNodes: [target1],
+      targetNodes: targets,
     };
   }
 

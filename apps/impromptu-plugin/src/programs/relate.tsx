@@ -1,6 +1,6 @@
 import { getCompletion } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
-import { createOrUseSourceNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setStickyColor } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setStickyColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -19,7 +19,7 @@ export class RelateProgram implements Program {
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
-      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333">
+      <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Relate</FormTitle>
         <Description>For each sticky in the left section, use the relation to find stickies in the right section.</Description>
         <TextField label="Relation (left to right)" value="can be solved by" />
@@ -30,14 +30,12 @@ export class RelateProgram implements Program {
     getFieldByLabel("Relation (left to right)", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Group A", "Group B"], context.selectedOutputNodes);
-
-    const target1 = figma.createSection();
-    target1.name = "Output";
+    const targets = createTargetNodes(["Output"]);
 
     return {
       programNode: node,
       sourceNodes: sources,
-      targetNodes: [target1],
+      targetNodes: targets,
     };
   }
 

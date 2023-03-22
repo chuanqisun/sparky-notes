@@ -159,15 +159,20 @@ export function insertStickyToSection(sticky: StickyNode, reference: { position:
   resizeToHugContent(section);
 }
 
+const DEFAULT_STICKY_DIMENSION = 240; // figma constant
+const DEFAULT_SECTION_DIMENSION = 400; // match that of the program node
+
 export interface Layout {
   padding?: number;
+  minHeight?: number;
+  minWidth?: number;
 }
 export function resizeToHugContent(targetNode: SectionNode, layout: Layout = {}) {
-  const { padding = 40 } = layout;
-  const childMaxX = Math.max(padding, Math.max(...targetNode.children.map((child) => child.x + child.width)));
-  const childMaxY = Math.max(padding, Math.max(...targetNode.children.map((child) => child.y + child.height)));
+  const { padding = 40, minWidth = DEFAULT_SECTION_DIMENSION, minHeight = DEFAULT_STICKY_DIMENSION + 80 } = layout;
+  const childMaxX = Math.max(0, ...targetNode.children.map((child) => child.x + child.width));
+  const childMaxY = Math.max(0, ...targetNode.children.map((child) => child.y + child.height));
 
-  targetNode.resizeWithoutConstraints(childMaxX + padding, childMaxY + padding);
+  targetNode.resizeWithoutConstraints(Math.max(minWidth, childMaxX + padding), Math.max(minHeight, childMaxY + padding));
 }
 
 export function joinWithConnector(source: SceneNode, target: SceneNode) {
@@ -220,6 +225,7 @@ export function createOrUseSourceNodes(names: string[], selectedOutputNodes: Sec
     if (!source) {
       source = figma.createSection();
       source.name = name;
+      source.resizeWithoutConstraints(DEFAULT_SECTION_DIMENSION, DEFAULT_STICKY_DIMENSION + 80);
     }
 
     return source;
@@ -241,6 +247,7 @@ export function createTargetNodes(names: string[]) {
   const targets = names.map((name) => {
     const target = figma.createSection();
     target.name = name;
+    target.resizeWithoutConstraints(DEFAULT_SECTION_DIMENSION, DEFAULT_STICKY_DIMENSION + 80);
     return target;
   });
 

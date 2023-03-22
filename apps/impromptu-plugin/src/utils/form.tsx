@@ -6,7 +6,7 @@ export interface FormTitleProps {
 
 export function FormTitle(props: FormTitleProps) {
   return (
-    <Text fill="#fff" fontSize={20} fontWeight="bold">
+    <Text fill="#fff" fontSize={20} fontWeight="bold" width="fill-parent">
       {props.children}
     </Text>
   );
@@ -18,15 +18,15 @@ export interface TextFieldProps {
 }
 export function TextField(props: TextFieldProps) {
   return (
-    <AutoLayout direction="vertical" spacing={8}>
-      <Text fill="#fff" fontSize={16}>
+    <AutoLayout direction="vertical" spacing={8} width="fill-parent">
+      <Text fill="#fff" fontSize={16} width="fill-parent">
         {props.label}
       </Text>
       <Input
         inputBehavior="multiline"
         inputFrameProps={{ fill: "#fff", padding: 8, cornerRadius: 8 }}
         fill="#000"
-        width={320}
+        width="fill-parent"
         value={props.value}
         onTextEditEnd={() => {}}
       />
@@ -39,7 +39,7 @@ export interface DescriptionProps {
 }
 export function Description(props: DescriptionProps) {
   return (
-    <Text fill="#ccc" fontSize={16} width={320}>
+    <Text fill="#ccc" fontSize={16} width="fill-parent">
       {props.children}
     </Text>
   );
