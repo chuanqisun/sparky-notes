@@ -13,7 +13,9 @@ export class ThemeProgram implements Program {
   public name = "theme";
 
   public getSummary(node: FrameNode) {
-    return `Theme: ${getFieldByLabel("Instruction", node)!.value.characters}`;
+    return `Theme: ${getFieldByLabel("Theme count", node)!.value.characters} or more themes across ${
+      getFieldByLabel("Item type", node)!.value.characters
+    } stickies`;
   }
 
   public async create(context: CreationContext) {
@@ -21,13 +23,13 @@ export class ThemeProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Theme</FormTitle>
         <Description>Identify common themes across stickies and group them accordingly.</Description>
-        <TextField label="Instruction" value="You are a UX researcher with deep exerience in Usability Engineering and analyzing usability studies." />
+        <TextField label="Item type" value="Usability issue" />
         <TextField label="Theme count" value="4" />
       </AutoLayout>
     )) as FrameNode;
 
     getTextByContent("Theme", node)!.locked = true;
-    getFieldByLabel("Instruction", node)!.label.locked = true;
+    getFieldByLabel("Item type", node)!.label.locked = true;
     getFieldByLabel("Theme count", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Input"], context.selectedOutputNodes);
@@ -47,26 +49,29 @@ export class ThemeProgram implements Program {
       return;
     }
 
+    const itemType = getFieldByLabel("Item type", node)!.value.characters;
+    const themeCount = parseInt(getFieldByLabel("Theme count", node)!.value.characters);
+
     const inputNodes = getInnerStickies(sources);
 
     const prompt = `
-You are a UX researcher with deep exerience in Usability Engineering and analyzing usability studies.
+Using the following format, identify ${themeCount} or more themes across the following ${itemType} list,
+Provide the relevant ${itemType} id numbers after each theme.
 
-Using the following format, we will be identify four or more themes from the following usability issues, and list the relevant issue numbers that relate to the theme.
+${itemType} list:
+${inputNodes.map((node, index) => `${itemType} #${index + 1}: ${node.text.characters.trim()} ${node.getPluginData("shortContext")}`).join("\n")}
 
 FORMAT START
 Theme: <description of the first theme>
-Issues: <the # of the issue, e.g. 2,7,11>
+${itemType} #s: <the #s of the ${itemType}, e.g. 2,7,11>
 Theme: <description of the second theme>
-Issues: <the # of the issue, e.g. 8,1,9>
+${itemType} #s: <the #s of the ${itemType}, e.g. 9,1,8>
 FORMAT END
 
-The following usability issues were found across a set of usability studies conducted on Microsoft's Azure Portal experience.
-${inputNodes.map((node, index) => `Issue #${index + 1}: ${node.text.characters.trim()} ${node.getPluginData("shortContext")}`).join("\n")}
-
+Begin!
 Theme:`;
 
-    const fullAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 800 })).choices[0].text.trim();
+    const fullAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 300 })).choices[0].text.trim();
 
     const themes = fullAnswer
       .split("Theme:")
@@ -78,7 +83,7 @@ Theme:`;
           .map((themeLine) => themeLine.trim())
           .filter(Boolean);
         const themeName = allThemeLines[0];
-        const themeItems = [...(allThemeLines.find((line) => line.startsWith("Issues"))?.matchAll(/\d+/g) ?? [])]
+        const themeItems = [...(allThemeLines.find((line) => line.startsWith(itemType))?.matchAll(/\d+/g) ?? [])]
           .map((position) => parseInt(position[0]) - 1)
           .map((itemIndex) => inputNodes[itemIndex]);
 
@@ -104,7 +109,7 @@ Theme:`;
       moveStickiesToSectionNewLine([themeSticky], targetSection);
 
       for (const item of theme.items) {
-        const itemSticky = figma.createSticky();
+        const itemSticky = item.clone();
         itemSticky.text.characters = item.text.characters;
         setFillColor(stickyColors.Yellow, itemSticky);
         moveStickiesToSectionNoWrap([itemSticky], targetSection);
