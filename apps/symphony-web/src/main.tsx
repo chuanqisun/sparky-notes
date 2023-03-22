@@ -37,7 +37,18 @@ function App() {
   }, []);
 
   const summarizeContext = async (targetNodeId: string) => {
-    await figmaProxy.request({ requestContext: targetNodeId });
+    const { respondContextPath } = await figmaProxy.request({ requestContextPath: targetNodeId });
+
+    const layerSizes = respondContextPath!.map((layer) => layer.length);
+
+    return respondContextPath!
+      .flatMap((layer, layerIndex) =>
+        layer.map(
+          (item, itemIndex) =>
+            `${item.subtype}${layerIndex === 0 ? "" : " " + [...layerSizes.slice(0, layerIndex), itemIndex + 1].slice(1).join(".")}: ${item.input}`
+        )
+      )
+      .join("\n");
   };
 
   const handleAnalyze = useCallback(async () => {
@@ -63,11 +74,12 @@ Step by step plan (one line per step): `,
         },
       });
     } else if (activeProgram.subtype === "Task") {
+      const context = await summarizeContext(activeProgram.id);
+      const allContextItems = context.split("\n");
       const partialList = await runContext.getCompletion(
         `
-Make a step-by-step plan to carry out the following task
-Task: "${activeProgram.input}"
-Step by step plan (one line per step): `,
+${allContextItems.join("\n")}
+${allContextItems[allContextItems.length - 1].split(":")[0]}.1: `,
         { max_tokens: 200 }
       );
 
@@ -85,7 +97,7 @@ Step by step plan (one line per step): `,
     const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
 
-    summarizeContext(activeProgram.id);
+    const context = await summarizeContext(activeProgram.id);
     // TBD
   }, [runContext, selectedPrograms]);
 

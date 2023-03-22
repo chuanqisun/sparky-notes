@@ -1,9 +1,9 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, TaskNode } from "./components/program-node";
-import { getFieldByLabel } from "./components/text-field";
 import { $ } from "./utils/fq";
-import { selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
+import { collectContextPath, selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
+import { frameNodeLayersToContextPath, frameNodeToProgramNode } from "./utils/program-node";
 import { showUI } from "./utils/show-ui";
 
 async function main() {
@@ -22,34 +22,23 @@ function handleSelection(nodes: readonly SceneNode[]) {
     .closest((node) => node.getPluginData("type") === "programNode")
     .toNodes<FrameNode>();
 
-  const selectedPrograms = programNodes.map((node) => {
-    const subtype = node.getPluginData("subtype");
-    return {
-      id: node.id,
-      subtype,
-      input: getFieldByLabel(subtype, node)!.value.characters.trim(),
-    };
-  });
+  const selectedPrograms = programNodes.map(frameNodeToProgramNode);
 
   webProxy.notify({ programSelectionChanged: selectedPrograms });
 }
 
 async function handleMessage(message: MessageToFigma) {
-  if (message.requestContext) {
+  if (message.requestContextPath) {
     // traverseGraphAbove
-    const targetNode = figma.getNodeById(message.requestContext);
+    const targetNode = figma.getNodeById(message.requestContextPath);
     if (!targetNode) return "";
 
-    const results: any[] = [];
-
-    console.log("will traverse", targetNode);
-
+    const layers: FrameNode[][] = [[targetNode as FrameNode]];
     traverse([targetNode as SceneNode], {
-      onPreVisit: (node) => results.push(node),
-      onConnector: selectInEdgesFromTopOrLeftNodes(),
+      onConnector: selectInEdgesFromTopOrLeftNodes(collectContextPath(layers)),
     });
-
-    console.log(results);
+    const contextPath = frameNodeLayersToContextPath(layers);
+    webProxy.respond(message, { respondContextPath: contextPath });
   }
 
   if (message.requestCreateProgramNode) {

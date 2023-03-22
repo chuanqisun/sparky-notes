@@ -1,11 +1,12 @@
 export interface MessageToWeb {
   programSelectionChanged?: SelectedProgram[];
+  respondContextPath?: SelectedProgram[][];
   respondRuntimeUpdate?: boolean;
   respondSelectedPrograms?: SelectedProgram[];
 }
 
 export interface MessageToFigma {
-  requestContext?: string;
+  requestContextPath?: string;
   requestCreateProgramNode?: boolean;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
   requestProgramSelection?: boolean;

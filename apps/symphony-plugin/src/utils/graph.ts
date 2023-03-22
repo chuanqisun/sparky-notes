@@ -1,3 +1,11 @@
+export const collectContextPath = (results: SceneNode[][]) => (connectorFromTopOrLeftNode: AttachedConnector) => {
+  if (connectorFromTopOrLeftNode.connectorEnd.magnet === "TOP") {
+    results.unshift([figma.getNodeById(connectorFromTopOrLeftNode.connectorStart.endpointNodeId)].filter(Boolean) as SceneNode[]);
+  } else if (connectorFromTopOrLeftNode.connectorEnd.magnet === "LEFT") {
+    results[0].unshift(...([figma.getNodeById(connectorFromTopOrLeftNode.connectorStart.endpointNodeId)].filter(Boolean) as SceneNode[]));
+  }
+};
+
 export function collectAllExcept(excludeNodes: readonly SceneNode[], results: SceneNode[]) {
   return (candidate: SceneNode) => {
     if (excludeNodes.every((node) => node.id !== candidate.id)) {
@@ -10,12 +18,15 @@ export function selectOutEdges() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorStart.endpointNodeId === sourceNode.id;
 }
 
-export function selectInEdgesFromTopOrLeftNodes() {
+export function selectInEdgesFromTopOrLeftNodes(onEdge?: (edge: AttachedConnector, currentNode: SceneNode) => any) {
   return (connector: AttachedConnector, currentNode: SceneNode) => {
     const isInEdge = connector.connectorEnd.endpointNodeId === currentNode.id;
     if (!isInEdge) return false;
 
     const isFromTopOrLeft = ["TOP", "LEFT"].includes(connector.connectorEnd.magnet);
+
+    onEdge?.(connector, currentNode);
+
     return isFromTopOrLeft;
   };
 }
@@ -35,7 +46,7 @@ export function selectOutEdgesBelowStartNodes(startNodes: readonly SceneNode[]) 
 export interface Traversal {
   onPreVisit?: (node: SceneNode) => any;
   onPostVisit?: (node: SceneNode) => any;
-  onConnector: (connector: AttachedConnector, sourceNode: SceneNode) => boolean;
+  onConnector: (connector: AttachedConnector, currentNode: SceneNode) => boolean;
 }
 
 export function traverse(sources: readonly SceneNode[], traversal: Traversal) {
