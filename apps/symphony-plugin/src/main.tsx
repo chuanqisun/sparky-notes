@@ -34,6 +34,12 @@ function handleSelection(nodes: readonly SceneNode[]) {
 }
 
 async function handleMessage(message: MessageToFigma) {
+  if (message.requestContext) {
+    // traverseGraphAbove
+    const targetNode = figma.getNodeById(message.requestContext);
+    if (!targetNode) return "";
+  }
+
   if (message.requestCreateProgramNode) {
     const node = await figma.createNodeFromJSXAsync(
       <QuestionNode input="How to conduct a literature review on usability issues with the “Create new link” pattern?" />
@@ -62,7 +68,8 @@ async function handleMessage(message: MessageToFigma) {
       .connect("right")
       .align("vertical-center")
       .moveToBottomLeft(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
-      .zoomOutViewToFit();
+      .zoomOutViewToFit()
+      .select();
 
     $([parentNode, ...$(taskNodes).first().toNodes()]).connect("down");
   }

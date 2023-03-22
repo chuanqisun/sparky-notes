@@ -36,26 +36,49 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  const summarizeContext = async (targetNodeId: string) => {
+    await figmaProxy.request({ requestContext: targetNodeId });
+  };
+
   const handleAnalyze = useCallback(async () => {
     const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
+
     figmaProxy.notify({ requestRemoveDownstreamNode: activeProgram.id });
 
-    const partialList = await runContext.getCompletion(
-      `
+    if (activeProgram.subtype === "Question") {
+      const partialList = await runContext.getCompletion(
+        `
 Make a step-by-step plan to answer the following question. 
 Question: "${activeProgram.input}"
 Step by step plan (one line per step): `,
-      { max_tokens: 200 }
-    );
+        { max_tokens: 200 }
+      );
 
-    const steps = responseToArray(partialList.choices[0].text);
-    figmaProxy.request({
-      requestCreateSerialTaskNodes: {
-        parentId: activeProgram.id,
-        taskDescriptions: steps,
-      },
-    });
+      const steps = responseToArray(partialList.choices[0].text);
+      figmaProxy.request({
+        requestCreateSerialTaskNodes: {
+          parentId: activeProgram.id,
+          taskDescriptions: steps,
+        },
+      });
+    } else if (activeProgram.subtype === "Task") {
+      const partialList = await runContext.getCompletion(
+        `
+Make a step-by-step plan to carry out the following task
+Task: "${activeProgram.input}"
+Step by step plan (one line per step): `,
+        { max_tokens: 200 }
+      );
+
+      const steps = responseToArray(partialList.choices[0].text);
+      figmaProxy.request({
+        requestCreateSerialTaskNodes: {
+          parentId: activeProgram.id,
+          taskDescriptions: steps,
+        },
+      });
+    }
   }, [runContext, selectedPrograms]);
 
   const handleRun = useCallback(async () => {

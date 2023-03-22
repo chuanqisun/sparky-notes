@@ -5,7 +5,7 @@ export interface MessageToWeb {
 }
 
 export interface MessageToFigma {
-  injectContext?: any;
+  requestContext?: string;
   requestCreateProgramNode?: boolean;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
   requestProgramSelection?: boolean;

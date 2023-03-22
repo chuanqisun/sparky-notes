@@ -1,4 +1,4 @@
-import { excludeNodes, selectOutEdgesBelowStartNodes, traverse } from "./graph";
+import { collectAllExcept, selectOutEdgesBelowStartNodes, traverse } from "./graph";
 import { closest, getAbsoluteBoundingRect, isInnerOuter } from "./query";
 
 class FigmaQuery {
@@ -90,12 +90,14 @@ class FigmaQuery {
 
   /** all reachable nodes below the selected nodes */
   subtree() {
-    const downstreamNodes = traverse(this.nodes, {
-      onCollectNode: excludeNodes(this.nodes),
+    const results: SceneNode[] = [];
+
+    traverse(this.nodes, {
+      onPreVisit: collectAllExcept(this.nodes, results),
       onConnector: selectOutEdgesBelowStartNodes(this.nodes),
-      order: "pre",
     });
-    return new FigmaQuery(downstreamNodes);
+
+    return new FigmaQuery(results);
   }
 
   filter(predicate: (node: SceneNode) => boolean) {

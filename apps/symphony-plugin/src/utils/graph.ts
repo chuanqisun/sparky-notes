@@ -1,5 +1,9 @@
-export function excludeNodes(excludeNodes: readonly SceneNode[]) {
-  return (node: SceneNode) => excludeNodes.every((excludeNode) => node.id !== excludeNode.id);
+export function collectAllExcept(excludeNodes: readonly SceneNode[], results: SceneNode[]) {
+  return (candidate: SceneNode) => {
+    if (excludeNodes.every((node) => node.id !== candidate.id)) {
+      results.push(candidate);
+    }
+  };
 }
 
 export function selectOutEdges() {
@@ -18,16 +22,14 @@ export function selectOutEdgesBelowStartNodes(startNodes: readonly SceneNode[]) 
 }
 
 export interface Traversal {
-  onCollectNode: (node: SceneNode) => boolean;
+  onPreVisit?: (node: SceneNode) => any;
+  onPostVisit?: (node: SceneNode) => any;
   onConnector: (connector: AttachedConnector, sourceNode: SceneNode) => boolean;
-  order: "pre" | "post";
 }
 
-export function traverse(sources: readonly SceneNode[], traversal: Traversal, results?: SceneNode[]): SceneNode[] {
-  let workingResults = results ?? [];
-
+export function traverse(sources: readonly SceneNode[], traversal: Traversal) {
   sources.forEach((node) => {
-    if (traversal.order === "pre") !workingResults.some((foundNode) => foundNode.id === node.id) && traversal.onCollectNode(node) && workingResults.push(node);
+    traversal.onPreVisit?.(node);
 
     const allConnectors = node.attachedConnectors.filter(filterToAttachedMagnetConnector);
     const includedConnectors = allConnectors.filter((connector) => traversal.onConnector(connector, node));
@@ -37,12 +39,10 @@ export function traverse(sources: readonly SceneNode[], traversal: Traversal, re
       .map(figma.getNodeById)
       .filter(Boolean) as SceneNode[];
 
-    traverse(targetNodes, traversal, workingResults);
+    traverse(targetNodes, traversal);
 
-    if (traversal.order === "post") !workingResults.some((foundNode) => foundNode.id === node.id) && traversal.onCollectNode(node) && workingResults.push(node);
+    traversal.onPostVisit?.(node);
   });
-
-  return workingResults;
 }
 
 export interface Graph {
