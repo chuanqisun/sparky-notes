@@ -23,8 +23,8 @@ export class ThemeProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Theme</FormTitle>
         <Description>Identify common themes across stickies and group them accordingly.</Description>
-        <TextField label="Item type" value="Business trend" />
-        <TextField label="Theme count" value="5" />
+        <TextField label="Item type" value="Usability issue" />
+        <TextField label="Theme count" value="4" />
       </AutoLayout>
     )) as FrameNode;
 
