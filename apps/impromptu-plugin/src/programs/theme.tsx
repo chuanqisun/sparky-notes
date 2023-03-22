@@ -5,6 +5,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
+import { shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -59,7 +60,12 @@ Using the following format, identify ${themeCount} or more themes across the fol
 Provide the relevant ${itemType} id numbers after each theme.
 
 ${itemType} list:
-${inputNodes.map((node, index) => `${itemType} #${index + 1}: ${node.text.characters.trim()} ${node.getPluginData("shortContext")}`).join("\n")}
+${inputNodes
+  .map(
+    (node, index) =>
+      `${itemType} #${index + 1}: ${node.text.characters.trim()} ${shortenToWordCount(2000 / inputNodes.length, node.getPluginData("shortContext"))}`
+  )
+  .join("\n")}
 
 FORMAT START
 Theme: <description of the first theme>
@@ -71,7 +77,7 @@ FORMAT END
 Begin!
 Theme:`;
 
-    const fullAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 300 })).choices[0].text.trim();
+    const fullAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 200 })).choices[0].text.trim();
 
     const themes = fullAnswer
       .split("Theme:")
@@ -83,7 +89,7 @@ Theme:`;
           .map((themeLine) => themeLine.trim())
           .filter(Boolean);
         const themeName = allThemeLines[0];
-        const themeItems = [...(allThemeLines.find((line) => line.startsWith(itemType))?.matchAll(/\d+/g) ?? [])]
+        const themeItems = [...(allThemeLines.find((line) => line.toLocaleLowerCase().startsWith(itemType.toLocaleLowerCase()))?.matchAll(/\d+/g) ?? [])]
           .map((position) => parseInt(position[0]) - 1)
           .map((itemIndex) => inputNodes[itemIndex]);
 

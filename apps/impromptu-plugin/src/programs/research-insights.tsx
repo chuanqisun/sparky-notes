@@ -63,7 +63,7 @@ export class ResearchInsightsProgram implements Program {
 
       for (const report of searchSummary.results) {
         const children = report.document.children.filter((child) => child.title).filter((child) => child.entityType === EntityType.Insight);
-        const highlights = [...(report.highlights!["children/Title"] ?? []), ...(report.highlights!["children/Contents"] ?? [])].map(removeHighlightHtml);
+        const highlights = [...(report.highlights?.["children/Title"] ?? []), ...(report.highlights?.["children/Contents"] ?? [])].map(removeHighlightHtml);
 
         for (let highlight of highlights) {
           const titleMatchedChild = children.find((child) => child.title?.toLocaleLowerCase().includes(highlight.toLocaleLowerCase()));
@@ -91,6 +91,8 @@ export class ResearchInsightsProgram implements Program {
           if (resultCount >= limit) return;
         }
       }
+
+      currentSkip += pageSize;
     }
   }
 }
