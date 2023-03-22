@@ -84,11 +84,9 @@ Step by step plan (one line per step): `,
   const handleRun = useCallback(async () => {
     const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
-    // todo run selected program
-    const partialList = await runContext.getCompletion(`
-Make a plan to accomplish the following goal.
-Goal: "${activeProgram.input}"
-Plan: `);
+
+    summarizeContext(activeProgram.id);
+    // TBD
   }, [runContext, selectedPrograms]);
 
   return (

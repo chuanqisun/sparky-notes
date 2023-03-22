@@ -9,9 +9,20 @@ export function collectAllExcept(excludeNodes: readonly SceneNode[], results: Sc
 export function selectOutEdges() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorStart.endpointNodeId === sourceNode.id;
 }
+
+export function selectInEdgesFromTopOrLeftNodes() {
+  return (connector: AttachedConnector, currentNode: SceneNode) => {
+    const isInEdge = connector.connectorEnd.endpointNodeId === currentNode.id;
+    if (!isInEdge) return false;
+
+    const isFromTopOrLeft = ["TOP", "LEFT"].includes(connector.connectorEnd.magnet);
+    return isFromTopOrLeft;
+  };
+}
+
 export function selectOutEdgesBelowStartNodes(startNodes: readonly SceneNode[]) {
-  return (connector: AttachedConnector, sourceNode: SceneNode) => {
-    const isOutEdge = connector.connectorStart.endpointNodeId === sourceNode.id;
+  return (connector: AttachedConnector, currentNode: SceneNode) => {
+    const isOutEdge = connector.connectorStart.endpointNodeId === currentNode.id;
     const isFromSource = startNodes.some((node) => node.id === connector.connectorStart.endpointNodeId);
     if (!isFromSource) {
       return isOutEdge;
@@ -34,8 +45,9 @@ export function traverse(sources: readonly SceneNode[], traversal: Traversal) {
     const allConnectors = node.attachedConnectors.filter(filterToAttachedMagnetConnector);
     const includedConnectors = allConnectors.filter((connector) => traversal.onConnector(connector, node));
 
+    // treat all connector as outEdges from the current node
     const targetNodes = includedConnectors
-      .map((connector) => connector.connectorEnd.endpointNodeId)
+      .map((connector) => (connector.connectorEnd.endpointNodeId === node.id ? connector.connectorStart.endpointNodeId : connector.connectorEnd.endpointNodeId))
       .map(figma.getNodeById)
       .filter(Boolean) as SceneNode[];
 

@@ -88,18 +88,6 @@ class FigmaQuery {
     return this;
   }
 
-  /** all reachable nodes below the selected nodes */
-  subtree() {
-    const results: SceneNode[] = [];
-
-    traverse(this.nodes, {
-      onPreVisit: collectAllExcept(this.nodes, results),
-      onConnector: selectOutEdgesBelowStartNodes(this.nodes),
-    });
-
-    return new FigmaQuery(results);
-  }
-
   filter(predicate: (node: SceneNode) => boolean) {
     const consequentNodes = this.nodes.filter(predicate);
     return new FigmaQuery(consequentNodes);
@@ -155,6 +143,18 @@ class FigmaQuery {
   setPluginData(dict: Record<string, any>) {
     this.nodes.forEach((node) => Object.entries(dict).forEach(([key, value]) => node.setPluginData(key, value)));
     return this;
+  }
+
+  /** all reachable nodes below the selected nodes */
+  subtree() {
+    const results: SceneNode[] = [];
+
+    traverse(this.nodes, {
+      onPreVisit: collectAllExcept(this.nodes, results),
+      onConnector: selectOutEdgesBelowStartNodes(this.nodes),
+    });
+
+    return new FigmaQuery(results);
   }
 
   toNodes<T extends SceneNode>() {

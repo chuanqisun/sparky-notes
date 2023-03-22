@@ -3,6 +3,7 @@ import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, TaskNode } from "./components/program-node";
 import { getFieldByLabel } from "./components/text-field";
 import { $ } from "./utils/fq";
+import { selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
 import { showUI } from "./utils/show-ui";
 
 async function main() {
@@ -38,6 +39,17 @@ async function handleMessage(message: MessageToFigma) {
     // traverseGraphAbove
     const targetNode = figma.getNodeById(message.requestContext);
     if (!targetNode) return "";
+
+    const results: any[] = [];
+
+    console.log("will traverse", targetNode);
+
+    traverse([targetNode as SceneNode], {
+      onPreVisit: (node) => results.push(node),
+      onConnector: selectInEdgesFromTopOrLeftNodes(),
+    });
+
+    console.log(results);
   }
 
   if (message.requestCreateProgramNode) {
