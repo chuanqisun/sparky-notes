@@ -1,3 +1,50 @@
+export function excludeNodes(excludeNodes: readonly SceneNode[]) {
+  return (node: SceneNode) => excludeNodes.every((excludeNode) => node.id !== excludeNode.id);
+}
+
+export function selectOutEdges() {
+  return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorStart.endpointNodeId === sourceNode.id;
+}
+export function selectOutEdgesBelowStartNodes(startNodes: readonly SceneNode[]) {
+  return (connector: AttachedConnector, sourceNode: SceneNode) => {
+    const isOutEdge = connector.connectorStart.endpointNodeId === sourceNode.id;
+    const isFromSource = startNodes.some((node) => node.id === connector.connectorStart.endpointNodeId);
+    if (!isFromSource) {
+      return isOutEdge;
+    } else {
+      return isOutEdge && connector.connectorStart.magnet === "BOTTOM";
+    }
+  };
+}
+
+export interface Traversal {
+  onCollectNode: (node: SceneNode) => boolean;
+  onConnector: (connector: AttachedConnector, sourceNode: SceneNode) => boolean;
+  order: "pre" | "post";
+}
+
+export function traverse(sources: readonly SceneNode[], traversal: Traversal, results?: SceneNode[]): SceneNode[] {
+  let workingResults = results ?? [];
+
+  sources.forEach((node) => {
+    if (traversal.order === "pre") !workingResults.some((foundNode) => foundNode.id === node.id) && traversal.onCollectNode(node) && workingResults.push(node);
+
+    const allConnectors = node.attachedConnectors.filter(filterToAttachedMagnetConnector);
+    const includedConnectors = allConnectors.filter((connector) => traversal.onConnector(connector, node));
+
+    const targetNodes = includedConnectors
+      .map((connector) => connector.connectorEnd.endpointNodeId)
+      .map(figma.getNodeById)
+      .filter(Boolean) as SceneNode[];
+
+    traverse(targetNodes, traversal, workingResults);
+
+    if (traversal.order === "post") !workingResults.some((foundNode) => foundNode.id === node.id) && traversal.onCollectNode(node) && workingResults.push(node);
+  });
+
+  return workingResults;
+}
+
 export interface Graph {
   nodeIds: string[];
   nodes: SceneNode[];

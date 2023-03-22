@@ -44,10 +44,7 @@ async function handleMessage(message: MessageToFigma) {
   if (message.requestRemoveDownstreamNode) {
     const parentNode = figma.getNodeById(message.requestRemoveDownstreamNode) as SceneNode;
     if (!parentNode) return;
-    $([parentNode])
-      .downstreamGraphNodes()
-      .filter((node) => node.id !== parentNode.id)
-      .remove();
+    $([parentNode]).subtree().remove();
   }
 
   if (message.requestCreateSerialTaskNodes) {
