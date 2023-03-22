@@ -26,6 +26,10 @@
 - Convert to Widget for relaunch discoverability
 - Fix filter output auto-rename
 
+## Symphony
+
+- Explore left edge tree auto-layout
+
 ## Figma runtime pain point
 
 - Progress/status display can be stuck when user force closes the plugin
