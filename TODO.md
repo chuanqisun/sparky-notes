@@ -13,6 +13,7 @@
 
 ## Impromptu
 
+- Add publish to HITS action
 - Restore the chatbot agent
 - Add wikipedia search
 - Add interactive task break down maybe a separate tool: for each task, interactively/progressive break down to smaller tasks
