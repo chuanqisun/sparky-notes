@@ -3,8 +3,9 @@ import type { DisplayProgram, MessageToFigma, MessageToWeb } from "@symphony/typ
 import { ThoughtNode } from "../components/program-node";
 import { frameNodeToDisplayProgram, selectionNodesToDisplayPrograms } from "../utils/display-program";
 import { $ } from "../utils/fq";
-import { selectInEdges, traverse } from "../utils/graph";
+import { getOutConnectors, selectInConnectors, traverse } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
+import { sortUpstreamNodes } from "../utils/sort";
 
 export type Handler = (message: MessageToFigma, context: HandlerContext) => any;
 
@@ -47,6 +48,60 @@ export const respondCreateDownstreamProgram: Handler = async (message, context) 
   }
 };
 
+export const respondLinearContextGraph: Handler = async (message, context) => {
+  if (!message.requestLinearContextGraph) return;
+
+  const leafNodes = message.requestLinearContextGraph.leafIds.map((id) => figma.getNodeById(id)).filter(Boolean) as SceneNode[];
+  if (!leafNodes.length) return;
+
+  const reachableConnectorIds: string[] = [];
+  const isInConnector = selectInConnectors();
+  let hasCycle = false;
+
+  // first traverse, gather all edges
+  leafNodes.forEach((leafNode) => {
+    let hasCycleFromLeaf = false;
+    const reachableConnectorIdsFromLeaf = new Set<string>();
+    traverse([leafNode], {
+      onConnector: (connector, sourceNode) => {
+        const isInEdge = isInConnector(connector, sourceNode); // go upstream
+
+        if (isInEdge) {
+          if (reachableConnectorIdsFromLeaf.has(connector.id)) {
+            hasCycleFromLeaf = true;
+            return false;
+          }
+
+          reachableConnectorIdsFromLeaf.add(connector.id);
+        }
+
+        return isInEdge;
+      },
+    });
+
+    if (hasCycleFromLeaf) {
+      hasCycle = true;
+    }
+    reachableConnectorIds.push(...reachableConnectorIdsFromLeaf);
+  });
+
+  const uniqueReachableConnectorIds = new Set(reachableConnectorIds);
+
+  if (hasCycle) {
+    replaceNotification("Cycle detected in graph", { error: true });
+    return;
+  }
+
+  // find leaf nodes that are not connected to any other leaf nodes
+  const qualifiedLeafNodes = leafNodes.filter((candidateLeafNode) => {
+    return getOutConnectors(candidateLeafNode).every((connector) => !uniqueReachableConnectorIds.has(connector.id));
+  }) as FrameNode[];
+
+  console.log("reachable connectors", [...uniqueReachableConnectorIds]);
+  const sortedNodes = sortUpstreamNodes(qualifiedLeafNodes, uniqueReachableConnectorIds) as FrameNode[];
+  console.log("upstreamContext", sortedNodes.map(frameNodeToDisplayProgram));
+};
+
 export const respondPathFromRoot: Handler = async (message, context) => {
   if (!message.requestPathFromRoot) {
     return;
@@ -62,7 +117,7 @@ export const respondPathFromRoot: Handler = async (message, context) => {
 
   const results = [] as DisplayProgram[];
   traverse([targetNode as SceneNode], {
-    onConnector: selectInEdges(),
+    onConnector: selectInConnectors(),
     onPreVisit: (node) => results.unshift(frameNodeToDisplayProgram(node as FrameNode)),
   });
 

@@ -155,6 +155,11 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Context</legend>
+            <menu>
+              <button onClick={() => figmaProxy.notify({ requestLinearContextGraph: { leafIds: selectedPrograms.map((p) => p.id) } })}>
+                Get debug context
+              </button>
+            </menu>
             <ul>
               {selectedPrograms.map((program) => (
                 <li key={program.id}>

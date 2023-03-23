@@ -13,6 +13,9 @@ export interface MessageToFigma {
   requestCreateProgramNode?: boolean;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
   requestCreateDownstreamProgram?: CreateDownstreamProgramNodeInput;
+  requestLinearContextGraph?: {
+    leafIds: string[];
+  };
   requestPathFromRoot?: string; // includes nodes above the selected node
   requestRemoveDownstreamNode?: string;
   requestRuntimeUpdate?: {

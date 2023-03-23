@@ -14,11 +14,11 @@ export function collectAllExcept(excludeNodes: readonly SceneNode[], results: Sc
   };
 }
 
-export function selectOutEdges() {
+export function selectOutConnectors() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorStart.endpointNodeId === sourceNode.id;
 }
 
-export function selectInEdges() {
+export function selectInConnectors() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorEnd.endpointNodeId === sourceNode.id;
 }
 
@@ -110,10 +110,27 @@ export function getReachableGraph(sources: readonly SceneNode[]): Graph {
   };
 }
 
+export function getInConnectors(node: SceneNode): AttachedConnector[] {
+  return node.attachedConnectors.filter(filterToAttachedMagnetConnector).filter(isInConnectorOf(node.id));
+}
+
+export function getOutConnectors(node: SceneNode): AttachedConnector[] {
+  return node.attachedConnectors.filter(filterToAttachedMagnetConnector).filter(isOutConnectorOf(node.id));
+}
+
+export function isInConnectorOf(nodeId: string) {
+  return (connector: AttachedConnector) => connector.connectorEnd.endpointNodeId === nodeId;
+}
+
+export function isOutConnectorOf(nodeId: string) {
+  return (connector: AttachedConnector) => connector.connectorStart.endpointNodeId === nodeId;
+}
+
+/** @deprecated use getInConnectors */
 export function getInEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
     .filter(filterToAttachedMagnetConnector)
-    .filter((connector) => connector.connectorEnd.endpointNodeId === node.id)
+    .filter(isInConnectorOf(node.id))
     .map((connector) => ({
       id: connector.id,
       source: connector.connectorStart.endpointNodeId,
@@ -121,10 +138,11 @@ export function getInEdges(node: SceneNode): Edge[] {
     }));
 }
 
+/** @deprecated use getOutConnectors */
 export function getOutEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
     .filter(filterToAttachedMagnetConnector)
-    .filter((connector) => connector.connectorStart.endpointNodeId === node.id)
+    .filter(isOutConnectorOf(node.id))
     .map((connector) => ({
       id: connector.id,
       source: connector.connectorStart.endpointNodeId,
