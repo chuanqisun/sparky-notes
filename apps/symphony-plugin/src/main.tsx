@@ -73,12 +73,12 @@ async function handleMessage(message: MessageToFigma) {
       .setPluginData({ type: "programNode", subtype: "Task" })
       .appendTo(figma.currentPage)
       .distribute("left-to-right", 100)
-      .connect("right")
+      .joinWithConnectors("right")
       .align("vertical-center")
       .moveToBottomLeft(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
       .zoomOutViewToContain()
       .select();
 
-    $([parentNode, ...$(taskNodes).first().toNodes()]).connect("down");
+    $([parentNode, ...$(taskNodes).first().toNodes()]).joinWithConnectors("down");
   }
 }

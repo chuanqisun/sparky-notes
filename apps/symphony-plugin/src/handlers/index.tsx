@@ -34,8 +34,8 @@ export const respondCreateDownstreamProgram: Handler = async (message, context) 
       const parentNode = messageData.parentId ? (figma.getNodeById(messageData.parentId) as FrameNode) : null;
       const fqNode = $([node]).appendTo(figma.currentPage).setPluginData({ type: "programNode", subtype: "Thought" });
       if (parentNode) {
-        fqNode.moveToBottomLeft(parentNode, 100).select().scrollOrZoomOutViewToContain();
-        $([parentNode, node]).connect("down");
+        fqNode.moveToGraphNextPosition(parentNode).select().scrollOrZoomOutViewToContain();
+        $([parentNode, node]).joinWithConnectors("down");
       } else {
         fqNode.select().moveToViewCenter().zoomOutViewToContain();
       }

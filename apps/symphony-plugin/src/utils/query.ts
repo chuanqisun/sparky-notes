@@ -8,6 +8,24 @@ export function closest<T extends SceneNode>(predicate: (node: SceneNode) => Boo
   return closest<T>(predicate, node.parent as SceneNode); // TODO questionable typing
 }
 
+export function filterToType<T extends BaseNode>(type: BaseNode["type"]) {
+  return function (node: BaseNode): node is T {
+    return node.type === type;
+  };
+}
+
+export function filterToPredicate<T extends BaseNode>(predicate: (node: BaseNode) => boolean) {
+  return function (node: BaseNode): node is T {
+    return predicate(node);
+  };
+}
+
+export function filterToHaveWidgetDataKey(key: string) {
+  return function (node: BaseNode): node is WidgetNode {
+    return node.getPluginDataKeys().includes(key);
+  };
+}
+
 export function getNodesDisplayName(nodes: readonly SceneNode[]) {
   switch (nodes.length) {
     case 0:
@@ -16,23 +34,6 @@ export function getNodesDisplayName(nodes: readonly SceneNode[]) {
       return nodes[0].name;
     default:
       return "Mixed";
-  }
-}
-
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export function getNodeAbsolutePosition(node: SceneNode): Point {
-  if (!(node.parent as SceneNode)?.x) {
-    return { x: node.x, y: node.y };
-  } else {
-    const parentPosition = getNodeAbsolutePosition(node.parent as SceneNode);
-    return {
-      x: node.x + parentPosition.x,
-      y: node.y + parentPosition.y,
-    };
   }
 }
 
@@ -49,26 +50,9 @@ export function canBeInnerOuter(innerCandidate: Rect, outerCandidate: Rect) {
   return innerCandidate.width <= outerCandidate.width && innerCandidate.height <= outerCandidate.height;
 }
 
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-export function getAbsoluteBoundingRect(nodes: readonly SceneNode[]): Rect {
-  if (nodes.length === 0) throw new Error("At least one node is required");
-
-  if (nodes.length === 1) {
-    const pos = getNodeAbsolutePosition(nodes[0]);
-    return {
-      x: pos.x,
-      y: pos.y,
-      width: nodes[0].width,
-      height: nodes[0].height,
-    };
-  }
-
-  const nodeBoundingBoxes = nodes.map((node) => getAbsoluteBoundingRect([node]));
+export function getAbsoluteBoundingBox(nodes: readonly SceneNode[]): Rect {
+  const nodeBoundingBoxes = nodes.map((node) => node.absoluteBoundingBox!).filter(Boolean);
+  if (nodeBoundingBoxes.length === 0) throw new Error("At least one node is required");
 
   const x = Math.min(...nodeBoundingBoxes.map((box) => box.x));
   const y = Math.min(...nodeBoundingBoxes.map((box) => box.y));
@@ -81,4 +65,33 @@ export function getAbsoluteBoundingRect(nodes: readonly SceneNode[]): Rect {
     width: maxX - x,
     height: maxY - y,
   };
+}
+
+export interface BoundingNodes {
+  top: SceneNode[];
+  right: SceneNode[];
+  left: SceneNode[];
+  bottom: SceneNode[];
+}
+export function getBoundingNodes(nodes: readonly SceneNode[]): BoundingNodes {
+  const allNodesBox = getAbsoluteBoundingBox(nodes);
+
+  const result: BoundingNodes = {
+    top: [],
+    right: [],
+    bottom: [],
+    left: [],
+  };
+
+  nodes.forEach((node) => {
+    const nodeBox = node.absoluteBoundingBox;
+    if (!nodeBox) return;
+
+    if (nodeBox.x === allNodesBox.x) result.left.push(node);
+    if (nodeBox.x + nodeBox.width === allNodesBox.x + allNodesBox.width) result.right.push(node);
+    if (nodeBox.y === allNodesBox.y) result.top.push(node);
+    if (nodeBox.y + nodeBox.height === allNodesBox.y + allNodesBox.height) result.bottom.push(node);
+  });
+
+  return result;
 }

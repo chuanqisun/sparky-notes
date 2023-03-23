@@ -1,5 +1,9 @@
-import { collectAllExcept, selectOutEdgesBelowStartNodes, traverse } from "./graph";
-import { canBeInnerOuter, closest, getAbsoluteBoundingRect, isInnerOuter } from "./query";
+import { collectAllExcept, filterToAttachedMagnetConnector, selectOutEdgesBelowStartNodes, traverse } from "./graph";
+import { graphHorizonalDefaultGap, graphVerticalDefaultGap } from "./layout";
+import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, isInnerOuter } from "./query";
+
+export type ConnectorDirection = "left" | "right" | "up" | "down";
+export type MagnetPosition = "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
 
 class FigmaQuery {
   static createFromNodes(nodes: readonly SceneNode[]) {
@@ -42,13 +46,52 @@ class FigmaQuery {
     return new FigmaQuery(foundNodes);
   }
 
-  connect(arrowDirection: "right" | "down" | "up") {
-    let startMagnet: "RIGHT" | "BOTTOM" | "TOP";
-    let endMagnet: "LEFT" | "TOP" | "BOTTOM";
-    switch (arrowDirection) {
+  distribute(direction = "left-to-right", gap: number) {
+    this.nodes.reduce<number | undefined>((topLeftX, node) => {
+      if (topLeftX) {
+        node.x = topLeftX;
+      }
+
+      return node.x + node.width + gap;
+    }, undefined);
+
+    return this;
+  }
+
+  filter(predicate: (node: SceneNode) => boolean) {
+    const consequentNodes = this.nodes.filter(predicate);
+    return new FigmaQuery(consequentNodes);
+  }
+
+  first() {
+    return new FigmaQuery(this.nodes.slice(0, 1));
+  }
+
+  graphNext() {
+    if (!this.nodes.length) return new FigmaQuery([]);
+
+    const nextNodes = this.nodes.flatMap((refNode) =>
+      refNode.attachedConnectors
+        .filter(filterToAttachedMagnetConnector)
+        .filter((connector) => connector.connectorStart.endpointNodeId === refNode.id)
+        .map((outEdge) => figma.getNodeById(outEdge.connectorEnd.endpointNodeId)!)
+        .filter(Boolean)
+    ) as SceneNode[];
+
+    return new FigmaQuery(nextNodes);
+  }
+
+  joinWithConnectors(connectorExitDirection: ConnectorDirection) {
+    let startMagnet: MagnetPosition;
+    let endMagnet: MagnetPosition;
+    switch (connectorExitDirection) {
       case "right":
         startMagnet = "RIGHT";
         endMagnet = "LEFT";
+        break;
+      case "left":
+        startMagnet = "LEFT";
+        endMagnet = "RIGHT";
         break;
       case "down":
         startMagnet = "BOTTOM";
@@ -76,32 +119,11 @@ class FigmaQuery {
     return this;
   }
 
-  distribute(direction = "left-to-right", gap: number) {
-    this.nodes.reduce<number | undefined>((topLeftX, node) => {
-      if (topLeftX) {
-        node.x = topLeftX;
-      }
-
-      return node.x + node.width + gap;
-    }, undefined);
-
-    return this;
-  }
-
-  filter(predicate: (node: SceneNode) => boolean) {
-    const consequentNodes = this.nodes.filter(predicate);
-    return new FigmaQuery(consequentNodes);
-  }
-
-  first() {
-    return new FigmaQuery(this.nodes.slice(0, 1));
-  }
-
   last() {
     return new FigmaQuery(this.nodes.slice(-1));
   }
 
-  moveToBottomLeft(target: SceneNode, gap: number) {
+  moveToBottomLeft(target: SceneNode, gap = graphVerticalDefaultGap) {
     if (!this.nodes.length) return this;
 
     const boundingMinX = Math.min(...this.nodes.map((node) => node.x));
@@ -110,28 +132,43 @@ class FigmaQuery {
     const targetMinX = target.x;
     const targetY = target.y + target.height + gap;
 
-    const deltaX = targetMinX - boundingMinX;
-    const deltaY = targetY - boundingMinY;
+    const translateX = targetMinX - boundingMinX;
+    const translateY = targetY - boundingMinY;
 
-    this.nodes.forEach((node) => {
-      node.x += deltaX;
-      node.y += deltaY;
-    });
+    return this.translate(translateX, translateY);
+  }
 
-    return this;
+  moveToGraphNextPosition(target: SceneNode, verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
+    if (!this.nodes.length) return this;
+
+    const selfRect = getAbsoluteBoundingBox(this.nodes);
+    const existingNextNodes = $([target]).graphNext().toNodes();
+
+    if (!existingNextNodes.length) {
+      return this.moveToBottomLeft(target, verticalGap);
+    } else {
+      const anchor = getBoundingNodes(getBoundingNodes(existingNextNodes).right).bottom[0]!;
+      const translateX = anchor.x + anchor.width + horizontalGap - selfRect.x;
+      const translateY = anchor.y - selfRect.y;
+
+      return this.translate(translateX, translateY);
+    }
   }
 
   moveToViewCenter() {
-    this.nodes.forEach((node) => {
-      node.x = figma.viewport.center.x - node.width / 2;
-      node.y = figma.viewport.center.y - node.height / 2;
-    });
+    const rect = getAbsoluteBoundingBox(this.nodes);
+    const rectCenter = {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2,
+    };
+    const translateX = figma.viewport.center.x - rectCenter.x;
+    const translateY = figma.viewport.center.y - rectCenter.y;
 
-    return this;
+    return this.translate(translateX, translateY);
   }
 
   moveViewToCenter() {
-    const rect = getAbsoluteBoundingRect(this.nodes);
+    const rect = getAbsoluteBoundingBox(this.nodes);
     figma.viewport.center = {
       x: rect.x + rect.width / 2,
       y: rect.y + rect.height / 2,
@@ -147,7 +184,7 @@ class FigmaQuery {
   // Scroll the least distance to fit the selection. If impossible, zoom out to fit
   scrollOrZoomOutViewToContain(padding?: { top: number; right: number; bottom: number; left: number }) {
     const finalPadding = { top: 10, right: 10, bottom: 100, left: 10, ...padding }; // additional bottom distance due to figjam dock
-    const rect = getAbsoluteBoundingRect(this.nodes);
+    const rect = getAbsoluteBoundingBox(this.nodes);
 
     const viewportBox = figma.viewport.bounds;
 
@@ -208,10 +245,18 @@ class FigmaQuery {
     return [...this.nodes] as T[];
   }
 
+  translate(x: number, y: number) {
+    this.nodes.forEach((node) => {
+      node.x += x;
+      node.y += y;
+    });
+    return this;
+  }
+
   zoomOutViewToContain() {
     if (!this.nodes.length) return this;
 
-    const boundingBox = getAbsoluteBoundingRect(this.nodes);
+    const boundingBox = getAbsoluteBoundingBox(this.nodes);
     const viewportBox = figma.viewport.bounds;
 
     if (isInnerOuter(boundingBox, viewportBox)) return this;

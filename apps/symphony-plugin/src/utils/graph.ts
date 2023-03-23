@@ -110,7 +110,7 @@ export function getReachableGraph(sources: readonly SceneNode[]): Graph {
   };
 }
 
-function getInEdges(node: SceneNode): Edge[] {
+export function getInEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
     .filter(filterToAttachedMagnetConnector)
     .filter((connector) => connector.connectorEnd.endpointNodeId === node.id)
@@ -121,7 +121,7 @@ function getInEdges(node: SceneNode): Edge[] {
     }));
 }
 
-function getOutEdges(node: SceneNode): Edge[] {
+export function getOutEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
     .filter(filterToAttachedMagnetConnector)
     .filter((connector) => connector.connectorStart.endpointNodeId === node.id)
