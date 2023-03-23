@@ -130,6 +130,15 @@ class FigmaQuery {
     return this;
   }
 
+  moveViewToCenter() {
+    const rect = getAbsoluteBoundingRect(this.nodes);
+    figma.viewport.center = {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2,
+    };
+    return this;
+  }
+
   remove() {
     this.nodes.forEach((node) => node.remove());
     return new FigmaQuery([]);

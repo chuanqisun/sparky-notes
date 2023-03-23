@@ -1,28 +1,32 @@
 export interface MessageToWeb {
-  programSelectionChanged?: SelectedProgram[];
-  respondContextPath?: SelectedProgram[][];
+  programSelectionChanged?: DisplayProgram[];
+  respondContextPath?: DisplayProgram[][];
+  respondCreateDownstreamProgram?: DisplayProgram;
+  respondPathFromRoot?: DisplayProgram[];
   respondRuntimeUpdate?: boolean;
-  respondSelectedPrograms?: SelectedProgram[];
+  respondSelectedPrograms?: DisplayProgram[];
 }
 
+// messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
-  requestContextPath?: string;
+  requestContextPath?: string; // includes nodes before and above the selected node
   requestCreateProgramNode?: boolean;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
-  requestProgramSelection?: boolean;
+  requestCreateDownstreamProgram?: CreateDownstreamProgramNodeInput;
+  requestPathFromRoot?: string; // includes nodes above the selected node
   requestRemoveDownstreamNode?: string;
   requestRuntimeUpdate?: {
     messageHandler: string;
     selectionHandler: string;
   };
-  requestSelectedPrograms?: boolean;
+  webClientStarted?: boolean;
 }
 
 export interface GraphSelection {
   nodeName: string;
 }
 
-export interface SelectedProgram {
+export interface DisplayProgram {
   id: string;
   subtype: string;
   input: string;
@@ -31,4 +35,10 @@ export interface SelectedProgram {
 export interface CreateSerialTaskNodesInput {
   parentId: string;
   taskDescriptions: string[];
+}
+
+export interface CreateDownstreamProgramNodeInput {
+  parentId?: string;
+  subtype: string;
+  input: string;
 }

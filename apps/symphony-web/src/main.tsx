@@ -1,26 +1,29 @@
-import { getFigmaProxy } from "@h20/figma-relay";
-import { MessageToFigma, MessageToWeb, SelectedProgram } from "@symphony/types";
+import { FigmaProxy, getFigmaProxy } from "@h20/figma-relay";
+import { DisplayProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { getCompletion, OpenAICompletionPayload, OpenAICompletionResponse } from "./modules/openai/completion";
+import { generateReasonAct } from "./modules/prompts/reason-act";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
 export interface RunContext {
-  getCompletion: (prompt: string, config: Partial<OpenAICompletionPayload>) => Promise<OpenAICompletionResponse>;
+  figmaProxy: FigmaProxy<MessageToFigma, MessageToWeb>;
+  getCompletion: (prompt: string, config?: Partial<OpenAICompletionPayload>) => Promise<OpenAICompletionResponse>;
 }
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
-  const [selectedPrograms, setSelectedPrograms] = useState<SelectedProgram[]>([]);
+  const [selectedPrograms, setSelectedPrograms] = useState<DisplayProgram[]>([]);
 
   const runContext = useMemo<RunContext>(
     () => ({
+      figmaProxy,
       getCompletion: getCompletion.bind(null, accessToken),
     }),
     [accessToken]
@@ -39,7 +42,12 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  const summarizeContext = async (targetNodeId: string) => {
+  // request initial selection
+  useEffect(() => {
+    figmaProxy.notify({ webClientStarted: true });
+  }, []);
+
+  const summarizeContext = async (targetNodeId: string, figmaProxy: FigmaProxy<MessageToFigma, MessageToWeb>) => {
     const { respondContextPath } = await figmaProxy.request({ requestContextPath: targetNodeId });
 
     const layerSizes = respondContextPath!.map((layer) => layer.length);
@@ -54,13 +62,34 @@ function App() {
       .join("\n");
   };
 
-  const handleThinkStep = useCallback(async () => {}, [runContext, selectedPrograms]);
+  const handleThinkStep = useCallback(async () => {
+    if (!selectedPrograms.length) return;
+
+    const parentId = selectedPrograms[0].id;
+    const { respondPathFromRoot } = await runContext.figmaProxy.request({ requestPathFromRoot: parentId });
+    if (!respondPathFromRoot?.length) return;
+
+    const thought = await generateReasonAct(runContext, {
+      pretext: respondPathFromRoot.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+      nextStepName: "Thought",
+    });
+
+    if (!thought) return;
+
+    await runContext.figmaProxy.request({
+      requestCreateDownstreamProgram: {
+        parentId,
+        subtype: "Thought",
+        input: thought,
+      },
+    });
+  }, [runContext, selectedPrograms]);
 
   const handleActStep = useCallback(async () => {
     const activeProgram = selectedPrograms[0];
     if (!activeProgram) return;
 
-    const context = await summarizeContext(activeProgram.id);
+    const context = await summarizeContext(activeProgram.id, runContext.figmaProxy);
     // TBD
   }, [runContext, selectedPrograms]);
 

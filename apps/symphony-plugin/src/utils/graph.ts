@@ -18,6 +18,10 @@ export function selectOutEdges() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorStart.endpointNodeId === sourceNode.id;
 }
 
+export function selectInEdges() {
+  return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorEnd.endpointNodeId === sourceNode.id;
+}
+
 export function selectInEdgesFromTopOrLeftNodes(onEdge?: (edge: AttachedConnector, currentNode: SceneNode) => any) {
   return (connector: AttachedConnector, currentNode: SceneNode) => {
     const isInEdge = connector.connectorEnd.endpointNodeId === currentNode.id;

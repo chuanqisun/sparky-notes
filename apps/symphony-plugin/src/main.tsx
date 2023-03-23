@@ -1,13 +1,16 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, TaskNode } from "./components/program-node";
+import { HandlerContext, onWebClientStarted, respondCreateDownstreamProgram, respondPathFromRoot } from "./handlers";
+import { frameNodeLayersToContextPath, selectionNodesToDisplayPrograms } from "./utils/display-program";
 import { $ } from "./utils/fq";
 import { collectContextPath, selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
-import { frameNodeLayersToContextPath, frameNodeToProgramNode } from "./utils/program-node";
 import { showUI } from "./utils/show-ui";
 
+const webProxy = getWebProxy<MessageToWeb, MessageToFigma>();
+
 async function main() {
-  figma.on("selectionchange", () => handleSelection(figma.currentPage.selection));
+  figma.on("selectionchange", () => webProxy.notify({ programSelectionChanged: selectionNodesToDisplayPrograms(figma.currentPage.selection) }));
   figma.ui.on("message", handleMessage);
 
   showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 600, width: 420 });
@@ -15,19 +18,16 @@ async function main() {
 
 main();
 
-const webProxy = getWebProxy<MessageToWeb, MessageToFigma>();
-
-function handleSelection(nodes: readonly SceneNode[]) {
-  const programNodes = $(nodes)
-    .closest((node) => node.getPluginData("type") === "programNode")
-    .toNodes<FrameNode>();
-
-  const selectedPrograms = programNodes.map(frameNodeToProgramNode);
-
-  webProxy.notify({ programSelectionChanged: selectedPrograms });
-}
-
 async function handleMessage(message: MessageToFigma) {
+  // v2 handlers
+  const context: HandlerContext = {
+    webProxy,
+  };
+  onWebClientStarted(message, context);
+  respondPathFromRoot(message, context);
+  respondCreateDownstreamProgram(message, context);
+
+  // v1 handlers
   if (message.requestContextPath) {
     // traverseGraphAbove
     const targetNode = figma.getNodeById(message.requestContextPath);
