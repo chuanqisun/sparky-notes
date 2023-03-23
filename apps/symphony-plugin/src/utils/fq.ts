@@ -1,5 +1,5 @@
 import { collectAllExcept, selectOutEdgesBelowStartNodes, traverse } from "./graph";
-import { closest, getAbsoluteBoundingRect, isInnerOuter } from "./query";
+import { canBeInnerOuter, closest, getAbsoluteBoundingRect, isInnerOuter } from "./query";
 
 class FigmaQuery {
   static createFromNodes(nodes: readonly SceneNode[]) {
@@ -139,6 +139,44 @@ class FigmaQuery {
     return this;
   }
 
+  // Scroll the least distance to fit the selection. If impossible, zoom out to fit
+  scrollOrZoomOutViewToContain(padding?: { top: number; right: number; bottom: number; left: number }) {
+    const finalPadding = { top: 10, right: 10, bottom: 10, left: 10, ...padding };
+    const rect = getAbsoluteBoundingRect(this.nodes);
+
+    const viewportBox = figma.viewport.bounds;
+
+    if (!canBeInnerOuter(rect, viewportBox)) {
+      figma.viewport.scrollAndZoomIntoView(this.nodes);
+      return this;
+    }
+    // now we can guarantee a fit
+
+    const targetMinX = rect.x - finalPadding.left;
+    const targetMinY = rect.y - finalPadding.top;
+    const targetMaxX = rect.x + rect.width + finalPadding.right;
+    const targetMaxY = rect.y + rect.height + finalPadding.bottom;
+
+    const viewportMinX = figma.viewport.bounds.x;
+    const viewportMinY = figma.viewport.bounds.y;
+    const viewportMaxX = figma.viewport.bounds.x + figma.viewport.bounds.width;
+    const viewportMaxY = figma.viewport.bounds.y + figma.viewport.bounds.height;
+
+    // we at least one of them is 0 because of fit check
+    const translateXContainRight = Math.max(0, targetMaxX - viewportMaxX);
+    const translateXContainLeft = Math.min(0, targetMinX - viewportMinX);
+
+    const translateYContainTop = Math.min(0, targetMinY - viewportMinY);
+    const translateYContainBottom = Math.max(0, targetMaxY - viewportMaxY);
+
+    figma.viewport.center = {
+      x: figma.viewport.center.x + translateXContainRight + translateXContainLeft,
+      y: figma.viewport.center.y + translateYContainBottom + translateYContainTop,
+    };
+
+    return this;
+  }
+
   remove() {
     this.nodes.forEach((node) => node.remove());
     return new FigmaQuery([]);
@@ -170,7 +208,7 @@ class FigmaQuery {
     return [...this.nodes] as T[];
   }
 
-  zoomOutViewToFit() {
+  zoomOutViewToContain() {
     if (!this.nodes.length) return this;
 
     const boundingBox = getAbsoluteBoundingRect(this.nodes);

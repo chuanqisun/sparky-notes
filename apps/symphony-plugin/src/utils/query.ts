@@ -45,6 +45,10 @@ export function isInnerOuter(innerRect: Rect, outerRect: Rect) {
   );
 }
 
+export function canBeInnerOuter(innerCandidate: Rect, outerCandidate: Rect) {
+  return innerCandidate.width <= outerCandidate.width && innerCandidate.height <= outerCandidate.height;
+}
+
 export interface Rect {
   x: number;
   y: number;

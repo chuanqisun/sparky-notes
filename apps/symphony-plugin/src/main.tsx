@@ -46,7 +46,13 @@ async function handleMessage(message: MessageToFigma) {
     const node = await figma.createNodeFromJSXAsync(
       <QuestionNode input="How to conduct a literature review on usability issues with the “Create new link” pattern?" />
     );
-    $([node]).first().setPluginData({ type: "programNode", subtype: "Question" }).appendTo(figma.currentPage).moveToViewCenter().zoomOutViewToFit().select();
+    $([node])
+      .first()
+      .setPluginData({ type: "programNode", subtype: "Question" })
+      .appendTo(figma.currentPage)
+      .moveToViewCenter()
+      .zoomOutViewToContain()
+      .select();
   }
 
   if (message.requestRemoveDownstreamNode) {
@@ -70,7 +76,7 @@ async function handleMessage(message: MessageToFigma) {
       .connect("right")
       .align("vertical-center")
       .moveToBottomLeft(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
-      .zoomOutViewToFit()
+      .zoomOutViewToContain()
       .select();
 
     $([parentNode, ...$(taskNodes).first().toNodes()]).connect("down");

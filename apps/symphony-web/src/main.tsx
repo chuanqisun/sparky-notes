@@ -107,14 +107,15 @@ function App() {
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>Ask</button>{" "}
+              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>Ask</button>
               <button onClick={handleThinkStep} disabled={!selectedPrograms.length}>
                 Think
               </button>
               <button onClick={handleActStep} disabled={!selectedPrograms.some((program) => program.subtype === "Task")}>
                 Act
               </button>{" "}
-              <button disabled={true}>Auto-run</button>
+              <button disabled={true}>Auto step</button>
+              <button disabled={true}>Auto run</button>
             </menu>
           </fieldset>
           <fieldset>

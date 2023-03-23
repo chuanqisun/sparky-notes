@@ -34,10 +34,10 @@ export const respondCreateDownstreamProgram: Handler = async (message, context) 
       const parentNode = messageData.parentId ? (figma.getNodeById(messageData.parentId) as FrameNode) : null;
       const fqNode = $([node]).appendTo(figma.currentPage).setPluginData({ type: "programNode", subtype: "Thought" });
       if (parentNode) {
-        fqNode.moveToBottomLeft(parentNode, 100).select().moveViewToCenter().zoomOutViewToFit();
+        fqNode.moveToBottomLeft(parentNode, 100).select().scrollOrZoomOutViewToContain();
         $([parentNode, node]).connect("down");
       } else {
-        fqNode.select().moveToViewCenter().zoomOutViewToFit();
+        fqNode.select().moveToViewCenter().zoomOutViewToContain();
       }
       context.webProxy.respond(message, { respondCreateDownstreamProgram: frameNodeToDisplayProgram(node as FrameNode) });
       break;
