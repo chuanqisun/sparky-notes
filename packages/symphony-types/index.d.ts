@@ -21,7 +21,9 @@ export interface MessageToFigma {
   };
   showNotification?: {
     message: string;
-    error?: boolean;
+    config?: {
+      error?: boolean;
+    };
   };
   webClientStarted?: boolean;
 }

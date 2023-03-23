@@ -14,7 +14,7 @@ export interface HandlerContext {
 
 export const onShowNotification: Handler = (message, _context) => {
   if (!message.showNotification) return;
-  replaceNotification(message.showNotification.message, { error: message.showNotification.error });
+  replaceNotification(message.showNotification.message, message.showNotification.config);
 };
 
 export const onWebClientStarted: Handler = (message, context) => {
