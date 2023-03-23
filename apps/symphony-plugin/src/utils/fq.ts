@@ -139,9 +139,14 @@ class FigmaQuery {
     return this;
   }
 
+  remove() {
+    this.nodes.forEach((node) => node.remove());
+    return new FigmaQuery([]);
+  }
+
   // Scroll the least distance to fit the selection. If impossible, zoom out to fit
   scrollOrZoomOutViewToContain(padding?: { top: number; right: number; bottom: number; left: number }) {
-    const finalPadding = { top: 10, right: 10, bottom: 10, left: 10, ...padding };
+    const finalPadding = { top: 10, right: 10, bottom: 100, left: 10, ...padding }; // additional bottom distance due to figjam dock
     const rect = getAbsoluteBoundingRect(this.nodes);
 
     const viewportBox = figma.viewport.bounds;
@@ -175,11 +180,6 @@ class FigmaQuery {
     };
 
     return this;
-  }
-
-  remove() {
-    this.nodes.forEach((node) => node.remove());
-    return new FigmaQuery([]);
   }
 
   select() {
