@@ -107,7 +107,7 @@ function App() {
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>Ask</button>
+              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>New question</button>{" "}
               <button onClick={handleThinkStep} disabled={!selectedPrograms.length}>
                 Think
               </button>
@@ -115,8 +115,43 @@ function App() {
                 Act
               </button>{" "}
               <button disabled={true}>Auto step</button>
-              <button disabled={true}>Auto run</button>
+              <button disabled={true}>Auto run</button> <button disabled={true}>Regenerate</button>
             </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Action tools</legend>
+            <ul class="tool-list">
+              <li>
+                <input type="checkbox" checked={true}></input>Auto tooling
+              </li>
+              <li>
+                <input type="checkbox"></input>HITS search
+              </li>
+              <li>
+                <input type="checkbox"></input>Academic search
+              </li>
+              <li>
+                <input type="checkbox"></input>Wikipedia search
+              </li>
+              <li>
+                <input type="checkbox"></input>Google search
+              </li>
+              <li>
+                <input type="checkbox"></input>Theme extraction
+              </li>
+              <li>
+                <input type="checkbox"></input>Summarization
+              </li>
+              <li>
+                <input type="checkbox"></input>Filter
+              </li>
+              <li>
+                <input type="checkbox"></input>Problem analysis
+              </li>
+              <li>
+                <input type="checkbox"></input>Step-by-step planning
+              </li>
+            </ul>
           </fieldset>
           <fieldset>
             <legend>Context</legend>

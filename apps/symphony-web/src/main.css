@@ -19,3 +19,8 @@ ul {
   padding: 0;
   padding-inline-start: 20px;
 }
+
+.tool-list {
+  padding: 0;
+  list-style: none;
+}
