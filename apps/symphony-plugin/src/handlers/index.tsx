@@ -12,6 +12,11 @@ export interface HandlerContext {
   webProxy: WebProxy<MessageToWeb, MessageToFigma>;
 }
 
+export const onShowNotification: Handler = (message, _context) => {
+  if (!message.showNotification) return;
+  replaceNotification(message.showNotification.message, { error: message.showNotification.error });
+};
+
 export const onWebClientStarted: Handler = (message, context) => {
   if (!message.webClientStarted) return;
   context.webProxy.notify({ programSelectionChanged: selectionNodesToDisplayPrograms(figma.currentPage.selection) });

@@ -74,7 +74,14 @@ function App() {
       nextStepName: "Thought",
     });
 
-    if (!thought) return;
+    if (!thought) {
+      runContext.figmaProxy.notify({
+        showNotification: {
+          message: "Nothing came up. Try again or make a change?",
+        },
+      });
+      return;
+    }
 
     await runContext.figmaProxy.request({
       requestCreateDownstreamProgram: {

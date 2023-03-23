@@ -1,7 +1,7 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, TaskNode } from "./components/program-node";
-import { HandlerContext, onWebClientStarted, respondCreateDownstreamProgram, respondPathFromRoot } from "./handlers";
+import { HandlerContext, onShowNotification, onWebClientStarted, respondCreateDownstreamProgram, respondPathFromRoot } from "./handlers";
 import { frameNodeLayersToContextPath, selectionNodesToDisplayPrograms } from "./utils/display-program";
 import { $ } from "./utils/fq";
 import { collectContextPath, selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
@@ -24,6 +24,7 @@ async function handleMessage(message: MessageToFigma) {
     webProxy,
   };
   onWebClientStarted(message, context);
+  onShowNotification(message, context);
   respondPathFromRoot(message, context);
   respondCreateDownstreamProgram(message, context);
 

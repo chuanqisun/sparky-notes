@@ -19,6 +19,10 @@ export interface MessageToFigma {
     messageHandler: string;
     selectionHandler: string;
   };
+  showNotification?: {
+    message: string;
+    error?: boolean;
+  };
   webClientStarted?: boolean;
 }
 
