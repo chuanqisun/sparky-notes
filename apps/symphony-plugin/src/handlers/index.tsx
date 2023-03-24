@@ -48,11 +48,12 @@ export const respondCreateProgram: Handler = async (message, context) => {
   }
 
   if (fqNode) {
-    const parentNode = messageData.parentIds.length ? (figma.getNodeById(messageData.parentIds[0]) as FrameNode) : null;
     fqNode.appendTo(figma.currentPage);
-    if (parentNode) {
-      fqNode.moveToGraphNextPosition(parentNode).select().scrollOrZoomOutViewToContain();
-      $([parentNode, ...fqNode.toNodes()]).joinWithConnectors("down");
+
+    const parentNodes = messageData.parentIds.map((id) => figma.getNodeById(id) as FrameNode);
+    if (parentNodes.length) {
+      fqNode.moveToGraphNextPositionV2(parentNodes).select().scrollOrZoomOutViewToContain();
+      $([parentNodes[0], ...fqNode.toNodes()]).joinWithConnectors("down");
     } else {
       fqNode.select().moveToViewCenter().zoomOutViewToContain();
     }

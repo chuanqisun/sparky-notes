@@ -65,10 +65,8 @@ function App() {
   const handleThinkStep = useCallback(async () => {
     if (!selectedPrograms.length) return;
 
-    const parentId = selectedPrograms[0].id;
     const parentIds = selectedPrograms.map((p) => p.id);
     const { respondLinearContextGraph } = await runContext.figmaProxy.request({ requestLinearContextGraph: { leafIds: parentIds } });
-    console.log(respondLinearContextGraph);
     if (!respondLinearContextGraph?.length) return;
 
     const thought = await generateReasonAct(runContext, {
@@ -87,7 +85,7 @@ function App() {
 
     await runContext.figmaProxy.request({
       requestCreateProgram: {
-        parentIds: [parentId],
+        parentIds: parentIds,
         subtype: "Thought",
         input: thought,
       },

@@ -138,6 +138,28 @@ export class FigmaQuery {
     return this.translate(translateX, translateY);
   }
 
+  moveToGraphNextPositionV2(targets: SceneNode[], verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
+    if (!this.nodes.length) return this;
+    if (!targets.length) return this;
+
+    const selfRect = getAbsoluteBoundingBox(this.nodes);
+
+    // candidate node should be lowest-left-most node
+    const target = getBoundingNodes(getBoundingNodes(targets).bottom).left[0];
+
+    const existingNextNodes = $([target]).graphNext().toNodes();
+
+    if (!existingNextNodes.length) {
+      return this.moveToBottomLeft(target, verticalGap);
+    } else {
+      const anchor = getBoundingNodes(getBoundingNodes(existingNextNodes).right).bottom[0]!;
+      const translateX = anchor.x + anchor.width + horizontalGap - selfRect.x;
+      const translateY = anchor.y - selfRect.y;
+
+      return this.translate(translateX, translateY);
+    }
+  }
+
   moveToGraphNextPosition(target: SceneNode, verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
     if (!this.nodes.length) return this;
 
