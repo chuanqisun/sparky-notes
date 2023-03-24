@@ -1,9 +1,8 @@
-import { collectAllExcept, filterToAttachedMagnetConnector, selectOutEdgesBelowStartNodes, traverse } from "./graph";
+import { collectAllExcept, connect, ConnectorConfig, filterToAttachedMagnetConnector, MagnetPosition, selectOutEdgesBelowStartNodes, traverse } from "./graph";
 import { graphHorizonalDefaultGap, graphVerticalDefaultGap } from "./layout";
 import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, isInnerOuter } from "./query";
 
 export type ConnectorDirection = "left" | "right" | "up" | "down";
-export type MagnetPosition = "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
 
 export class FigmaQuery {
   static createFromNodes(nodes: readonly SceneNode[]) {
@@ -41,9 +40,30 @@ export class FigmaQuery {
     return this;
   }
 
+  chainWithConnectors(config: ConnectorConfig) {
+    this.nodes.reduce((previousNode, node) => {
+      connect(previousNode, node, config);
+      return node;
+    });
+
+    return this;
+  }
+
   closest(predicate: (node: SceneNode) => boolean) {
     const foundNodes = this.nodes.map((node) => closest(predicate, node)).filter(Boolean) as SceneNode[];
     return new FigmaQuery(foundNodes);
+  }
+
+  connectToNodes(targets: SceneNode[], config?: Partial<ConnectorConfig>) {
+    const finalConfig: ConnectorConfig = { sourceMagnet: "BOTTOM", targetMagnet: "TOP", ...config };
+    this.nodes.forEach((sourceNode) => targets.forEach((target) => connect(sourceNode, target, finalConfig)));
+    return this;
+  }
+
+  connectFromNodes(sources: SceneNode[], config?: { sourceMaget?: MagnetPosition; targetMagnet?: MagnetPosition }) {
+    const finalConfig: ConnectorConfig = { sourceMagnet: "BOTTOM", targetMagnet: "TOP", ...config };
+    sources.forEach((sourceNode) => this.nodes.forEach((target) => connect(sourceNode, target, finalConfig)));
+    return this;
   }
 
   distribute(direction = "left-to-right", gap: number) {
@@ -81,44 +101,6 @@ export class FigmaQuery {
     return new FigmaQuery(nextNodes);
   }
 
-  joinWithConnectors(connectorExitDirection: ConnectorDirection) {
-    let startMagnet: MagnetPosition;
-    let endMagnet: MagnetPosition;
-    switch (connectorExitDirection) {
-      case "right":
-        startMagnet = "RIGHT";
-        endMagnet = "LEFT";
-        break;
-      case "left":
-        startMagnet = "LEFT";
-        endMagnet = "RIGHT";
-        break;
-      case "down":
-        startMagnet = "BOTTOM";
-        endMagnet = "TOP";
-        break;
-      case "up":
-        startMagnet = "TOP";
-        endMagnet = "BOTTOM";
-        break;
-    }
-
-    this.nodes.reduce((previousNode, node) => {
-      const connector = figma.createConnector();
-      connector.connectorStart = {
-        endpointNodeId: previousNode.id,
-        magnet: startMagnet,
-      };
-      connector.connectorEnd = {
-        endpointNodeId: node.id,
-        magnet: endMagnet,
-      };
-      return node;
-    });
-
-    return this;
-  }
-
   last() {
     return new FigmaQuery(this.nodes.slice(-1));
   }
@@ -138,7 +120,7 @@ export class FigmaQuery {
     return this.translate(translateX, translateY);
   }
 
-  moveToGraphNextPositionV2(targets: SceneNode[], verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
+  moveToGraphTargetPosition(targets: SceneNode[], verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
     if (!this.nodes.length) return this;
     if (!targets.length) return this;
 
@@ -147,23 +129,6 @@ export class FigmaQuery {
     // candidate node should be lowest-left-most node
     const target = getBoundingNodes(getBoundingNodes(targets).bottom).left[0];
 
-    const existingNextNodes = $([target]).graphNext().toNodes();
-
-    if (!existingNextNodes.length) {
-      return this.moveToBottomLeft(target, verticalGap);
-    } else {
-      const anchor = getBoundingNodes(getBoundingNodes(existingNextNodes).right).bottom[0]!;
-      const translateX = anchor.x + anchor.width + horizontalGap - selfRect.x;
-      const translateY = anchor.y - selfRect.y;
-
-      return this.translate(translateX, translateY);
-    }
-  }
-
-  moveToGraphNextPosition(target: SceneNode, verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
-    if (!this.nodes.length) return this;
-
-    const selfRect = getAbsoluteBoundingBox(this.nodes);
     const existingNextNodes = $([target]).graphNext().toNodes();
 
     if (!existingNextNodes.length) {

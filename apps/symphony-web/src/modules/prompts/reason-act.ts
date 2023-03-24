@@ -24,12 +24,12 @@ Begin!
 ${input.pretext}
 ${input.nextStepName}: `.trimStart();
 
-  const response = await context.getCompletion(prompt, { max_tokens: 300, stop: ["Action"], ...promptConfig });
+  const response = await context.getCompletion(prompt, { max_tokens: 300, ...promptConfig });
 
   const raw = response.choices[0].text.trim();
   const lines = raw.split("\n").filter(Boolean);
   const trimStartIndex = lines.findIndex((line) => line.match(/^.+:/));
-  const keepLines = lines.slice(0, trimStartIndex > 0 ? trimStartIndex : undefined);
+  const keepLines = lines.slice(0, trimStartIndex > -1 ? trimStartIndex : undefined);
 
   const result = keepLines.join("\n").trim();
   return result;

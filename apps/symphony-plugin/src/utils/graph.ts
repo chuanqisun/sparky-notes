@@ -1,3 +1,5 @@
+export type MagnetPosition = "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
+
 export const collectContextPath = (results: SceneNode[][]) => (connectorFromTopOrLeftNode: AttachedConnector) => {
   if (connectorFromTopOrLeftNode.connectorEnd.magnet === "TOP") {
     results.unshift([figma.getNodeById(connectorFromTopOrLeftNode.connectorStart.endpointNodeId)].filter(Boolean) as SceneNode[]);
@@ -175,4 +177,25 @@ export function filterToAttachedMagnetConnector(node: ConnectorNode): node is At
   if (!(node.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet).magnet) return false;
   if (!(node.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet).magnet) return false;
   return true;
+}
+
+export interface ConnectorConfig {
+  sourceMagnet: MagnetPosition;
+  targetMagnet: MagnetPosition;
+}
+export function connect(source: SceneNode, target: SceneNode, config?: Partial<ConnectorConfig>) {
+  const finalConfig: ConnectorConfig = { sourceMagnet: "BOTTOM", targetMagnet: "TOP", ...config };
+
+  const connector = figma.createConnector();
+
+  connector.connectorStart = {
+    endpointNodeId: source.id,
+    magnet: finalConfig.sourceMagnet,
+  };
+  connector.connectorEnd = {
+    endpointNodeId: target.id,
+    magnet: finalConfig.targetMagnet,
+  };
+
+  return connector;
 }
