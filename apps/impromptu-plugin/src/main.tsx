@@ -1,7 +1,6 @@
 import { MessageToFigma } from "@impromptu/types";
 import { ArxivSearchProxy, getArxivSearchProxy } from "./arxiv/search";
-import { createReport } from "./hits/create-report";
-import { getHITSApiProxy, getSearchProxy, HitsApiProxy, SearchProxy } from "./hits/proxy";
+import { getSearchProxy, SearchProxy } from "./hits/proxy";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
@@ -25,7 +24,7 @@ import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
 import { Logger } from "./utils/logger";
 import { clearNotification, replaceNotification } from "./utils/notify";
-import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash, getStickySummary } from "./utils/query";
+import { filterToHaveWidgetDataKey, filterToType, getNodePlaintext, getProgramNodeHash, getStickySummary } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
 import { getAllDataNodes, getSelectedDataNodes, getSelectedProgramNodes, getSelectedStickies } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
@@ -41,7 +40,6 @@ let completion!: CompletionProxy;
 let hitsSearch!: SearchProxy;
 let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
-let hitsApi: HitsApiProxy;
 
 const programs: Program[] = [
   new AgentProgram(),
@@ -272,17 +270,6 @@ const handleUIMessage = async (message: MessageToFigma) => {
     webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
     arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
-    hitsApi = getHITSApiProxy(message.hitsConfig.accessToken, logger);
-  }
-
-  if (message.requestExportAsHitsReport) {
-    createReport(hitsApi, {
-      report: {
-        title: "My test report",
-        markdown: "This is a test report.",
-      },
-    }).then((res) => console.log("report created", res));
-    // TBD
   }
 
   if (message.start) {
@@ -292,6 +279,10 @@ const handleUIMessage = async (message: MessageToFigma) => {
   if (message.stop) {
     eventLoop.stop();
   }
+
+  if (message.webStarted) {
+    handleSelectionChange();
+  }
 };
 
 const handleSelectionChange = () => {
@@ -300,9 +291,13 @@ const handleSelectionChange = () => {
   const stickySummaries = getSelectedStickies().map(getStickySummary);
 
   notifyUI({
-    selectionChangedV2: {
+    selectionChanged: {
       programNodeIds: programNodes.map((node) => node.id),
       dataNodeIds: dataNodes.map((node) => node.id),
+      plaintextNodes: dataNodes.map((node) => ({
+        id: node.id,
+        text: getNodePlaintext(node),
+      })),
       stickies: stickySummaries,
     },
   });

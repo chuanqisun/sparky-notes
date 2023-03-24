@@ -25,6 +25,7 @@ export class ReportProgram implements Program {
         <FormTitle>Report</FormTitle>
         <Description>
           Draft a HITS report using the stickies, with green stickies as sections, yellow stickies as insights/recommendations, and gray stickies as paragraphs.
+          The output markdown can be exported to HITS as a draft report.
         </Description>
         <TextField label="Title" value="My UX Research Report" />
       </AutoLayout>
@@ -34,7 +35,7 @@ export class ReportProgram implements Program {
     getFieldByLabel("Title", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Input"], context.selectedOutputNodes);
-    const targets = createTargetNodes(["Draft preview"]);
+    const targets = createTargetNodes(["Draft markdown"]);
 
     return {
       programNode: node,
@@ -68,13 +69,16 @@ export class ReportProgram implements Program {
     });
 
     const reportText = `
+---
+Title: ${getFieldByLabel("Title", node)!.value.characters.trim()}
+---
 ${colorStickies
   .map((sticky) => {
     switch (sticky.color) {
       case "Green":
         return `# ${sticky.text}`;
       case "Yellow":
-        return `**Insight** ${sticky.text}`;
+        return `- **Insight** ${sticky.text}`;
       case "LightGray":
         return `${sticky.text}`;
       default:

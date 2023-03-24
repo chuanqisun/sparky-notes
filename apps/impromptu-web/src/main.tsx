@@ -1,10 +1,14 @@
 import { LogEntry, MessageToUI, StickySummary } from "@impromptu/types";
 import { render } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { notifyFigma, requestFigma } from "./modules/figma/rpc";
+import { notifyFigma } from "./modules/figma/rpc";
+import { createReport } from "./modules/hits/create-report";
+import { DraftView } from "./modules/hits/draft-view";
+import { parseReport } from "./modules/hits/parse-report";
+import { getHITSApiProxy } from "./modules/hits/proxy";
 import { LogEntryView } from "./modules/log/log-entry-view";
 import { StickyView } from "./modules/sticky-view/sticky-view";
 
@@ -16,13 +20,17 @@ function App() {
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
 
   const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
+  const [plaintextNode, setPlaintextNode] = useState<{ id: string; text: string }>();
+
+  const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
 
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToUI;
 
-      if (message.selectionChangedV2) {
-        setStickySummaries(message.selectionChangedV2.stickies);
+      if (message.selectionChanged) {
+        setStickySummaries(message.selectionChanged.stickies);
+        setPlaintextNode(message.selectionChanged.plaintextNodes[0]);
       }
 
       if (message.started) {
@@ -42,6 +50,19 @@ function App() {
   }, []);
 
   useEffect(() => {
+    notifyFigma({ webStarted: true });
+  }, []);
+
+  const parsedDraft = useMemo(() => {
+    if (!plaintextNode) return null;
+
+    const parsedReport = parseReport(plaintextNode.text);
+    if (!parsedReport) return null;
+
+    return parsedReport;
+  }, [plaintextNode]);
+
+  useEffect(() => {
     notifyFigma({ hitsConfig: { accessToken } });
   }, [accessToken]);
 
@@ -54,7 +75,21 @@ function App() {
   );
   const handleClearLog = useCallback(() => setLogEntries([]), []);
 
-  const handleExportAsHitsReport = useCallback(() => requestFigma({ requestExportAsHitsReport: true }), []);
+  const [isCreating, setIsCreating] = useState(false);
+  const handleExportAsHitsReport = useCallback(async () => {
+    if (!parsedDraft || parsedDraft.error) return;
+
+    setIsCreating(true);
+    createReport(hitsApi, {
+      report: {
+        title: parsedDraft.title,
+        markdown: parsedDraft.markdown,
+      },
+    })
+      .then((res) => console.log("report created", res))
+      .finally(() => setIsCreating(false));
+    console.log(plaintextNode);
+  }, [hitsApi, parsedDraft]);
 
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
@@ -93,8 +128,15 @@ function App() {
           <fieldset>
             <legend>Export</legend>
             <menu>
-              <button onClick={handleExportAsHitsReport}>HITS report draft</button>
+              <button
+                onClick={handleExportAsHitsReport}
+                title="Export markdown as a HITS draft report"
+                disabled={isCreating || !parsedDraft || !!parsedDraft.error}
+              >
+                HITS draft report
+              </button>
             </menu>
+            <DraftView draft={parsedDraft} />
           </fieldset>
           <fieldset>
             <legend>Inspect</legend>

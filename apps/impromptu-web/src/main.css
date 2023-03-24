@@ -31,10 +31,14 @@ button {
   cursor: pointer;
   border-radius: 2px;
 }
-button:hover {
+button:hover:not(:disabled) {
   background-color: white;
 }
-button:active {
+button:disabled {
+  cursor: not-allowed;
+  border-color: white;
+}
+button:active:not(:disabled) {
   background-color: black;
   color: white;
 }

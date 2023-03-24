@@ -1,6 +1,5 @@
 export interface MessageToUI {
   selectionChanged?: SelectionSummary;
-  selectionChangedV2?: SelectionSummaryV2;
   started?: boolean;
   stopped?: boolean;
   logCompletionInfo?: CompletionInfoItem;
@@ -13,9 +12,9 @@ export interface MessageToFigma {
   createProgram?: string;
   hitsConfig?: HitsConfig;
   programConfigChanged?: ProgramConfigSummary;
-  requestExportAsHitsReport?: true;
   start?: boolean;
   stop?: boolean;
+  webStarted?: boolean;
 }
 
 export interface LogEntry {
@@ -59,15 +58,10 @@ export interface OpenAIConnection {
 }
 
 export interface SelectionSummary {
-  mode: "single" | "multiple" | "none";
-  programNode?: ProgramNodeSummary;
-  dataNode?: boolean;
-}
-
-export interface SelectionSummaryV2 {
   programNodeIds: string[];
   dataNodeIds: string[];
   stickies: StickySummary[];
+  plaintextNodes: PlaintextNodeSummary[];
 }
 
 export interface ProgramNodeSummary {
@@ -80,4 +74,9 @@ export interface StickySummary {
   shortContext: string;
   longContext: string;
   url?: string;
+}
+
+export interface PlaintextNodeSummary {
+  id: string;
+  text: string;
 }
