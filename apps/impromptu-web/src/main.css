@@ -20,6 +20,10 @@ fieldset {
   border-radius: 4px;
 }
 
+fieldset > *:not(legend) {
+  margin-inline-start: 2px;
+}
+
 button {
   background-color: light-grey;
   border: 1px solid grey;
