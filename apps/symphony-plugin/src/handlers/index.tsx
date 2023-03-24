@@ -1,8 +1,8 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { DisplayProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
-import { ThoughtNode } from "../components/program-node";
+import { QuestionNode, ThoughtNode } from "../components/program-node";
 import { frameNodeToDisplayProgram, selectionNodesToDisplayPrograms } from "../utils/display-program";
-import { $ } from "../utils/fq";
+import { $, FQ } from "../utils/fq";
 import { getOutConnectors, selectInConnectors, traverse } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { sortUpstreamNodes } from "../utils/sort";
@@ -23,28 +23,40 @@ export const onWebClientStarted: Handler = (message, context) => {
   context.webProxy.notify({ programSelectionChanged: selectionNodesToDisplayPrograms(figma.currentPage.selection) });
 };
 
-export const respondCreateDownstreamProgram: Handler = async (message, context) => {
-  if (!message.requestCreateDownstreamProgram) {
+export const respondCreateProgram: Handler = async (message, context) => {
+  if (!message.requestCreateProgram) {
     return;
   }
 
-  const messageData = message.requestCreateDownstreamProgram;
+  const messageData = message.requestCreateProgram;
+  let fqNode: FQ;
+
   switch (messageData.subtype) {
-    case "Thought":
-      const node = await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />);
-      const parentNode = messageData.parentId ? (figma.getNodeById(messageData.parentId) as FrameNode) : null;
-      const fqNode = $([node]).appendTo(figma.currentPage).setPluginData({ type: "programNode", subtype: "Thought" });
-      if (parentNode) {
-        fqNode.moveToGraphNextPosition(parentNode).select().scrollOrZoomOutViewToContain();
-        $([parentNode, node]).joinWithConnectors("down");
-      } else {
-        fqNode.select().moveToViewCenter().zoomOutViewToContain();
-      }
-      context.webProxy.respond(message, { respondCreateDownstreamProgram: frameNodeToDisplayProgram(node as FrameNode) });
+    case "Thought": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Thought" });
       break;
+    }
+    case "Question": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<QuestionNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Question" });
+      break;
+    }
     default:
-      replaceNotification(`Invalid subtype "${message.requestCreateDownstreamProgram}"`, { error: true });
+      replaceNotification(`Invalid subtype "${message.requestCreateProgram}"`, { error: true });
       return;
+  }
+
+  if (fqNode) {
+    const parentNode = messageData.parentIds.length ? (figma.getNodeById(messageData.parentIds[0]) as FrameNode) : null;
+    fqNode.appendTo(figma.currentPage);
+    if (parentNode) {
+      fqNode.moveToGraphNextPosition(parentNode).select().scrollOrZoomOutViewToContain();
+      $([parentNode, ...fqNode.toNodes()]).joinWithConnectors("down");
+    } else {
+      fqNode.select().moveToViewCenter().zoomOutViewToContain();
+    }
+    context.webProxy.respond(message, { respondCreateProgram: frameNodeToDisplayProgram(fqNode.toNodes()[0] as FrameNode) });
   }
 };
 

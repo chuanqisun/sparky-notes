@@ -1,7 +1,7 @@
 export interface MessageToWeb {
   programSelectionChanged?: DisplayProgram[];
   respondContextPath?: DisplayProgram[][];
-  respondCreateDownstreamProgram?: DisplayProgram;
+  respondCreateProgram?: DisplayProgram;
   respondPathFromRoot?: DisplayProgram[];
   respondRuntimeUpdate?: boolean;
   respondSelectedPrograms?: DisplayProgram[];
@@ -10,9 +10,8 @@ export interface MessageToWeb {
 // messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
   requestContextPath?: string; // includes nodes before and above the selected node
-  requestCreateProgramNode?: boolean;
+  requestCreateProgram?: CreateProgramInput;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
-  requestCreateDownstreamProgram?: CreateDownstreamProgramNodeInput;
   requestLinearContextGraph?: {
     leafIds: string[];
   };
@@ -46,8 +45,8 @@ export interface CreateSerialTaskNodesInput {
   taskDescriptions: string[];
 }
 
-export interface CreateDownstreamProgramNodeInput {
-  parentId?: string;
+export interface CreateProgramInput {
+  parentIds: string[];
   subtype: string;
   input: string;
 }

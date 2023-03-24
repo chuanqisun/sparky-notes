@@ -1,14 +1,7 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import { QuestionNode, TaskNode } from "./components/program-node";
-import {
-  HandlerContext,
-  onShowNotification,
-  onWebClientStarted,
-  respondCreateDownstreamProgram,
-  respondLinearContextGraph,
-  respondPathFromRoot,
-} from "./handlers";
+import { TaskNode } from "./components/program-node";
+import { HandlerContext, onShowNotification, onWebClientStarted, respondCreateProgram, respondLinearContextGraph, respondPathFromRoot } from "./handlers";
 import { frameNodeLayersToContextPath, selectionNodesToDisplayPrograms } from "./utils/display-program";
 import { $ } from "./utils/fq";
 import { collectContextPath, selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
@@ -30,11 +23,12 @@ async function handleMessage(message: MessageToFigma) {
   const context: HandlerContext = {
     webProxy,
   };
-  onWebClientStarted(message, context);
+
   onShowNotification(message, context);
+  onWebClientStarted(message, context);
+  respondCreateProgram(message, context);
   respondLinearContextGraph(message, context);
   respondPathFromRoot(message, context);
-  respondCreateDownstreamProgram(message, context);
 
   // v1 handlers
   if (message.requestContextPath) {
@@ -48,19 +42,6 @@ async function handleMessage(message: MessageToFigma) {
     });
     const contextPath = frameNodeLayersToContextPath(layers);
     webProxy.respond(message, { respondContextPath: contextPath });
-  }
-
-  if (message.requestCreateProgramNode) {
-    const node = await figma.createNodeFromJSXAsync(
-      <QuestionNode input="How to conduct a literature review on usability issues with the “Create new link” pattern?" />
-    );
-    $([node])
-      .first()
-      .setPluginData({ type: "programNode", subtype: "Question" })
-      .appendTo(figma.currentPage)
-      .moveToViewCenter()
-      .zoomOutViewToContain()
-      .select();
   }
 
   if (message.requestRemoveDownstreamNode) {

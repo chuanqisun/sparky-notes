@@ -84,8 +84,8 @@ function App() {
     }
 
     await runContext.figmaProxy.request({
-      requestCreateDownstreamProgram: {
-        parentId,
+      requestCreateProgram: {
+        parentIds: [parentId],
         subtype: "Thought",
         input: thought,
       },
@@ -107,7 +107,19 @@ function App() {
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button onClick={() => figmaProxy.notify({ requestCreateProgramNode: true })}>New question</button>{" "}
+              <button
+                onClick={() =>
+                  figmaProxy.request({
+                    requestCreateProgram: {
+                      parentIds: [],
+                      subtype: "Question",
+                      input: "How to conduct a literature review on usability issues with the “Create new link” pattern?",
+                    },
+                  })
+                }
+              >
+                New question
+              </button>{" "}
               <button onClick={handleThinkStep} disabled={!selectedPrograms.length}>
                 Think
               </button>
