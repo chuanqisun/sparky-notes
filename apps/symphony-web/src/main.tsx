@@ -1,5 +1,5 @@
 import { FigmaProxy, getFigmaProxy } from "@h20/figma-relay";
-import { DisplayProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
+import { LiveProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
@@ -19,7 +19,7 @@ function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
-  const [selectedPrograms, setSelectedPrograms] = useState<DisplayProgram[]>([]);
+  const [contextPrograms, setContextPrograms] = useState<LiveProgram[]>([]);
 
   const runContext = useMemo<RunContext>(
     () => ({
@@ -33,14 +33,16 @@ function App() {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToWeb;
 
-      if (message.programSelectionChanged) {
-        setSelectedPrograms(message.programSelectionChanged);
+      if (message.upstreamGraphChanged) {
+        setContextPrograms(message.upstreamGraphChanged);
       }
     };
 
     window.addEventListener("message", handleMainMessage);
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
+
+  const selectedPrograms = useMemo(() => contextPrograms.filter((program) => program.isSelected), [contextPrograms]);
 
   // request initial selection
   useEffect(() => {
@@ -66,7 +68,7 @@ function App() {
     if (!selectedPrograms.length) return;
 
     const parentIds = selectedPrograms.map((p) => p.id);
-    const { respondLinearContextGraph } = await runContext.figmaProxy.request({ requestLinearContextGraph: { leafIds: parentIds } });
+    const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
     if (!respondLinearContextGraph?.length) return;
 
     const thought = await generateReasonAct(runContext, {
@@ -167,15 +169,10 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Context</legend>
-            <menu>
-              <button onClick={() => figmaProxy.notify({ requestLinearContextGraph: { leafIds: selectedPrograms.map((p) => p.id) } })}>
-                Get debug context
-              </button>
-            </menu>
-            <ul>
-              {selectedPrograms.map((program) => (
-                <li key={program.id}>
-                  {program.subtype}: {program.input}{" "}
+            <ul class="context-list">
+              {contextPrograms.map((program) => (
+                <li key={program.id} data-selected={program.isSelected}>
+                  <b>{program.subtype}</b>: {program.input}{" "}
                 </li>
               ))}
             </ul>

@@ -1,29 +1,49 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, ThoughtNode } from "../components/program-node";
-import { frameNodeToDisplayProgram, selectionNodesToDisplayPrograms } from "../utils/display-program";
+import { ChangeTracker } from "../utils/change-tracker";
+import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../utils/display-program";
 import { $, FigmaQuery } from "../utils/fq";
-import { getOutConnectors, selectInConnectors, traverse } from "../utils/graph";
+import { getLinearUpstreamGraph } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
-import { sortUpstreamNodes } from "../utils/sort";
 
-export type Handler = (message: MessageToFigma, context: HandlerContext) => any;
+// selection handler
+const selectedProgramChangeTracker = new ChangeTracker();
+
+export const onSelectionChange = (context: HandlerContext, selection: readonly SceneNode[]) => {
+  const selectedPrograms = selectionNodesToLivePrograms(selection);
+  if (selectedProgramChangeTracker.next(selectedPrograms.map((p) => p.id).join(","))) {
+    const upstreamGraph = getLinearUpstreamGraph(selectedPrograms.map((p) => p.id));
+    if (upstreamGraph.hasCycle) replaceNotification("Remove the cycle to continue", { error: true });
+
+    context.webProxy.notify({
+      upstreamGraphChanged: upstreamGraph.nodes.map((node) => ({
+        ...frameNodeToDisplayProgram(node),
+        isSelected: selectedPrograms.some((p) => p.id === node.id),
+      })),
+    });
+  }
+};
+
+// message handlers
+
+export type Handler = (context: HandlerContext, message: MessageToFigma) => any;
 
 export interface HandlerContext {
   webProxy: WebProxy<MessageToWeb, MessageToFigma>;
 }
 
-export const onShowNotification: Handler = (message, _context) => {
+export const onShowNotification: Handler = (_context, message) => {
   if (!message.showNotification) return;
   replaceNotification(message.showNotification.message, message.showNotification.config);
 };
 
-export const onWebClientStarted: Handler = (message, context) => {
+export const onWebClientStarted: Handler = (context, message) => {
   if (!message.webClientStarted) return;
-  context.webProxy.notify({ programSelectionChanged: selectionNodesToDisplayPrograms(figma.currentPage.selection) });
+  onSelectionChange(context, figma.currentPage.selection);
 };
 
-export const respondCreateProgram: Handler = async (message, context) => {
+export const respondCreateProgram: Handler = async (context, message) => {
   if (!message.requestCreateProgram) {
     return;
   }
@@ -60,56 +80,18 @@ export const respondCreateProgram: Handler = async (message, context) => {
   }
 };
 
-export const respondLinearContextGraph: Handler = async (message, context) => {
-  if (!message.requestLinearContextGraph) return;
+export const respondLinearContextGraph: Handler = async (context, message) => {
+  if (!message.requestUpstreamGraph) return;
 
-  const leafNodes = message.requestLinearContextGraph.leafIds.map((id) => figma.getNodeById(id)).filter(Boolean) as SceneNode[];
-  if (!leafNodes.length) return;
-
-  const reachableConnectorIds: string[] = [];
-  const isInConnector = selectInConnectors();
-  let hasCycle = false;
-
-  // first traverse, gather all edges
-  leafNodes.forEach((leafNode) => {
-    let hasCycleFromLeaf = false;
-    const reachableConnectorIdsFromLeaf = new Set<string>();
-    traverse([leafNode], {
-      onConnector: (connector, sourceNode) => {
-        const isInEdge = isInConnector(connector, sourceNode); // go upstream
-
-        if (isInEdge) {
-          if (reachableConnectorIdsFromLeaf.has(connector.id)) {
-            hasCycleFromLeaf = true;
-            return false;
-          }
-
-          reachableConnectorIdsFromLeaf.add(connector.id);
-        }
-
-        return isInEdge;
-      },
-    });
-
-    if (hasCycleFromLeaf) {
-      hasCycle = true;
-    }
-    reachableConnectorIds.push(...reachableConnectorIdsFromLeaf);
-  });
-
-  const uniqueReachableConnectorIds = new Set(reachableConnectorIds);
-
-  if (hasCycle) {
+  const graph = getLinearUpstreamGraph(message.requestUpstreamGraph.leafIds);
+  if (graph.hasCycle) {
     replaceNotification("Cycle detected in graph", { error: true });
     return;
   }
+  if (!graph.nodes.length) {
+    replaceNotification("Selection not found", { error: true });
+    return;
+  }
 
-  // find leaf nodes that are not connected to any other leaf nodes
-  const qualifiedLeafNodes = leafNodes.filter((candidateLeafNode) => {
-    return getOutConnectors(candidateLeafNode).every((connector) => !uniqueReachableConnectorIds.has(connector.id));
-  }) as FrameNode[];
-
-  const sortedNodes = sortUpstreamNodes(qualifiedLeafNodes, uniqueReachableConnectorIds) as FrameNode[];
-
-  context.webProxy.respond(message, { respondLinearContextGraph: sortedNodes.map(frameNodeToDisplayProgram) });
+  context.webProxy.respond(message, { respondUpstreamGraph: graph.nodes.map(frameNodeToDisplayProgram) });
 };

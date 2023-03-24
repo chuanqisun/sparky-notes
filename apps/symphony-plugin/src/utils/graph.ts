@@ -1,3 +1,6 @@
+import { filterToType } from "./query";
+import { sortUpstreamNodes } from "./sort";
+
 export type MagnetPosition = "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
 
 export const collectContextPath = (results: SceneNode[][]) => (connectorFromTopOrLeftNode: AttachedConnector) => {
@@ -198,4 +201,70 @@ export function connect(source: SceneNode, target: SceneNode, config?: Partial<C
   };
 
   return connector;
+}
+
+export interface LinearUpstreamGraph {
+  nodes: FrameNode[];
+  hasCycle: boolean;
+}
+export function getLinearUpstreamGraph(leafIds: string[]): LinearUpstreamGraph {
+  const leafNodes = (leafIds.map((id) => figma.getNodeById(id)).filter(Boolean) as SceneNode[]).filter(filterToType<FrameNode>("FRAME"));
+
+  if (!leafNodes.length)
+    return {
+      nodes: [],
+      hasCycle: false,
+    };
+
+  const reachableConnectorIds: string[] = [];
+  const isInConnector = selectInConnectors();
+  let hasCycle = false;
+
+  // first traverse, gather all edges
+  leafNodes.forEach((leafNode) => {
+    let hasCycleFromLeaf = false;
+    const reachableConnectorIdsFromLeaf = new Set<string>();
+    traverse([leafNode], {
+      onConnector: (connector, sourceNode) => {
+        const isInEdge = isInConnector(connector, sourceNode); // go upstream
+
+        if (isInEdge) {
+          if (reachableConnectorIdsFromLeaf.has(connector.id)) {
+            hasCycleFromLeaf = true;
+            return false;
+          }
+
+          reachableConnectorIdsFromLeaf.add(connector.id);
+        }
+
+        return isInEdge;
+      },
+    });
+
+    if (hasCycleFromLeaf) {
+      hasCycle = true;
+    }
+    reachableConnectorIds.push(...reachableConnectorIdsFromLeaf);
+  });
+
+  const uniqueReachableConnectorIds = new Set(reachableConnectorIds);
+
+  if (hasCycle) {
+    return {
+      nodes: [],
+      hasCycle: true,
+    };
+  }
+
+  // find leaf nodes that are not connected to any other leaf nodes
+  const qualifiedLeafNodes = leafNodes.filter((candidateLeafNode) => {
+    return getOutConnectors(candidateLeafNode).every((connector) => !uniqueReachableConnectorIds.has(connector.id));
+  });
+
+  const sortedNodes = sortUpstreamNodes(qualifiedLeafNodes, uniqueReachableConnectorIds);
+
+  return {
+    nodes: sortedNodes,
+    hasCycle: false,
+  };
 }

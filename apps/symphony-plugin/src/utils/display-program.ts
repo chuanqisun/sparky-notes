@@ -1,4 +1,4 @@
-import type { DisplayProgram } from "@symphony/types";
+import type { DisplayProgram, LiveProgram } from "@symphony/types";
 import { getFieldByLabel } from "../components/text-field";
 import { $ } from "./fq";
 
@@ -16,11 +16,11 @@ export function frameNodeToDisplayProgram(node: FrameNode): DisplayProgram {
   };
 }
 
-export function selectionNodesToDisplayPrograms(nodes: readonly SceneNode[]) {
+export function selectionNodesToLivePrograms(nodes: readonly SceneNode[]): LiveProgram[] {
   const programNodes = $(nodes)
     .closest((node) => node.getPluginData("type") === "programNode")
     .toNodes<FrameNode>();
 
-  const selectedPrograms = programNodes.map(frameNodeToDisplayProgram);
+  const selectedPrograms = programNodes.map((node) => ({ ...frameNodeToDisplayProgram(node), isSelected: true }));
   return selectedPrograms;
 }

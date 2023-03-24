@@ -24,3 +24,12 @@ ul {
   padding: 0;
   list-style: none;
 }
+
+.context-list {
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.context-list li[data-selected="false"] {
+  opacity: 0.5;
+}
