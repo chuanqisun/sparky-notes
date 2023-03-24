@@ -106,9 +106,9 @@ function App() {
                     )}
                   </dd>
                   <dt>Short context</dt>
-                  <dd>{sticky.shortContext}</dd>
+                  <dd>{sticky.shortContext.length ? sticky.shortContext : "N/A"}</dd>
                   <dt>Long context</dt>
-                  <dd>{sticky.longContext}</dd>
+                  <dd>{sticky.longContext.length ? sticky.longContext : "N/A"}</dd>
                 </dl>
               </details>
             ))}
