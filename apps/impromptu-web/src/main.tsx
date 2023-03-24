@@ -1,4 +1,4 @@
-import { LogEntry, MessageToUI, StickySummary } from "@impromptu/types";
+import { LogEntry, MessageToUI, PrimaryDataNodeSummary, StickySummary } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
@@ -20,7 +20,9 @@ function App() {
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
 
   const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
+
   const [plaintextNode, setPlaintextNode] = useState<{ id: string; text: string }>();
+  const [primaryDataNode, setPrimaryDataNode] = useState<PrimaryDataNodeSummary | null>();
 
   const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
 
@@ -31,6 +33,7 @@ function App() {
       if (message.selectionChanged) {
         setStickySummaries(message.selectionChanged.stickies);
         setPlaintextNode(message.selectionChanged.plaintextNodes[0]);
+        setPrimaryDataNode(message.selectionChanged.primaryDataNode);
       }
 
       if (message.started) {

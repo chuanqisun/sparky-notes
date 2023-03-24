@@ -1,3 +1,5 @@
+import { MappedColorNames } from "../../apps/impromptu-plugin/src/utils/colors";
+
 export interface MessageToUI {
   selectionChanged?: SelectionSummary;
   started?: boolean;
@@ -62,6 +64,7 @@ export interface SelectionSummary {
   dataNodeIds: string[];
   stickies: StickySummary[];
   plaintextNodes: PlaintextNodeSummary[];
+  primaryDataNode: PrimaryDataNodeSummary | null;
 }
 
 export interface ProgramNodeSummary {
@@ -79,4 +82,13 @@ export interface StickySummary {
 export interface PlaintextNodeSummary {
   id: string;
   text: string;
+}
+
+export interface PrimaryDataNodeSummary {
+  name: string;
+  orderedStickies: {
+    color: MappedColorNames;
+    text: string;
+    url?: string;
+  }[];
 }

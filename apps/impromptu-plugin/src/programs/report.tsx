@@ -64,6 +64,7 @@ export class ReportProgram implements Program {
         return {
           text: sticky.text.characters,
           color: colorName,
+          url: (sticky.text.hyperlink as HyperlinkTarget)?.value,
         };
       }
     });
@@ -78,7 +79,7 @@ ${colorStickies
       case "Green":
         return `# ${sticky.text}`;
       case "Yellow":
-        return `- **Insight** ${sticky.text}`;
+        return sticky.url ? `- [**Insight**](${sticky.url}) ${sticky.text}` : `- **Insight** ${sticky.text}`;
       case "LightGray":
         return `${sticky.text}`;
       default:

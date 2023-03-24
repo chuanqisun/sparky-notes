@@ -1,10 +1,40 @@
-import { closest, filterToType } from "./query";
+import { PrimaryDataNodeSummary } from "@impromptu/types";
+import { getClosestColor } from "./colors";
+import { closest, filterToType, getInnerStickies } from "./query";
 
 export function getSelectedProgramNodes(isProgramNode: (node: BaseNode) => boolean) {
   const getClosestProgramNode = (node: BaseNode) => closest(isProgramNode, node);
   const programNodes = figma.currentPage.selection.map(getClosestProgramNode).filter(Boolean) as FrameNode[];
   const uniqueProgramNodes = programNodes.filter(filterToUniqe); // only keep first occurances
   return uniqueProgramNodes;
+}
+
+export function getPrimaryDataNode(node: SectionNode): PrimaryDataNodeSummary | null {
+  const stickies = getInnerStickies([node]);
+  if (!stickies.length) return null;
+
+  // sort stickies by y, then by x
+  const sortedStickies = stickies.sort((a, b) => {
+    if (a.y === b.y) return a.x - b.x;
+    return a.y - b.y;
+  });
+
+  const colorStickies = sortedStickies.map((sticky) => {
+    const fill = ((sticky.fills as Paint[])?.[0] as SolidPaint)?.color;
+    const colorName = fill?.b ? getClosestColor(fill, "LightGray") : "LightGray";
+    {
+      return {
+        text: sticky.text.characters,
+        color: colorName,
+        url: (sticky.text.hyperlink as HyperlinkTarget)?.value,
+      };
+    }
+  });
+
+  return {
+    name: node.name,
+    orderedStickies: colorStickies,
+  };
 }
 
 export function getSelectedStickies() {
