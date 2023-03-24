@@ -44,6 +44,7 @@
   - When selection is mixed, context is topological sort of the superset of all paths
 - Details
   - Use constant connector color
+- Context order control (topological sort leads to serveral equivalent orders)
 
 ## Figma runtime pain point
 

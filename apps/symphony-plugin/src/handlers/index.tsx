@@ -52,9 +52,9 @@ export const respondCreateProgram: Handler = async (message, context) => {
 
     const parentNodes = messageData.parentIds.map((id) => figma.getNodeById(id) as FrameNode);
     if (parentNodes.length) {
-      fqNode.moveToGraphTargetPosition(parentNodes).scrollOrZoomOutViewToContain().connectFromNodes(parentNodes).select();
+      fqNode.moveToGraphTargetPosition(parentNodes).scrollOrZoomOutViewToContain().connectFromNodes(parentNodes);
     } else {
-      fqNode.moveToViewCenter().zoomOutViewToContain().select();
+      fqNode.moveToViewCenter().zoomOutViewToContain();
     }
     context.webProxy.respond(message, { respondCreateProgram: frameNodeToDisplayProgram(fqNode.toNodes()[0] as FrameNode) });
   }
