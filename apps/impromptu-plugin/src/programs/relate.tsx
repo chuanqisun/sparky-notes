@@ -1,11 +1,12 @@
 import { getCompletion } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
+import { combineWhitespace, shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -14,20 +15,18 @@ export class RelateProgram implements Program {
   public name = "relate";
 
   public getSummary(node: FrameNode) {
-    return `Relate: ${getFieldByLabel("Relation (left to right)", node)!.value.characters}`;
+    return `Relating...`;
   }
 
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Relate</FormTitle>
-        <Description>For each sticky in the left section, use the relation to find stickies in the right section.</Description>
-        <TextField label="Relation (left to right)" value="can be solved by" />
+        <Description>For each sticky in the left section, find meaningful relations to any sticky from the right section.</Description>
       </AutoLayout>
     )) as FrameNode;
 
     getTextByContent("Relate", node)!.locked = true;
-    getFieldByLabel("Relation (left to right)", node)!.label.locked = true;
 
     const sources = createOrUseSourceNodes(["Group A", "Group B"], context.selectedOutputNodes);
     const targets = createTargetNodes(["Output"]);
@@ -41,7 +40,6 @@ export class RelateProgram implements Program {
 
   public async run(context: ProgramContext, node: FrameNode) {
     const sources = context.sourceNodes.sort(sortLeftToRight);
-    const relation = getFieldByLabel("Relation (left to right)", node)!.value.characters.trim();
 
     if (sources.length !== 2) {
       replaceNotification("Relate requires 2 input sections");
@@ -56,21 +54,31 @@ export class RelateProgram implements Program {
       const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
       if (!targetSection) return;
       const newKeyNode = keyNode.clone();
+      newKeyNode.text.characters = "=== Left text ===\n\n" + newKeyNode.text.characters;
       setFillColor(stickyColors.Yellow, newKeyNode);
       moveStickiesToSectionNewLine([newKeyNode], targetSection);
 
       for (const valueNode of valueNodes) {
-        const prompt = `Statement: ${keyNode.text.characters.replace(/\s+/g, " ")} ${relation} ${valueNode.text.characters.replace(/\s+/g, " ")}
-Question: is it probable?
+        const prompt = `
+Read the Left text and the right text. Answer the following question.
+
+Left text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
+Right text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
+
+Question: Is the left text highly related to right text?
 Answer (Yes/No): `;
 
+        replaceNotification(`Relating "${shortenToWordCount(5, keyNode.text.characters)}" with "${shortenToWordCount(5, valueNode.text.characters)}"`);
         const binaryAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 3 })).choices[0].text.trim();
 
         if (context.isAborted() || context.isChanged()) return;
 
         if (binaryAnswer.toLocaleLowerCase().includes("no")) {
           const combinedSticky = figma.createSticky();
-          combinedSticky.text.characters = `${valueNode.text.characters}
+          combinedSticky.text.characters = `=== Right text ===
+
+${valueNode.text.characters}
+
 === Not related ===
 `;
 
@@ -79,17 +87,26 @@ Answer (Yes/No): `;
           setFillColor(stickyColors.LightGray, combinedSticky);
           moveStickiesToSectionNoWrap([combinedSticky], targetSection);
         } else {
-          const followupPrompt = `Statement: ${keyNode.text.characters.replace(/\s+/g, " ")} ${relation} ${valueNode.text.characters.replace(/\s+/g, " ")}
-Question: why the statement might be true?
+          const followupPrompt = `
+Read the Left text and the right text. Answer the following question about the relations between the two texts.
+
+Left text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
+Right text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
+
+Question: The left text and right text are closely related, what is the relation?
 Answer: `;
 
           const fullAnswer = (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();
 
           if (context.isAborted() || context.isChanged()) return;
 
-          const combinedSticky = figma.createSticky();
-          combinedSticky.text.characters = `${valueNode.text.characters}
-=== Explanation ===
+          const combinedSticky = valueNode.clone();
+          combinedSticky.text.characters = `=== Right text ===
+
+${valueNode.text.characters}
+
+=== Related ===
+
 ${fullAnswer}`;
 
           const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
@@ -99,12 +116,5 @@ ${fullAnswer}`;
         }
       }
     }
-  }
-
-  private getConfig(node: FrameNode) {
-    return {
-      temperature: parseFloat(getFieldByLabel("Temperature", node)!.value.characters),
-      maxTokens: parseInt(getFieldByLabel("Max tokens", node)!.value.characters),
-    };
   }
 }
