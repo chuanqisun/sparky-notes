@@ -68,20 +68,28 @@ export function DraftViewV2(props: DraftViewProps) {
     if (primaryDataNode) {
       onExport({ title: draftTitle, markdown: reportMd });
     }
-  }, [primaryDataNode]);
+  }, [draftTitle, reportMd, primaryDataNode]);
+
+  const handlePreviewClick = useCallback<EventListener>((e: Event) => {
+    const maybeLink = (e.target as HTMLElement).closest?.("a");
+    if (maybeLink) {
+      e.preventDefault();
+      window.open(maybeLink.href, "_blank");
+    }
+  }, []);
 
   return (
     <>
       <menu>
         <button onClick={handleExport} title="Export markdown as a HITS draft report" disabled={isCreating || !primaryDataNode}>
-          As HITS Draft
+          Create HITS Draft
         </button>
         {primaryDataNode ? <input type="text" value={draftTitle} onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)} /> : null}
       </menu>
       {primaryDataNode ? (
         <details open={isExpanded}>
           <summary>Preview</summary>
-          <div class="md-preview" dangerouslySetInnerHTML={{ __html: reportHtml }}></div>
+          <div class="md-preview" dangerouslySetInnerHTML={{ __html: reportHtml }} onClick={handlePreviewClick}></div>
         </details>
       ) : null}
     </>
