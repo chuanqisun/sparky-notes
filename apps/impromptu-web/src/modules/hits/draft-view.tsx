@@ -1,7 +1,10 @@
 import { PrimaryDataNodeSummary } from "@impromptu/types";
-import { useCallback, useMemo, useState } from "preact/hooks";
+import MarkdownIt from "markdown-it";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./draft-view.css";
 import { ParsedReport } from "./parse-report";
+
+const md = new MarkdownIt();
 
 export function DraftView(props: { draft: ParsedReport | null }) {
   const { draft } = props;
@@ -28,7 +31,15 @@ export function DraftViewV2(props: DraftViewProps) {
   const { primaryDataNode, onExport, isCreating } = props;
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const reportText = useMemo(
+  const [draftTitle, setDraftTitle] = useState("New report");
+
+  useEffect(() => {
+    if (primaryDataNode) {
+      setDraftTitle(primaryDataNode.name);
+    }
+  }, [primaryDataNode]);
+
+  const reportMd = useMemo(
     () =>
       `
   ${primaryDataNode?.orderedStickies
@@ -48,9 +59,14 @@ export function DraftViewV2(props: DraftViewProps) {
     [primaryDataNode]
   );
 
+  const reportHtml = useMemo(() => {
+    if (!reportMd) return "";
+    return md.render(reportMd);
+  }, [reportMd]);
+
   const handleExport = useCallback(() => {
     if (primaryDataNode) {
-      onExport({ title: primaryDataNode.name, markdown: reportText });
+      onExport({ title: draftTitle, markdown: reportMd });
     }
   }, [primaryDataNode]);
 
@@ -58,13 +74,14 @@ export function DraftViewV2(props: DraftViewProps) {
     <>
       <menu>
         <button onClick={handleExport} title="Export markdown as a HITS draft report" disabled={isCreating || !primaryDataNode}>
-          HITS draft report
+          As HITS Draft
         </button>
+        {primaryDataNode ? <input type="text" value={draftTitle} onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)} /> : null}
       </menu>
       {primaryDataNode ? (
         <details open={isExpanded}>
-          <summary>{primaryDataNode.name}</summary>
-          {reportText}
+          <summary>Preview</summary>
+          <div class="md-preview" dangerouslySetInnerHTML={{ __html: reportHtml }}></div>
         </details>
       ) : null}
     </>
