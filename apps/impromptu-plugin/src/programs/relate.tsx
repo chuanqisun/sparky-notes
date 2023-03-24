@@ -54,18 +54,18 @@ export class RelateProgram implements Program {
       const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
       if (!targetSection) return;
       const newKeyNode = keyNode.clone();
-      newKeyNode.text.characters = "=== Left text ===\n\n" + newKeyNode.text.characters;
+      newKeyNode.text.characters = "=== Left-side ===\n\n" + newKeyNode.text.characters;
       setFillColor(stickyColors.Yellow, newKeyNode);
       moveStickiesToSectionNewLine([newKeyNode], targetSection);
 
       for (const valueNode of valueNodes) {
         const prompt = `
-Read the Left text and the right text. Answer the following question.
+Read the Left-side text and the Right-side text. Answer the following question.
 
-Left text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
-Right text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
+Left-side text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
+Right-side text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
 
-Question: Is the left text highly related to right text?
+Question: Is the Left-side text highly related to the Right-side text?
 Answer (Yes/No): `;
 
         replaceNotification(`Relating "${shortenToWordCount(5, keyNode.text.characters)}" with "${shortenToWordCount(5, valueNode.text.characters)}"`);
@@ -75,7 +75,7 @@ Answer (Yes/No): `;
 
         if (binaryAnswer.toLocaleLowerCase().includes("no")) {
           const combinedSticky = figma.createSticky();
-          combinedSticky.text.characters = `=== Right text ===
+          combinedSticky.text.characters = `=== Right-side ===
 
 ${valueNode.text.characters}
 
@@ -88,12 +88,12 @@ ${valueNode.text.characters}
           moveStickiesToSectionNoWrap([combinedSticky], targetSection);
         } else {
           const followupPrompt = `
-Read the Left text and the right text. Answer the following question about the relations between the two texts.
+Read the Left-side text and the Right-side text. Answer the following question about the relations between the two texts.
 
-Left text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
-Right text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
+Left-side text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
+Right-side text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
 
-Question: The left text and right text are closely related, what is the relation?
+Question: The Left-side text and Right-side text are highly related, what is the relation in short?
 Answer: `;
 
           const fullAnswer = (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();
@@ -101,7 +101,7 @@ Answer: `;
           if (context.isAborted() || context.isChanged()) return;
 
           const combinedSticky = valueNode.clone();
-          combinedSticky.text.characters = `=== Right text ===
+          combinedSticky.text.characters = `=== Right-side ===
 
 ${valueNode.text.characters}
 
