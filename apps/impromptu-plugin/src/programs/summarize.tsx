@@ -5,7 +5,7 @@ import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, setFi
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
-import { shortenToWordCount } from "../utils/text";
+import { combineWhitespace, shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -50,7 +50,12 @@ export class SummarizeProgram implements Program {
 
     const getInitSummary = async () => {
       // initially, use superficial titles
-      const allTitles = inputStickies.map((sticky) => `- ${sticky.text.characters.replace(/\s+/g, " ")}`).join("\n");
+      const allTitles = inputStickies
+        .map(
+          (sticky) =>
+            `- ${shortenToWordCount(2000 / inputStickies.length, `${combineWhitespace(sticky.text.characters)} ${sticky.getPluginData("shortContext")}`)}`
+        )
+        .join("\n");
       const safeTitles = shortenToWordCount(2000, allTitles);
       const initPrompt = `
 Summarize the full list into a concise list with up to ${maxItemCount} items, 10 words per item.

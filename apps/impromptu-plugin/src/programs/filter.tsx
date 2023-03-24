@@ -4,6 +4,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
+import { combineWhitespace } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -64,18 +65,17 @@ export class FilterProgram implements Program {
 
       const positiveSamples = getInnerStickies([positiveContainer])
         .slice(0, 7)
-        .map((sticky) => sticky.text.characters);
+        .map((sticky) => combineWhitespace(sticky.text.characters));
       const negativeSamples = getInnerStickies([negativeContainer])
         .slice(0, 7)
-        .map((sticky) => sticky.text.characters);
+        .map((sticky) => combineWhitespace(sticky.text.characters));
 
       const prompt =
         `${positiveSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): Yes`).join("\n\n")}\n\n` +
         `${negativeSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): No`).join("\n\n")}` +
         `\n\nUse the following text to answer the following question with Yes/No: ${question}
 
-Text: ${currentSticky.text.characters}
-        
+Text: ${combineWhitespace(currentSticky.text.characters)} ${currentSticky.getPluginData("shortContext")}
 Answer (Yes/No): `;
 
       const topChoiceResult = (

@@ -2,6 +2,7 @@ import { getCompletion } from "../openai/completion";
 import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
+import { nonEmptyString } from "../utils/non-empty-string";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { CreationContext, Program, ProgramContext } from "./program";
 
@@ -45,7 +46,13 @@ export class CompletionProgram implements Program {
     const question = getFieldByLabel("Prompt", node)!.value.characters;
 
     for (const currentSticky of inputStickies) {
-      const prompt = [currentSticky.getPluginData("longContext") ?? "", currentSticky.text.characters, question].filter(Boolean).join("\n\n");
+      const prompt = [
+        nonEmptyString(currentSticky.getPluginData("longContext"), currentSticky.getPluginData("shortContext")) ?? "",
+        currentSticky.text.characters,
+        question,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
 
       const config = this.getConfig(node);
       const apiConfig = {

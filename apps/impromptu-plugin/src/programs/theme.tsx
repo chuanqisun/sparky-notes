@@ -5,7 +5,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
-import { shortenToWordCount } from "../utils/text";
+import { combineWhitespace, shortenToWordCount } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -63,7 +63,10 @@ ${itemType} list:
 ${inputNodes
   .map(
     (node, index) =>
-      `${itemType} #${index + 1}: ${node.text.characters.trim()} ${shortenToWordCount(2000 / inputNodes.length, node.getPluginData("shortContext"))}`
+      `${itemType} #${index + 1}: ${combineWhitespace(node.text.characters)} ${shortenToWordCount(
+        2000 / inputNodes.length,
+        node.getPluginData("shortContext")
+      )}`
   )
   .join("\n")}
 

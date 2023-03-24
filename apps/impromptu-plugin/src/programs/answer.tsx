@@ -45,13 +45,24 @@ export class AnswerProgram implements Program {
     const question = getFieldByLabel("Question", node)!.value.characters;
 
     for (let currentSticky of inputStickies) {
-      const prompt = [
-        currentSticky.getPluginData("longContext") ?? "",
-        "Answer the question about the following text.\n\nText: " + currentSticky.text.characters + "\nQuestion: " + question,
-        "Asnwer: ",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
+      const pretext = currentSticky.getPluginData("longContext");
+      const prompt = `${
+        pretext.length
+          ? `Read the following article and answer the question.
+Article """
+${pretext}
+"""`
+          : ""
+      }
+
+Answer the question about the following text.
+
+Text: """
+${currentSticky.text.characters}
+${currentSticky.getPluginData("shortContext") ?? ""}
+"""
+Question: ${question}
+Answer: `;
 
       const config = this.getConfig(node);
       const apiConfig = {
