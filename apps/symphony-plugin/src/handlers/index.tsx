@@ -1,5 +1,5 @@
 import type { WebProxy } from "@h20/figma-relay";
-import type { DisplayProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
+import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, ThoughtNode } from "../components/program-node";
 import { frameNodeToDisplayProgram, selectionNodesToDisplayPrograms } from "../utils/display-program";
 import { $, FigmaQuery } from "../utils/fq";
@@ -109,29 +109,7 @@ export const respondLinearContextGraph: Handler = async (message, context) => {
     return getOutConnectors(candidateLeafNode).every((connector) => !uniqueReachableConnectorIds.has(connector.id));
   }) as FrameNode[];
 
-  console.log("reachable connectors", [...uniqueReachableConnectorIds]);
   const sortedNodes = sortUpstreamNodes(qualifiedLeafNodes, uniqueReachableConnectorIds) as FrameNode[];
-  console.log("upstreamContext", sortedNodes.map(frameNodeToDisplayProgram));
-};
 
-export const respondPathFromRoot: Handler = async (message, context) => {
-  if (!message.requestPathFromRoot) {
-    return;
-  }
-
-  // traverseGraphAbove
-  const targetNode = figma.getNodeById(message.requestPathFromRoot);
-  if (!targetNode) {
-    replaceNotification(`Error finding node with id ${message.requestContextPath}`, { error: true });
-    context.webProxy.respond(message, { respondPathFromRoot: [] });
-    return;
-  }
-
-  const results = [] as DisplayProgram[];
-  traverse([targetNode as SceneNode], {
-    onConnector: selectInConnectors(),
-    onPreVisit: (node) => results.unshift(frameNodeToDisplayProgram(node as FrameNode)),
-  });
-
-  context.webProxy.respond(message, { respondPathFromRoot: results });
+  context.webProxy.respond(message, { respondLinearContextGraph: sortedNodes.map(frameNodeToDisplayProgram) });
 };

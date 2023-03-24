@@ -66,11 +66,13 @@ function App() {
     if (!selectedPrograms.length) return;
 
     const parentId = selectedPrograms[0].id;
-    const { respondPathFromRoot } = await runContext.figmaProxy.request({ requestPathFromRoot: parentId });
-    if (!respondPathFromRoot?.length) return;
+    const parentIds = selectedPrograms.map((p) => p.id);
+    const { respondLinearContextGraph } = await runContext.figmaProxy.request({ requestLinearContextGraph: { leafIds: parentIds } });
+    console.log(respondLinearContextGraph);
+    if (!respondLinearContextGraph?.length) return;
 
     const thought = await generateReasonAct(runContext, {
-      pretext: respondPathFromRoot.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+      pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
       nextStepName: "Thought",
     });
 

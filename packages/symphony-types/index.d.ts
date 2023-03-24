@@ -2,7 +2,7 @@ export interface MessageToWeb {
   programSelectionChanged?: DisplayProgram[];
   respondContextPath?: DisplayProgram[][];
   respondCreateProgram?: DisplayProgram;
-  respondPathFromRoot?: DisplayProgram[];
+  respondLinearContextGraph?: DisplayProgram[];
   respondRuntimeUpdate?: boolean;
   respondSelectedPrograms?: DisplayProgram[];
 }
@@ -15,7 +15,6 @@ export interface MessageToFigma {
   requestLinearContextGraph?: {
     leafIds: string[];
   };
-  requestPathFromRoot?: string; // includes nodes above the selected node
   requestRemoveDownstreamNode?: string;
   requestRuntimeUpdate?: {
     messageHandler: string;
