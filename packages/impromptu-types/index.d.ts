@@ -13,6 +13,7 @@ export interface MessageToFigma {
   createProgram?: string;
   hitsConfig?: HitsConfig;
   programConfigChanged?: ProgramConfigSummary;
+  requestExportAsHitsReport?: true;
   start?: boolean;
   stop?: boolean;
 }

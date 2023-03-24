@@ -10,6 +10,7 @@ import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
 import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
 import { RelateProgram } from "./programs/relate";
+import { ReportProgram } from "./programs/report";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
@@ -48,6 +49,7 @@ const programs: Program[] = [
   new CompletionProgram(),
   new FilterProgram(),
   new RelateProgram(),
+  new ReportProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),
   new SortProgram(),
@@ -268,6 +270,10 @@ const handleUIMessage = async (message: MessageToFigma) => {
     webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
     arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
+  }
+
+  if (message.requestExportAsHitsReport) {
+    // TBD
   }
 
   if (message.start) {

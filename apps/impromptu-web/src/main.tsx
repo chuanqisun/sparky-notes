@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { notifyFigma } from "./modules/figma/rpc";
+import { notifyFigma, requestFigma } from "./modules/figma/rpc";
 import { LogEntryView } from "./modules/log/log-entry-view";
 import { StickyView } from "./modules/sticky-view/sticky-view";
 
@@ -54,6 +54,8 @@ function App() {
   );
   const handleClearLog = useCallback(() => setLogEntries([]), []);
 
+  const handleExportAsHitsReport = useCallback(() => requestFigma({ requestExportAsHitsReport: true }), []);
+
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
 
@@ -78,13 +80,20 @@ function App() {
               <button data-program="completion">Completion</button>
               <button data-program="filter">Filter</button>
               <button data-program="relate">Relate</button>
-              <button data-program="research-insights"> Research Insights</button>
-              <button data-program="research-recommendations"> Research Recommendations</button>
+              <button data-program="report">Report</button>
+              <button data-program="research-insights">Research Insights</button>
+              <button data-program="research-recommendations">Research Recommendations</button>
               <button data-program="sort">Sort</button>
               <button data-program="summarize">Summarize</button>
               <button data-program="theme">Theme</button>
               <button data-program="web-browse">Web browse</button>
               <button data-program="web-search">Web search</button>
+            </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Export</legend>
+            <menu>
+              <button onClick={handleExportAsHitsReport}>HITS report draft</button>
             </menu>
           </fieldset>
           <fieldset>
