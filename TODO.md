@@ -42,6 +42,8 @@
   - No cycle allowed
   - All nodes along the path to the root are collectively considered "Context"
   - When selection is mixed, context is topological sort of the superset of all paths
+- Details
+  - Use constant connector color
 
 ## Figma runtime pain point
 
