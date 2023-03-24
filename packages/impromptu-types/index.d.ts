@@ -66,9 +66,17 @@ export interface SelectionSummary {
 export interface SelectionSummaryV2 {
   programNodeIds: string[];
   dataNodeIds: string[];
+  stickies: StickySummary[];
 }
 
 export interface ProgramNodeSummary {
   name: string | null;
   config: any;
+}
+
+export interface StickySummary {
+  text: string;
+  shortContext: string;
+  longContext: string;
+  url?: string;
 }

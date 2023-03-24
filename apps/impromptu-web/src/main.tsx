@@ -1,4 +1,4 @@
-import { LogEntry, MessageToUI } from "@impromptu/types";
+import { LogEntry, MessageToUI, StickySummary } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import "./main.css";
@@ -14,9 +14,15 @@ function App() {
 
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
 
+  const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
+
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToUI;
+
+      if (message.selectionChangedV2) {
+        setStickySummaries(message.selectionChangedV2.stickies);
+      }
 
       if (message.started) {
         setIsRunning(true);
@@ -80,6 +86,42 @@ function App() {
               <button data-program="web-search">Web search</button>
             </menu>
           </fieldset>
+          <fieldset>
+            <legend>Inspect</legend>
+            {!stickySummaries.length && <div>Select stickies to inspect</div>}
+            {stickySummaries.map((sticky) => (
+              <details>
+                <summary>{sticky.text}</summary>
+                <dl>
+                  <dt>Display text</dt>
+                  <dd>{sticky.text}</dd>
+                  <dt>Link</dt>
+                  <dd>
+                    {sticky.url ? (
+                      <a href={sticky.url} target="_blank">
+                        {sticky.url}
+                      </a>
+                    ) : (
+                      "N/A"
+                    )}
+                  </dd>
+                  <dt>Short context</dt>
+                  <dd>{sticky.shortContext}</dd>
+                  <dt>Long context</dt>
+                  <dd>{sticky.longContext}</dd>
+                </dl>
+              </details>
+            ))}
+          </fieldset>
+          <fieldset>
+            <legend>Log</legend>
+            <menu>
+              <button onClick={handleClearLog}>Clear</button>
+            </menu>
+            {logEntries.map((entry) => (
+              <LogEntryView entry={entry} key={entry.id} />
+            ))}
+          </fieldset>
         </>
       )}
       <fieldset>
@@ -104,17 +146,6 @@ function App() {
           )}
         </menu>
       </fieldset>
-      {isConnected && (
-        <fieldset>
-          <legend>Log</legend>
-          <menu>
-            <button onClick={handleClearLog}>Clear</button>
-          </menu>
-          {logEntries.map((entry) => (
-            <LogEntryView entry={entry} key={entry.id} />
-          ))}
-        </fieldset>
-      )}
     </main>
   );
 }

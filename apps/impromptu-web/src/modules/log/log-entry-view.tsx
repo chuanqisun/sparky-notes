@@ -27,7 +27,7 @@ export function LogEntryView(props: { entry: LogEntry }) {
 
   return (
     <details>
-      <summary>
+      <summary title={summaryTitle}>
         {new Date(entry.timestamp).toLocaleTimeString()} {summaryTitle}
       </summary>
       {InnerDetails}

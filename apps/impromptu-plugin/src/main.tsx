@@ -23,9 +23,9 @@ import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
 import { Logger } from "./utils/logger";
 import { clearNotification, replaceNotification } from "./utils/notify";
-import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash } from "./utils/query";
+import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash, getStickySummary } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
-import { getAllDataNodes, getSelectedDataNodes, getSelectedProgramNodes } from "./utils/selection";
+import { getAllDataNodes, getSelectedDataNodes, getSelectedProgramNodes, getSelectedStickies } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
 import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
 import { getWebSearchProxy, WebSearchProxy } from "./web/search";
@@ -282,11 +282,13 @@ const handleUIMessage = async (message: MessageToFigma) => {
 const handleSelectionChange = () => {
   const programNodes = getSelectedProgramNodes(filterToProgramNode);
   const dataNodes = getSelectedDataNodes();
+  const stickySummaries = getSelectedStickies().map(getStickySummary);
 
   notifyUI({
     selectionChangedV2: {
       programNodeIds: programNodes.map((node) => node.id),
       dataNodeIds: dataNodes.map((node) => node.id),
+      stickies: stickySummaries,
     },
   });
 };

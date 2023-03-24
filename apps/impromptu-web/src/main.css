@@ -13,3 +13,16 @@ fieldset {
   display: grid;
   gap: 4px;
 }
+
+dt {
+  font-weight: 600;
+}
+dt + dd {
+  margin-block-start: 4px;
+}
+dd + dt {
+  margin-block-start: 8px;
+}
+dd {
+  margin-inline-start: 20px;
+}

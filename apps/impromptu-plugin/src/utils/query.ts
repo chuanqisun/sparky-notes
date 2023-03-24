@@ -1,3 +1,4 @@
+import { StickySummary } from "@impromptu/types";
 import { getNextNodes, getPrevNodes } from "./graph";
 import { getProgramNodeGraphHash } from "./hash";
 import { sortFPattern } from "./sort";
@@ -196,4 +197,13 @@ export function getProgramNodeHash(currentNode: FrameNode) {
   const targetNodes = getNextNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
   const latestHash = getProgramNodeGraphHash(currentNode, sourceNodes, targetNodes);
   return latestHash;
+}
+
+export function getStickySummary(node: StickyNode): StickySummary {
+  return {
+    text: node.text.characters,
+    shortContext: node.getPluginData("shortContext"),
+    longContext: node.getPluginData("longContext"),
+    url: (node.text.hyperlink as HyperlinkTarget)?.value,
+  };
 }
