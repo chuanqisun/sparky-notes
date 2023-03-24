@@ -1,6 +1,7 @@
 import { MessageToFigma } from "@impromptu/types";
 import { ArxivSearchProxy, getArxivSearchProxy } from "./arxiv/search";
-import { getSearchProxy, SearchProxy } from "./hits/proxy";
+import { createReport } from "./hits/create-report";
+import { getHITSApiProxy, getSearchProxy, HitsApiProxy, SearchProxy } from "./hits/proxy";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
@@ -40,6 +41,7 @@ let completion!: CompletionProxy;
 let hitsSearch!: SearchProxy;
 let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
+let hitsApi: HitsApiProxy;
 
 const programs: Program[] = [
   new AgentProgram(),
@@ -270,9 +272,16 @@ const handleUIMessage = async (message: MessageToFigma) => {
     webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
     arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
+    hitsApi = getHITSApiProxy(message.hitsConfig.accessToken, logger);
   }
 
   if (message.requestExportAsHitsReport) {
+    createReport(hitsApi, {
+      report: {
+        title: "My test report",
+        markdown: "This is a test report.",
+      },
+    }).then((res) => console.log("report created", res));
     // TBD
   }
 

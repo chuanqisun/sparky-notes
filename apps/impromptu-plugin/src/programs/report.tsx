@@ -68,8 +68,6 @@ export class ReportProgram implements Program {
     });
 
     const reportText = `
-Title: My test
-
 ${colorStickies
   .map((sticky) => {
     switch (sticky.color) {
@@ -83,10 +81,8 @@ ${colorStickies
         return "";
     }
   })
-  .join("\n\n")}
-     `;
+  .join("\n\n")}`.trim();
 
-    console.log(reportText);
     const text = figma.createText();
     text.characters = reportText;
     (targetNode as SectionNode).appendChild(text);
