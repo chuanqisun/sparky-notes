@@ -63,7 +63,6 @@ export interface SelectionSummary {
   programNodeIds: string[];
   dataNodeIds: string[];
   stickies: StickySummary[];
-  plaintextNodes: PlaintextNodeSummary[];
   primaryDataNode: PrimaryDataNodeSummary | null;
 }
 
@@ -77,11 +76,6 @@ export interface StickySummary {
   shortContext: string;
   longContext: string;
   url?: string;
-}
-
-export interface PlaintextNodeSummary {
-  id: string;
-  text: string;
 }
 
 export interface PrimaryDataNodeSummary {

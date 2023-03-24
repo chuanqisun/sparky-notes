@@ -6,8 +6,7 @@ import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
 import { createReport } from "./modules/hits/create-report";
-import { DraftView } from "./modules/hits/draft-view";
-import { parseReport } from "./modules/hits/parse-report";
+import { DraftViewV2 } from "./modules/hits/draft-view";
 import { getHITSApiProxy } from "./modules/hits/proxy";
 import { LogEntryView } from "./modules/log/log-entry-view";
 import { StickyView } from "./modules/sticky-view/sticky-view";
@@ -21,8 +20,7 @@ function App() {
 
   const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
 
-  const [plaintextNode, setPlaintextNode] = useState<{ id: string; text: string }>();
-  const [primaryDataNode, setPrimaryDataNode] = useState<PrimaryDataNodeSummary | null>();
+  const [primaryDataNode, setPrimaryDataNode] = useState<PrimaryDataNodeSummary | null>(null);
 
   const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
 
@@ -32,7 +30,6 @@ function App() {
 
       if (message.selectionChanged) {
         setStickySummaries(message.selectionChanged.stickies);
-        setPlaintextNode(message.selectionChanged.plaintextNodes[0]);
         setPrimaryDataNode(message.selectionChanged.primaryDataNode);
       }
 
@@ -56,15 +53,6 @@ function App() {
     notifyFigma({ webStarted: true });
   }, []);
 
-  const parsedDraft = useMemo(() => {
-    if (!plaintextNode) return null;
-
-    const parsedReport = parseReport(plaintextNode.text);
-    if (!parsedReport) return null;
-
-    return parsedReport;
-  }, [plaintextNode]);
-
   useEffect(() => {
     notifyFigma({ hitsConfig: { accessToken } });
   }, [accessToken]);
@@ -79,20 +67,23 @@ function App() {
   const handleClearLog = useCallback(() => setLogEntries([]), []);
 
   const [isCreating, setIsCreating] = useState(false);
-  const handleExportAsHitsReport = useCallback(async () => {
-    if (!parsedDraft || parsedDraft.error) return;
-
-    setIsCreating(true);
-    createReport(hitsApi, {
-      report: {
-        title: parsedDraft.title,
-        markdown: parsedDraft.markdown,
-      },
-    })
-      .then((res) => console.log("report created", res))
-      .finally(() => setIsCreating(false));
-    console.log(plaintextNode);
-  }, [hitsApi, parsedDraft]);
+  const handleExportAsHitsReport = useCallback(
+    async (draft: { title: string; markdown: string }) => {
+      setIsCreating(true);
+      createReport(hitsApi, {
+        report: {
+          title: draft.title,
+          markdown: draft.markdown,
+        },
+      })
+        .then((res) => {
+          console.log("report created", res);
+          window.open(res.url, "_blank");
+        })
+        .finally(() => setIsCreating(false));
+    },
+    [hitsApi]
+  );
 
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
@@ -130,16 +121,8 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Export</legend>
-            <menu>
-              <button
-                onClick={handleExportAsHitsReport}
-                title="Export markdown as a HITS draft report"
-                disabled={isCreating || !parsedDraft || !!parsedDraft.error}
-              >
-                HITS draft report
-              </button>
-            </menu>
-            <DraftView draft={parsedDraft} />
+
+            <DraftViewV2 isCreating={isCreating} primaryDataNode={primaryDataNode} onExport={handleExportAsHitsReport} />
           </fieldset>
           <fieldset>
             <legend>Inspect</legend>

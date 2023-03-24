@@ -129,14 +129,6 @@ export function getNextTilePositionNoWrap(tile: SceneNode, container: SectionNod
   };
 }
 
-export function getNodePlaintext(node: SectionNode) {
-  return [...node.children]
-    .sort((a, b) => a.y - b.y)
-    .filter(filterToType<TextNode>("TEXT"))
-    .map((child) => child.characters.trim())
-    .join("\n\n");
-}
-
 export function getInnerTextNodeGroups(node: SectionNode) {
   const sortedChildren = [...node.children].sort((a, b) => a.y - b.y);
   return sortedChildren.reduce((prev, current) => {

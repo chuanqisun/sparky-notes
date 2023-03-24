@@ -24,7 +24,7 @@ import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
 import { Logger } from "./utils/logger";
 import { clearNotification, replaceNotification } from "./utils/notify";
-import { filterToHaveWidgetDataKey, filterToType, getNodePlaintext, getProgramNodeHash, getStickySummary } from "./utils/query";
+import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash, getStickySummary } from "./utils/query";
 import { notifyUI } from "./utils/rpc";
 import { getAllDataNodes, getPrimaryDataNode, getSelectedDataNodes, getSelectedProgramNodes, getSelectedStickies } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
@@ -296,10 +296,6 @@ const handleSelectionChange = () => {
       programNodeIds: programNodes.map((node) => node.id),
       dataNodeIds: dataNodes.map((node) => node.id),
       primaryDataNode,
-      plaintextNodes: dataNodes.map((node) => ({
-        id: node.id,
-        text: getNodePlaintext(node),
-      })),
       stickies: stickySummaries,
     },
   });

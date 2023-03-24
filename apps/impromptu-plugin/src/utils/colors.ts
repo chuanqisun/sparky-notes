@@ -43,7 +43,6 @@ export function getClosestColor(rgb: RGB, fallback: MappedColorNames): MappedCol
     }))
     .sort((a, b) => a.distance - b.distance)[0];
 
-  console.log(candidate.distance);
   if (candidate.distance > 0.1) return fallback;
   return candidate.key as MappedColorNames;
 }
