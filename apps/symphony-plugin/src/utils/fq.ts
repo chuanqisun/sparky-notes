@@ -4,9 +4,8 @@ import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, isI
 
 export type ConnectorDirection = "left" | "right" | "up" | "down";
 export type MagnetPosition = "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
-export type FQ = FigmaQuery;
 
-class FigmaQuery {
+export class FigmaQuery {
   static createFromNodes(nodes: readonly SceneNode[]) {
     return new FigmaQuery(nodes);
   }

@@ -2,7 +2,7 @@ import type { WebProxy } from "@h20/figma-relay";
 import type { DisplayProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
 import { QuestionNode, ThoughtNode } from "../components/program-node";
 import { frameNodeToDisplayProgram, selectionNodesToDisplayPrograms } from "../utils/display-program";
-import { $, FQ } from "../utils/fq";
+import { $, FigmaQuery } from "../utils/fq";
 import { getOutConnectors, selectInConnectors, traverse } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { sortUpstreamNodes } from "../utils/sort";
@@ -29,7 +29,7 @@ export const respondCreateProgram: Handler = async (message, context) => {
   }
 
   const messageData = message.requestCreateProgram;
-  let fqNode: FQ;
+  let fqNode: FigmaQuery;
 
   switch (messageData.subtype) {
     case "Thought": {
