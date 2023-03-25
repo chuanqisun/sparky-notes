@@ -1,12 +1,13 @@
 import { MappedColorNames } from "../../apps/impromptu-plugin/src/utils/colors";
 
 export interface MessageToUI {
-  selectionChanged?: SelectionSummary;
-  started?: boolean;
-  stopped?: boolean;
   logCompletionInfo?: CompletionInfoItem;
   logCompletionError?: CompletionErrorItem;
   log?: LogEntry;
+  respondDataNodeSynthesis?: SynthesisResponse;
+  selectionChanged?: SelectionSummary;
+  started?: boolean;
+  stopped?: boolean;
 }
 
 export interface MessageToFigma {
@@ -14,6 +15,7 @@ export interface MessageToFigma {
   createProgram?: string;
   hitsConfig?: HitsConfig;
   programConfigChanged?: ProgramConfigSummary;
+  requestDataNodeSynthesis?: SynthesisRequest;
   start?: boolean;
   stop?: boolean;
   webStarted?: boolean;
@@ -59,6 +61,16 @@ export interface OpenAIConnection {
   apiKey: string;
 }
 
+export interface SynthesisRequest {
+  dataNodeId: string;
+  title?: boolean;
+  introduction?: boolean;
+}
+export interface SynthesisResponse {
+  title?: string;
+  introduction?: string;
+}
+
 export interface SelectionSummary {
   programNodeIds: string[];
   dataNodeIds: string[];
@@ -79,6 +91,7 @@ export interface StickySummary {
 }
 
 export interface PrimaryDataNodeSummary {
+  id: string;
   name: string;
   orderedStickies: {
     color: MappedColorNames;

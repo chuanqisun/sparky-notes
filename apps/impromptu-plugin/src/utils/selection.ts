@@ -34,6 +34,7 @@ export function getPrimaryDataNode(node: SectionNode): PrimaryDataNodeSummary | 
   });
 
   return {
+    id: node.id,
     name: node.name,
     orderedStickies: colorStickies,
   };

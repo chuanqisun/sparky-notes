@@ -1,4 +1,4 @@
-import { PrimaryDataNodeSummary } from "@impromptu/types";
+import { PrimaryDataNodeSummary, SynthesisResponse } from "@impromptu/types";
 import MarkdownIt from "markdown-it";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./draft-view.css";
@@ -9,6 +9,7 @@ export interface DraftViewProps {
   primaryDataNode: PrimaryDataNodeSummary | null;
   isCreating: boolean;
   creationResults: CreationResult[];
+  onRequestSynthesis: (dataNodeId: string) => Promise<SynthesisResponse>;
   onExport: (exportedReport: { title: string; markdown: string }) => any;
 }
 
@@ -20,7 +21,7 @@ export interface CreationResult {
 }
 
 export function DraftViewV2(props: DraftViewProps) {
-  const { primaryDataNode, onExport, isCreating, creationResults } = props;
+  const { primaryDataNode, onExport, onRequestSynthesis, isCreating, creationResults } = props;
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [draftTitle, setDraftTitle] = useState("New report");
@@ -58,8 +59,9 @@ export function DraftViewV2(props: DraftViewProps) {
     return md.render(reportMd);
   }, [reportMd]);
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (primaryDataNode) {
+      const synthesis = await onRequestSynthesis(primaryDataNode.id);
       onExport({ title: draftTitle, markdown: reportMd });
     }
   }, [draftTitle, reportMd, primaryDataNode]);

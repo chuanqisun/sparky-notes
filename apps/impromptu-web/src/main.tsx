@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { notifyFigma } from "./modules/figma/rpc";
+import { notifyFigma, requestFigma } from "./modules/figma/rpc";
 import { createReport } from "./modules/hits/create-report";
 import { CreationResult, DraftViewV2 } from "./modules/hits/draft-view";
 import { getHITSApiProxy } from "./modules/hits/proxy";
@@ -88,6 +88,20 @@ function App() {
     },
     [hitsApi]
   );
+  const handleRequestSynthesis = useCallback(async (dataNodeId: string) => {
+    setIsCreating(true);
+    return requestFigma({
+      requestDataNodeSynthesis: {
+        dataNodeId,
+        title: true,
+        introduction: true,
+      },
+    })
+      .then(({ respondDataNodeSynthesis }) => {
+        return respondDataNodeSynthesis!;
+      })
+      .finally(() => setIsCreating(false));
+  }, []);
 
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
@@ -125,7 +139,13 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Export</legend>
-            <DraftViewV2 isCreating={isCreating} primaryDataNode={primaryDataNode} onExport={handleExportAsHitsReport} creationResults={creationResults} />
+            <DraftViewV2
+              isCreating={isCreating}
+              primaryDataNode={primaryDataNode}
+              onExport={handleExportAsHitsReport}
+              onRequestSynthesis={handleRequestSynthesis}
+              creationResults={creationResults}
+            />
           </fieldset>
           <fieldset>
             <legend>Inspect</legend>

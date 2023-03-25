@@ -270,6 +270,9 @@ const handleUIMessage = async (message: MessageToFigma) => {
     arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
   }
 
+  if (message.requestDataNodeSynthesis) {
+  }
+
   if (message.start) {
     eventLoop.start();
   }
