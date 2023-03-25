@@ -103,6 +103,7 @@ _\<A description of how the report is generated\>_
 
         setIsCreating(true);
         const synthesis = await handleRequestSynthesis(primaryDataNode.id);
+        if (synthesis.error) throw new Error(synthesis.error);
         const fullReportMd = `
 ## Introduction
 

@@ -4,7 +4,7 @@ export interface MessageToUI {
   logCompletionInfo?: CompletionInfoItem;
   logCompletionError?: CompletionErrorItem;
   log?: LogEntry;
-  respondDataNodeSynthesis?: SynthesisResponse;
+  respondDataNodeSynthesis?: SynthesisResponse | null;
   selectionChanged?: SelectionSummary;
   started?: boolean;
   stopped?: boolean;
@@ -77,6 +77,7 @@ export interface SynthesisResponse {
   title?: string;
   introduction?: string;
   methodology?: string;
+  error?: string;
 }
 
 export interface SelectionSummary {

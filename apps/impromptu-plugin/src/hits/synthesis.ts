@@ -10,20 +10,22 @@ export interface Synthesis {
   title: string;
   introduction: string;
   methodology: string;
+  error?: string;
 }
 
-export async function getSynthesis(
-  context: ReflectionContext,
-  matchProgram: (baseNode: BaseNode) => Program | null,
-  dataNodeId: string
-): Promise<Synthesis | null> {
+export async function getSynthesis(context: ReflectionContext, matchProgram: (baseNode: BaseNode) => Program | null, dataNodeId: string): Promise<Synthesis> {
   replaceNotification("Generating methodology...");
   const { completion } = context;
 
   const dataNode = figma.getNodeById(dataNodeId);
   if (!dataNode) {
     replaceNotification("Section node does not exist.", { error: true });
-    return null;
+    return {
+      title: "",
+      introduction: "",
+      methodology: "",
+      error: "Section node does not exist.",
+    };
   }
 
   const sourceGraph = getSourceGraph([dataNode as SectionNode]);
@@ -36,7 +38,13 @@ export async function getSynthesis(
     await Promise.all(
       programNodes.map((programNode) => {
         const program = matchProgram(programNode);
-        if (!program) return null;
+        if (!program)
+          return {
+            title: "",
+            introduction: "",
+            methodology: "",
+            error: `Invalid program node id=${programNode.id}`,
+          };
         return program.getMethodology(context, programNode);
       })
     )
@@ -95,7 +103,6 @@ ${methodology}
 `
     : ""
 }`.trim()}
-}
 """
 
 Begin!
