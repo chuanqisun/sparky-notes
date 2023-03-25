@@ -1,5 +1,5 @@
 import { getCompletion } from "../openai/completion";
-import { findMatchedProgram, Program, PROGRAME_NAME_KEY, ReflectionContext } from "../programs/program";
+import { Program, PROGRAME_NAME_KEY, ReflectionContext } from "../programs/program";
 import { getSourceGraph } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToHaveWidgetDataKey } from "../utils/query";
@@ -12,8 +12,12 @@ export interface Synthesis {
   methodology: string;
 }
 
-export async function getSynthesis(context: ReflectionContext, programs: Program[], dataNodeId: string): Promise<Synthesis | null> {
-  const matchProgram = findMatchedProgram.bind(null, programs);
+export async function getSynthesis(
+  context: ReflectionContext,
+  matchProgram: (baseNode: BaseNode) => Program | null,
+  dataNodeId: string
+): Promise<Synthesis | null> {
+  replaceNotification("Generating methodology...");
   const { completion } = context;
 
   replaceNotification("Generating methodology...");

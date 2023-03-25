@@ -272,13 +272,8 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.requestDataNodeSynthesis) {
-    replaceNotification("Generating methodology...");
-
-    const reflectionContext: ReflectionContext = {
-      completion,
-    };
-
-    const synthesis = await getSynthesis(reflectionContext, programs, message.requestDataNodeSynthesis.dataNodeId);
+    const reflectionContext: ReflectionContext = { completion };
+    const synthesis = await getSynthesis(reflectionContext, matchProgram, message.requestDataNodeSynthesis.dataNodeId);
     if (!synthesis) return;
 
     respondUI(message, { respondDataNodeSynthesis: synthesis });
