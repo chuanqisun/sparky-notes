@@ -20,6 +20,10 @@ export class ThemeProgram implements Program {
     } stickies`;
   }
 
+  public getMethodology(_context: ProgramContext, node: FrameNode) {
+    return `Identify themes across "${getFieldByLabel("Item type", node)!.value.characters}" items`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

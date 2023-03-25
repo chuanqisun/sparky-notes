@@ -14,6 +14,10 @@ export class AnswerProgram implements Program {
     return `Answer: ${getFieldByLabel("Question", node)!.value.characters}`;
   }
 
+  public getMethodology(_context: ProgramContext, node: FrameNode) {
+    return `Answer the question "${getFieldByLabel("Question", node)!.value.characters}"`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

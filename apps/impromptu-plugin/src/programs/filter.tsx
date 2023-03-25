@@ -16,6 +16,10 @@ export class FilterProgram implements Program {
     return `Filter: ${getFieldByLabel("Yes/No question", node)!.value.characters}`;
   }
 
+  public getMethodology(_context: ProgramContext, node: FrameNode) {
+    return `Check each piece of information with the question "${getFieldByLabel("Yes/No question", node)!.value.characters}"`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

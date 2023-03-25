@@ -20,6 +20,11 @@ export class CategorizeProgram implements Program {
     return `Categorize: ${targetNodeNames}`;
   }
 
+  public getMethodology(_context: ProgramContext, node: FrameNode) {
+    const targetNodes = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
+    return `Categorize information into one of [${targetNodes.map((targetNode) => targetNode.name).join(", ")}]`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

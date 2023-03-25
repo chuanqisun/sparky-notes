@@ -23,6 +23,10 @@ export class SortProgram implements Program {
     return `Sort: ${getFieldByLabel("What to promote", node)!.value.characters}`;
   }
 
+  public getMethodology(_context: ProgramContext, node: FrameNode) {
+    return `Sort and identify items that are "${getFieldByLabel("What to promote", node)!.value.characters}"`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

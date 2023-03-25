@@ -17,6 +17,10 @@ export class SummarizeProgram implements Program {
     return `Summarize: reduce to ${getFieldByLabel("Max item count", node)!.value.characters} items.`;
   }
 
+  public getMethodology(_context: ProgramContext, _node: FrameNode) {
+    return `Summarze information`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

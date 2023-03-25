@@ -15,6 +15,10 @@ export class CompletionProgram implements Program {
     return `Completion: ${getFieldByLabel("Prompt", node)!.value.characters}`;
   }
 
+  public getMethodology(_context: ProgramContext, node: FrameNode) {
+    return `Ask GPT with the prompt "${getFieldByLabel("Prompt", node)!.value.characters}"`;
+  }
+
   public async create(context: CreationContext) {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>

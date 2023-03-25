@@ -18,7 +18,7 @@ export interface ProgramContext {
 export interface Program {
   name: string;
   getSummary: (node: FrameNode) => string;
-  getMethodology?: (node: FrameNode) => string;
+  getMethodology: (context: ProgramContext, node: FrameNode) => string | Promise<string>;
   create: (context: CreationContext) => Promise<ProgramView>;
   run: (context: ProgramContext, node: FrameNode) => Promise<void>;
 }
