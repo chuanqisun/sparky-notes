@@ -281,8 +281,6 @@ const handleUIMessage = async (message: MessageToFigma) => {
     const synthesis = await getSynthesis(reflectionContext, programs, message.requestDataNodeSynthesis.dataNodeId);
     if (!synthesis) return;
 
-    console.log(synthesis);
-
     respondUI(message, { respondDataNodeSynthesis: synthesis });
   }
 
