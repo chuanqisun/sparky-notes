@@ -7,7 +7,7 @@ import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
 import { combineWhitespace, shortenToWordCount } from "../utils/text";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -20,7 +20,7 @@ export class ThemeProgram implements Program {
     } stickies`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Identify themes across "${getFieldByLabel("Item type", node)!.value.characters}" items`;
   }
 

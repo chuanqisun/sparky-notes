@@ -3,7 +3,7 @@ import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToS
 import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -20,7 +20,7 @@ export class CategorizeProgram implements Program {
     return `Categorize: ${targetNodeNames}`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     const targetNodes = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
     return `Categorize information into one of [${targetNodes.map((targetNode) => targetNode.name).join(", ")}]`;
   }

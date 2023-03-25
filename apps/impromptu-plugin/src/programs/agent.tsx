@@ -16,7 +16,7 @@ import { HypothesisTool } from "./agent-tools/hypothesize";
 import { InductionTool } from "./agent-tools/induction";
 import { UxInsightTool } from "./agent-tools/ux-insights";
 import { WebSearchTool } from "./agent-tools/web-search";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -43,7 +43,7 @@ export class AgentProgram implements Program {
     return `Agent: ${getFieldByLabel("Question", node)!.value.characters}`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Use an AI assistant to answer the question "${getFieldByLabel("Question", node)!.value.characters}"`;
   }
 

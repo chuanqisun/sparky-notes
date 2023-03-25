@@ -21,8 +21,8 @@ export function filterToPredicate<T extends BaseNode>(predicate: (node: BaseNode
   };
 }
 
-export function filterToHaveWidgetDataKey(key: string) {
-  return function (node: BaseNode): node is WidgetNode {
+export function filterToHaveWidgetDataKey<T extends BaseNode>(key: string) {
+  return function (node: BaseNode): node is T {
     return node.getPluginDataKeys().includes(key);
   };
 }

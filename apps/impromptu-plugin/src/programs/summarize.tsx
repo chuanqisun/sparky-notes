@@ -6,7 +6,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { combineWhitespace, shortenToWordCount } from "../utils/text";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -17,7 +17,7 @@ export class SummarizeProgram implements Program {
     return `Summarize: reduce to ${getFieldByLabel("Max item count", node)!.value.characters} items.`;
   }
 
-  public getMethodology(_context: ProgramContext, _node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, _node: FrameNode) {
     return `Summarze information`;
   }
 

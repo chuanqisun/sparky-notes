@@ -7,7 +7,7 @@ import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { AutoLayout } = figma.widget;
 
@@ -19,7 +19,7 @@ export class WebSearchProgram implements Program {
     return ` Web search: "${input.value.characters}"`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Search the web with the query "${getFieldByLabel("Query", node)!.value.characters}"`;
   }
 

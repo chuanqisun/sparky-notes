@@ -65,10 +65,12 @@ export interface SynthesisRequest {
   dataNodeId: string;
   title?: boolean;
   introduction?: boolean;
+  methodology?: boolean;
 }
 export interface SynthesisResponse {
   title?: string;
   introduction?: string;
+  methodology?: string;
 }
 
 export interface SelectionSummary {

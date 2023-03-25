@@ -7,7 +7,7 @@ import { createTargetNodes, moveStickiesToSection, setFillColor } from "../utils
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { AutoLayout } = figma.widget;
 
@@ -19,8 +19,8 @@ export class ResearchRecommendationsProgram implements Program {
     return ` Find UX Insights: "${input.value.characters}"`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
-    return `Find UX design recommendations from HITS database with the query "${getFieldByLabel("Query", node)!.value.characters}"`;
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
+    return `Find UX research insights from Microsoft Human Insight Tracking System (HITS) with the query "${getFieldByLabel("Query", node)!.value.characters}"`;
   }
 
   public async create(context: CreationContext) {

@@ -8,7 +8,7 @@ import { ArxivSearchProgram } from "./programs/arxiv-search";
 import { CategorizeProgram } from "./programs/categorize";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
-import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY } from "./programs/program";
+import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY, ReflectionContext } from "./programs/program";
 import { RelateProgram } from "./programs/relate";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
@@ -26,7 +26,7 @@ import { clearNotification, replaceNotification } from "./utils/notify";
 import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash, getStickySummary } from "./utils/query";
 import { notifyUI, respondUI } from "./utils/rpc";
 import { getAllDataNodes, getPrimaryDataNode, getSelectedDataNodes, getSelectedProgramNodes, getSelectedStickies } from "./utils/selection";
-import { shortenToWordCount } from "./utils/text";
+import { combineWhitespace, shortenToWordCount } from "./utils/text";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
 import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
 import { getWebSearchProxy, WebSearchProxy } from "./web/search";
@@ -280,10 +280,35 @@ const handleUIMessage = async (message: MessageToFigma) => {
 
     const sourceGraph = getSourceGraph([dataNode as SectionNode]);
     const programNodes = (sourceGraph.nodeIds.map((id) => figma.getNodeById(id)).filter(Boolean) as SceneNode[]).filter(
-      filterToHaveWidgetDataKey(PROGRAME_NAME_KEY)
-    )[0];
-    const methodNode = getPrevNodes(dataNode as SectionNode);
-    // extract title and description
+      filterToHaveWidgetDataKey<FrameNode>(PROGRAME_NAME_KEY)
+    );
+
+    const reflectionContext: ReflectionContext = {
+      completion,
+    };
+
+    let methodology = "";
+    const methodologyList = (
+      await Promise.all(
+        programNodes.map((programNode) => {
+          const program = matchProgram(programNode);
+          if (!program) return null;
+          return program.getMethodology(reflectionContext, programNode);
+        })
+      )
+    ).filter(Boolean) as string[];
+
+    if (methodologyList.length) {
+      const methodologyPrompt = `
+A research report is generated using the following steps. Each step is performed by a human assisted by a human-in-the-loop research tool called Impromptu. Summarize the entire process into a "Methodology" section.
+
+Steps:
+${methodologyList.map((step, index) => `${index + 1}. ${step}`).join("\n")};
+
+Methodology: `.trimStart();
+      const methodologyCompletion = await getCompletion(completion, methodologyPrompt, { max_tokens: 300 });
+      methodology = methodologyCompletion.choices[0].text.trim();
+    }
 
     const primaryDataNode = getPrimaryDataNode(dataNode as SectionNode);
 
@@ -305,7 +330,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
       })
       .join("\n\n")}`.trim();
 
-    const prompt = `
+    const synthesisPrompt = `
 Based on information from the following Report body, use the following format to write a very short title and an introduction paragraph.
 
 Format """
@@ -314,19 +339,40 @@ Introduction: <The introduction paragraph of the report>
 """
 
 Report body """
-${shortenToWordCount(2000, bodyText)}
+${`${shortenToWordCount(1700, bodyText)}
+${
+  methodology
+    ? `
+
+# Methodology
+
+${methodology}
+`
+    : ""
+}`.trim()}
+}
 """
 
 Begin!
 Title: `;
 
-    const synthesis = (await getCompletion(completion, prompt, { max_tokens: 400 })).choices[0].text;
-    console.log(synthesis);
+    const synthesis = (await getCompletion(completion, synthesisPrompt, { max_tokens: 300 })).choices[0].text;
+    const lines = synthesis.split("\n");
+    const introLineIndex = lines.findIndex((line) => line.toLocaleLowerCase().startsWith("introduction:"));
+    const title = combineWhitespace(lines.slice(0, introLineIndex).join("\n").trim());
+    const introduction = lines
+      .slice(introLineIndex)
+      .join("\n")
+      .replace(/^introduction\:/i, "")
+      .trim();
+
+    console.log({ title, introduction, methodology });
 
     respondUI(message, {
       respondDataNodeSynthesis: {
-        title: "",
-        introduction: "",
+        title,
+        introduction,
+        methodology,
       },
     });
   }

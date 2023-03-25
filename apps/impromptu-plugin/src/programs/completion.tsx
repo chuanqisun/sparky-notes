@@ -4,7 +4,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { nonEmptyString } from "../utils/non-empty-string";
 import { filterToType, getInnerStickies } from "../utils/query";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -15,7 +15,7 @@ export class CompletionProgram implements Program {
     return `Completion: ${getFieldByLabel("Prompt", node)!.value.characters}`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Ask GPT with the prompt "${getFieldByLabel("Prompt", node)!.value.characters}"`;
   }
 

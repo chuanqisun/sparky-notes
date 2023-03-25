@@ -1,6 +1,6 @@
 import { PrimaryDataNodeSummary } from "@impromptu/types";
 import MarkdownIt from "markdown-it";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import { requestFigma } from "../figma/rpc";
 import { createReport } from "./create-report";
 import "./draft-view.css";
@@ -24,7 +24,6 @@ export function DraftViewV2(props: DraftViewProps) {
   const { primaryDataNode, accessToken } = props;
   const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
 
-  const [draftTitle, setDraftTitle] = useState("New report");
   const [isCreating, setIsCreating] = useState(false);
   const [creationResults, setCreationResults] = useState<CreationResult[]>([]);
 
@@ -48,16 +47,11 @@ export function DraftViewV2(props: DraftViewProps) {
         dataNodeId,
         title: true,
         introduction: true,
+        methodology: true,
       },
     });
     return respondDataNodeSynthesis!;
   }, []);
-
-  useEffect(() => {
-    if (primaryDataNode) {
-      setDraftTitle(primaryDataNode.name);
-    }
-  }, [primaryDataNode]);
 
   const reportMd = useMemo(
     () =>
@@ -91,17 +85,30 @@ export function DraftViewV2(props: DraftViewProps) {
       try {
         setIsCreating(true);
         const synthesis = await handleRequestSynthesis(primaryDataNode.id);
-        throw new Error("TBD");
-        const result = await handleExportAsHitsReport({ title: draftTitle, markdown: reportMd });
+        const fullReportMd = `
+# Introduction
+
+${synthesis.introduction}
+
+${reportMd}
+
+# Methodology
+
+${synthesis.methodology}
+        `.trim();
+        const result = await handleExportAsHitsReport({ title: synthesis.title!, markdown: fullReportMd });
         window.open(result.url, "_blank");
-        setCreationResults((prev) => [...prev, { title: draftTitle, url: result.url, timestamp: new Date() }]);
+        setCreationResults((prev) => [...prev, { title: synthesis.title!, url: result.url, timestamp: new Date() }]);
       } catch (e: any) {
-        setCreationResults((prev) => [...prev, { title: draftTitle, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
+        setCreationResults((prev) => [
+          ...prev,
+          { title: `Synthetic report from ${primaryDataNode.name}`, timestamp: new Date(), error: `${e.name} ${e.message}` },
+        ]);
       } finally {
         setIsCreating(false);
       }
     }
-  }, [draftTitle, reportMd, primaryDataNode]);
+  }, [reportMd, primaryDataNode]);
 
   const handlePreviewClick = useCallback<EventListener>((e: Event) => {
     const maybeLink = (e.target as HTMLElement).closest?.("a");
@@ -143,16 +150,6 @@ export function DraftViewV2(props: DraftViewProps) {
         >
           Create HITS Draft
         </button>
-        {primaryDataNode ? (
-          <input
-            type="text"
-            placeholder="My report draft"
-            title="Title of the draft"
-            value={draftTitle}
-            disabled={isCreating}
-            onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)}
-          />
-        ) : null}
       </menu>
       {primaryDataNode ? (
         <details>

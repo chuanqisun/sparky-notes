@@ -5,7 +5,7 @@ import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { combineWhitespace } from "../utils/text";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -16,7 +16,7 @@ export class FilterProgram implements Program {
     return `Filter: ${getFieldByLabel("Yes/No question", node)!.value.characters}`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Check each piece of information with the question "${getFieldByLabel("Yes/No question", node)!.value.characters}"`;
   }
 

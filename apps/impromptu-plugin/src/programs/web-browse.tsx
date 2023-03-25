@@ -5,7 +5,7 @@ import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { shortenToWordCount } from "../utils/text";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { AutoLayout } = figma.widget;
 
@@ -23,7 +23,7 @@ export class WebBrowseProgram implements Program {
     return ` Web browse: "${input.value.characters}"`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Find information on the web to answer "${getFieldByLabel("Question", node)!.value.characters}"`;
   }
 

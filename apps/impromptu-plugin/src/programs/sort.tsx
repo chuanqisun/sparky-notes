@@ -7,7 +7,7 @@ import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { combineWhitespace } from "../utils/text";
-import { CreationContext, Program, ProgramContext } from "./program";
+import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
 
@@ -23,7 +23,7 @@ export class SortProgram implements Program {
     return `Sort: ${getFieldByLabel("What to promote", node)!.value.characters}`;
   }
 
-  public getMethodology(_context: ProgramContext, node: FrameNode) {
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
     return `Sort and identify items that are "${getFieldByLabel("What to promote", node)!.value.characters}"`;
   }
 
