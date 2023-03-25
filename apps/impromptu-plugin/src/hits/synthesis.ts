@@ -19,13 +19,7 @@ export async function getSynthesis(context: ReflectionContext, matchProgram: (ba
 
   const dataNode = figma.getNodeById(dataNodeId);
   if (!dataNode) {
-    replaceNotification("Section node does not exist.", { error: true });
-    return {
-      title: "",
-      introduction: "",
-      methodology: "",
-      error: "Section node does not exist.",
-    };
+    throw new Error("Section node does not exist.");
   }
 
   const sourceGraph = getSourceGraph([dataNode as SectionNode]);
@@ -38,13 +32,7 @@ export async function getSynthesis(context: ReflectionContext, matchProgram: (ba
     await Promise.all(
       programNodes.map((programNode) => {
         const program = matchProgram(programNode);
-        if (!program)
-          return {
-            title: "",
-            introduction: "",
-            methodology: "",
-            error: `Invalid program node id=${programNode.id}`,
-          };
+        if (!program) throw new Error(`Invalid program node id "${programNode.id}"`);
         return program.getMethodology(context, programNode);
       })
     )

@@ -111,7 +111,7 @@ ${synthesis.introduction}
 
 ${reportMd}
 
-# Methodology
+${synthesis.methodology ? `# Methodology` : ""}
 
 ${synthesis.methodology}
         `.trim();
