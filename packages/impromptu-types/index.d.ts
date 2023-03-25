@@ -83,6 +83,7 @@ export interface PrimaryDataNodeSummary {
   orderedStickies: {
     color: MappedColorNames;
     text: string;
+    childText?: string;
     url?: string;
   }[];
 }

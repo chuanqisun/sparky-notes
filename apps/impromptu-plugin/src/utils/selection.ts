@@ -1,5 +1,6 @@
 import { PrimaryDataNodeSummary } from "@impromptu/types";
 import { getClosestColor } from "./colors";
+import { nonEmptyString } from "./non-empty-string";
 import { closest, filterToType, getInnerStickies } from "./query";
 
 export function getSelectedProgramNodes(isProgramNode: (node: BaseNode) => boolean) {
@@ -25,6 +26,7 @@ export function getPrimaryDataNode(node: SectionNode): PrimaryDataNodeSummary | 
     {
       return {
         text: sticky.text.characters,
+        childText: nonEmptyString(sticky.getPluginData("shortContext")),
         color: colorName,
         url: (sticky.text.hyperlink as HyperlinkTarget)?.value,
       };

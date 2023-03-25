@@ -3,6 +3,7 @@ import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
+import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
 import { combineWhitespace, shortenToWordCount } from "../utils/text";
@@ -81,6 +82,7 @@ Begin!
 Theme:`;
 
     const fullAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 200 })).choices[0].text.trim();
+    if (context.isAborted() || context.isChanged()) return;
 
     const themes = fullAnswer
       .split("Theme:")
@@ -104,14 +106,34 @@ Theme:`;
 
     console.log(themes);
 
-    if (context.isAborted() || context.isChanged()) return;
-
     const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetSection) return;
 
     for (const theme of themes) {
+      // inject additional context to the theme
+      const prompt = `
+Summarize the following ${itemType} items, focus on the theme ${theme.name}.
+
+${theme.items
+  .map(
+    (item, index) =>
+      `${itemType} item ${index + 1}: ${combineWhitespace(item.text.characters)} ${shortenToWordCount(
+        2000 / inputNodes.length,
+        item.getPluginData("shortContext")
+      )}`
+  )
+  .join("\n")}
+
+Summary in one paragraph:`;
+
+      replaceNotification(`Reflecting on theme "${theme.name}"...`);
+      const themeIntroResponse = (await getCompletion(context.completion, prompt, { max_tokens: 250 })).choices[0].text.trim();
+      if (context.isAborted() || context.isChanged()) return;
+      console.log(themeIntroResponse);
+
       const themeSticky = figma.createSticky();
       themeSticky.text.characters = theme.name;
+      themeSticky.setPluginData("shortContext", themeIntroResponse);
       setFillColor(stickyColors.Green, themeSticky);
       moveStickiesToSectionNewLine([themeSticky], targetSection);
 

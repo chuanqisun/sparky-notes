@@ -38,7 +38,9 @@ export function DraftViewV2(props: DraftViewProps) {
     .map((sticky) => {
       switch (sticky.color) {
         case "Green":
-          return `# ${sticky.text}`;
+          const title = `# ${sticky.text}`;
+          const context = sticky.childText;
+          return `${title}${context ? `\n\n${context}` : ""}`;
         case "Yellow":
           return sticky.url ? `- [**Insight**](${sticky.url}) ${sticky.text}` : `- **Insight** ${sticky.text}`;
         case "LightGray":
