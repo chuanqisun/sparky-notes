@@ -110,7 +110,7 @@ Theme:`;
     for (const theme of themes) {
       // inject additional context to the theme
       const prompt = `
-Summarize the following ${itemType} items, focus on the theme ${theme.name}.
+Summarize the following ${itemType} items, focus on the theme "${theme.name}".
 
 ${theme.items
   .map(
