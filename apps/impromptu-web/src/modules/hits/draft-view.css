@@ -1,8 +1,14 @@
-.draft-error-list,
-.draft-result-list {
+.draft-output-list {
   margin: 0;
   padding-left: 20px;
 }
+.draft-output-item {
+  display: grid;
+}
+.draft-output-item--error {
+  color: red;
+}
+
 ul:empty {
   display: none;
 }

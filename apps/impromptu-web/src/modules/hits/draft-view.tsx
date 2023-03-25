@@ -116,10 +116,7 @@ ${synthesis.methodology}
         window.open(result.url, "_blank");
         setCreationResults((prev) => [...prev, { title: synthesis.title!, url: result.url, timestamp: new Date() }]);
       } catch (e: any) {
-        setCreationResults((prev) => [
-          ...prev,
-          { title: `Synthetic report from ${primaryDataNode.name}`, timestamp: new Date(), error: `${e.name} ${e.message}` },
-        ]);
+        setCreationResults((prev) => [...prev, { title: primaryDataNode.name, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
       } finally {
         setIsCreating(false);
       }
@@ -136,25 +133,27 @@ ${synthesis.methodology}
 
   return (
     <>
-      <ul class="draft-result-list">
+      <ul class="draft-output-list ">
         {creationResults
           .filter((result) => result.url)
           .map((result) => (
             <li key={result.url}>
-              <a href={result.url} target="_blank">
-                {result.title}
-              </a>
-              {" | "}
-              Draft created at {result.timestamp.toLocaleTimeString()}
+              <div class="draft-output-item">
+                <a href={result.url} target="_blank">
+                  {result.title}
+                </a>
+              </div>
             </li>
           ))}
       </ul>
-      <ul class="draft-error-list">
+      <ul class="draft-output-list ">
         {creationResults
           .filter((result) => result.error)
           .map((result, index) => (
             <li key={index}>
-              {result.title} | Failed with {result.error} at {result.timestamp.toLocaleTimeString()}
+              <div class="draft-output-item draft-output-item--error">
+                Error creating draft from "{result.title}" section: {result.error} ({result.timestamp.toLocaleTimeString()})
+              </div>
             </li>
           ))}
       </ul>
