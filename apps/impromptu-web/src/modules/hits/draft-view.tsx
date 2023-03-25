@@ -82,7 +82,7 @@ export function DraftViewV2(props: DraftViewProps) {
 
 ## Introduction
 
-_\<An introduction paragraph\>_
+_\<An introduction for the following content\>_
 
 ${reportMd
   .split("\n")
@@ -91,7 +91,7 @@ ${reportMd
 
 ## Methodology
 
-_\<Methodology description\>_
+_\<A description of how the report is generated\>_
     `.trim();
     return md.render(previewSourceMd);
   }, [reportMd]);
@@ -99,6 +99,8 @@ _\<Methodology description\>_
   const handleExport = useCallback(async () => {
     if (primaryDataNode) {
       try {
+        notifyFigma({ stop: true });
+
         setIsCreating(true);
         const synthesis = await handleRequestSynthesis(primaryDataNode.id);
         const fullReportMd = `
@@ -136,15 +138,19 @@ ${synthesis.methodology}
 
   return (
     <>
-      <menu>
-        <button
-          onClick={handleExport}
-          title="Compile stickies into a HITS draft report, with Green stickies becoming headings, yellow stickies insights, and gray stickies paragraph."
-          disabled={isCreating || !primaryDataNode}
-        >
-          Create HITS Draft
-        </button>
-      </menu>
+      {primaryDataNode ? (
+        <menu>
+          <button
+            onClick={handleExport}
+            title="Compile stickies into a HITS draft report, with Green stickies becoming headings, yellow stickies insights, and gray stickies paragraph."
+            disabled={isCreating || !primaryDataNode}
+          >
+            Create HITS Draft
+          </button>
+        </menu>
+      ) : (
+        <div>Select a section to export</div>
+      )}
       {creationResults.length > 0 ? (
         <details open={true}>
           <summary>Output</summary>
