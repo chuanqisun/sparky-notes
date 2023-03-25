@@ -95,11 +95,22 @@ export function DraftViewV2(props: DraftViewProps) {
           ))}
       </ul>
       <menu>
-        <button onClick={handleExport} title="Export markdown as a HITS draft report" disabled={isCreating || !primaryDataNode}>
+        <button
+          onClick={handleExport}
+          title="Compile stickies into a HITS draft report, with Green stickies becoming headings, yellow stickies insights, and gray stickies paragraph."
+          disabled={isCreating || !primaryDataNode}
+        >
           Create HITS Draft
         </button>
         {primaryDataNode ? (
-          <input type="text" value={draftTitle} disabled={isCreating} onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)} />
+          <input
+            type="text"
+            placeholder="My report draft"
+            title="Title of the draft"
+            value={draftTitle}
+            disabled={isCreating}
+            onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)}
+          />
         ) : null}
       </menu>
       {primaryDataNode ? (
