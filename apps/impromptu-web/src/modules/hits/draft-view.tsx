@@ -1,16 +1,16 @@
-import { PrimaryDataNodeSummary, SynthesisResponse } from "@impromptu/types";
+import { PrimaryDataNodeSummary } from "@impromptu/types";
 import MarkdownIt from "markdown-it";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { requestFigma } from "../figma/rpc";
+import { createReport } from "./create-report";
 import "./draft-view.css";
+import { getHITSApiProxy } from "./proxy";
 
 const md = new MarkdownIt();
 
 export interface DraftViewProps {
   primaryDataNode: PrimaryDataNodeSummary | null;
-  isCreating: boolean;
-  creationResults: CreationResult[];
-  onRequestSynthesis: (dataNodeId: string) => Promise<SynthesisResponse>;
-  onExport: (exportedReport: { title: string; markdown: string }) => any;
+  accessToken: string;
 }
 
 export interface CreationResult {
@@ -21,10 +21,37 @@ export interface CreationResult {
 }
 
 export function DraftViewV2(props: DraftViewProps) {
-  const { primaryDataNode, onExport, onRequestSynthesis, isCreating, creationResults } = props;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { primaryDataNode, accessToken } = props;
+  const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
 
   const [draftTitle, setDraftTitle] = useState("New report");
+  const [isCreating, setIsCreating] = useState(false);
+  const [creationResults, setCreationResults] = useState<CreationResult[]>([]);
+
+  const handleExportAsHitsReport = useCallback(
+    async (draft: { title: string; markdown: string }) => {
+      const result = await createReport(hitsApi, {
+        report: {
+          title: draft.title,
+          markdown: draft.markdown,
+        },
+      });
+
+      return result;
+    },
+    [hitsApi]
+  );
+
+  const handleRequestSynthesis = useCallback(async (dataNodeId: string) => {
+    const { respondDataNodeSynthesis } = await requestFigma({
+      requestDataNodeSynthesis: {
+        dataNodeId,
+        title: true,
+        introduction: true,
+      },
+    });
+    return respondDataNodeSynthesis!;
+  }, []);
 
   useEffect(() => {
     if (primaryDataNode) {
@@ -61,8 +88,18 @@ export function DraftViewV2(props: DraftViewProps) {
 
   const handleExport = useCallback(async () => {
     if (primaryDataNode) {
-      const synthesis = await onRequestSynthesis(primaryDataNode.id);
-      onExport({ title: draftTitle, markdown: reportMd });
+      try {
+        setIsCreating(true);
+        const synthesis = await handleRequestSynthesis(primaryDataNode.id);
+        throw new Error("TBD");
+        const result = await handleExportAsHitsReport({ title: draftTitle, markdown: reportMd });
+        window.open(result.url, "_blank");
+        setCreationResults((prev) => [...prev, { title: draftTitle, url: result.url, timestamp: new Date() }]);
+      } catch (e: any) {
+        setCreationResults((prev) => [...prev, { title: draftTitle, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
+      } finally {
+        setIsCreating(false);
+      }
     }
   }, [draftTitle, reportMd, primaryDataNode]);
 
@@ -118,7 +155,7 @@ export function DraftViewV2(props: DraftViewProps) {
         ) : null}
       </menu>
       {primaryDataNode ? (
-        <details open={isExpanded}>
+        <details>
           <summary>Preview</summary>
           <div class="md-preview" dangerouslySetInnerHTML={{ __html: reportHtml }} onClick={handlePreviewClick}></div>
         </details>

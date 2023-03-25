@@ -1,13 +1,11 @@
 import { LogEntry, MessageToUI, PrimaryDataNodeSummary, StickySummary } from "@impromptu/types";
 import { render } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { notifyFigma, requestFigma } from "./modules/figma/rpc";
-import { createReport } from "./modules/hits/create-report";
-import { CreationResult, DraftViewV2 } from "./modules/hits/draft-view";
-import { getHITSApiProxy } from "./modules/hits/proxy";
+import { notifyFigma } from "./modules/figma/rpc";
+import { DraftViewV2 } from "./modules/hits/draft-view";
 import { LogEntryView } from "./modules/log/log-entry-view";
 import { StickyView } from "./modules/sticky-view/sticky-view";
 
@@ -21,8 +19,6 @@ function App() {
   const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
 
   const [primaryDataNode, setPrimaryDataNode] = useState<PrimaryDataNodeSummary | null>(null);
-
-  const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
 
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
@@ -66,43 +62,6 @@ function App() {
   );
   const handleClearLog = useCallback(() => setLogEntries([]), []);
 
-  const [isCreating, setIsCreating] = useState(false);
-  const [creationResults, setCreationResults] = useState<CreationResult[]>([]);
-  const handleExportAsHitsReport = useCallback(
-    async (draft: { title: string; markdown: string }) => {
-      setIsCreating(true);
-      createReport(hitsApi, {
-        report: {
-          title: draft.title,
-          markdown: draft.markdown,
-        },
-      })
-        .then((res) => {
-          window.open(res.url, "_blank");
-          setCreationResults((prev) => [...prev, { title: draft.title, url: res.url, timestamp: new Date() }]);
-        })
-        .catch((e) => {
-          setCreationResults((prev) => [...prev, { title: draft.title, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
-        })
-        .finally(() => setIsCreating(false));
-    },
-    [hitsApi]
-  );
-  const handleRequestSynthesis = useCallback(async (dataNodeId: string) => {
-    setIsCreating(true);
-    return requestFigma({
-      requestDataNodeSynthesis: {
-        dataNodeId,
-        title: true,
-        introduction: true,
-      },
-    })
-      .then(({ respondDataNodeSynthesis }) => {
-        return respondDataNodeSynthesis!;
-      })
-      .finally(() => setIsCreating(false));
-  }, []);
-
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
 
@@ -139,13 +98,7 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Export</legend>
-            <DraftViewV2
-              isCreating={isCreating}
-              primaryDataNode={primaryDataNode}
-              onExport={handleExportAsHitsReport}
-              onRequestSynthesis={handleRequestSynthesis}
-              creationResults={creationResults}
-            />
+            <DraftViewV2 accessToken={accessToken} primaryDataNode={primaryDataNode} />
           </fieldset>
           <fieldset>
             <legend>Inspect</legend>

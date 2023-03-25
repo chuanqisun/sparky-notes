@@ -35,6 +35,30 @@ export function getReachableGraph(sources: SceneNode[]): Graph {
   };
 }
 
+export function getSourceGraph(targets: SceneNode[]): Graph {
+  const foundEdges: Edge[] = [];
+  const foundNodeIds: string[] = [];
+
+  const pendingNodes = [...targets];
+  const isNotPending = (node: SceneNode) => pendingNodes.every((pendingNode) => pendingNode.id !== node.id);
+
+  while (pendingNodes.length) {
+    const node = pendingNodes.pop()!;
+    if (foundNodeIds.includes(node.id)) continue;
+
+    foundNodeIds.unshift(node.id);
+    const inEdges = getInEdges(node);
+    foundEdges.push(...inEdges);
+    const nextNodes = (inEdges.map(getEdgeSourceNode).filter(Boolean) as SceneNode[]).filter(isNotPending);
+    pendingNodes.push(...nextNodes);
+  }
+
+  return {
+    nodeIds: foundNodeIds,
+    edges: foundEdges,
+  };
+}
+
 function getInEdges(node: SceneNode): Edge[] {
   return node.attachedConnectors
     .filter(filterToAttachedConnector)

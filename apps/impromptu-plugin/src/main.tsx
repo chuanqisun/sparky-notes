@@ -1,7 +1,7 @@
 import { MessageToFigma } from "@impromptu/types";
 import { ArxivSearchProxy, getArxivSearchProxy } from "./arxiv/search";
 import { getSearchProxy, SearchProxy } from "./hits/proxy";
-import { CompletionProxy, getCompletionProxy } from "./openai/completion";
+import { CompletionProxy, getCompletion, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
 import { ArxivSearchProgram } from "./programs/arxiv-search";
@@ -20,12 +20,13 @@ import { WebSearchProgram } from "./programs/web-search";
 import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
 import { EventLoop } from "./utils/event-loop";
 import { ensureStickyFont } from "./utils/font";
-import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
+import { getExecutionOrder, getNextNodes, getPrevNodes, getSourceGraph } from "./utils/graph";
 import { Logger } from "./utils/logger";
 import { clearNotification, replaceNotification } from "./utils/notify";
 import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash, getStickySummary } from "./utils/query";
-import { notifyUI } from "./utils/rpc";
+import { notifyUI, respondUI } from "./utils/rpc";
 import { getAllDataNodes, getPrimaryDataNode, getSelectedDataNodes, getSelectedProgramNodes, getSelectedStickies } from "./utils/selection";
+import { shortenToWordCount } from "./utils/text";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
 import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
 import { getWebSearchProxy, WebSearchProxy } from "./web/search";
@@ -271,6 +272,63 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.requestDataNodeSynthesis) {
+    const dataNode = figma.getNodeById(message.requestDataNodeSynthesis.dataNodeId);
+    if (!dataNode) {
+      replaceNotification("Section node does not exist.", { error: true });
+      return;
+    }
+
+    const sourceGraph = getSourceGraph([dataNode as SectionNode]);
+    const programNodes = (sourceGraph.nodeIds.map((id) => figma.getNodeById(id)).filter(Boolean) as SceneNode[]).filter(
+      filterToHaveWidgetDataKey(PROGRAME_NAME_KEY)
+    )[0];
+    const methodNode = getPrevNodes(dataNode as SectionNode);
+    // extract title and description
+
+    const primaryDataNode = getPrimaryDataNode(dataNode as SectionNode);
+
+    const bodyText = `
+    ${primaryDataNode?.orderedStickies
+      .map((sticky) => {
+        switch (sticky.color) {
+          case "Green":
+            const title = `# ${sticky.text}`;
+            const context = sticky.childText;
+            return `${title}${context ? `\n\n${context}` : ""}`;
+          case "Yellow":
+            return sticky.url ? `- **Insight** ${sticky.text}` : `- **Insight** ${sticky.text}`;
+          case "LightGray":
+            return `${sticky.text}`;
+          default:
+            return "";
+        }
+      })
+      .join("\n\n")}`.trim();
+
+    const prompt = `
+Based on information from the following Report body, use the following format to write a very short title and an introduction paragraph.
+
+Format """
+Title: <The very short title of the report>
+Introduction: <The introduction paragraph of the report>
+"""
+
+Report body """
+${shortenToWordCount(2000, bodyText)}
+"""
+
+Begin!
+Title: `;
+
+    const synthesis = (await getCompletion(completion, prompt, { max_tokens: 400 })).choices[0].text;
+    console.log(synthesis);
+
+    respondUI(message, {
+      respondDataNodeSynthesis: {
+        title: "",
+        introduction: "",
+      },
+    });
   }
 
   if (message.start) {
