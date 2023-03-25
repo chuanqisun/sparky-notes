@@ -64,6 +64,6 @@ dd {
 }
 
 * {
-  overflow-wrap: anywhere;
   font-size: inherit;
+  overflow-wrap: anywhere;
 }

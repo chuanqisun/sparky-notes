@@ -16,7 +16,22 @@ ul:empty {
 
 .md-preview {
   padding-block: 8px;
+  white-space: normal;
+  display: grid;
+  gap: 4px;
 }
+
+.md-preview * + h1 {
+  margin-block-start: 8px;
+}
+.md-preview * + h2 {
+  margin-block-start: 8px;
+}
+
+.md-preview h1 {
+  font-size: 16px;
+}
+
 .md-preview h1,
 .md-preview h2,
 .md-preview h3 {
@@ -28,5 +43,12 @@ ul:empty {
 .md-preview * {
   margin: 0;
   padding: 0;
-  white-space: normal;
+  /* white-space: normal; */
+}
+.md-preview ul {
+  padding-left: 20px;
+}
+
+.md-preview em {
+  opacity: 0.7;
 }

@@ -77,7 +77,23 @@ export function DraftViewV2(props: DraftViewProps) {
 
   const reportHtml = useMemo(() => {
     if (!reportMd) return "";
-    return md.render(reportMd);
+    const previewSourceMd = `
+# _\<Title of The Report\>_
+
+## Introduction
+
+_\<An introduction paragraph\>_
+
+${reportMd
+  .split("\n")
+  .map((line) => (line.startsWith("# ") ? `#${line}` : line))
+  .join("\n")}
+
+## Methodology
+
+_\<Methodology description\>_
+    `.trim();
+    return md.render(previewSourceMd);
   }, [reportMd]);
 
   const handleExport = useCallback(async () => {
@@ -86,7 +102,7 @@ export function DraftViewV2(props: DraftViewProps) {
         setIsCreating(true);
         const synthesis = await handleRequestSynthesis(primaryDataNode.id);
         const fullReportMd = `
-# Introduction
+## Introduction
 
 ${synthesis.introduction}
 
