@@ -104,8 +104,6 @@ Theme:`;
         };
       });
 
-    console.log(themes);
-
     const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
     if (!targetSection) return;
 
@@ -129,7 +127,6 @@ Summary in one paragraph:`;
       replaceNotification(`Reflecting on theme "${theme.name}"...`);
       const themeIntroResponse = (await getCompletion(context.completion, prompt, { max_tokens: 250 })).choices[0].text.trim();
       if (context.isAborted() || context.isChanged()) return;
-      console.log(themeIntroResponse);
 
       const themeSticky = figma.createSticky();
       themeSticky.text.characters = theme.name;
