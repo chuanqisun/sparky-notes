@@ -20,7 +20,6 @@ export async function getSynthesis(
   replaceNotification("Generating methodology...");
   const { completion } = context;
 
-  replaceNotification("Generating methodology...");
   const dataNode = figma.getNodeById(dataNodeId);
   if (!dataNode) {
     replaceNotification("Section node does not exist.", { error: true });
