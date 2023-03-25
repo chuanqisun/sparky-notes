@@ -2,33 +2,25 @@ import { PrimaryDataNodeSummary } from "@impromptu/types";
 import MarkdownIt from "markdown-it";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./draft-view.css";
-import { ParsedReport } from "./parse-report";
 
 const md = new MarkdownIt();
-
-export function DraftView(props: { draft: ParsedReport | null }) {
-  const { draft } = props;
-  return (
-    <>
-      {draft?.title ? (
-        <details>
-          <summary>{draft.title}</summary>
-          {draft.markdown}
-        </details>
-      ) : null}
-      {draft?.error ? <div class="draft-error">{draft.error}</div> : null}
-    </>
-  );
-}
 
 export interface DraftViewProps {
   primaryDataNode: PrimaryDataNodeSummary | null;
   isCreating: boolean;
-
+  creationResults: CreationResult[];
   onExport: (exportedReport: { title: string; markdown: string }) => any;
 }
+
+export interface CreationResult {
+  url?: string;
+  title: string;
+  error?: string;
+  timestamp: Date;
+}
+
 export function DraftViewV2(props: DraftViewProps) {
-  const { primaryDataNode, onExport, isCreating } = props;
+  const { primaryDataNode, onExport, isCreating, creationResults } = props;
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [draftTitle, setDraftTitle] = useState("New report");
@@ -80,11 +72,35 @@ export function DraftViewV2(props: DraftViewProps) {
 
   return (
     <>
+      <ul class="draft-result-list">
+        {creationResults
+          .filter((result) => result.url)
+          .map((result) => (
+            <li key={result.url}>
+              <a href={result.url} target="_blank">
+                {result.title}
+              </a>
+              {" | "}
+              Draft created at {result.timestamp.toLocaleTimeString()}
+            </li>
+          ))}
+      </ul>
+      <ul class="draft-error-list">
+        {creationResults
+          .filter((result) => result.error)
+          .map((result, index) => (
+            <li key={index}>
+              {result.title} | Failed with {result.error} at {result.timestamp.toLocaleTimeString()}
+            </li>
+          ))}
+      </ul>
       <menu>
         <button onClick={handleExport} title="Export markdown as a HITS draft report" disabled={isCreating || !primaryDataNode}>
           Create HITS Draft
         </button>
-        {primaryDataNode ? <input type="text" value={draftTitle} onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)} /> : null}
+        {primaryDataNode ? (
+          <input type="text" value={draftTitle} disabled={isCreating} onChange={(e) => setDraftTitle((e.target as HTMLInputElement).value)} />
+        ) : null}
       </menu>
       {primaryDataNode ? (
         <details open={isExpanded}>

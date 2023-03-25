@@ -6,7 +6,7 @@ import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
 import { createReport } from "./modules/hits/create-report";
-import { DraftViewV2 } from "./modules/hits/draft-view";
+import { CreationResult, DraftViewV2 } from "./modules/hits/draft-view";
 import { getHITSApiProxy } from "./modules/hits/proxy";
 import { LogEntryView } from "./modules/log/log-entry-view";
 import { StickyView } from "./modules/sticky-view/sticky-view";
@@ -67,6 +67,7 @@ function App() {
   const handleClearLog = useCallback(() => setLogEntries([]), []);
 
   const [isCreating, setIsCreating] = useState(false);
+  const [creationResults, setCreationResults] = useState<CreationResult[]>([]);
   const handleExportAsHitsReport = useCallback(
     async (draft: { title: string; markdown: string }) => {
       setIsCreating(true);
@@ -77,8 +78,11 @@ function App() {
         },
       })
         .then((res) => {
-          console.log("report created", res);
           window.open(res.url, "_blank");
+          setCreationResults((prev) => [...prev, { title: draft.title, url: res.url, timestamp: new Date() }]);
+        })
+        .catch((e) => {
+          setCreationResults((prev) => [...prev, { title: draft.title, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
         })
         .finally(() => setIsCreating(false));
     },
@@ -121,8 +125,7 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Export</legend>
-
-            <DraftViewV2 isCreating={isCreating} primaryDataNode={primaryDataNode} onExport={handleExportAsHitsReport} />
+            <DraftViewV2 isCreating={isCreating} primaryDataNode={primaryDataNode} onExport={handleExportAsHitsReport} creationResults={creationResults} />
           </fieldset>
           <fieldset>
             <legend>Inspect</legend>
