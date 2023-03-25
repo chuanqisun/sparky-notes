@@ -272,6 +272,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.requestDataNodeSynthesis) {
+    replaceNotification("Generating methodology...");
     const dataNode = figma.getNodeById(message.requestDataNodeSynthesis.dataNodeId);
     if (!dataNode) {
       replaceNotification("Section node does not exist.", { error: true });
@@ -310,6 +311,7 @@ Methodology: `.trimStart();
       methodology = methodologyCompletion.choices[0].text.trim();
     }
 
+    replaceNotification("Generating title and introduction...");
     const primaryDataNode = getPrimaryDataNode(dataNode as SectionNode);
 
     const bodyText = `
@@ -375,6 +377,10 @@ Title: `;
         methodology,
       },
     });
+  }
+
+  if (message.showNotification) {
+    replaceNotification(message.showNotification.message, message.showNotification.config);
   }
 
   if (message.start) {

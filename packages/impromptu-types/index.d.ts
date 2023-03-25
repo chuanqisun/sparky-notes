@@ -16,6 +16,12 @@ export interface MessageToFigma {
   hitsConfig?: HitsConfig;
   programConfigChanged?: ProgramConfigSummary;
   requestDataNodeSynthesis?: SynthesisRequest;
+  showNotification?: {
+    message: string;
+    config?: {
+      error?: boolean;
+    };
+  };
   start?: boolean;
   stop?: boolean;
   webStarted?: boolean;

@@ -1,11 +1,22 @@
 .draft-output-list {
   margin: 0;
-  padding-left: 20px;
+  /* padding: 0; */
+  /* list-style: none; */
+  /* list-style-position: inside; */
+  padding: 0;
+  padding-inline: 8px;
+  list-style-type: "•";
 }
-.draft-output-item {
-  display: grid;
+.draft-output-list li {
+  padding-left: 8px;
 }
-.draft-output-item--error {
+.draft-output-list li::marker {
+  font-weight: bold;
+}
+.draft-output-list time {
+  white-space: nowrap;
+}
+.draft-output-item__error {
   color: red;
 }
 

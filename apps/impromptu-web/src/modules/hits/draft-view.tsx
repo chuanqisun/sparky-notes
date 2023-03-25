@@ -1,7 +1,7 @@
 import { PrimaryDataNodeSummary } from "@impromptu/types";
 import MarkdownIt from "markdown-it";
 import { useCallback, useMemo, useState } from "preact/hooks";
-import { requestFigma } from "../figma/rpc";
+import { notifyFigma, requestFigma } from "../figma/rpc";
 import { createReport } from "./create-report";
 import "./draft-view.css";
 import { getHITSApiProxy } from "./proxy";
@@ -112,11 +112,14 @@ ${reportMd}
 
 ${synthesis.methodology}
         `.trim();
+        notifyFigma({ showNotification: { message: `Creating draft...` } });
         const result = await handleExportAsHitsReport({ title: synthesis.title!, markdown: fullReportMd });
         window.open(result.url, "_blank");
-        setCreationResults((prev) => [...prev, { title: synthesis.title!, url: result.url, timestamp: new Date() }]);
+        setCreationResults((prev) => [{ title: synthesis.title!, url: result.url, timestamp: new Date() }, ...prev]);
+        notifyFigma({ showNotification: { message: `✅ The draft was successful created!` } });
       } catch (e: any) {
-        setCreationResults((prev) => [...prev, { title: primaryDataNode.name, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
+        setCreationResults((prev) => [{ title: primaryDataNode.name, timestamp: new Date(), error: `${e.name} ${e.message}` }, ...prev]);
+        notifyFigma({ showNotification: { message: `Something went wrong while creating the draft`, config: { error: true } } });
       } finally {
         setIsCreating(false);
       }
@@ -133,30 +136,6 @@ ${synthesis.methodology}
 
   return (
     <>
-      <ul class="draft-output-list ">
-        {creationResults
-          .filter((result) => result.url)
-          .map((result) => (
-            <li key={result.url}>
-              <div class="draft-output-item">
-                <a href={result.url} target="_blank">
-                  {result.title}
-                </a>
-              </div>
-            </li>
-          ))}
-      </ul>
-      <ul class="draft-output-list ">
-        {creationResults
-          .filter((result) => result.error)
-          .map((result, index) => (
-            <li key={index}>
-              <div class="draft-output-item draft-output-item--error">
-                Error creating draft from "{result.title}" section: {result.error} ({result.timestamp.toLocaleTimeString()})
-              </div>
-            </li>
-          ))}
-      </ul>
       <menu>
         <button
           onClick={handleExport}
@@ -166,6 +145,39 @@ ${synthesis.methodology}
           Create HITS Draft
         </button>
       </menu>
+      {creationResults.length > 0 ? (
+        <details open={true}>
+          <summary>Output</summary>
+          <ul class="draft-output-list ">
+            {creationResults
+              .filter((result) => result.url)
+              .map((result) => (
+                <li key={result.url}>
+                  <div class="draft-output-item">
+                    <a href={result.url} target="_blank">
+                      {result.title}
+                    </a>{" "}
+                    <time>({result.timestamp.toLocaleTimeString()})</time>
+                  </div>
+                </li>
+              ))}
+          </ul>
+          <ul class="draft-output-list ">
+            {creationResults
+              .filter((result) => result.error)
+              .map((result, index) => (
+                <li key={index}>
+                  <div class="draft-output-item">
+                    <span class="draft-output-item__error">
+                      Error creating draft from "{result.title}" section: {result.error}
+                    </span>{" "}
+                    <time>({result.timestamp.toLocaleTimeString()})</time>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        </details>
+      ) : null}
       {primaryDataNode ? (
         <details>
           <summary>Preview</summary>
