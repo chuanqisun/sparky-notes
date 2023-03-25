@@ -1,11 +1,15 @@
-import { LogEntry, MessageToUI } from "@impromptu/types";
+import { LogEntry, MessageToUI, PrimaryDataNodeSummary, StickySummary } from "@impromptu/types";
 import { render } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
+import { createReport } from "./modules/hits/create-report";
+import { CreationResult, DraftViewV2 } from "./modules/hits/draft-view";
+import { getHITSApiProxy } from "./modules/hits/proxy";
 import { LogEntryView } from "./modules/log/log-entry-view";
+import { StickyView } from "./modules/sticky-view/sticky-view";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
@@ -14,9 +18,20 @@ function App() {
 
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
 
+  const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
+
+  const [primaryDataNode, setPrimaryDataNode] = useState<PrimaryDataNodeSummary | null>(null);
+
+  const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
+
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToUI;
+
+      if (message.selectionChanged) {
+        setStickySummaries(message.selectionChanged.stickies);
+        setPrimaryDataNode(message.selectionChanged.primaryDataNode);
+      }
 
       if (message.started) {
         setIsRunning(true);
@@ -35,6 +50,10 @@ function App() {
   }, []);
 
   useEffect(() => {
+    notifyFigma({ webStarted: true });
+  }, []);
+
+  useEffect(() => {
     notifyFigma({ hitsConfig: { accessToken } });
   }, [accessToken]);
 
@@ -46,6 +65,29 @@ function App() {
     []
   );
   const handleClearLog = useCallback(() => setLogEntries([]), []);
+
+  const [isCreating, setIsCreating] = useState(false);
+  const [creationResults, setCreationResults] = useState<CreationResult[]>([]);
+  const handleExportAsHitsReport = useCallback(
+    async (draft: { title: string; markdown: string }) => {
+      setIsCreating(true);
+      createReport(hitsApi, {
+        report: {
+          title: draft.title,
+          markdown: draft.markdown,
+        },
+      })
+        .then((res) => {
+          window.open(res.url, "_blank");
+          setCreationResults((prev) => [...prev, { title: draft.title, url: res.url, timestamp: new Date() }]);
+        })
+        .catch((e) => {
+          setCreationResults((prev) => [...prev, { title: draft.title, timestamp: new Date(), error: `${e.name} ${e.message}` }]);
+        })
+        .finally(() => setIsCreating(false));
+    },
+    [hitsApi]
+  );
 
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
@@ -71,14 +113,32 @@ function App() {
               <button data-program="completion">Completion</button>
               <button data-program="filter">Filter</button>
               <button data-program="relate">Relate</button>
-              <button data-program="research-insights"> Research Insights</button>
-              <button data-program="research-recommendations"> Research Recommendations</button>
+              <button data-program="report">Report</button>
+              <button data-program="research-insights">Research Insights</button>
+              <button data-program="research-recommendations">Research Recommendations</button>
               <button data-program="sort">Sort</button>
               <button data-program="summarize">Summarize</button>
               <button data-program="theme">Theme</button>
               <button data-program="web-browse">Web browse</button>
               <button data-program="web-search">Web search</button>
             </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Export</legend>
+            <DraftViewV2 isCreating={isCreating} primaryDataNode={primaryDataNode} onExport={handleExportAsHitsReport} creationResults={creationResults} />
+          </fieldset>
+          <fieldset>
+            <legend>Inspect</legend>
+            <StickyView stickySummaries={stickySummaries} />
+          </fieldset>
+          <fieldset>
+            <legend>Log</legend>
+            <menu>
+              <button onClick={handleClearLog}>Clear</button>
+            </menu>
+            {logEntries.map((entry) => (
+              <LogEntryView entry={entry} key={entry.id} />
+            ))}
           </fieldset>
         </>
       )}
@@ -104,17 +164,6 @@ function App() {
           )}
         </menu>
       </fieldset>
-      {isConnected && (
-        <fieldset>
-          <legend>Log</legend>
-          <menu>
-            <button onClick={handleClearLog}>Clear</button>
-          </menu>
-          {logEntries.map((entry) => (
-            <LogEntryView entry={entry} key={entry.id} />
-          ))}
-        </fieldset>
-      )}
     </main>
   );
 }

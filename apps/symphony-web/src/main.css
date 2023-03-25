@@ -14,6 +14,10 @@ fieldset {
   gap: 4px;
 }
 
+fieldset > *:not(legend) {
+  margin-inline-start: 2px;
+}
+
 ul {
   margin: 0;
   padding: 0;

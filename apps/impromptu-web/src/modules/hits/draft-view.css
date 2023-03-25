@@ -1,0 +1,32 @@
+.draft-error-list,
+.draft-result-list {
+  margin: 0;
+  padding-left: 20px;
+}
+ul:empty {
+  display: none;
+}
+
+.draft-preview {
+  font-weight: 600;
+}
+.draft-error {
+  color: red;
+}
+
+.md-preview {
+  padding-block: 8px;
+}
+.md-preview h1,
+.md-preview h2,
+.md-preview h3 {
+  font-weight: 600;
+}
+.md-preview * {
+  font-weight: inherit;
+}
+.md-preview * {
+  margin: 0;
+  padding: 0;
+  white-space: normal;
+}

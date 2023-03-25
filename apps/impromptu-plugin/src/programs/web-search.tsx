@@ -102,7 +102,7 @@ Response (bullet list of 3 - 5 items): -  `;
           type: "URL",
           value: item.url,
         };
-        sticky.setPluginData("longContext", shortenToWordCount(1500, crawledText));
+        sticky.setPluginData("longContext", shortenToWordCount(1000, crawledText));
         sticky.setPluginData("shortContext", shortenToWordCount(200, crawledText));
 
         resultCount++;

@@ -63,7 +63,7 @@ export class CategorizeProgram implements Program {
         `${trainingSamples.map((sample) => `Example: ${sample.text}\nCategory: ${sample.category}`).join("\n\n")}` +
         `\n\nClassify the following text into 1 of the following categories: [${targetNodes.map((targetNode) => targetNode.name).join(", ")}]
 
-Text: ${currentSticky.text.characters}
+Text: ${currentSticky.text.characters} ${currentSticky.getPluginData("shortContext")}
         
 Classified category: `;
 

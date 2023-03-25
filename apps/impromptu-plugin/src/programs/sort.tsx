@@ -6,6 +6,7 @@ import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } 
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
+import { combineWhitespace } from "../utils/text";
 import { CreationContext, Program, ProgramContext } from "./program";
 
 const { Text, AutoLayout, Input } = figma.widget;
@@ -26,7 +27,7 @@ export class SortProgram implements Program {
     const node = (await figma.createNodeFromJSXAsync(
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Sort</FormTitle>
-        <Description>Stickies will be re-arranged based on what you would like to promote. Sorting will speed up as it progresses.</Description>
+        <Description>Promote the best stickies to the left. Sorting will speed up as it progresses.</Description>
         <TextField label="What to promote" value="most counterintuitive" />
       </AutoLayout>
     )) as FrameNode;
@@ -57,7 +58,7 @@ export class SortProgram implements Program {
 
     const inMemoryStickies: InMemorySticky[] = inputStickies.map((sticky) => ({
       vId: sticky.id,
-      text: sticky.text.characters,
+      text: `${combineWhitespace(sticky.text.characters)} ${sticky.getPluginData("shortContext")}`.trim(),
     }));
 
     const onPivot = (pivot: InMemorySticky) => {
