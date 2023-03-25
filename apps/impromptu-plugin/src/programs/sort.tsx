@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
 import { stickyColors } from "../utils/colors";
@@ -24,7 +25,7 @@ export class SortProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Sort and identify items that are "${getFieldByLabel("What to promote", node)!.value.characters}"`;
+    return `Sort items in the ${getMethodInputName(node)} and promote ones that are "${getFieldByLabel("What to promote", node)!.value.characters}"`;
   }
 
   public async create(context: CreationContext) {

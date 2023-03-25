@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getTextByContent } from "../utils/form";
@@ -22,7 +23,9 @@ export class CategorizeProgram implements Program {
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
     const targetNodes = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
-    return `Categorize information into one of [${targetNodes.map((targetNode) => targetNode.name).join(", ")}]`;
+    return `For each item in the ${getMethodInputName(node)}, categorize its information into one of [${targetNodes
+      .map((targetNode) => targetNode.name)
+      .join(", ")}]`;
   }
 
   public async create(context: CreationContext) {

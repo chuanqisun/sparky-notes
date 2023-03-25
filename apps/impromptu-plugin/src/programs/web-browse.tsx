@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion, OpenAICompletionResponse } from "../openai/completion";
 import { createOrUseSourceNodes, createTargetNodes, printStickyNoWrap } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
@@ -24,7 +25,9 @@ export class WebBrowseProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Find information on the web to answer "${getFieldByLabel("Question", node)!.value.characters}"`;
+    return `Start with links from the ${getMethodInputName(node)}, find information on the web to answer "${
+      getFieldByLabel("Question", node)!.value.characters
+    }"`;
   }
 
   public async create(context: CreationContext) {

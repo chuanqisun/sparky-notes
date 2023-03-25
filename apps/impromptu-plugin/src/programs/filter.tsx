@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
@@ -17,7 +18,7 @@ export class FilterProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Check each piece of information with the question "${getFieldByLabel("Yes/No question", node)!.value.characters}"`;
+    return `Filter the items in the ${getMethodInputName(node)}, with the Yes/No question "${getFieldByLabel("Yes/No question", node)!.value.characters}"`;
   }
 
   public async create(context: CreationContext) {

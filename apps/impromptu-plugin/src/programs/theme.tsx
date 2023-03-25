@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
@@ -21,7 +22,7 @@ export class ThemeProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Identify themes across "${getFieldByLabel("Item type", node)!.value.characters}" items`;
+    return `Identify themes across the "${getFieldByLabel("Item type", node)!.value.characters}" items in the ${getMethodInputName(node)}`;
   }
 
   public async create(context: CreationContext) {

@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { responseToArray } from "../openai/format";
 import { stickyColors } from "../utils/colors";
@@ -17,8 +18,8 @@ export class SummarizeProgram implements Program {
     return `Summarize: reduce to ${getFieldByLabel("Max item count", node)!.value.characters} items.`;
   }
 
-  public getMethodology(_context: ReflectionContext, _node: FrameNode) {
-    return `Summarze information`;
+  public getMethodology(_context: ReflectionContext, node: FrameNode) {
+    return `Summarize items in the ${getMethodInputName(node)}`;
   }
 
   public async create(context: CreationContext) {

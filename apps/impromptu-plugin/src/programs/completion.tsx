@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
@@ -16,7 +17,7 @@ export class CompletionProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Ask GPT with the prompt "${getFieldByLabel("Prompt", node)!.value.characters}"`;
+    return `For each item in the ${getMethodInputName(node)}, complete the content with the prompt "${getFieldByLabel("Prompt", node)!.value.characters}"`;
   }
 
   public async create(context: CreationContext) {

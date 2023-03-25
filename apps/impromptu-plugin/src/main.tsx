@@ -273,7 +273,10 @@ const handleUIMessage = async (message: MessageToFigma) => {
 
   if (message.requestDataNodeSynthesis) {
     const reflectionContext: ReflectionContext = { completion };
-    const synthesis = await getSynthesis(reflectionContext, matchProgram, message.requestDataNodeSynthesis.dataNodeId);
+    const synthesis = await getSynthesis(reflectionContext, matchProgram, message.requestDataNodeSynthesis.dataNodeId).catch((e) => {
+      replaceNotification(`Synthesis failed: ${e.name} ${e.message}`, { error: true });
+      return null;
+    });
     if (!synthesis) return;
 
     respondUI(message, { respondDataNodeSynthesis: synthesis });

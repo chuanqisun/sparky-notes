@@ -1,3 +1,4 @@
+import { getMethodInputName } from "../hits/method-input";
 import { getCompletion } from "../openai/completion";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
@@ -15,7 +16,7 @@ export class AnswerProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Answer the question "${getFieldByLabel("Question", node)!.value.characters}"`;
+    return `For each item in the ${getMethodInputName(node)}, answer the question "${getFieldByLabel("Question", node)!.value.characters}"`;
   }
 
   public async create(context: CreationContext) {

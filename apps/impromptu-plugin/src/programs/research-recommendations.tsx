@@ -20,7 +20,9 @@ export class ResearchRecommendationsProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Find UX research insights from Microsoft Human Insight Tracking System (HITS) with the query "${getFieldByLabel("Query", node)!.value.characters}"`;
+    return `Find UX research recommendations from Microsoft Human Insight Tracking System (HITS) with the query "${
+      getFieldByLabel("Query", node)!.value.characters
+    }"`;
   }
 
   public async create(context: CreationContext) {
