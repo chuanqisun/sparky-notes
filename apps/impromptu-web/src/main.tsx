@@ -71,10 +71,16 @@ function App() {
           <fieldset>
             <legend>Run</legend>
             <menu>
-              {isRunning ? <button onClick={handleStop}>Stop</button> : <button onClick={handleStart}>Start</button>}
-              <button onClick={handleRunSelection} title="Run select programs or run programs for the selected outputs">
-                Run selected
-              </button>
+              {isRunning ? (
+                <button onClick={handleStop}>Stop</button>
+              ) : runnableProgramNodeIds.length ? (
+                <button onClick={handleRunSelection} title="Run select programs or run programs for the selected outputs">
+                  Run {runnableProgramNodeIds.length} selected
+                </button>
+              ) : (
+                <button onClick={handleStart}>Start</button>
+              )}
+
               <button
                 onClick={handleClear}
                 title="Clear all content from the selected outputs. If there is no selection, any output on the current page will be cleared. Lock any sticky to prevent it from being cleared."
