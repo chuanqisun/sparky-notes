@@ -67,10 +67,11 @@ export class RelateProgram implements Program {
         const prompt = `
 Read the Left-side text and the Right-side text. Answer the following question.
 
-Left-side text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
-Right-side text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
+Left-side text: ${combineWhitespace(`${keyNode.text.characters} ${keyNode.getPluginData("shortContext")}`)}
 
-Question: Is the Left-side text highly related to the Right-side text?
+Right-side text: ${combineWhitespace(`${valueNode.text.characters} ${valueNode.getPluginData("shortContext")}`)}
+
+Question: Is the Left-side text closely related to the Right-side text?
 Answer (Yes/No): `;
 
         replaceNotification(`Relating "${shortenToWordCount(5, keyNode.text.characters)}" with "${shortenToWordCount(5, valueNode.text.characters)}"`);
@@ -95,10 +96,11 @@ ${valueNode.text.characters}
           const followupPrompt = `
 Read the Left-side text and the Right-side text. Answer the following question about the relations between the two texts.
 
-Left-side text: ${`${combineWhitespace(keyNode.text.characters)} ${keyNode.getPluginData("shortContext")}`.trim()}
-Right-side text: ${`${combineWhitespace(valueNode.text.characters)} ${valueNode.getPluginData("shortContext")}`.trim()}
+Left-side text: ${combineWhitespace(`${keyNode.text.characters} ${keyNode.getPluginData("shortContext")}`)}
 
-Question: The Left-side text and Right-side text are highly related, what is the relation in short?
+Right-side text: ${combineWhitespace(`${valueNode.text.characters} ${valueNode.getPluginData("shortContext")}`)}
+
+Question: The Left-side text and Right-side text are closely related, what is the relation in short?
 Answer: `;
 
           const fullAnswer = (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();

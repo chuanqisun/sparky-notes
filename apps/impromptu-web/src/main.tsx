@@ -54,7 +54,7 @@ function App() {
   const handleStart = useCallback(() => notifyFigma({ start: true }), []);
   const handleStop = useCallback(() => notifyFigma({ stop: true }), []);
   const handleClear = useCallback(() => notifyFigma({ clear: true }), []);
-  const handleRunSelection = useCallback(() => notifyFigma({ runSelection: { runnableProgramNodeIds } }), [runnableProgramNodeIds]);
+  const handleRunSelection = useCallback(() => notifyFigma({ runSelected: { runnableProgramNodeIds } }), [runnableProgramNodeIds]);
   const handleCreateProgram = useCallback(
     (e: Event) => notifyFigma({ createProgram: (e.target as HTMLElement).closest("[data-program]")!.getAttribute("data-program")! }),
     []

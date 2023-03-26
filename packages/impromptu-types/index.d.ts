@@ -16,7 +16,7 @@ export interface MessageToFigma {
   hitsConfig?: HitsConfig;
   programConfigChanged?: ProgramConfigSummary;
   requestDataNodeSynthesis?: SynthesisRequest;
-  runSelection?: {
+  runSelected?: {
     runnableProgramNodeIds: string[];
   };
   showNotification?: {

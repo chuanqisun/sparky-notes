@@ -9,7 +9,29 @@ export interface EventHandlerMap {
   stop: KeyedHandler[];
 }
 
-export class EventLoop {
+export interface IEventLoop {
+  isAborted(): boolean;
+  start(): any;
+  stop(): any;
+}
+
+export class AdhocEventLoop implements IEventLoop {
+  private isStopRequested = false;
+
+  isAborted(): boolean {
+    return this.isStopRequested;
+  }
+
+  async start(): Promise<void> {
+    this.isStopRequested = false;
+  }
+
+  async stop(message?: string | undefined): Promise<void> {
+    this.isStopRequested = true;
+  }
+}
+
+export class EventLoop implements IEventLoop {
   private isStopRequested = false;
   private handlerId = 0;
   private handlers: EventHandlerMap = {

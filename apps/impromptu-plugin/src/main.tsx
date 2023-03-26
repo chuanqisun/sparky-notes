@@ -19,7 +19,7 @@ import { ThemeProgram } from "./programs/theme";
 import { WebBrowseProgram } from "./programs/web-browse";
 import { WebSearchProgram } from "./programs/web-search";
 import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
-import { EventLoop } from "./utils/event-loop";
+import { AdhocEventLoop, EventLoop } from "./utils/event-loop";
 import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
 import { Logger } from "./utils/logger";
@@ -292,18 +292,71 @@ const handleUIMessage = async (message: MessageToFigma) => {
     respondUI(message, { respondDataNodeSynthesis: synthesis });
   }
 
-  if (message.runSelection) {
-    eventLoop.stop();
-    if (!message.runSelection.runnableProgramNodeIds.length) {
+  if (message.runSelected) {
+    autoEventLoop.stop();
+    if (!message.runSelected.runnableProgramNodeIds.length) {
       replaceNotification("Select any program or output section to run");
       return;
     }
 
-    // get full graph execution order from selection
+    const sourceNodes = message.runSelected.runnableProgramNodeIds.map((id) => figma.getNodeById(id)).filter(Boolean) as FrameNode[];
+    if (!sourceNodes.length) {
+      replaceNotification("Selected nodes do not exist", { error: true });
+      return;
+    }
 
-    // use execution order to re-order selection
+    const order = getExecutionOrder(sourceNodes, sourceNodes[0].id);
+    const sortedRunnableProgramNodes = sourceNodes.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
-    // execute a single event loop for the selection
+    // emulate event loop
+    adhocEventLoop.start();
+    notifyUI({ started: true });
+
+    await fontInitPromise;
+
+    console.log(`adhoc run ${sortedRunnableProgramNodes.length} programs`);
+
+    for (const currentNode of sortedRunnableProgramNodes) {
+      const programContext: ProgramContext = {
+        sourceNodes: getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION")),
+        arxivSearch,
+        hitsSearch,
+        completion,
+        webCrawl,
+        webSearch,
+        isAborted: () => adhocEventLoop.isAborted(),
+        isChanged: () => false,
+      };
+
+      const targetContainers = getNextNodes(currentNode).filter(filterToType<SectionNode>("SECTION"));
+      emptySections(targetContainers);
+      const program = matchProgram(currentNode);
+      if (!program) {
+        replaceNotification("Unknown program");
+        return;
+      }
+
+      const summary = program.getSummary(currentNode);
+      replaceNotification(summary, {
+        timeout: Infinity,
+        button: {
+          text: "Stop",
+          action: () => {
+            adhocEventLoop.stop();
+            return true;
+          },
+        },
+      });
+      await program.run(programContext, currentNode);
+
+      if (adhocEventLoop.isAborted()) {
+        return;
+      }
+    }
+
+    adhocEventLoop.stop();
+    replaceNotification("Done");
+    notifyUI({ stopped: true });
   }
 
   if (message.showNotification) {
@@ -311,11 +364,12 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.start) {
-    eventLoop.start();
+    autoEventLoop.start();
   }
 
   if (message.stop) {
-    eventLoop.stop();
+    adhocEventLoop.stop();
+    autoEventLoop.stop();
   }
 
   if (message.webStarted) {
@@ -345,18 +399,19 @@ showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 600,
 
 figma.ui.on("message", handleUIMessage);
 
-const eventLoop = new EventLoop();
-eventLoop.on("tick", async () => {
+const adhocEventLoop = new AdhocEventLoop();
+const autoEventLoop = new EventLoop();
+autoEventLoop.on("tick", async () => {
   try {
-    await handleEventLoopTick(context, eventLoop);
+    await handleEventLoopTick(context, autoEventLoop);
   } catch (e) {
-    eventLoop.stop();
+    autoEventLoop.stop();
     console.log(e);
     replaceNotification((e as any)?.message ?? "Unknown error", { error: true });
   }
 });
-eventLoop.on("start", handleEventLoopStart.bind(null, context));
-eventLoop.on("stop", handleEventLoopStop);
+autoEventLoop.on("start", handleEventLoopStart.bind(null, context));
+autoEventLoop.on("stop", handleEventLoopStop);
 
 figma.on("selectionchange", handleSelectionChange);
 handleSelectionChange(); // initial
