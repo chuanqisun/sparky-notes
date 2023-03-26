@@ -316,7 +316,7 @@ const handleSelectionChange = () => {
   });
 };
 
-showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}#build`, { height: 600, width: 420 });
+showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 600, width: 420 });
 
 figma.ui.on("message", handleUIMessage);
 
