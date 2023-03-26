@@ -53,6 +53,18 @@ export function DraftViewV2(props: DraftViewProps) {
     return respondDataNodeSynthesis!;
   }, []);
 
+  const formatClaimSticky = useCallback((text: string, url?: string) => {
+    if (url?.match(/^https:\/\/hits\.microsoft\.com\/insight/i)) {
+      return `- [**Insight**](${url}) ${text}`;
+    } else if (url?.match(/^https:\/\/hits\.microsoft\.com\/recommendation/i)) {
+      return `- [**Recommendation**](${url}) ${text}`;
+    } else if (url) {
+      `- **Insight** ${text}\n  [Source](${url})`;
+    } else {
+      return `- **Insight** ${text}`;
+    }
+  }, []);
+
   const reportMd = useMemo(
     () =>
       `
@@ -64,9 +76,9 @@ export function DraftViewV2(props: DraftViewProps) {
           const context = sticky.childText;
           return `${title}${context ? `\n\n${context}` : ""}`;
         case "Yellow":
-          return sticky.url ? `- [**Insight**](${sticky.url}) ${sticky.text}` : `- **Insight** ${sticky.text}`;
+          return formatClaimSticky(sticky.text, sticky.url);
         case "LightGray":
-          return `${sticky.text}`;
+          return sticky.url ? `[${sticky.text}](${sticky.url})` : sticky.text;
         default:
           return "";
       }
@@ -115,7 +127,7 @@ ${synthesis.methodology ? `# Methodology` : ""}
 
 ${synthesis.methodology}
         `.trim();
-        notifyFigma({ showNotification: { message: `Creating draft...` } });
+        notifyFigma({ showNotification: { message: `Creating draft...`, config: { timeout: Infinity } } });
         const result = await handleExportAsHitsReport({ title: synthesis.title!, markdown: fullReportMd });
         window.open(result.url, "_blank");
         setCreationResults((prev) => [{ title: synthesis.title!, url: result.url, timestamp: new Date() }, ...prev]);

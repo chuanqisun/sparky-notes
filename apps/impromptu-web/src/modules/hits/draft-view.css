@@ -54,9 +54,11 @@ ul:empty {
 .md-preview h3 {
   font-weight: 600;
 }
-.md-preview * {
-  font-weight: inherit;
+
+.md-preview strong {
+  font-weight: 600;
 }
+
 .md-preview * {
   margin: 0;
   padding: 0;

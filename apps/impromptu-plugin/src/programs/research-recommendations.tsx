@@ -65,7 +65,7 @@ export class ResearchRecommendationsProgram implements Program {
       if (context.isAborted() || context.isChanged()) return;
 
       for (const report of searchSummary.results) {
-        const children = report.document.children.filter((child) => child.title).filter((child) => child.entityType === EntityType.Insight);
+        const children = report.document.children.filter((child) => child.title).filter((child) => child.entityType === EntityType.Recommendation);
         const highlights = [...(report.highlights?.["children/Title"] ?? []), ...(report.highlights?.["children/Contents"] ?? [])].map(removeHighlightHtml);
 
         for (let highlight of highlights) {
