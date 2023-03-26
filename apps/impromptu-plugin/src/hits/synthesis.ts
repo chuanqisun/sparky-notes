@@ -40,7 +40,7 @@ export async function getSynthesis(context: ReflectionContext, matchProgram: (ba
 
   if (methodologyList.length) {
     const methodologyPrompt = `
-A research report is generated using the following steps. Each step is performed by a human assisted by a human-in-the-loop research tool called Impromptu. Summarize the entire process into a "Methodology" section.
+A research report is generated using the following steps. Each step is performed by a human assisted by a human-in-the-loop AI reasoning environment called Impromptu. Summarize the entire process into a "Methodology" section.
 
 Steps:
 ${methodologyList.map((step, index) => `${index + 1}. ${step}`).join("\n")}
