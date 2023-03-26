@@ -28,4 +28,6 @@ function getBestIntermediateInputName(name: string) {
 function getBestNewInputName(name: string) {
   const normalized = name.toLowerCase();
   if (normalized === "input") return "new input";
+
+  return `"${name}" input`;
 }

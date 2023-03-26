@@ -12,7 +12,6 @@ export function getSelectedProgramNodes(isProgramNode: (node: BaseNode) => boole
 
 export function getPrimaryDataNode(node: SectionNode): PrimaryDataNodeSummary | null {
   const stickies = getInnerStickies([node]);
-  if (!stickies.length) return null;
 
   // sort stickies by y, then by x
   const sortedStickies = stickies.sort((a, b) => {

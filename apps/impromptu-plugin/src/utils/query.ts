@@ -201,7 +201,7 @@ export function getProgramNodeHash(currentNode: FrameNode) {
 
 export function getStickySummary(node: StickyNode): StickySummary {
   return {
-    text: node.text.characters,
+    text: node.name,
     shortContext: node.getPluginData("shortContext"),
     longContext: node.getPluginData("longContext"),
     url: (node.text.hyperlink as HyperlinkTarget)?.value,

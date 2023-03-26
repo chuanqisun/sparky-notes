@@ -40,7 +40,7 @@ export class SortProgram implements Program {
     getTextByContent("Sort", node)!.locked = true;
     getFieldByLabel("What to promote", node)!.label.locked = true;
 
-    const sources = createOrUseSourceNodes(["Pre-sorted"], context.selectedOutputNodes);
+    const sources = createOrUseSourceNodes(["Unsorted"], context.selectedOutputNodes);
     const targets = createTargetNodes(["Sorted"]);
 
     return {

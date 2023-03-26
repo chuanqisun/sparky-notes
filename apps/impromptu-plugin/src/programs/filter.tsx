@@ -18,7 +18,7 @@ export class FilterProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Filter the items in the ${getMethodInputName(node)}, with the Yes/No question "${getFieldByLabel("Yes/No question", node)!.value.characters}"`;
+    return `Filter the items in the ${getMethodInputName(node)} with the Yes/No question "${getFieldByLabel("Yes/No question", node)!.value.characters}"`;
   }
 
   public async create(context: CreationContext) {

@@ -20,7 +20,7 @@ export class RelateProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `Identify meaningful relations among items in the ${getMethodInputName(node)}`;
+    return `Identify meaningful relations between items in the ${getMethodInputName(node)}`;
   }
 
   public async create(context: CreationContext) {
