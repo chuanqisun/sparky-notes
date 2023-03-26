@@ -16,6 +16,9 @@ export interface MessageToFigma {
   hitsConfig?: HitsConfig;
   programConfigChanged?: ProgramConfigSummary;
   requestDataNodeSynthesis?: SynthesisRequest;
+  runSelection?: {
+    runnableProgramNodeIds: string[];
+  };
   showNotification?: {
     message: string;
     config?: {
@@ -83,6 +86,7 @@ export interface SynthesisResponse {
 export interface SelectionSummary {
   programNodeIds: string[];
   dataNodeIds: string[];
+  runnableProgramNodeIds: string[];
   stickies: StickySummary[];
   primaryDataNode: PrimaryDataNodeSummary | null;
 }

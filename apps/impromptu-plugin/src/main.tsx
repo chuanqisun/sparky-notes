@@ -26,7 +26,14 @@ import { Logger } from "./utils/logger";
 import { clearNotification, replaceNotification } from "./utils/notify";
 import { filterToHaveWidgetDataKey, filterToType, getProgramNodeHash, getStickySummary } from "./utils/query";
 import { notifyUI, respondUI } from "./utils/rpc";
-import { getAllDataNodes, getPrimaryDataNode, getSelectedDataNodes, getSelectedProgramNodes, getSelectedStickies } from "./utils/selection";
+import {
+  getAllDataNodes,
+  getPrimaryDataNode,
+  getRunnableProgramNodeIds,
+  getSelectedDataNodes,
+  getSelectedProgramNodes,
+  getSelectedStickies,
+} from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
 import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
 import { getWebSearchProxy, WebSearchProxy } from "./web/search";
@@ -285,6 +292,20 @@ const handleUIMessage = async (message: MessageToFigma) => {
     respondUI(message, { respondDataNodeSynthesis: synthesis });
   }
 
+  if (message.runSelection) {
+    eventLoop.stop();
+    if (!message.runSelection.runnableProgramNodeIds.length) {
+      replaceNotification("Select any program or output section to run");
+      return;
+    }
+
+    // get full graph execution order from selection
+
+    // use execution order to re-order selection
+
+    // execute a single event loop for the selection
+  }
+
   if (message.showNotification) {
     replaceNotification(message.showNotification.message, message.showNotification.config);
   }
@@ -307,12 +328,14 @@ const handleSelectionChange = () => {
   const dataNodes = getSelectedDataNodes();
   const stickySummaries = getSelectedStickies().map(getStickySummary);
   const primaryDataNode = dataNodes.length ? getPrimaryDataNode(dataNodes[0]) : null;
+  const runnableProgramNodeIds = getRunnableProgramNodeIds(programNodes, dataNodes);
 
   notifyUI({
     selectionChanged: {
       programNodeIds: programNodes.map((node) => node.id),
       dataNodeIds: dataNodes.map((node) => node.id),
       primaryDataNode,
+      runnableProgramNodeIds,
       stickies: stickySummaries,
     },
   });

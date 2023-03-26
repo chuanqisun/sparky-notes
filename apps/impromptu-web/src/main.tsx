@@ -1,6 +1,6 @@
-import { LogEntry, MessageToUI, PrimaryDataNodeSummary, StickySummary } from "@impromptu/types";
+import { LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
 import { render } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
@@ -11,22 +11,16 @@ import { StickyView } from "./modules/sticky-view/sticky-view";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
-
   const [isRunning, setIsRunning] = useState(false);
-
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
-
-  const [stickySummaries, setStickySummaries] = useState<StickySummary[]>([]);
-
-  const [primaryDataNode, setPrimaryDataNode] = useState<PrimaryDataNodeSummary | null>(null);
+  const [selectionSummary, setSelectionSummary] = useState<SelectionSummary | null>(null);
 
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToUI;
 
       if (message.selectionChanged) {
-        setStickySummaries(message.selectionChanged.stickies);
-        setPrimaryDataNode(message.selectionChanged.primaryDataNode);
+        setSelectionSummary(message.selectionChanged!);
       }
 
       if (message.started) {
@@ -45,6 +39,10 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  const stickySummaries = useMemo(() => selectionSummary?.stickies ?? [], [selectionSummary]);
+  const primaryDataNode = useMemo(() => selectionSummary?.primaryDataNode ?? null, [selectionSummary]);
+  const runnableProgramNodeIds = useMemo(() => selectionSummary?.runnableProgramNodeIds ?? [], [selectionSummary]);
+
   useEffect(() => {
     notifyFigma({ webStarted: true });
   }, []);
@@ -56,6 +54,7 @@ function App() {
   const handleStart = useCallback(() => notifyFigma({ start: true }), []);
   const handleStop = useCallback(() => notifyFigma({ stop: true }), []);
   const handleClear = useCallback(() => notifyFigma({ clear: true }), []);
+  const handleRunSelection = useCallback(() => notifyFigma({ runSelection: { runnableProgramNodeIds } }), [runnableProgramNodeIds]);
   const handleCreateProgram = useCallback(
     (e: Event) => notifyFigma({ createProgram: (e.target as HTMLElement).closest("[data-program]")!.getAttribute("data-program")! }),
     []
@@ -73,7 +72,15 @@ function App() {
             <legend>Run</legend>
             <menu>
               {isRunning ? <button onClick={handleStop}>Stop</button> : <button onClick={handleStart}>Start</button>}
-              <button onClick={handleClear}>Clear</button>
+              <button onClick={handleRunSelection} title="Run select programs or run programs for the selected outputs">
+                Run selected
+              </button>
+              <button
+                onClick={handleClear}
+                title="Clear all content from the selected outputs. If there is no selection, any output on the current page will be cleared. Lock any sticky to prevent it from being cleared."
+              >
+                Clear output
+              </button>
             </menu>
           </fieldset>
           <fieldset onClick={handleCreateProgram}>
@@ -117,7 +124,7 @@ function App() {
       <fieldset>
         <legend>Account</legend>
         <menu>
-          {isConnected === undefined && <button disabled>Authenticating...</button>}
+          {isConnected === undefined && <div>Authenticating...</div>}
           {isConnected === true && <button onClick={signOut}>Sign out</button>}
           {isConnected === false && (
             <>

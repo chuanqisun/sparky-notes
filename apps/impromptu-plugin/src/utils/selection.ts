@@ -1,13 +1,21 @@
 import { PrimaryDataNodeSummary } from "@impromptu/types";
+import { PROGRAME_NAME_KEY } from "../programs/program";
 import { getClosestColor } from "./colors";
+import { getPrevNodes } from "./graph";
 import { nonEmptyString } from "./non-empty-string";
-import { closest, filterToType, getInnerStickies } from "./query";
+import { closest, filterToHaveWidgetDataKey, filterToType, getInnerStickies } from "./query";
 
 export function getSelectedProgramNodes(isProgramNode: (node: BaseNode) => boolean) {
   const getClosestProgramNode = (node: BaseNode) => closest(isProgramNode, node);
   const programNodes = figma.currentPage.selection.map(getClosestProgramNode).filter(Boolean) as FrameNode[];
   const uniqueProgramNodes = programNodes.filter(filterToUniqe); // only keep first occurances
   return uniqueProgramNodes;
+}
+
+export function getRunnableProgramNodeIds(programNodes: FrameNode[], dataNodes: SectionNode[]) {
+  const implicitProgramNodes = dataNodes.flatMap((dataNode) => getPrevNodes(dataNode).filter(filterToHaveWidgetDataKey<FrameNode>(PROGRAME_NAME_KEY)));
+  const allProgramNodeIds = [...new Set([...programNodes, ...implicitProgramNodes].map((node) => node.id))];
+  return allProgramNodeIds;
 }
 
 export function getPrimaryDataNode(node: SectionNode): PrimaryDataNodeSummary | null {
