@@ -31,6 +31,8 @@ import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
 import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
 import { getWebSearchProxy, WebSearchProxy } from "./web/search";
 
+console.log(`Impromptu timestamp`, process.env.VITE_TIMESTAMP);
+
 const showUI = (href: string, options?: ShowUIOptions) => figma.showUI(`<script>window.location.href="${href}"</script>`, options);
 
 let fontInitPromise = ensureStickyFont();

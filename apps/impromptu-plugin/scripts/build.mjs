@@ -20,11 +20,12 @@ async function main() {
     },
   ];
 
-  const safeEnvDefines = Object.fromEntries(
-    Object.entries(process.env)
+  const safeEnvDefines = Object.fromEntries([
+    ...Object.entries(process.env)
       .filter(([key, _value]) => key.startsWith("VITE_"))
-      .map(([key, value]) => [`process.env.${key}`, `"${value}"`])
-  );
+      .map(([key, value]) => [`process.env.${key}`, `"${value}"`]),
+    ["process.env.VITE_TIMESTAMP", `"${new Date().toLocaleString()}"`],
+  ]);
 
   const context = await esbuild.context({
     entryPoints: ["src/main.tsx"],
