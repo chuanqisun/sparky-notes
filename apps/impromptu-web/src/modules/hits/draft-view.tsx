@@ -75,7 +75,7 @@ export function DraftViewV2(props: DraftViewProps) {
     }
   }, []);
 
-  const reportMd = useMemo(() => {
+  const generateMarkdown = useCallback((primaryDataNode: PrimaryDataNodeSummary, insightTitleMap?: Record<string, string>) => {
     const lines: string[] = [];
     const reducerContext = {
       lines,
@@ -85,7 +85,7 @@ export function DraftViewV2(props: DraftViewProps) {
     primaryDataNode?.orderedStickies.reduce((context, sticky) => {
       switch (sticky.color) {
         case "Green":
-          context.lines.push(formatClaimSticky({ text: sticky.text, url: sticky.url, innerText: sticky.childText }));
+          context.lines.push(formatClaimSticky({ text: insightTitleMap?.[sticky.id] ?? sticky.text, url: sticky.url, innerText: sticky.childText }));
           return {
             ...context,
             parentInsightDepth: 1,
@@ -102,7 +102,9 @@ export function DraftViewV2(props: DraftViewProps) {
     }, reducerContext);
 
     return lines.join("\n\n").trim();
-  }, [primaryDataNode]);
+  }, []);
+
+  const reportMd = useMemo(() => (primaryDataNode ? generateMarkdown(primaryDataNode) : undefined), [generateMarkdown, primaryDataNode]);
 
   const reportHtml = useMemo(() => {
     if (!reportMd) return "";
@@ -138,7 +140,7 @@ _\<A description of how the report is generated\>_
 
 ${synthesis.introduction}
 
-${reportMd}
+${generateMarkdown(primaryDataNode, synthesis.insightTitleMap)}
 
 ${synthesis.methodology ? `# Methodology` : ""}
 
@@ -156,7 +158,7 @@ ${synthesis.methodology}
         setIsCreating(false);
       }
     }
-  }, [reportMd, primaryDataNode]);
+  }, [generateMarkdown, primaryDataNode]);
 
   const handlePreviewClick = useCallback<EventListener>((e: Event) => {
     const maybeLink = (e.target as HTMLElement).closest?.("a");

@@ -81,6 +81,7 @@ export interface SynthesisResponse {
   title?: string;
   introduction?: string;
   methodology?: string;
+  insightTitleMap?: Record<string, string>;
   error?: string;
 }
 
@@ -108,6 +109,7 @@ export interface PrimaryDataNodeSummary {
   id: string;
   name: string;
   orderedStickies: {
+    id: string;
     color: MappedColorNames;
     text: string;
     childText?: string;

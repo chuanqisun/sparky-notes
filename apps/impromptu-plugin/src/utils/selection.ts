@@ -32,6 +32,7 @@ export function getPrimaryDataNode(node: SectionNode): PrimaryDataNodeSummary | 
     const colorName = fill?.b ? getClosestColor(fill, "LightGray") : "LightGray";
     {
       return {
+        id: sticky.id,
         text: sticky.text.characters,
         childText: nonEmptyString(sticky.getPluginData("shortContext")),
         color: colorName,

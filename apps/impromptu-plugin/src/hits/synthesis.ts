@@ -10,6 +10,7 @@ export interface Synthesis {
   title: string;
   introduction: string;
   methodology: string;
+  insightTitleMap: Record<string, string>;
   error?: string;
 }
 
@@ -40,25 +41,43 @@ export async function getSynthesis(context: ReflectionContext, matchProgram: (ba
 
   if (methodologyList.length) {
     const methodologyPrompt = `
-A research report is generated using the following steps. Each step is performed by a human assisted by a human-in-the-loop AI reasoning environment called Impromptu. Summarize the entire process into a "Methodology" section.
+A research report is generated using the following steps. Each step is performed by a human assisted by a human-in-the-loop AI reasoning environment called Impromptu. Summarize the entire process into a "Methodology" paragraph.
 
 Steps:
 ${methodologyList.map((step, index) => `${index + 1}. ${step}`).join("\n")}
 
-Methodology: `.trimStart();
+Methodology paragraph: `.trimStart();
     const methodologyCompletion = await getCompletion(completion, methodologyPrompt, { max_tokens: 300 });
     methodology = methodologyCompletion.choices[0].text.trim();
   }
 
-  replaceNotification("Generating title and introduction...");
   const primaryDataNode = getPrimaryDataNode(dataNode as SectionNode);
+
+  const insightMap = new Map<string, string>();
+  const higherOrderStickies = primaryDataNode?.orderedStickies.filter((sticky) => sticky.color === "Green" && sticky.childText?.trim()) ?? [];
+
+  for (const sticky of higherOrderStickies) {
+    replaceNotification(`Synthesizing insight: "${sticky.text.trim()}"...`);
+    const prompt = `
+Summarize the following title and body into a short one-sentence claim that sounds insightful.
+Title: ${sticky.text.trim()}
+Body: ${combineWhitespace(sticky.childText!.trim())}
+One sentence claim: `.trimStart();
+
+    try {
+      const claim = await getCompletion(completion, prompt, { max_tokens: 300 }).then((res) => res.choices[0].text.trim());
+      insightMap.set(sticky.id, claim);
+    } catch (e) {
+      // ignore non-fatal errors
+    }
+  }
 
   const bodyText = `
     ${primaryDataNode?.orderedStickies
       .map((sticky) => {
         switch (sticky.color) {
           case "Green":
-            const title = `# ${sticky.text}`;
+            const title = `# ${insightMap.get(sticky.id) ?? sticky.text}`;
             const context = sticky.childText;
             return `${title}${context ? `\n\n${context}` : ""}`;
           case "Yellow":
@@ -71,13 +90,32 @@ Methodology: `.trimStart();
       })
       .join("\n\n")}`.trim();
 
-  const synthesisPrompt = `
-Based on information from the following Report body, use the following format to write a very short title and an introduction paragraph.
+  const titlePrompt = `
+Write a short title for the following Report.
 
-Format """
-Title: <The very short title of the report>
-Introduction: <The introduction paragraph of the report>
+Report """
+${`${shortenToWordCount(1700, bodyText)}
+${
+  methodology
+    ? `
+
+# Methodology
+
+${methodology}
+`
+    : ""
+}`.trim()}
 """
+
+Title: `;
+
+  replaceNotification("Generating title...");
+  const title = (await getCompletion(completion, titlePrompt, { max_tokens: 100 })).choices[0].text.trim();
+
+  const introPrompt = `
+Based on information from the following Report title and body, write an introduction paragraph.
+
+Report title: ${title}
 
 Report body """
 ${`${shortenToWordCount(1700, bodyText)}
@@ -93,19 +131,11 @@ ${methodology}
 }`.trim()}
 """
 
-Begin!
-Title: `;
+Introduction paragraph: `;
 
-  const synthesis = (await getCompletion(completion, synthesisPrompt, { max_tokens: 300 })).choices[0].text;
-  const lines = synthesis.split("\n");
-  const introLineIndex = lines.findIndex((line) => line.toLocaleLowerCase().startsWith("introduction:"));
-  const title = combineWhitespace(lines.slice(0, introLineIndex).join("\n").trim());
-  const introduction = lines
-    .slice(introLineIndex)
-    .join("\n")
-    .replace(/^introduction\:/i, "")
-    .trim();
+  replaceNotification("Generating introduction...");
+  const introduction = (await getCompletion(completion, introPrompt, { max_tokens: 300 })).choices[0].text.trim();
 
-  const synthesisResult = { title, introduction, methodology };
+  const synthesisResult = { title, introduction, methodology, insightTitleMap: Object.fromEntries(insightMap) };
   return synthesisResult;
 }
