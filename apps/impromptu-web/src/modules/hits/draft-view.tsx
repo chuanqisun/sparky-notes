@@ -63,15 +63,13 @@ export function DraftViewV2(props: DraftViewProps) {
   const formatClaimSticky = useCallback((config: StickyConfig) => {
     const { depth, url, text, innerText } = config;
     const indent = "  ".repeat(depth ?? 0);
-    const wrapWithUrl = (text: string) => (url ? `[${text}](${url})` : text);
-    const innerTextSuffix = innerText ? `\n\n${indent}  ${wrapWithUrl(innerText)}` : "";
+    const urlSuffix = url ? `\n\n${indent}  [Source](${url})` : "";
+    const innerTextSuffix = innerText ? `\n\n${indent}  ${innerText}${urlSuffix}` : urlSuffix;
 
     if (url?.match(/^https:\/\/hits\.microsoft\.com\/insight/i)) {
       return `${indent}- [**Insight**](${url}) ${text}`;
     } else if (url?.match(/^https:\/\/hits\.microsoft\.com\/recommendation/i)) {
       return `${indent}- [**Recommendation**](${url}) ${text}`;
-    } else if (url) {
-      return `${indent}- **Insight** ${text}${innerTextSuffix}`;
     } else {
       return `${indent}- **Insight** ${text}${innerTextSuffix}`;
     }
@@ -93,7 +91,7 @@ export function DraftViewV2(props: DraftViewProps) {
             parentInsightDepth: 1,
           };
         case "Yellow":
-          context.lines.push(formatClaimSticky({ depth: context.parentInsightDepth, text: sticky.text, url: sticky.url }));
+          context.lines.push(formatClaimSticky({ depth: context.parentInsightDepth, text: sticky.text, url: sticky.url, innerText: sticky.childText }));
           return context;
         case "LightGray":
           context.lines.push(sticky.url ? `[${sticky.text}](${sticky.url})` : sticky.text);
