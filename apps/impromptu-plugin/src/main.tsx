@@ -15,6 +15,7 @@ import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
 import { SortProgram } from "./programs/sort";
 import { SummarizeProgram } from "./programs/summarize";
+import { TemplateProgram } from "./programs/template";
 import { ThemeProgram } from "./programs/theme";
 import { WebBrowseProgram } from "./programs/web-browse";
 import { WebSearchProgram } from "./programs/web-search";
@@ -62,6 +63,7 @@ const programs: Program[] = [
   new ResearchRecommendationsProgram(),
   new SortProgram(),
   new SummarizeProgram(),
+  new TemplateProgram(),
   new ThemeProgram(),
   new WebBrowseProgram(),
   new WebSearchProgram(),

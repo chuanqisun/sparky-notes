@@ -103,6 +103,7 @@ function App() {
               <button data-program="research-recommendations">Research Recommendations</button>
               <button data-program="sort">Sort</button>
               <button data-program="summarize">Summarize</button>
+              <button data-program="template">Template</button>
               <button data-program="theme">Theme</button>
               <button data-program="web-browse">Web browse</button>
               <button data-program="web-search">Web search</button>

@@ -177,9 +177,7 @@ export class AgentProgram implements Program {
 }
 
 export function getFirstOutput(node: FrameNode): SectionNode | null {
-  const outputContainer = getNextNodes(node)
-    .filter(filterToType<SectionNode>("SECTION"))
-    .find((item) => item.name === "Output");
+  const outputContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
   return outputContainer ?? null;
 }
 
