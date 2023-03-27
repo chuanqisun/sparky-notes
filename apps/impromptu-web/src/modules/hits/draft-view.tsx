@@ -20,6 +20,13 @@ export interface CreationResult {
   timestamp: Date;
 }
 
+export interface StickyConfig {
+  depth?: number;
+  innerText?: string;
+  url?: string;
+  text: string;
+}
+
 export function DraftViewV2(props: DraftViewProps) {
   const { primaryDataNode, accessToken } = props;
   const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
@@ -53,39 +60,51 @@ export function DraftViewV2(props: DraftViewProps) {
     return respondDataNodeSynthesis!;
   }, []);
 
-  const formatClaimSticky = useCallback((text: string, url?: string) => {
+  const formatClaimSticky = useCallback((config: StickyConfig) => {
+    const { depth, url, text, innerText } = config;
+    const indent = "  ".repeat(depth ?? 0);
+    const wrapWithUrl = (text: string) => (url ? `[${text}](${url})` : text);
+    const innerTextSuffix = innerText ? `\n\n${indent}  ${wrapWithUrl(innerText)}` : "";
+
     if (url?.match(/^https:\/\/hits\.microsoft\.com\/insight/i)) {
-      return `- [**Insight**](${url}) ${text}`;
+      return `${indent}- [**Insight**](${url}) ${text}`;
     } else if (url?.match(/^https:\/\/hits\.microsoft\.com\/recommendation/i)) {
-      return `- [**Recommendation**](${url}) ${text}`;
+      return `${indent}- [**Recommendation**](${url}) ${text}`;
     } else if (url) {
-      `- **Insight** ${text}\n  [Source](${url})`;
+      return `${indent}- **Insight** ${text}${innerTextSuffix}`;
     } else {
-      return `- **Insight** ${text}`;
+      return `${indent}- **Insight** ${text}${innerTextSuffix}`;
     }
   }, []);
 
-  const reportMd = useMemo(
-    () =>
-      `
-  ${primaryDataNode?.orderedStickies
-    .map((sticky) => {
+  const reportMd = useMemo(() => {
+    const lines: string[] = [];
+    const reducerContext = {
+      lines,
+      parentInsightDepth: 0,
+    };
+
+    primaryDataNode?.orderedStickies.reduce((context, sticky) => {
       switch (sticky.color) {
         case "Green":
-          const title = `# ${sticky.text}`;
-          const context = sticky.childText;
-          return `${title}${context ? `\n\n${context}` : ""}`;
+          context.lines.push(formatClaimSticky({ text: sticky.text, url: sticky.url, innerText: sticky.childText }));
+          return {
+            ...context,
+            parentInsightDepth: 1,
+          };
         case "Yellow":
-          return formatClaimSticky(sticky.text, sticky.url);
+          context.lines.push(formatClaimSticky({ depth: context.parentInsightDepth, text: sticky.text, url: sticky.url }));
+          return context;
         case "LightGray":
-          return sticky.url ? `[${sticky.text}](${sticky.url})` : sticky.text;
+          context.lines.push(sticky.url ? `[${sticky.text}](${sticky.url})` : sticky.text);
+          return context;
         default:
-          return "";
+          return context;
       }
-    })
-    .join("\n\n")}`.trim(),
-    [primaryDataNode]
-  );
+    }, reducerContext);
+
+    return lines.join("\n\n").trim();
+  }, [primaryDataNode]);
 
   const reportHtml = useMemo(() => {
     if (!reportMd) return "";
