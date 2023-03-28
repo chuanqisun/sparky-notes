@@ -7,6 +7,7 @@ import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
 import { ArxivSearchProgram } from "./programs/arxiv-search";
 import { CategorizeProgram } from "./programs/categorize";
+import { CollectProgram } from "./programs/collect";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
 import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY, ReflectionContext } from "./programs/program";
@@ -56,6 +57,7 @@ const programs: Program[] = [
   new AnswerProgram(),
   new ArxivSearchProgram(),
   new CategorizeProgram(),
+  new CollectProgram(),
   new CompletionProgram(),
   new FilterProgram(),
   new RelateProgram(),

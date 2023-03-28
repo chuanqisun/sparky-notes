@@ -96,6 +96,7 @@ function App() {
               <button data-program="answer">Answer</button>
               <button data-program="arxiv-search">arXiv search</button>
               <button data-program="categorize">Categorize</button>
+              <button data-program="collect">Collect</button>
               <button data-program="completion">Completion</button>
               <button data-program="filter">Filter</button>
               <button data-program="relate">Relate</button>
