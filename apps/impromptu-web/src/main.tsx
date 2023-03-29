@@ -1,4 +1,4 @@
-import { LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
+import { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
@@ -8,12 +8,15 @@ import { notifyFigma } from "./modules/figma/rpc";
 import { DraftViewV2 } from "./modules/hits/draft-view";
 import { LogEntryView } from "./modules/log/log-entry-view";
 import { StickyView } from "./modules/sticky-view/sticky-view";
+import { formatLargeNumber } from "./modules/usage/format";
+import { useTokenMeter } from "./modules/usage/usage";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [selectionSummary, setSelectionSummary] = useState<SelectionSummary | null>(null);
+  const { increaseTokenCount, costInCents, tokenCount, reset } = useTokenMeter();
 
   useEffect(() => {
     const handleMainMessage = async (e: MessageEvent) => {
@@ -31,6 +34,10 @@ function App() {
       }
 
       if (message.log) {
+        const data = message.log.data;
+        if ((data as CompletionInfoItem).tokenUsage) {
+          increaseTokenCount((data as CompletionInfoItem).tokenUsage);
+        }
         setLogEntries((prev) => [message.log!, ...prev].slice(0, 25));
       }
     };
@@ -43,6 +50,7 @@ function App() {
   const primaryDataNode = useMemo(() => selectionSummary?.primaryDataNode ?? null, [selectionSummary]);
   const runnableProgramNodeIds = useMemo(() => selectionSummary?.runnableProgramNodeIds ?? [], [selectionSummary]);
 
+  // app init
   useEffect(() => {
     notifyFigma({ webStarted: true });
   }, []);
@@ -133,7 +141,12 @@ function App() {
         <legend>Account</legend>
         <menu>
           {isConnected === undefined && <div>Authenticating...</div>}
-          {isConnected === true && <button onClick={signOut}>Sign out</button>}
+          {isConnected === true && (
+            <>
+              <button onClick={signOut}>Sign out</button>
+              <button onClick={reset}>Reset usage</button>
+            </>
+          )}
           {isConnected === false && (
             <>
               <input
@@ -150,6 +163,12 @@ function App() {
             </>
           )}
         </menu>
+        {isConnected === true && (
+          <div>
+            Usage: {formatLargeNumber(tokenCount)} tokens{" "}
+            <span class="cost-estimate" title="Estimated cost based on Open AI consumer pricing">{`($${(costInCents / 100).toFixed(3)})`}</span>
+          </div>
+        )}
       </fieldset>
     </main>
   );

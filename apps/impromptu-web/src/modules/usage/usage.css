@@ -1,0 +1,7 @@
+.cost-estimate {
+  cursor: help;
+}
+.cost-estimate:hover {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
