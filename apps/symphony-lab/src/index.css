@@ -4,6 +4,7 @@
 
 * {
   font-family: inherit;
+  font-size: inherit;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -23,5 +24,16 @@ main {
   max-width: 800px;
   margin-inline: auto;
   display: grid;
-  gap: 8px;
+  gap: 16px;
+}
+
+button,
+input,
+textarea {
+  border: 1px solid var(--theme-coal);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+textarea {
+  resize: none;
 }

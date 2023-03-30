@@ -2,6 +2,7 @@ import { render } from "preact";
 import { useCallback, useEffect, useMemo, useRef } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
 import { EditorElement, TreeNode } from "./features/editor/editor-element";
+import { Notebook } from "./features/notebook/notebook";
 import { getCompletion } from "./features/openai/completion";
 import "./index.css";
 
@@ -49,7 +50,7 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
-          <editor-element ref={editorRef} />
+          <Notebook complete={complete} />
         </>
       ) : null}
       {isConnected === false ? (
