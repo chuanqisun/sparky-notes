@@ -8,11 +8,20 @@
   padding: 0;
   box-sizing: border-box;
 
-  --theme-background: #dfd4c7;
-  --theme-text: #2e2b2b;
+  --theme-rice: #dfd4c7;
+  --theme-coal: #2e2b2b;
 }
 
 body {
-  color: var(--theme-text);
-  background-color: var(--theme-background);
+  color: var(--theme-coal);
+  background-color: var(--theme-rice);
+  padding: 16px;
+  font-size: 18px;
+}
+
+main {
+  max-width: 800px;
+  margin-inline: auto;
+  display: grid;
+  gap: 8px;
 }
