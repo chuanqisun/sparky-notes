@@ -1,0 +1,18 @@
+:root {
+  font-family: monospace;
+}
+
+* {
+  font-family: inherit;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+  --theme-background: #dfd4c7;
+  --theme-text: #2e2b2b;
+}
+
+body {
+  color: var(--theme-text);
+  background-color: var(--theme-background);
+}
