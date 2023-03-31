@@ -1,6 +1,5 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import { TaskNode } from "./components/program-node";
 import { HandlerContext, onSelectionChange, onShowNotification, onWebClientStarted, respondCreateProgram, respondLinearContextGraph } from "./handlers";
 import { frameNodeLayersToContextPath } from "./utils/display-program";
 import { $ } from "./utils/fq";
@@ -49,13 +48,12 @@ async function handleMessage(message: MessageToFigma) {
     $([parentNode]).subtree().remove();
   }
 
+  // Deprecated
   if (message.requestCreateSerialTaskNodes) {
     const parentNode = figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode;
     if (!parentNode) return;
 
-    const taskNodes = await Promise.all(
-      message.requestCreateSerialTaskNodes.taskDescriptions.map((input) => figma.createNodeFromJSXAsync(<TaskNode input={input} />))
-    );
+    const taskNodes = [] as any[];
 
     $(taskNodes)
       .setPluginData({ type: "programNode", subtype: "Task" })

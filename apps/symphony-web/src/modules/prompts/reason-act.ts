@@ -3,7 +3,7 @@ import { OpenAICompletionPayload } from "../openai/completion";
 
 export interface GenerateReasonActInput {
   pretext: string;
-  nextStepName: string;
+  generateStepName: string;
 }
 export async function generateReasonAct(context: RunContext, input: GenerateReasonActInput, promptConfig?: Partial<OpenAICompletionPayload>) {
   const prompt = `
@@ -14,13 +14,12 @@ Use the following format:
 Question: the input question you must answer
 Thought: you should always think about what to do
 Action: the action to take
-Action Input: the input to the action
 Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
+... (this Thought/Action/Observation can repeat N times)
 
 Begin!
 ${input.pretext}
-${input.nextStepName}: `.trimStart();
+${input.generateStepName}: `.trimStart();
 
   const response = await context.getCompletion(prompt, { max_tokens: 300, ...promptConfig });
 

@@ -64,7 +64,7 @@ function App() {
       .join("\n");
   };
 
-  const handleThinkStep = useCallback(async () => {
+  const handleCreateThought = useCallback(async () => {
     if (!selectedPrograms.length) {
       figmaProxy.request({
         requestCreateProgram: {
@@ -83,7 +83,7 @@ function App() {
 
     const thought = await generateReasonAct(runContext, {
       pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
-      nextStepName: "Thought",
+      generateStepName: "Thought",
     });
 
     if (!thought) {
@@ -104,11 +104,83 @@ function App() {
     });
   }, [runContext, selectedPrograms]);
 
-  const handleActStep = useCallback(async () => {
+  const handleCreateAction = useCallback(async () => {
     const activeProgram = selectedPrograms[0];
-    if (!activeProgram) return;
+    if (!activeProgram) {
+      figmaProxy.request({
+        requestCreateProgram: {
+          parentIds: [],
+          subtype: "Action",
+          input: `Search the web for "Technology Trend"`,
+        },
+      });
+      return;
+    }
 
-    const context = await summarizeContext(activeProgram.id, runContext.figmaProxy);
+    const parentIds = selectedPrograms.map((p) => p.id);
+    const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
+    if (!respondLinearContextGraph?.length) return;
+    const action = await generateReasonAct(runContext, {
+      pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+      generateStepName: "Action",
+    });
+
+    if (!action) {
+      runContext.figmaProxy.notify({
+        showNotification: {
+          message: "Nothing came up. Try again or make a change?",
+        },
+      });
+      return;
+    }
+
+    await runContext.figmaProxy.request({
+      requestCreateProgram: {
+        parentIds: parentIds,
+        subtype: "Action",
+        input: action,
+      },
+    });
+    // TBD
+  }, [runContext, selectedPrograms]);
+
+  const handleCreateObservation = useCallback(async () => {
+    const activeProgram = selectedPrograms[0];
+    if (!activeProgram) {
+      figmaProxy.request({
+        requestCreateProgram: {
+          parentIds: [],
+          subtype: "Observation",
+          input: "The Earth revolves around the Sun",
+        },
+      });
+      return;
+    }
+
+    const parentIds = selectedPrograms.map((p) => p.id);
+    const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
+    if (!respondLinearContextGraph?.length) return;
+    const observation = await generateReasonAct(runContext, {
+      pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+      generateStepName: "Observation",
+    });
+
+    if (!observation) {
+      runContext.figmaProxy.notify({
+        showNotification: {
+          message: "Nothing came up. Try again or make a change?",
+        },
+      });
+      return;
+    }
+
+    await runContext.figmaProxy.request({
+      requestCreateProgram: {
+        parentIds: parentIds,
+        subtype: "Observation",
+        input: observation,
+      },
+    });
     // TBD
   }, [runContext, selectedPrograms]);
 
@@ -117,14 +189,18 @@ function App() {
       {isConnected ? (
         <>
           <fieldset>
-            <legend>Menu</legend>
+            <legend>Create</legend>
             <menu>
-              <button onClick={handleThinkStep}>Think</button>
-              <button onClick={handleActStep} disabled={!selectedPrograms.some((program) => program.subtype === "Task")}>
-                Act
-              </button>{" "}
-              <button disabled={true}>Auto step</button>
-              <button disabled={true}>Auto run</button> <button disabled={true}>Regenerate</button>
+              <button onClick={handleCreateThought}>Thought</button>
+              <button onClick={handleCreateAction}>Action</button>
+              <button onClick={handleCreateObservation}>Observation</button>
+            </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Run</legend>
+            <menu>
+              <button>Step</button>
+              <button>Auto-run</button>
             </menu>
           </fieldset>
           <fieldset>

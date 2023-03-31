@@ -1,6 +1,6 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import { ThoughtNode } from "../components/program-node";
+import { ActionNode, ObservationNode, ThoughtNode } from "../components/program-node";
 import { ChangeTracker } from "../utils/change-tracker";
 import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../utils/display-program";
 import { $, FigmaQuery } from "../utils/fq";
@@ -55,6 +55,16 @@ export const respondCreateProgram: Handler = async (context, message) => {
     case "Thought": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
       fqNode.setPluginData({ type: "programNode", subtype: "Thought" });
+      break;
+    }
+    case "Action": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<ActionNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Action" });
+      break;
+    }
+    case "Observation": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<ObservationNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Observation" });
       break;
     }
     default:
