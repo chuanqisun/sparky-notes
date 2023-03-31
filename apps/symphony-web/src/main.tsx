@@ -7,6 +7,7 @@ import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { ChatMessage, getChatResponse, OpenAIChatPayload, OpenAIChatResponse } from "./modules/openai/chat";
 import { getCompletion, OpenAICompletionPayload, OpenAICompletionResponse } from "./modules/openai/completion";
+import { exploreLakoffSpace } from "./modules/prompts/lakoff";
 import { generateReasonAct } from "./modules/prompts/reason-act-v2";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -97,47 +98,18 @@ function App() {
     [runContext, selectedPrograms]
   );
 
-  const handleCreateSpatialNode = useCallback(
-    async (subtype: string, fallbackInput: string) => {
+  const handleExplore = useCallback(
+    async (direction: "Up" | "Down" | "Left" | "Right") => {
       if (!selectedPrograms.length) {
-        figmaProxy.request({
-          requestCreateProgram: {
-            parentIds: [],
-            subtype,
-            input: fallbackInput,
-          },
-        });
-
         return;
       }
 
-      const parentIds = selectedPrograms.map((p) => p.id);
-      const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
-      if (!respondLinearContextGraph?.length) return;
-
-      const resultList = await generateReasonAct(runContext, {
-        pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
-        generateStepName: subtype,
+      const resultList = await exploreLakoffSpace(runContext, {
+        direction,
+        center: selectedPrograms.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
       });
 
-      if (!resultList) {
-        runContext.figmaProxy.notify({
-          showNotification: {
-            message: "Nothing came up. Try again or make a change?",
-          },
-        });
-        return;
-      }
-
-      for (const item of resultList.listItems) {
-        await runContext.figmaProxy.request({
-          requestCreateProgram: {
-            parentIds,
-            subtype,
-            input: item,
-          },
-        });
-      }
+      console.log(resultList);
     },
     [runContext, selectedPrograms]
   );
@@ -174,13 +146,13 @@ function App() {
               {(navMode === "semiauto" || navMode === "manual") && (
                 <div class="navigator-menu">
                   <menu class="top-menu">
-                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "semiauto" && <button onClick={() => handleExplore("Up")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
                   <div class="top-link">↓</div>
                   <menu class="left-menu">
-                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "semiauto" && <button onClick={() => handleExplore("Left")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
@@ -193,13 +165,13 @@ function App() {
                   </menu>
                   <div class="right-link">→</div>
                   <menu class="right-menu">
-                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "semiauto" && <button onClick={() => handleExplore("Right")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
                   <div class="bottom-link">↓</div>
                   <menu class="bottom-menu">
-                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "semiauto" && <button onClick={() => handleExplore("Down")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
