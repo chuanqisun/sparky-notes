@@ -70,12 +70,12 @@ function App() {
       const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
       if (!respondLinearContextGraph?.length) return;
 
-      const nodeInput = await generateReasonAct(runContext, {
+      const resultList = await generateReasonAct(runContext, {
         pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
         generateStepName: subtype,
       });
 
-      if (!nodeInput) {
+      if (!resultList) {
         runContext.figmaProxy.notify({
           showNotification: {
             message: "Nothing came up. Try again or make a change?",
@@ -84,13 +84,15 @@ function App() {
         return;
       }
 
-      await runContext.figmaProxy.request({
-        requestCreateProgram: {
-          parentIds: parentIds,
-          subtype,
-          input: nodeInput,
-        },
-      });
+      for (const item of resultList.listItems) {
+        await runContext.figmaProxy.request({
+          requestCreateProgram: {
+            parentIds: parentIds,
+            subtype,
+            input: item,
+          },
+        });
+      }
     },
     [runContext, selectedPrograms]
   );
