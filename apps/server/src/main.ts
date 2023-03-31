@@ -11,6 +11,7 @@ import { hitsToken } from "./modules/hits/token";
 import { validateHitsToken } from "./modules/hits/validate-hits-token";
 import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
+import { chat } from "./modules/openai/chat";
 import { completions } from "./modules/openai/completion";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
 import { webCrawl } from "./modules/web/crawl";
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]);
+app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat]);
 
 app.post("/web/search", [validateHitsToken, webSearch]);
 app.post("/web/crawl", [validateHitsToken, webCrawl]);

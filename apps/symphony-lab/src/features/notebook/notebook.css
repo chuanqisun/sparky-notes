@@ -1,0 +1,5 @@
+.c-notebook {
+  display: grid;
+  gap: 4px;
+  resize: none;
+}
