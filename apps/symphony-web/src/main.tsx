@@ -167,6 +167,7 @@ function App() {
               </div>
               {navMode === "auto" && (
                 <menu>
+                  <input type="text" placeholder="Goal" />
                   <button>Start</button>
                 </menu>
               )}
