@@ -87,7 +87,7 @@ function App() {
       for (const item of resultList.listItems) {
         await runContext.figmaProxy.request({
           requestCreateProgram: {
-            parentIds: parentIds,
+            parentIds,
             subtype,
             input: item,
           },
