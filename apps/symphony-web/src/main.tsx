@@ -5,14 +5,16 @@ import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
+import { ChatMessage, getChatResponse, OpenAIChatPayload, OpenAIChatResponse } from "./modules/openai/chat";
 import { getCompletion, OpenAICompletionPayload, OpenAICompletionResponse } from "./modules/openai/completion";
-import { generateReasonAct } from "./modules/prompts/reason-act";
+import { generateReasonAct } from "./modules/prompts/reason-act-v2";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
 export interface RunContext {
   figmaProxy: FigmaProxy<MessageToFigma, MessageToWeb>;
   getCompletion: (prompt: string, config?: Partial<OpenAICompletionPayload>) => Promise<OpenAICompletionResponse>;
+  getChat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
 }
 
 function App() {
@@ -25,6 +27,7 @@ function App() {
     () => ({
       figmaProxy,
       getCompletion: getCompletion.bind(null, accessToken),
+      getChat: getChatResponse.bind(null, accessToken),
     }),
     [accessToken]
   );
@@ -49,140 +52,48 @@ function App() {
     figmaProxy.notify({ webClientStarted: true });
   }, []);
 
-  const summarizeContext = async (targetNodeId: string, figmaProxy: FigmaProxy<MessageToFigma, MessageToWeb>) => {
-    const { respondContextPath } = await figmaProxy.request({ requestContextPath: targetNodeId });
+  const handleCreateNode = useCallback(
+    async (subtype: string, fallbackInput: string) => {
+      if (!selectedPrograms.length) {
+        figmaProxy.request({
+          requestCreateProgram: {
+            parentIds: [],
+            subtype,
+            input: fallbackInput,
+          },
+        });
 
-    const layerSizes = respondContextPath!.map((layer) => layer.length);
+        return;
+      }
 
-    return respondContextPath!
-      .flatMap((layer, layerIndex) =>
-        layer.map(
-          (item, itemIndex) =>
-            `${item.subtype}${layerIndex === 0 ? "" : " " + [...layerSizes.slice(0, layerIndex), itemIndex + 1].slice(1).join(".")}: ${item.input}`
-        )
-      )
-      .join("\n");
-  };
+      const parentIds = selectedPrograms.map((p) => p.id);
+      const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
+      if (!respondLinearContextGraph?.length) return;
 
-  const handleCreateThought = useCallback(async () => {
-    if (!selectedPrograms.length) {
-      figmaProxy.request({
+      const nodeInput = await generateReasonAct(runContext, {
+        pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+        generateStepName: subtype,
+      });
+
+      if (!nodeInput) {
+        runContext.figmaProxy.notify({
+          showNotification: {
+            message: "Nothing came up. Try again or make a change?",
+          },
+        });
+        return;
+      }
+
+      await runContext.figmaProxy.request({
         requestCreateProgram: {
-          parentIds: [],
-          subtype: "Thought",
-          input: "How to conduct a literature review on usability issues with the “Create new link” pattern?",
+          parentIds: parentIds,
+          subtype,
+          input: nodeInput,
         },
       });
-
-      return;
-    }
-
-    const parentIds = selectedPrograms.map((p) => p.id);
-    const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
-    if (!respondLinearContextGraph?.length) return;
-
-    const thought = await generateReasonAct(runContext, {
-      pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
-      generateStepName: "Thought",
-    });
-
-    if (!thought) {
-      runContext.figmaProxy.notify({
-        showNotification: {
-          message: "Nothing came up. Try again or make a change?",
-        },
-      });
-      return;
-    }
-
-    await runContext.figmaProxy.request({
-      requestCreateProgram: {
-        parentIds: parentIds,
-        subtype: "Thought",
-        input: thought,
-      },
-    });
-  }, [runContext, selectedPrograms]);
-
-  const handleCreateAction = useCallback(async () => {
-    const activeProgram = selectedPrograms[0];
-    if (!activeProgram) {
-      figmaProxy.request({
-        requestCreateProgram: {
-          parentIds: [],
-          subtype: "Action",
-          input: `Search the web for "Technology Trend"`,
-        },
-      });
-      return;
-    }
-
-    const parentIds = selectedPrograms.map((p) => p.id);
-    const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
-    if (!respondLinearContextGraph?.length) return;
-    const action = await generateReasonAct(runContext, {
-      pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
-      generateStepName: "Action",
-    });
-
-    if (!action) {
-      runContext.figmaProxy.notify({
-        showNotification: {
-          message: "Nothing came up. Try again or make a change?",
-        },
-      });
-      return;
-    }
-
-    await runContext.figmaProxy.request({
-      requestCreateProgram: {
-        parentIds: parentIds,
-        subtype: "Action",
-        input: action,
-      },
-    });
-    // TBD
-  }, [runContext, selectedPrograms]);
-
-  const handleCreateObservation = useCallback(async () => {
-    const activeProgram = selectedPrograms[0];
-    if (!activeProgram) {
-      figmaProxy.request({
-        requestCreateProgram: {
-          parentIds: [],
-          subtype: "Observation",
-          input: "The Earth revolves around the Sun",
-        },
-      });
-      return;
-    }
-
-    const parentIds = selectedPrograms.map((p) => p.id);
-    const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
-    if (!respondLinearContextGraph?.length) return;
-    const observation = await generateReasonAct(runContext, {
-      pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
-      generateStepName: "Observation",
-    });
-
-    if (!observation) {
-      runContext.figmaProxy.notify({
-        showNotification: {
-          message: "Nothing came up. Try again or make a change?",
-        },
-      });
-      return;
-    }
-
-    await runContext.figmaProxy.request({
-      requestCreateProgram: {
-        parentIds: parentIds,
-        subtype: "Observation",
-        input: observation,
-      },
-    });
-    // TBD
-  }, [runContext, selectedPrograms]);
+    },
+    [runContext, selectedPrograms]
+  );
 
   return (
     <main>
@@ -191,9 +102,9 @@ function App() {
           <fieldset>
             <legend>Create</legend>
             <menu>
-              <button onClick={handleCreateThought}>Thought</button>
-              <button onClick={handleCreateAction}>Action</button>
-              <button onClick={handleCreateObservation}>Observation</button>
+              <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
+              <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
+              <button onClick={() => handleCreateNode("Observation", "The Earth revolves around the Sun")}>Observation</button>
             </menu>
           </fieldset>
           <fieldset>
