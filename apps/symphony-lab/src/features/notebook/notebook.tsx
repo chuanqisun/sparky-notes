@@ -1,11 +1,11 @@
 import { useState } from "preact/hooks";
 import { getCombo } from "../../utils/keyboard";
-import type { OpenAICompletionPayload, OpenAICompletionResponse } from "../openai/completion";
-import { extractActionPrompt } from "../openai/prompts/extract-action";
+import type { ChatMessage, OpenAIChatPayload, OpenAIChatResponse } from "../openai/chat";
+import { parseZeroKnowledgeReponse, zeroKnowledgePrompt } from "../openai/prompts/extract-action";
 import "./notebook.css";
 
 export interface NotebookProps {
-  complete: (prompt: string, config?: Partial<OpenAICompletionPayload>) => Promise<OpenAICompletionResponse>;
+  chat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
 }
 
 export function Notebook(props: NotebookProps) {
@@ -19,9 +19,9 @@ export function Notebook(props: NotebookProps) {
       case "ctrl+enter": {
         e.preventDefault();
         props
-          .complete(...extractActionPrompt(thoughtValue))
-          .then((res) => res.choices[0].text.trim())
-          .then((text) => setTree((tree) => [...tree, { id: crypto.randomUUID(), displayText: text, type: NodeType.Action }]))
+          .chat(...zeroKnowledgePrompt(thoughtValue))
+          .then((res) => parseZeroKnowledgeReponse(res.choices[0].message.content))
+          .then((tasks) => setTree((tree) => [...tree, ...tasks.map((task) => ({ id: crypto.randomUUID(), displayText: task, type: NodeType.Action }))]))
           .catch();
         break;
       }

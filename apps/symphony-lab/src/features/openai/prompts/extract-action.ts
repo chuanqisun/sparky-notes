@@ -1,22 +1,22 @@
-import type { OpenAICompletionPayload } from "../completion";
+import type { ChatMessage, OpenAIChatPayload } from "../chat";
 
-export function extractActionPrompt(text: string): [string, Partial<OpenAICompletionPayload>] {
+export function zeroKnowledgePrompt(text: string): [ChatMessage[], Partial<OpenAIChatPayload>] {
   return [
-    `
-Rephrase the following text to be a task statement.
-
-Example text: I want to create an article.
-Task: Create an article
-
-Example text: What is the weather like in New York?
-Task: Get weather information for New York.
-
-Example text: Need ideas for a logo design
-Task: Generate logo design ideas
-
-Begin!
-Text: ${text}
-Task: `.trimStart(),
-    { max_tokens: 100 },
+    [
+      {
+        role: "system",
+        content: `
+Now, I will respond with a list of question`,
+      },
+      {
+        role: "user",
+        content: `Text: ${text}`,
+      },
+    ],
+    { max_tokens: 200 },
   ];
+}
+
+export function parseZeroKnowledgeReponse(text: string) {
+  return [text];
 }

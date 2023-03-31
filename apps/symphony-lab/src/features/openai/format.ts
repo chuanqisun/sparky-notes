@@ -27,3 +27,12 @@ export function coerceToBulletList(response: string) {
 export function coerceToNumberedList(response: string) {
   return arrayToNumberedList(responseToArray(response));
 }
+
+export function parseListItem(line: string) {
+  return line
+    .trim()
+    .replace(/^\d+\.\s*/, "")
+    .replace(/^-\s*/, "")
+    .replace(/^\*\s*/, "")
+    .trim();
+}
