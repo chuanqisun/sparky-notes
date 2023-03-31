@@ -97,24 +97,114 @@ function App() {
     [runContext, selectedPrograms]
   );
 
+  const handleCreateSpatialNode = useCallback(
+    async (subtype: string, fallbackInput: string) => {
+      if (!selectedPrograms.length) {
+        figmaProxy.request({
+          requestCreateProgram: {
+            parentIds: [],
+            subtype,
+            input: fallbackInput,
+          },
+        });
+
+        return;
+      }
+
+      const parentIds = selectedPrograms.map((p) => p.id);
+      const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
+      if (!respondLinearContextGraph?.length) return;
+
+      const resultList = await generateReasonAct(runContext, {
+        pretext: respondLinearContextGraph.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+        generateStepName: subtype,
+      });
+
+      if (!resultList) {
+        runContext.figmaProxy.notify({
+          showNotification: {
+            message: "Nothing came up. Try again or make a change?",
+          },
+        });
+        return;
+      }
+
+      for (const item of resultList.listItems) {
+        await runContext.figmaProxy.request({
+          requestCreateProgram: {
+            parentIds,
+            subtype,
+            input: item,
+          },
+        });
+      }
+    },
+    [runContext, selectedPrograms]
+  );
+
+  const [navMode, setNavMode] = useState("semiauto");
+
   return (
     <main>
       {isConnected ? (
         <>
           <fieldset>
-            <legend>Create</legend>
-            <menu>
-              <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
-              <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
-              <button onClick={() => handleCreateNode("Observation", "The Earth revolves around the Sun")}>Observation</button>
-            </menu>
-          </fieldset>
-          <fieldset>
-            <legend>Run</legend>
-            <menu>
-              <button>Step</button>
-              <button>Auto-run</button>
-            </menu>
+            <legend>Navigate</legend>
+            <div class="navigator">
+              <div class="navigator-mode">
+                <label>
+                  <input type="radio" name="navmode" value="auto" checked={navMode === "auto"} onInput={() => setNavMode("auto")} />
+                  Auto
+                </label>
+                <label>
+                  <input type="radio" name="navmode" value="auto" checked={navMode === "semiauto"} onInput={() => setNavMode("semiauto")} />
+                  Copilot
+                </label>
+                <label>
+                  <input type="radio" name="navmode" value="manual" checked={navMode === "manual"} onInput={() => setNavMode("manual")} />
+                  Manual
+                </label>
+              </div>
+              {navMode === "auto" && (
+                <menu>
+                  <button>Start</button>
+                </menu>
+              )}
+              {(navMode === "semiauto" || navMode === "manual") && (
+                <div class="navigator-menu">
+                  <menu class="top-menu">
+                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                  </menu>
+                  <div class="top-link">↓</div>
+                  <menu class="left-menu">
+                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                  </menu>
+                  <div class="left-link">→</div>
+                  <menu class="center-menu">
+                    {navMode === "semiauto" && <button>Continue</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Observation", "The Earth revolves around the Sun")}>Observation</button>}
+                  </menu>
+                  <div class="right-link">→</div>
+                  <menu class="right-menu">
+                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                  </menu>
+                  <div class="bottom-link">↓</div>
+                  <menu class="bottom-menu">
+                    {navMode === "semiauto" && <button>Explore</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
+                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                  </menu>
+                </div>
+              )}
+            </div>
           </fieldset>
           <fieldset>
             <legend>Action tools</legend>
