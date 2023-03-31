@@ -1,8 +1,12 @@
 import { getInConnectors, getOutConnectors } from "./graph";
 
 // khan's algorithm for topological sorting, but in reverse order
-// requires the graph to be acyclic
-export function sortUpstreamNodes<T extends SceneNode>(startNodes: T[], reachableConnectorIds: Set<string>): T[] {
+// ref: https://en.wikipedia.org/wiki/Topological_sorting
+export interface SortResult<T> {
+  hasCycle: boolean;
+  nodes: T[];
+}
+export function sortUpstreamNodes<T extends SceneNode>(startNodes: T[], reachableConnectorIds: Set<string>): SortResult<T> {
   const sortedList: T[] = [];
   const nodesWithNoOutConnectors = [...startNodes];
   const visitedEdgeIds = new Set<string>();
@@ -26,5 +30,11 @@ export function sortUpstreamNodes<T extends SceneNode>(startNodes: T[], reachabl
     }
   }
 
-  return sortedList;
+  // if there are any edges that are not visited, then there is a cycle
+  const hasCycle = [...reachableConnectorIds.values()].some((reachableConnectorId) => !visitedEdgeIds.has(reachableConnectorId));
+
+  return {
+    nodes: sortedList,
+    hasCycle,
+  };
 }

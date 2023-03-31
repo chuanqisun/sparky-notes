@@ -218,11 +218,9 @@ export function getLinearUpstreamGraph(leafIds: string[]): LinearUpstreamGraph {
 
   const reachableConnectorIds: string[] = [];
   const isInConnector = selectInConnectors();
-  let hasCycle = false;
 
   // first traverse, gather all edges
   leafNodes.forEach((leafNode) => {
-    let hasCycleFromLeaf = false;
     const reachableConnectorIdsFromLeaf = new Set<string>();
     traverse([leafNode], {
       onConnector: (connector, sourceNode) => {
@@ -230,7 +228,6 @@ export function getLinearUpstreamGraph(leafIds: string[]): LinearUpstreamGraph {
 
         if (isInEdge) {
           if (reachableConnectorIdsFromLeaf.has(connector.id)) {
-            hasCycleFromLeaf = true;
             return false;
           }
 
@@ -240,31 +237,20 @@ export function getLinearUpstreamGraph(leafIds: string[]): LinearUpstreamGraph {
         return isInEdge;
       },
     });
-
-    if (hasCycleFromLeaf) {
-      hasCycle = true;
-    }
     reachableConnectorIds.push(...reachableConnectorIdsFromLeaf);
   });
 
   const uniqueReachableConnectorIds = new Set(reachableConnectorIds);
-
-  if (hasCycle) {
-    return {
-      nodes: [],
-      hasCycle: true,
-    };
-  }
 
   // find leaf nodes that are not connected to any other leaf nodes
   const qualifiedLeafNodes = leafNodes.filter((candidateLeafNode) => {
     return getOutConnectors(candidateLeafNode).every((connector) => !uniqueReachableConnectorIds.has(connector.id));
   });
 
-  const sortedNodes = sortUpstreamNodes(qualifiedLeafNodes, uniqueReachableConnectorIds);
+  const { nodes, hasCycle } = sortUpstreamNodes(qualifiedLeafNodes, uniqueReachableConnectorIds);
 
   return {
-    nodes: sortedNodes,
-    hasCycle: false,
+    nodes,
+    hasCycle,
   };
 }
