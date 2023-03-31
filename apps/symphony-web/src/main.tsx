@@ -65,7 +65,17 @@ function App() {
   };
 
   const handleThinkStep = useCallback(async () => {
-    if (!selectedPrograms.length) return;
+    if (!selectedPrograms.length) {
+      figmaProxy.request({
+        requestCreateProgram: {
+          parentIds: [],
+          subtype: "Thought",
+          input: "How to conduct a literature review on usability issues with the “Create new link” pattern?",
+        },
+      });
+
+      return;
+    }
 
     const parentIds = selectedPrograms.map((p) => p.id);
     const { respondUpstreamGraph: respondLinearContextGraph } = await runContext.figmaProxy.request({ requestUpstreamGraph: { leafIds: parentIds } });
@@ -109,22 +119,7 @@ function App() {
           <fieldset>
             <legend>Menu</legend>
             <menu>
-              <button
-                onClick={() =>
-                  figmaProxy.request({
-                    requestCreateProgram: {
-                      parentIds: [],
-                      subtype: "Question",
-                      input: "How to conduct a literature review on usability issues with the “Create new link” pattern?",
-                    },
-                  })
-                }
-              >
-                New question
-              </button>{" "}
-              <button onClick={handleThinkStep} disabled={!selectedPrograms.length}>
-                Think
-              </button>
+              <button onClick={handleThinkStep}>Think</button>
               <button onClick={handleActStep} disabled={!selectedPrograms.some((program) => program.subtype === "Task")}>
                 Act
               </button>{" "}

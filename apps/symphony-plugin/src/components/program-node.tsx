@@ -1,28 +1,5 @@
 const { Text, AutoLayout, Input } = figma.widget;
 
-export interface QuestionNodeProps {
-  input: string;
-}
-export function QuestionNode(props: QuestionNodeProps) {
-  return (
-    <AutoLayout direction="vertical" spacing={8} padding={12} cornerRadius={12} width={400} fill="#9747FF">
-      <AutoLayout direction="vertical" spacing={4} width="fill-parent">
-        <Text fill="#fff" fontWeight={700} fontSize={16} width="fill-parent">
-          Question
-        </Text>
-        <Input
-          inputBehavior="multiline"
-          inputFrameProps={{ fill: "#fff", padding: 8, cornerRadius: 8 }}
-          fill="#333"
-          width="fill-parent"
-          value={props.input}
-          onTextEditEnd={() => {}}
-        />
-      </AutoLayout>
-    </AutoLayout>
-  );
-}
-
 export interface ThoughtNodeProps {
   input: string;
 }
