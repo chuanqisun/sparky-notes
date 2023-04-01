@@ -157,9 +157,9 @@ function App() {
               {navMode === "semiauto" && (
                 <div class="navigator-menu">
                   <menu class="top-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Up")}>Explore</button>}</menu>
-                  <div class="top-link">↓</div>
+                  <div class="top-link">↑</div>
                   <menu class="left-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Left")}>Explore</button>}</menu>
-                  <div class="left-link">→</div>
+                  <div class="left-link">←</div>
                   <menu class="center-menu">{navMode === "semiauto" && <button>Step in</button>}</menu>
                   <div class="right-link">→</div>
                   <menu class="right-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Right")}>Explore</button>}</menu>

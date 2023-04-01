@@ -2,6 +2,13 @@ import { RunContext } from "../../main";
 import { ChatMessage, OpenAIChatPayload } from "../openai/chat";
 import { responseToList } from "../openai/format";
 
+const thoughtsMap = {
+  Up: "more general, broader, abstract, theoretic",
+  Down: "more specific, focused, concrete, practical",
+  Left: "previous, cause, before, assumption",
+  Right: "next, effect, after, conclusion",
+};
+
 export interface ExploreLakoffSpaceInput {
   center: string;
   historyContext: string;
@@ -30,13 +37,13 @@ ${parsedHistoryEntries.map((entry) => `${entry.subtype} ${entry.direction}: ${en
 You will use George Lakoff's spatial metaphor to navigate a map of Thoughts
 
 The metaphors
-Thought Up: more general, broader, abstract, theoretic
-Thought Down: more specific, focused, concrete, practical
-Thought Left: previous, cause, before, assumption
-Thought Right: next, effect, after, conclusion
+Thought Up: ${thoughtsMap["Up"]}
+Thought Down: ${thoughtsMap["Down"]}
+Thought Left: ${thoughtsMap["Left"]}
+Thought Right: ${thoughtsMap["Right"]}
 
-You will be provided a history from the start to the current location and other nearby Thoughts. You will use the history and nearby Thoughts to respond what is in the direction they are going.
-Your response must start with the prefix "Thought ${input.direction}: ".
+You will be provided a history from the start to the current location and other nearby Thoughts. You will use the history and nearby Thoughts to respond what the "?" is.
+Your response must a Thought that is ${thoughtsMap[input.direction]}, start with the prefix "Thought ${input.direction}: ".
 `.trimStart(),
     },
     {
