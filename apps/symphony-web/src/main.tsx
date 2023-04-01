@@ -170,29 +170,29 @@ function App() {
               {navMode === "manual" && (
                 <div class="navigator-menu">
                   <menu class="top-menu">
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                    <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
+                    <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
                   </menu>
-                  <div class="top-link">↓</div>
+                  <div class="top-link">↑</div>
                   <menu class="left-menu">
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                    <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
+                    <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
                   </menu>
-                  <div class="left-link">→</div>
+                  <div class="left-link">←</div>
                   <menu class="center-menu">
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Observation", "The Earth revolves around the Sun")}>Observation</button>}
+                    <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
+                    <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
+                    <button onClick={() => handleCreateNode("Observation", "The Earth revolves around the Sun")}>Observation</button>
                   </menu>
                   <div class="right-link">→</div>
                   <menu class="right-menu">
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                    <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
+                    <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
                   </menu>
                   <div class="bottom-link">↓</div>
                   <menu class="bottom-menu">
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
-                    {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
+                    <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>
+                    <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>
                   </menu>
                 </div>
               )}
