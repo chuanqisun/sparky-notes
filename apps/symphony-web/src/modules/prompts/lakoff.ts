@@ -4,9 +4,18 @@ import { responseToList } from "../openai/format";
 
 export interface ExploreLakoffSpaceInput {
   center: string;
+  historyContext: string;
+  spatialContext: string;
   direction: "Up" | "Down" | "Left" | "Right";
 }
 export async function exploreLakoffSpace(context: RunContext, input: ExploreLakoffSpaceInput, promptConfig?: Partial<OpenAIChatPayload>) {
+  const optionalHistoryContext = input.historyContext
+    ? `
+Context:
+${input.historyContext}
+`.trimStart()
+    : "";
+
   const messages: ChatMessage[] = [
     {
       role: "system",
@@ -26,7 +35,8 @@ Your response must start with the prefix "${input.direction}: ".
     },
     {
       role: "user",
-      content: `
+      content: `    
+${optionalHistoryContext}
 Center: ${input.center}
 ${input.direction}: ?`.trimStart(),
     },

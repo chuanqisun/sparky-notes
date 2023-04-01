@@ -38,6 +38,13 @@ ul {
   opacity: 0.5;
 }
 
+.context-list-v2 {
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
 .navigator {
   display: grid;
   gap: 8px;

@@ -1,6 +1,7 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { ActionNode, ObservationNode, ThoughtNode } from "../components/program-node";
+import { getFieldByLabel } from "../components/text-field";
 import { ChangeTracker } from "../utils/change-tracker";
 import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../utils/display-program";
 import { $, FigmaQuery } from "../utils/fq";
@@ -117,8 +118,17 @@ export const respondCreateSpatialProgram: Handler = async (context, message) => 
   if (fqNode) {
     fqNode.appendTo(figma.currentPage);
     const anchorNode = messageData.anchorId ? (figma.getNodeById(messageData.anchorId) as SceneNode) : null;
-
     if (anchorNode) {
+      fqNode.setPluginData({
+        context: [
+          anchorNode.getPluginData("context"),
+          `${anchorNode.getPluginData("subtype")}: ${
+            getFieldByLabel("Thought", anchorNode as FrameNode)?.value.characters ??
+            getFieldByLabel("Action", anchorNode as FrameNode)?.value.characters ??
+            getFieldByLabel("Observation", anchorNode as FrameNode)?.value.characters
+          }`,
+        ].join("\n"),
+      });
       fqNode.moveToDirection(messageData.directionFromAnchor ?? "Down", [anchorNode]).scrollOrZoomOutViewToContain();
     } else {
       fqNode.moveToViewCenter().zoomOutViewToContain();

@@ -13,6 +13,7 @@ export function frameNodeToDisplayProgram(node: FrameNode): DisplayProgram {
     id: node.id,
     subtype,
     input: getFieldByLabel(subtype, node)!.value.characters.trim(),
+    context: node.getPluginData("context"),
   };
 }
 

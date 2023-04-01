@@ -100,18 +100,22 @@ function App() {
 
   const handleExplore = useCallback(
     async (direction: "Up" | "Down" | "Left" | "Right") => {
-      if (!selectedPrograms.length) {
-        return;
-      }
+      if (!selectedPrograms.length) return;
+      if (selectedPrograms.length > 1) return;
+
+      const program = selectedPrograms[0];
 
       const resultList = await exploreLakoffSpace(runContext, {
         direction,
-        center: selectedPrograms.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
+        historyContext: program.context,
+        spatialContext: "",
+        center: `${program.subtype}: ${program.input}`,
       });
 
       runContext.figmaProxy.request({
         requestCreateSpatialProgram: {
           anchorId: selectedPrograms[0].id,
+          context: `${selectedPrograms[0].subtype}: ${selectedPrograms[0].input}`, // TODO need full context
           directionFromAnchor: direction,
           subtype: "Thought",
           input: resultList.listItems[0],
@@ -156,7 +160,7 @@ function App() {
                   <div class="top-link">↓</div>
                   <menu class="left-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Left")}>Explore</button>}</menu>
                   <div class="left-link">→</div>
-                  <menu class="center-menu">{navMode === "semiauto" && <button>Continue</button>}</menu>
+                  <menu class="center-menu">{navMode === "semiauto" && <button>Step in</button>}</menu>
                   <div class="right-link">→</div>
                   <menu class="right-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Right")}>Explore</button>}</menu>
                   <div class="bottom-link">↓</div>
@@ -227,6 +231,23 @@ function App() {
               <li>
                 <input type="checkbox"></input>Step-by-step planning
               </li>
+            </ul>
+          </fieldset>
+          <fieldset>
+            <legend>Context v2</legend>
+            <ul class="context-list-v2">
+              {contextPrograms
+                .filter((program) => program.isSelected)
+                .map((program) => (
+                  <li key={program.id}>
+                    <div>
+                      <b>{program.subtype}</b>: {program.input}
+                    </div>
+                    <div>
+                      <b>Node context</b>: {program.context}{" "}
+                    </div>
+                  </li>
+                ))}
             </ul>
           </fieldset>
           <fieldset>

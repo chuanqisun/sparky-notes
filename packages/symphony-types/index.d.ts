@@ -37,6 +37,7 @@ export interface DisplayProgram {
   id: string;
   subtype: string;
   input: string;
+  context: string;
 }
 
 export interface LiveProgram extends DisplayProgram {
@@ -50,6 +51,7 @@ export interface CreateSerialTaskNodesInput {
 
 export interface CreateSpatialProgramInput {
   anchorId?: string;
+  context?: string;
   directionFromAnchor?: SpatialDirection;
   subtype: string;
   input: string;
