@@ -30,6 +30,9 @@
 ## Symphony
 
 - History compression: preserve handle turning points and compress straight lines
+- Output thoughts from ambient only
+- Rethink the "Thought" node
+- When there is momentum, allow multiple "Thought" nodes in a row/column chain
 - Category design
   - Nouns: Question, Thought, Action plan, Observation, Answer, Mixed
   - Verb: Think, Act, Conclude, Step, Auto-run
