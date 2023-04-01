@@ -1,6 +1,7 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { ActionNode, ObservationNode, ThoughtNode } from "../components/program-node";
+import { getFieldByLabel } from "../components/text-field";
 import { ChangeTracker } from "../utils/change-tracker";
 import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../utils/display-program";
 import { $, FigmaQuery } from "../utils/fq";
@@ -13,7 +14,8 @@ const selectedProgramChangeTracker = new ChangeTracker();
 
 export const onSelectionChange = (context: HandlerContext, selection: readonly SceneNode[]) => {
   const selectedPrograms = selectionNodesToLivePrograms(selection);
-  if (selectedProgramChangeTracker.next(selectedPrograms.map((p) => p.id).join(","))) {
+
+  if (selectedProgramChangeTracker.next(selectedPrograms.flatMap((p) => [p.id, p.input]).join(","))) {
     const upstreamGraph = getLinearUpstreamGraph(selectedPrograms.map((p) => p.id));
     if (upstreamGraph.hasCycle) replaceNotification("Remove the cycle to continue", { error: true });
 
@@ -55,17 +57,17 @@ export const respondCreateProgram: Handler = async (context, message) => {
   switch (messageData.subtype) {
     case "Thought": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Thought", context: "[]" });
+      fqNode.setPluginData({ type: "programNode", subtype: "Thought", context: "[]", dirFromAnchor: "Start" });
       break;
     }
     case "Action": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ActionNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Action", context: "[]" });
+      fqNode.setPluginData({ type: "programNode", subtype: "Action", context: "[]", dirFromAnchor: "Start" });
       break;
     }
     case "Observation": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ObservationNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Observation", context: "[]" });
+      fqNode.setPluginData({ type: "programNode", subtype: "Observation", context: "[]", dirFromAnchor: "Start" });
       break;
     }
     default:
@@ -75,16 +77,6 @@ export const respondCreateProgram: Handler = async (context, message) => {
 
   if (fqNode) {
     fqNode.appendTo(figma.currentPage);
-    fqNode.setPluginData({
-      context: JSON.stringify([
-        {
-          id: fqNode.toNodes()[0].id,
-          direction: "Start",
-          subtype: messageData.subtype,
-          input: messageData.input,
-        },
-      ]),
-    });
 
     const parentNodes = messageData.parentIds.map((id) => figma.getNodeById(id) as FrameNode);
     if (parentNodes.length) {
@@ -130,14 +122,15 @@ export const respondCreateSpatialProgram: Handler = async (context, message) => 
     const anchorNode = messageData.anchorId ? (figma.getNodeById(messageData.anchorId) as SceneNode) : null;
     if (anchorNode) {
       fqNode.setPluginData({
+        dirFromAnchor: messageData.directionFromAnchor ?? "Down",
         context: [
           JSON.stringify([
             ...JSON.parse(anchorNode.getPluginData("context") ?? "[]"),
             {
-              id: fqNode.toNodes()[0].id,
-              direction: messageData.directionFromAnchor ?? "Down",
-              subtype: messageData.subtype,
-              input: messageData.input,
+              id: anchorNode.id,
+              direction: anchorNode.getPluginData("dirFromAnchor") ?? "Start",
+              subtype: anchorNode.getPluginData("subtype"),
+              input: getFieldByLabel(anchorNode.getPluginData("subtype"), anchorNode as FrameNode)!.value.characters,
             },
           ]),
         ].join("\n"),

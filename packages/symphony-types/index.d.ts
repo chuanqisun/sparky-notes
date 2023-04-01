@@ -36,6 +36,7 @@ export interface DisplayProgram {
   subtype: string;
   input: string;
   context: string;
+  dirFromAnchor: SpatialDirection;
 }
 
 export interface LiveProgram extends DisplayProgram {

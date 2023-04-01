@@ -10,7 +10,7 @@ const thoughtsMap = {
 };
 
 export interface ExploreLakoffSpaceInput {
-  center: string;
+  center: LakoffCenter;
   historyContext: HistoryContextEntry[];
   spatialContext: SpatialContextEntry[];
   direction: "Up" | "Down" | "Left" | "Right";
@@ -29,9 +29,18 @@ export interface HistoryContextEntry {
   input: string;
 }
 
+export interface LakoffCenter {
+  direction: string;
+  subtype: string;
+  input: string;
+}
+
 export async function exploreLakoffSpace(context: RunContext, input: ExploreLakoffSpaceInput, promptConfig?: Partial<OpenAIChatPayload>) {
   const spatialContext = input.spatialContext.length
-    ? `${input.spatialContext.map((entry) => `${entry.subtype} Nearby: ${entry.input}`).join("\n")}`.trim()
+    ? `${input.spatialContext
+        .reverse()
+        .map((entry) => `${entry.subtype} Nearby: ${entry.input}`)
+        .join("\n")}`.trim() // reverse to make closest neighbor last
     : "";
 
   const historyContext = input.historyContext.length
@@ -61,6 +70,7 @@ Your response must a Thought that is ${thoughtsMap[input.direction]}, start with
       role: "user",
       content: `
 ${historyContext}
+${input.center.subtype} ${input.center.direction}: ${input.center.input}
 ${spatialContext}
 Thought ${input.direction}: ?`.trim(),
     },

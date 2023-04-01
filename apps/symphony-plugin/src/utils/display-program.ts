@@ -1,4 +1,4 @@
-import type { DisplayProgram, LiveProgram } from "@symphony/types";
+import type { DisplayProgram, LiveProgram, SpatialDirection } from "@symphony/types";
 import { getFieldByLabel } from "../components/text-field";
 import { $ } from "./fq";
 
@@ -14,6 +14,7 @@ export function frameNodeToDisplayProgram(node: FrameNode): DisplayProgram {
     subtype,
     input: getFieldByLabel(subtype, node)!.value.characters.trim(),
     context: node.getPluginData("context"),
+    dirFromAnchor: node.getPluginData("dirFromAnchor") as SpatialDirection,
   };
 }
 

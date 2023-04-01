@@ -118,7 +118,11 @@ function App() {
         direction,
         historyContext: parsedHistoryEntries,
         spatialContext: detachedAmbientNodes,
-        center: `${program.subtype}: ${program.input}`,
+        center: {
+          direction: program.dirFromAnchor,
+          subtype: program.subtype,
+          input: program.input,
+        },
       });
 
       runContext.figmaProxy.request({
