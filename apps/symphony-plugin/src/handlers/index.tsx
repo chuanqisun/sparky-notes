@@ -137,11 +137,6 @@ export const respondCreateSpatialProgram: Handler = async (context, message) => 
               direction: messageData.directionFromAnchor ?? "Down",
               subtype: messageData.subtype,
               input: messageData.input,
-              // subtype: anchorNode.getPluginData("subtype"),
-              // input:
-              //   getFieldByLabel("Thought", anchorNode as FrameNode)?.value.characters ??
-              //   getFieldByLabel("Action", anchorNode as FrameNode)?.value.characters ??
-              //   getFieldByLabel("Observation", anchorNode as FrameNode)?.value.characters,
             },
           ]),
         ].join("\n"),

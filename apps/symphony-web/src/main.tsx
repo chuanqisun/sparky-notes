@@ -247,7 +247,7 @@ function App() {
                       <b>History</b>:
                       {(JSON.parse(program.context) as any[]).map((entry) => (
                         <div key={entry.id}>
-                          {entry.direction}: {entry.subtype}: {entry.input}
+                          {entry.subtype} {entry.direction}: {entry.input}
                         </div>
                       ))}
                     </div>

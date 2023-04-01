@@ -19,8 +19,8 @@ export async function exploreLakoffSpace(context: RunContext, input: ExploreLako
 
   const parsedHistory = parsedHistoryEntries.length
     ? `
-Context:
-${parsedHistoryEntries.map((entry) => `${entry.direction}: ${entry.subtype} ${entry.input}`).join("\n")}`.trim()
+History:
+${parsedHistoryEntries.map((entry) => `${entry.subtype} ${entry.direction}: ${entry.input}`).join("\n")}`.trim()
     : "";
 
   const messages: ChatMessage[] = [
@@ -30,20 +30,20 @@ ${parsedHistoryEntries.map((entry) => `${entry.direction}: ${entry.subtype} ${en
 You will use George Lakoff's spatial metaphor to navigate a map of Thoughts
 
 The metaphors
-Up: be more general, increase scope, set goal
-Down: be more specific, focus, divide
-Left: previous, cause, before
-Right: next, effect, after
+Thought Up: more general, broader, abstract, theoretic
+Thought Down: more specific, focused, concrete, practical
+Thought Left: previous, cause, before, assumption
+Thought Right: next, effect, after, conclusion
 
 You will be provided a history from the start to the current location and other nearby Thoughts. You will use the history and nearby Thoughts to respond what is in the direction they are going.
-Your response must start with the prefix "${input.direction}: Thought: ".
+Your response must start with the prefix "Thought ${input.direction}: ".
 `.trimStart(),
     },
     {
       role: "user",
       content: `    
 ${parsedHistory}
-${input.direction}: ?`.trimStart(),
+Thought ${input.direction}: ?`.trimStart(),
     },
   ];
 
@@ -54,7 +54,7 @@ ${input.direction}: ?`.trimStart(),
   const prefixMatchedLines = lines
     .map((line) => {
       const match = line.match(/^.+:/);
-      return { isPrefixLine: !!match, text: match ? line.slice(match[0].length).trim() : line.trim() };
+      return { isPrefixLine: !!match, text: match ? line.replace(/^.+:/, "").trim() : line.trim() };
     })
     .filter(Boolean);
   const startLineIndex = prefixMatchedLines.findIndex((line) => !!line.isPrefixLine);

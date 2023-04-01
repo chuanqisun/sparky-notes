@@ -1,2 +1,2 @@
-export const graphVerticalDefaultGap = 80;
+export const graphVerticalDefaultGap = 40;
 export const graphHorizonalDefaultGap = 40;
