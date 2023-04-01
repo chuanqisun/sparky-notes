@@ -6,6 +6,7 @@ import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../util
 import { $, FigmaQuery } from "../utils/fq";
 import { getLinearUpstreamGraph } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
+import { filterToHaveWidgetDataKey, getAbsoluteBoundingBox, sortByDistance } from "../utils/query";
 
 // selection handler
 const selectedProgramChangeTracker = new ChangeTracker();
@@ -163,4 +164,20 @@ export const respondLinearContextGraph: Handler = async (context, message) => {
   }
 
   context.webProxy.respond(message, { respondUpstreamGraph: graph.nodes.map(frameNodeToDisplayProgram) });
+};
+
+export const respondViewportPrograms: Handler = async (context, message) => {
+  if (!message.requestAmbientPrograms) return;
+
+  const selectedNodes = message.requestAmbientPrograms.anchorIds.map((id) => figma.getNodeById(id)).filter(Boolean) as FrameNode[];
+
+  const viewportNodes = $(figma.currentPage.findAll(filterToHaveWidgetDataKey("type")))
+    .viewportIntersections()
+    .toNodes()
+    .filter((node) => selectedNodes.every((selectedNode) => selectedNode.id !== node.id));
+
+  const measuringCenter = selectedNodes.length ? getAbsoluteBoundingBox(selectedNodes) : figma.viewport.center;
+
+  const sorted = sortByDistance(viewportNodes as FrameNode[], measuringCenter).map(frameNodeToDisplayProgram);
+  context.webProxy.respond(message, { respondAmbientPrograms: sorted });
 };

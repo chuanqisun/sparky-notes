@@ -11,23 +11,33 @@ const thoughtsMap = {
 
 export interface ExploreLakoffSpaceInput {
   center: string;
-  historyContext: string;
-  spatialContext: string;
+  historyContext: HistoryContextEntry[];
+  spatialContext: SpatialContextEntry[];
   direction: "Up" | "Down" | "Left" | "Right";
 }
-export async function exploreLakoffSpace(context: RunContext, input: ExploreLakoffSpaceInput, promptConfig?: Partial<OpenAIChatPayload>) {
-  const parsedHistoryEntries: { id: string; direction: string; subtype: string; input: string }[] = (() => {
-    try {
-      return JSON.parse(input.historyContext);
-    } catch {
-      return [];
-    }
-  })();
 
-  const parsedHistory = parsedHistoryEntries.length
+export interface SpatialContextEntry {
+  subtype: string;
+  input: string;
+  direction?: string; // Not implemented
+}
+
+export interface HistoryContextEntry {
+  id: string;
+  direction: string;
+  subtype: string;
+  input: string;
+}
+
+export async function exploreLakoffSpace(context: RunContext, input: ExploreLakoffSpaceInput, promptConfig?: Partial<OpenAIChatPayload>) {
+  const spatialContext = input.spatialContext.length
+    ? `${input.spatialContext.map((entry) => `${entry.subtype} Nearby: ${entry.input}`).join("\n")}`.trim()
+    : "";
+
+  const historyContext = input.historyContext.length
     ? `
 History:
-${parsedHistoryEntries.map((entry) => `${entry.subtype} ${entry.direction}: ${entry.input}`).join("\n")}`.trim()
+${input.historyContext.map((entry) => `${entry.subtype} ${entry.direction}: ${entry.input}`).join("\n")}`.trim()
     : "";
 
   const messages: ChatMessage[] = [
@@ -41,16 +51,18 @@ Thought Up: ${thoughtsMap["Up"]}
 Thought Down: ${thoughtsMap["Down"]}
 Thought Left: ${thoughtsMap["Left"]}
 Thought Right: ${thoughtsMap["Right"]}
+Thought Nearby: Your response must include Nearby information
 
-You will be provided a history from the start to the current location and other nearby Thoughts. You will use the history and nearby Thoughts to respond what the "?" is.
+You will be provided a history from the start to the current location and nearby Thoughts. You will use the history and nearby Thoughts to respond what the "?" is.
 Your response must a Thought that is ${thoughtsMap[input.direction]}, start with the prefix "Thought ${input.direction}: ".
 `.trimStart(),
     },
     {
       role: "user",
-      content: `    
-${parsedHistory}
-Thought ${input.direction}: ?`.trimStart(),
+      content: `
+${historyContext}
+${spatialContext}
+Thought ${input.direction}: ?`.trim(),
     },
   ];
 

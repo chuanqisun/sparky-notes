@@ -7,7 +7,7 @@ import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { ChatMessage, getChatResponse, OpenAIChatPayload, OpenAIChatResponse } from "./modules/openai/chat";
 import { getCompletion, OpenAICompletionPayload, OpenAICompletionResponse } from "./modules/openai/completion";
-import { exploreLakoffSpace } from "./modules/prompts/lakoff";
+import { exploreLakoffSpace, HistoryContextEntry } from "./modules/prompts/lakoff";
 import { generateReasonAct } from "./modules/prompts/reason-act-v2";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -105,10 +105,19 @@ function App() {
 
       const program = selectedPrograms[0];
 
+      const { respondAmbientPrograms } = await runContext.figmaProxy.request({ requestAmbientPrograms: { anchorIds: selectedPrograms.map((p) => p.id) } });
+      const parsedHistoryEntries: HistoryContextEntry[] = (() => {
+        try {
+          return JSON.parse(program.context);
+        } catch {
+          return [];
+        }
+      })();
+      const detachedAmbientNodes = (respondAmbientPrograms ?? []).filter((node) => !parsedHistoryEntries.find((entry) => entry.id === node.id));
       const resultList = await exploreLakoffSpace(runContext, {
         direction,
-        historyContext: program.context,
-        spatialContext: "",
+        historyContext: parsedHistoryEntries,
+        spatialContext: detachedAmbientNodes,
         center: `${program.subtype}: ${program.input}`,
       });
 

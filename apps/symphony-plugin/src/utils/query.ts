@@ -22,8 +22,8 @@ export function filterToPredicate<T extends BaseNode>(predicate: (node: BaseNode
   };
 }
 
-export function filterToHaveWidgetDataKey(key: string) {
-  return function (node: BaseNode): node is WidgetNode {
+export function filterToHaveWidgetDataKey<T extends BaseNode>(key: string) {
+  return function (node: BaseNode): node is T {
     return node.getPluginDataKeys().includes(key);
   };
 }
@@ -109,4 +109,19 @@ export function getEssentialAnchorNode(direction: SpatialDirection, anchorNodes:
     case "Right":
       return getBoundingNodes(getBoundingNodes(anchorNodes).right).top[0];
   }
+}
+
+export function sortByDistance<T extends SceneNode>(nodes: readonly T[], center: Vector): T[] {
+  const sortable = nodes.filter((node) => node.absoluteBoundingBox);
+  return sortable
+    .map((node) => {
+      const nodeCenter = {
+        x: node.absoluteBoundingBox!.x + node.absoluteBoundingBox!.width / 2,
+        y: node.absoluteBoundingBox!.y + node.absoluteBoundingBox!.height / 2,
+      };
+      const distance = Math.sqrt(Math.pow(center.x - nodeCenter.x, 2) + Math.pow(center.y - nodeCenter.y, 2));
+      return { node, distance };
+    })
+    .sort((a, b) => a.distance - b.distance)
+    .map((item) => item.node);
 }

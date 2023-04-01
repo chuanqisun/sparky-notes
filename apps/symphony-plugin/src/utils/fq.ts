@@ -12,6 +12,7 @@ import {
 } from "./graph";
 import { graphHorizonalDefaultGap, graphVerticalDefaultGap } from "./layout";
 import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, getEssentialAnchorNode, isInnerOuter } from "./query";
+import { doesRectIntersect } from "./range";
 
 export type ConnectorDirection = "left" | "right" | "up" | "down";
 
@@ -374,6 +375,12 @@ export class FigmaQuery {
       node.y += y;
     });
     return this;
+  }
+
+  // filter to nodes that intersects the viewport
+  viewportIntersections() {
+    const intersectNodes = this.nodes.filter((node) => node.absoluteBoundingBox && doesRectIntersect(node.absoluteBoundingBox, figma.viewport.bounds));
+    return new FigmaQuery(intersectNodes);
   }
 
   zoomOutViewToContain() {

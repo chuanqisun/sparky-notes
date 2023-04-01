@@ -1,5 +1,6 @@
 export interface MessageToWeb {
   upstreamGraphChanged?: LiveProgram[];
+  respondAmbientPrograms?: DisplayProgram[];
   respondContextPath?: DisplayProgram[][];
   respondCreateProgram?: DisplayProgram;
   respondRuntimeUpdate?: boolean;
@@ -8,15 +9,12 @@ export interface MessageToWeb {
 
 // messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
+  requestAmbientPrograms?: ViewportNodesInput;
   requestContextPath?: string; // includes nodes before and above the selected node
   requestCreateProgram?: CreateProgramInput;
   requestCreateSerialTaskNodes?: CreateSerialTaskNodesInput;
   requestCreateSpatialProgram?: CreateSpatialProgramInput;
   requestRemoveDownstreamNode?: string;
-  requestRuntimeUpdate?: {
-    messageHandler: string;
-    selectionHandler: string;
-  };
   requestUpstreamGraph?: {
     leafIds: string[];
   };
@@ -64,3 +62,7 @@ export interface CreateProgramInput {
 }
 
 export type SpatialDirection = "Up" | "Down" | "Left" | "Right";
+
+export interface ViewportNodesInput {
+  anchorIds: string[];
+}

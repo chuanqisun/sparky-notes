@@ -8,6 +8,7 @@ import {
   respondCreateProgram,
   respondCreateSpatialProgram,
   respondLinearContextGraph,
+  respondViewportPrograms as respondAmbientNodes,
 } from "./handlers";
 import { frameNodeLayersToContextPath } from "./utils/display-program";
 import { $ } from "./utils/fq";
@@ -36,6 +37,7 @@ async function handleMessage(message: MessageToFigma) {
   respondCreateProgram(context, message);
   respondCreateSpatialProgram(context, message);
   respondLinearContextGraph(context, message);
+  respondAmbientNodes(context, message);
 
   // v1 handlers
   if (message.requestContextPath) {
