@@ -1,7 +1,6 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { ActionNode, ObservationNode, ThoughtNode } from "../components/program-node";
-import { getFieldByLabel } from "../components/text-field";
 import { ChangeTracker } from "../utils/change-tracker";
 import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../utils/display-program";
 import { $, FigmaQuery } from "../utils/fq";
@@ -55,17 +54,17 @@ export const respondCreateProgram: Handler = async (context, message) => {
   switch (messageData.subtype) {
     case "Thought": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Thought" });
+      fqNode.setPluginData({ type: "programNode", subtype: "Thought", context: "[]" });
       break;
     }
     case "Action": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ActionNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Action" });
+      fqNode.setPluginData({ type: "programNode", subtype: "Action", context: "[]" });
       break;
     }
     case "Observation": {
       fqNode = $([await figma.createNodeFromJSXAsync(<ObservationNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Observation" });
+      fqNode.setPluginData({ type: "programNode", subtype: "Observation", context: "[]" });
       break;
     }
     default:
@@ -75,6 +74,16 @@ export const respondCreateProgram: Handler = async (context, message) => {
 
   if (fqNode) {
     fqNode.appendTo(figma.currentPage);
+    fqNode.setPluginData({
+      context: JSON.stringify([
+        {
+          id: fqNode.toNodes()[0].id,
+          direction: "Start",
+          subtype: messageData.subtype,
+          input: messageData.input,
+        },
+      ]),
+    });
 
     const parentNodes = messageData.parentIds.map((id) => figma.getNodeById(id) as FrameNode);
     if (parentNodes.length) {
@@ -121,12 +130,20 @@ export const respondCreateSpatialProgram: Handler = async (context, message) => 
     if (anchorNode) {
       fqNode.setPluginData({
         context: [
-          anchorNode.getPluginData("context"),
-          `${anchorNode.getPluginData("subtype")}: ${
-            getFieldByLabel("Thought", anchorNode as FrameNode)?.value.characters ??
-            getFieldByLabel("Action", anchorNode as FrameNode)?.value.characters ??
-            getFieldByLabel("Observation", anchorNode as FrameNode)?.value.characters
-          }`,
+          JSON.stringify([
+            ...JSON.parse(anchorNode.getPluginData("context") ?? "[]"),
+            {
+              id: fqNode.toNodes()[0].id,
+              direction: messageData.directionFromAnchor ?? "Down",
+              subtype: messageData.subtype,
+              input: messageData.input,
+              // subtype: anchorNode.getPluginData("subtype"),
+              // input:
+              //   getFieldByLabel("Thought", anchorNode as FrameNode)?.value.characters ??
+              //   getFieldByLabel("Action", anchorNode as FrameNode)?.value.characters ??
+              //   getFieldByLabel("Observation", anchorNode as FrameNode)?.value.characters,
+            },
+          ]),
         ].join("\n"),
       });
       fqNode.moveToDirection(messageData.directionFromAnchor ?? "Down", [anchorNode]).scrollOrZoomOutViewToContain();

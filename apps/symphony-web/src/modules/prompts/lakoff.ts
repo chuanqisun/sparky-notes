@@ -9,11 +9,18 @@ export interface ExploreLakoffSpaceInput {
   direction: "Up" | "Down" | "Left" | "Right";
 }
 export async function exploreLakoffSpace(context: RunContext, input: ExploreLakoffSpaceInput, promptConfig?: Partial<OpenAIChatPayload>) {
-  const optionalHistoryContext = input.historyContext
+  const parsedHistoryEntries: { id: string; direction: string; subtype: string; input: string }[] = (() => {
+    try {
+      return JSON.parse(input.historyContext);
+    } catch {
+      return [];
+    }
+  })();
+
+  const parsedHistory = parsedHistoryEntries.length
     ? `
 Context:
-${input.historyContext}
-`.trimStart()
+${parsedHistoryEntries.map((entry) => `${entry.direction}: ${entry.subtype} ${entry.input}`).join("\n")}`.trim()
     : "";
 
   const messages: ChatMessage[] = [
@@ -23,21 +30,19 @@ ${input.historyContext}
 You will use George Lakoff's spatial metaphor to navigate a map of Thoughts
 
 The metaphors
-Center: the current Thought
 Up: be more general, increase scope, set goal
 Down: be more specific, focus, divide
 Left: previous, cause, before
 Right: next, effect, after
 
-The user will provide where they are and you will respond what is in the direction they are going.
-Your response must start with the prefix "${input.direction}: ".
+You will be provided a history from the start to the current location and other nearby Thoughts. You will use the history and nearby Thoughts to respond what is in the direction they are going.
+Your response must start with the prefix "${input.direction}: Thought: ".
 `.trimStart(),
     },
     {
       role: "user",
       content: `    
-${optionalHistoryContext}
-Center: ${input.center}
+${parsedHistory}
 ${input.direction}: ?`.trimStart(),
     },
   ];

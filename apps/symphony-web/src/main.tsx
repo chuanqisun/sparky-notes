@@ -244,7 +244,12 @@ function App() {
                       <b>{program.subtype}</b>: {program.input}
                     </div>
                     <div>
-                      <b>Node context</b>: {program.context}{" "}
+                      <b>History</b>:
+                      {(JSON.parse(program.context) as any[]).map((entry) => (
+                        <div key={entry.id}>
+                          {entry.direction}: {entry.subtype}: {entry.input}
+                        </div>
+                      ))}
                     </div>
                   </li>
                 ))}

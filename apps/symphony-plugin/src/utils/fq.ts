@@ -347,7 +347,7 @@ export class FigmaQuery {
     return this;
   }
 
-  setPluginData(dict: Record<string, any>) {
+  setPluginData(dict: Record<string, string>) {
     this.nodes.forEach((node) => Object.entries(dict).forEach(([key, value]) => node.setPluginData(key, value)));
     return this;
   }
