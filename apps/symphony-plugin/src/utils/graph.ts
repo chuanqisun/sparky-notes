@@ -27,6 +27,22 @@ export function selectInConnectors() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorEnd.endpointNodeId === sourceNode.id;
 }
 
+export interface SelectConnectorConfig {
+  start?: Partial<ConnectorEndpointEndpointNodeIdAndMagnet>;
+  end?: Partial<ConnectorEndpointEndpointNodeIdAndMagnet>;
+}
+export function matchConnectors(config: SelectConnectorConfig) {
+  return (connector: AttachedConnector) => {
+    if (config.start?.magnet && connector.connectorStart.magnet !== config.start.magnet) return false;
+    if (config.end?.magnet && connector.connectorEnd.magnet !== config.end.magnet) return false;
+
+    if (config.start?.endpointNodeId && connector.connectorStart.endpointNodeId !== config.start.endpointNodeId) return false;
+    if (config.end?.endpointNodeId && connector.connectorEnd.endpointNodeId !== config.end.endpointNodeId) return false;
+
+    return true;
+  };
+}
+
 export function selectInEdgesFromTopOrLeftNodes(onEdge?: (edge: AttachedConnector, currentNode: SceneNode) => any) {
   return (connector: AttachedConnector, currentNode: SceneNode) => {
     const isInEdge = connector.connectorEnd.endpointNodeId === currentNode.id;

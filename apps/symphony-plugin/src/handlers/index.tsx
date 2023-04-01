@@ -85,6 +85,48 @@ export const respondCreateProgram: Handler = async (context, message) => {
   }
 };
 
+export const respondCreateSpatialProgram: Handler = async (context, message) => {
+  if (!message.requestCreateSpatialProgram) {
+    return;
+  }
+
+  const messageData = message.requestCreateSpatialProgram;
+  let fqNode: FigmaQuery;
+
+  switch (messageData.subtype) {
+    case "Thought": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Thought" });
+      break;
+    }
+    case "Action": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<ActionNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Action" });
+      break;
+    }
+    case "Observation": {
+      fqNode = $([await figma.createNodeFromJSXAsync(<ObservationNode input={messageData.input} />)]);
+      fqNode.setPluginData({ type: "programNode", subtype: "Observation" });
+      break;
+    }
+    default:
+      replaceNotification(`Invalid subtype "${message.requestCreateProgram}"`, { error: true });
+      return;
+  }
+
+  if (fqNode) {
+    fqNode.appendTo(figma.currentPage);
+    const anchorNode = messageData.anchorId ? (figma.getNodeById(messageData.anchorId) as SceneNode) : null;
+
+    if (anchorNode) {
+      fqNode.moveToDirection(messageData.directionFromAnchor ?? "Down", [anchorNode]).scrollOrZoomOutViewToContain();
+    } else {
+      fqNode.moveToViewCenter().zoomOutViewToContain();
+    }
+    context.webProxy.respond(message, { respondCreateProgram: frameNodeToDisplayProgram(fqNode.toNodes()[0] as FrameNode) });
+  }
+};
+
 export const respondLinearContextGraph: Handler = async (context, message) => {
   if (!message.requestUpstreamGraph) return;
 

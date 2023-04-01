@@ -1,3 +1,5 @@
+import type { SpatialDirection } from "@symphony/types";
+
 export function closest<T extends SceneNode>(predicate: (node: SceneNode) => Boolean, node: SceneNode): null | T {
   if (predicate(node)) {
     return node as T;
@@ -94,4 +96,17 @@ export function getBoundingNodes(nodes: readonly SceneNode[]): BoundingNodes {
   });
 
   return result;
+}
+
+export function getEssentialAnchorNode(direction: SpatialDirection, anchorNodes: SceneNode[]) {
+  switch (direction) {
+    case "Up":
+      return getBoundingNodes(getBoundingNodes(anchorNodes).top).left[0];
+    case "Down":
+      return getBoundingNodes(getBoundingNodes(anchorNodes).bottom).left[0];
+    case "Left":
+      return getBoundingNodes(getBoundingNodes(anchorNodes).left).top[0];
+    case "Right":
+      return getBoundingNodes(getBoundingNodes(anchorNodes).right).top[0];
+  }
 }

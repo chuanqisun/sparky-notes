@@ -1,6 +1,14 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import { HandlerContext, onSelectionChange, onShowNotification, onWebClientStarted, respondCreateProgram, respondLinearContextGraph } from "./handlers";
+import {
+  HandlerContext,
+  onSelectionChange,
+  onShowNotification,
+  onWebClientStarted,
+  respondCreateProgram,
+  respondCreateSpatialProgram,
+  respondLinearContextGraph,
+} from "./handlers";
 import { frameNodeLayersToContextPath } from "./utils/display-program";
 import { $ } from "./utils/fq";
 import { collectContextPath, selectInEdgesFromTopOrLeftNodes, traverse } from "./utils/graph";
@@ -26,6 +34,7 @@ async function handleMessage(message: MessageToFigma) {
   onShowNotification(context, message);
   onWebClientStarted(context, message);
   respondCreateProgram(context, message);
+  respondCreateSpatialProgram(context, message);
   respondLinearContextGraph(context, message);
 
   // v1 handlers
@@ -61,7 +70,7 @@ async function handleMessage(message: MessageToFigma) {
       .distribute("left-to-right", 100)
       .chainWithConnectors({ sourceMagnet: "LEFT", targetMagnet: "RIGHT" })
       .align("vertical-center")
-      .moveToBottomLeft(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
+      .hangBottomLeft(figma.getNodeById(message.requestCreateSerialTaskNodes!.parentId) as SceneNode, 150)
       .zoomOutViewToContain()
       .select();
 

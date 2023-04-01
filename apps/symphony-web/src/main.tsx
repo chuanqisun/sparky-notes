@@ -109,7 +109,14 @@ function App() {
         center: selectedPrograms.map((program) => `${program.subtype}: ${program.input}`).join("\n"),
       });
 
-      console.log(resultList);
+      runContext.figmaProxy.request({
+        requestCreateSpatialProgram: {
+          anchorId: selectedPrograms[0].id,
+          directionFromAnchor: direction,
+          subtype: "Thought",
+          input: resultList.listItems[0],
+        },
+      });
     },
     [runContext, selectedPrograms]
   );
@@ -143,35 +150,43 @@ function App() {
                   <button>Start</button>
                 </menu>
               )}
-              {(navMode === "semiauto" || navMode === "manual") && (
+              {navMode === "semiauto" && (
+                <div class="navigator-menu">
+                  <menu class="top-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Up")}>Explore</button>}</menu>
+                  <div class="top-link">↓</div>
+                  <menu class="left-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Left")}>Explore</button>}</menu>
+                  <div class="left-link">→</div>
+                  <menu class="center-menu">{navMode === "semiauto" && <button>Continue</button>}</menu>
+                  <div class="right-link">→</div>
+                  <menu class="right-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Right")}>Explore</button>}</menu>
+                  <div class="bottom-link">↓</div>
+                  <menu class="bottom-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Down")}>Explore</button>}</menu>
+                </div>
+              )}
+              {navMode === "manual" && (
                 <div class="navigator-menu">
                   <menu class="top-menu">
-                    {navMode === "semiauto" && <button onClick={() => handleExplore("Up")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
                   <div class="top-link">↓</div>
                   <menu class="left-menu">
-                    {navMode === "semiauto" && <button onClick={() => handleExplore("Left")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
                   <div class="left-link">→</div>
                   <menu class="center-menu">
-                    {navMode === "semiauto" && <button>Continue</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Observation", "The Earth revolves around the Sun")}>Observation</button>}
                   </menu>
                   <div class="right-link">→</div>
                   <menu class="right-menu">
-                    {navMode === "semiauto" && <button onClick={() => handleExplore("Right")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
                   <div class="bottom-link">↓</div>
                   <menu class="bottom-menu">
-                    {navMode === "semiauto" && <button onClick={() => handleExplore("Down")}>Explore</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Thought</button>}
                     {navMode === "manual" && <button onClick={() => handleCreateNode("Action", `Search the web for "Technology Trend"`)}>Action</button>}
                   </menu>
