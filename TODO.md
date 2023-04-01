@@ -29,6 +29,7 @@
 
 ## Symphony
 
+- History compression: preserve handle turning points and compress straight lines
 - Category design
   - Nouns: Question, Thought, Action plan, Observation, Answer, Mixed
   - Verb: Think, Act, Conclude, Step, Auto-run
