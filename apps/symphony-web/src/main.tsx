@@ -173,7 +173,9 @@ function App() {
                   <div class="top-link">↑</div>
                   <menu class="left-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Left")}>Explore</button>}</menu>
                   <div class="left-link">←</div>
-                  <menu class="center-menu">{navMode === "semiauto" && <button>Step in</button>}</menu>
+                  <menu class="center-menu">
+                    {navMode === "semiauto" && <button onClick={() => handleCreateNode("Thought", "How to tell a story?")}>Step in</button>}
+                  </menu>
                   <div class="right-link">→</div>
                   <menu class="right-menu">{navMode === "semiauto" && <button onClick={() => handleExplore("Right")}>Explore</button>}</menu>
                   <div class="bottom-link">↓</div>
