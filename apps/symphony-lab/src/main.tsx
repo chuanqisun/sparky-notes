@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
+import { DuoLoop } from "./features/duo-loop/duo-loop";
 import { FrameTreeRoot } from "./features/frame-tree/frame-tree";
 import { Notebook } from "./features/notebook/notebook";
 import { getChatResponse, type ChatMessage, type OpenAIChatPayload, type OpenAIChatResponse } from "./features/openai/chat";
@@ -28,13 +29,17 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
-          <details>
-            <summary>Notebook demo</summary>
-            <Notebook context={appContext} />
+          <details open={true}>
+            <summary>Duo loop demo</summary>
+            <DuoLoop context={appContext} />
           </details>
           <details>
             <summary>Frame tree demo</summary>
             <FrameTreeRoot context={appContext} />
+          </details>
+          <details>
+            <summary>Notebook demo</summary>
+            <Notebook context={appContext} />
           </details>
         </>
       ) : null}
