@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import type { AppContext } from "../../main";
-import { goalMapper, goalReducer, questionMapper, questionReducer, taskReducer, tasksMapper } from "../openai/prompts/map-reduce";
+import { goalMapper, goalReducer, questionMapper, questionReducer, taskReducer, tasksMapper } from "../openai/prompts/map-reduce/map-reduce";
 import "./notebook.css";
 
 export interface NotebookProps {

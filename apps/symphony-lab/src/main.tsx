@@ -1,8 +1,9 @@
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
+import { FrameTreeRoot } from "./features/frame-tree/frame-tree";
 import { Notebook } from "./features/notebook/notebook";
-import { ChatMessage, getChatResponse, OpenAIChatPayload, OpenAIChatResponse } from "./features/openai/chat";
+import { getChatResponse, type ChatMessage, type OpenAIChatPayload, type OpenAIChatResponse } from "./features/openai/chat";
 import "./index.css";
 
 export interface AppContext {
@@ -27,7 +28,14 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
-          <Notebook context={appContext} />
+          <details>
+            <summary>Notebook demo</summary>
+            <Notebook context={appContext} />
+          </details>
+          <details>
+            <summary>Frame tree demo</summary>
+            <FrameTreeRoot context={appContext} />
+          </details>
         </>
       ) : null}
       {isConnected === false ? (

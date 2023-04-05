@@ -1,7 +1,7 @@
-import type { AppContext } from "../../../main";
-import type { WorkItem } from "../../notebook/notebook";
-import type { ChatMessage } from "../chat";
-import { responseToArray } from "../format";
+import type { AppContext } from "../../../../main";
+import type { WorkItem } from "../../../notebook/notebook";
+import type { ChatMessage } from "../../chat";
+import { responseToArray } from "../../format";
 
 export type Mapper = (context: AppContext, workItems: WorkItem[]) => Promise<WorkItem[]>;
 
