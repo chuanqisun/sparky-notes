@@ -34,6 +34,11 @@ textarea {
   padding: 4px 8px;
   border-radius: 4px;
 }
+
+button:active {
+  transform: translate3d(1px, 1px, 0);
+}
+
 textarea {
   resize: none;
 }

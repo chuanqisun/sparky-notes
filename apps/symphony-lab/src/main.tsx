@@ -2,12 +2,22 @@ import { render } from "preact";
 import { useMemo } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
 import { Notebook } from "./features/notebook/notebook";
-import { getChatResponse } from "./features/openai/chat";
+import { ChatMessage, getChatResponse, OpenAIChatPayload, OpenAIChatResponse } from "./features/openai/chat";
 import "./index.css";
+
+export interface AppContext {
+  getChat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
+}
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
-  const chat = useMemo(() => getChatResponse.bind(null, accessToken), [accessToken]);
+
+  const appContext = useMemo<AppContext>(
+    () => ({
+      getChat: getChatResponse.bind(null, accessToken),
+    }),
+    [accessToken]
+  );
 
   return (
     <main>
@@ -17,7 +27,7 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
-          <Notebook chat={chat} />
+          <Notebook context={appContext} />
         </>
       ) : null}
       {isConnected === false ? (

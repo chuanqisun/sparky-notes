@@ -1,49 +1,118 @@
 import { useState } from "preact/hooks";
-import { getCombo } from "../../utils/keyboard";
-import type { ChatMessage, OpenAIChatPayload, OpenAIChatResponse } from "../openai/chat";
-import { parseZeroKnowledgeReponse, zeroKnowledgePrompt } from "../openai/prompts/extract-action";
+import type { AppContext } from "../../main";
+import { goalMapper, goalReducer, questionMapper, questionReducer } from "../openai/prompts/map-reduce";
 import "./notebook.css";
 
 export interface NotebookProps {
-  chat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
+  context: AppContext;
+}
+
+export interface Iteration {
+  id: string;
+  items: WorkItem[];
+}
+
+export interface WorkItem {
+  id: string;
+  displayText: string;
+  isEditing?: boolean;
 }
 
 export function Notebook(props: NotebookProps) {
-  const [thoughtValue, setToughtValue] = useState("");
+  const [iterations, setIterations] = useState<Iteration[]>([
+    {
+      id: crypto.randomUUID(),
+      items: [],
+    },
+  ]);
 
-  // refactor to reducer
-  const [tree, setTree] = useState<Node[]>([]);
+  const mapStep = async (headIndex: number) => {
+    const headIteration = iterations[headIndex];
 
-  const handleKeydown = (e: Event) => {
-    switch (getCombo(e as KeyboardEvent)) {
-      case "ctrl+enter": {
-        e.preventDefault();
-        props
-          .chat(...zeroKnowledgePrompt(thoughtValue))
-          .then((res) => parseZeroKnowledgeReponse(res.choices[0].message.content))
-          .then((tasks) => setTree((tree) => [...tree, ...tasks.map((task) => ({ id: crypto.randomUUID(), displayText: task, type: NodeType.Action }))]))
-          .catch();
-        break;
-      }
-    }
+    const goals = await goalMapper(props.context, headIteration.items);
+    const questions = await questionMapper(props.context, headIteration.items);
+    const newItems: WorkItem[] = [...goals, ...questions].map((item) => ({ ...item, isEditing: false }));
+
+    setIterations((iterations) => [...iterations.slice(0, headIndex + 1), { id: crypto.randomUUID(), items: newItems }]);
+  };
+
+  const reduceStep = async (headIndex: number) => {
+    const headIteration = iterations[headIndex];
+
+    const goals = await goalReducer(props.context, headIteration.items);
+    const questions = await questionReducer(props.context, headIteration.items);
+    const newItems: WorkItem[] = [...goals, ...questions].map((item) => ({ ...item, isEditing: false }));
+
+    setIterations((iterations) => [...iterations.slice(0, headIndex + 1), { id: crypto.randomUUID(), items: newItems }]);
+  };
+
+  const clearBelow = async (tailIndex: number) => {
+    setIterations((iterations) => [...iterations.slice(0, tailIndex + 1)]);
+  };
+
+  const add = (iterationIndex: number) => {
+    setIterations((iterations) => {
+      const iterationItems = iterations[iterationIndex].items;
+      const newIteration: Iteration = { id: crypto.randomUUID(), items: [{ id: crypto.randomUUID(), displayText: "", isEditing: true }, ...iterationItems] };
+      return [...iterations.slice(0, iterationIndex), newIteration, ...iterations.slice(iterationIndex + 1)];
+    });
+  };
+
+  const updateItem = (iterationIndex: number, itemIndex: number, updateItem: (item: WorkItem) => WorkItem) => {
+    setIterations((iterations) => {
+      const iterationItems = iterations[iterationIndex].items;
+      const newIteration: Iteration = {
+        id: iterations[iterationIndex].id,
+        items: [...iterationItems.slice(0, itemIndex), updateItem(iterationItems[itemIndex]), ...iterationItems.slice(itemIndex + 1)],
+      };
+      return [...iterations.slice(0, iterationIndex), newIteration, ...iterations.slice(iterationIndex + 1)];
+    });
+  };
+
+  const handleItemInput = (e: Event, iterationIndex: number, itemIndex: number) => {
+    const newValue = (e.target as HTMLInputElement).value;
+    updateItem(iterationIndex, itemIndex, (item) => ({ ...item, displayText: newValue }));
+  };
+
+  const handleItemRemove = (iterationIndex: number, itemIndex: number) => {
+    setIterations((iterations) => {
+      const iterationItems = iterations[iterationIndex].items;
+      const newIteration: Iteration = {
+        id: iterations[iterationIndex].id,
+        items: [...iterationItems.slice(0, itemIndex), ...iterationItems.slice(itemIndex + 1)],
+      };
+
+      return [...iterations.slice(0, iterationIndex), newIteration, ...iterations.slice(iterationIndex + 1)];
+    });
   };
 
   return (
     <div class="c-notebook">
-      <input
-        placeholder="What would you like to do?"
-        value={thoughtValue}
-        type="text"
-        onInput={(e) => setToughtValue((e.target as HTMLInputElement).value)}
-        onKeyDown={handleKeydown}
-      />
-      <div class="c-nodebook-tree">
-        {tree.map((node) => (
-          <div key={node.id} id={node.id}>
-            {node.displayText}
-          </div>
-        ))}
-      </div>
+      {iterations.map((iteration, iterationIndex) => (
+        <div key={iteration.id} class="c-notebook__iteration">
+          <menu>
+            <button onClick={() => add(iterationIndex)}>Add item</button>
+          </menu>
+          <ul class="c-notebook__work-item-list">
+            {iteration.items.map((item, itemIndex) => (
+              <li key={item.id} class="c-notebook__work-item">
+                <textarea
+                  class="c-notebook__work-item-input c-notebook__work-item-input--edit"
+                  type="text"
+                  value={item.displayText}
+                  onInput={(e) => handleItemInput(e, iterationIndex, itemIndex)}
+                />
+                <button onClick={() => handleItemRemove(iterationIndex, itemIndex)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+          <menu>
+            <button onClick={() => mapStep(iterationIndex)}>Map</button>
+            <button onClick={() => reduceStep(iterationIndex)}>Reduce</button>
+            <button onClick={() => clearBelow(iterationIndex)}>Clear below</button>
+          </menu>
+        </div>
+      ))}
     </div>
   );
 }
