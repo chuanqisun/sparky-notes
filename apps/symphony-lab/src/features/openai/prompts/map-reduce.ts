@@ -73,6 +73,7 @@ export const goalReducer: Mapper = async (context, workItems) => {
   return resultList.map((item) => ({ id: crypto.randomUUID(), displayText: item }));
 };
 
+// TODO perform the task using ReAct, or keep the task in an "pending" | "not started" state
 export const taskReducer: Mapper = async (context, workItems) => {
   const bucket = workItems.map((item) => item.displayText).join("\n");
   const messages: ChatMessage[] = [
@@ -90,6 +91,7 @@ export const taskReducer: Mapper = async (context, workItems) => {
   return resultList.map((item) => ({ id: crypto.randomUUID(), displayText: item }));
 };
 
+// TODO expect user answer or keep the question in an "unknown" state
 export const questionReducer: Mapper = async (context, workItems) => {
   const bucket = workItems.map((item) => item.displayText).join("\n");
   const messages: ChatMessage[] = [

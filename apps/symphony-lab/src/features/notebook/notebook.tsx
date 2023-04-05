@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import type { AppContext } from "../../main";
-import { goalMapper, goalReducer, questionMapper, questionReducer } from "../openai/prompts/map-reduce";
+import { goalMapper, goalReducer, questionMapper, questionReducer, taskReducer, tasksMapper } from "../openai/prompts/map-reduce";
 import "./notebook.css";
 
 export interface NotebookProps {
@@ -15,7 +15,6 @@ export interface Iteration {
 export interface WorkItem {
   id: string;
   displayText: string;
-  isEditing?: boolean;
 }
 
 export function Notebook(props: NotebookProps) {
@@ -30,8 +29,9 @@ export function Notebook(props: NotebookProps) {
     const headIteration = iterations[headIndex];
 
     const goals = await goalMapper(props.context, headIteration.items);
+    const tasks = await tasksMapper(props.context, headIteration.items);
     const questions = await questionMapper(props.context, headIteration.items);
-    const newItems: WorkItem[] = [...goals, ...questions].map((item) => ({ ...item, isEditing: false }));
+    const newItems: WorkItem[] = [...goals, ...tasks, ...questions];
 
     setIterations((iterations) => [...iterations.slice(0, headIndex + 1), { id: crypto.randomUUID(), items: newItems }]);
   };
@@ -40,8 +40,9 @@ export function Notebook(props: NotebookProps) {
     const headIteration = iterations[headIndex];
 
     const goals = await goalReducer(props.context, headIteration.items);
+    const tasks = await taskReducer(props.context, headIteration.items);
     const questions = await questionReducer(props.context, headIteration.items);
-    const newItems: WorkItem[] = [...goals, ...questions].map((item) => ({ ...item, isEditing: false }));
+    const newItems: WorkItem[] = [...goals, ...tasks, ...questions];
 
     setIterations((iterations) => [...iterations.slice(0, headIndex + 1), { id: crypto.randomUUID(), items: newItems }]);
   };
@@ -53,7 +54,7 @@ export function Notebook(props: NotebookProps) {
   const add = (iterationIndex: number) => {
     setIterations((iterations) => {
       const iterationItems = iterations[iterationIndex].items;
-      const newIteration: Iteration = { id: crypto.randomUUID(), items: [{ id: crypto.randomUUID(), displayText: "", isEditing: true }, ...iterationItems] };
+      const newIteration: Iteration = { id: crypto.randomUUID(), items: [{ id: crypto.randomUUID(), displayText: "" }, ...iterationItems] };
       return [...iterations.slice(0, iterationIndex), newIteration, ...iterations.slice(iterationIndex + 1)];
     });
   };
