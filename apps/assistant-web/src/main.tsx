@@ -1,7 +1,7 @@
 import type { CardData, MessageToUI } from "@h20/types";
-import { JSX, render } from "preact";
+import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import { getInitialToken, TOKEN_CACHE_KEY, validateToken } from "./modules/account/access-token";
+import { TOKEN_CACHE_KEY, getInitialToken, validateToken } from "./modules/account/access-token";
 import { CONFIG_CACHE_KEY, getInitialConfig, validateConfig } from "./modules/account/config";
 import { useAuth } from "./modules/account/use-auth";
 import type { HitsDisplayNode } from "./modules/display/display-node";
