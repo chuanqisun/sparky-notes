@@ -29,17 +29,17 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
-          <details open={true}>
-            <summary>Duo loop demo</summary>
-            <DuoLoop context={appContext} />
+          <details>
+            <summary>Notebook demo</summary>
+            <Notebook context={appContext} />
           </details>
           <details>
             <summary>Frame tree demo</summary>
             <FrameTreeRoot context={appContext} />
           </details>
           <details>
-            <summary>Notebook demo</summary>
-            <Notebook context={appContext} />
+            <summary>Duo loop demo</summary>
+            <DuoLoop context={appContext} />
           </details>
         </>
       ) : null}

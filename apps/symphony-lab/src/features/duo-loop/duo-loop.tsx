@@ -9,7 +9,7 @@ export interface DuoLoopProps {
   context: AppContext;
 }
 export function DuoLoop(props: DuoLoopProps) {
-  const memoryAgent = useMemoryAgent();
+  const memoryAgent = useMemoryAgent({ context: props.context });
   const stdout = useStdout();
 
   const handleQuery = useCallback(
@@ -21,8 +21,17 @@ export function DuoLoop(props: DuoLoopProps) {
     [memoryAgent.query, stdout.append]
   );
 
+  const handleCommand = useCallback(
+    async (command: string) => {
+      await memoryAgent.add(command);
+      stdout.append(`Executed ${command}`);
+      return "";
+    },
+    [memoryAgent.add, stdout.append]
+  );
+
   const queryField = useInputField({ onEnter: handleQuery });
-  const commandField = useInputField({ onEnter: () => "" });
+  const commandField = useInputField({ onEnter: handleCommand });
 
   return (
     <div class="c-duo">

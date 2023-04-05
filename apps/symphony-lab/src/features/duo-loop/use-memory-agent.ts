@@ -1,10 +1,28 @@
-import { useCallback, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
+import { AppContext } from "../../main";
+import { observeMemory } from "./prompts/memory";
 
-export function useMemoryAgent() {
+export interface UseMemoryAgentProps {
+  context: AppContext;
+}
+export function useMemoryAgent(props: UseMemoryAgentProps) {
   const [memoryEntries, setMemoryEntries] = useState<string[]>([]);
 
-  const query = useCallback(async (query: string) => memoryEntries.map((entry) => `- ${entry}`).join("\n"), []);
-  const add = useCallback((entry: string) => setMemoryEntries((prev) => [...prev, entry]), []);
+  const query = useCallback(
+    async (query: string) => {
+      const observation = await observeMemory(props.context, query, memoryEntries);
+      return observation;
+    },
+    [props.context.getChat, memoryEntries]
+  );
+  const add = useCallback(async (entry: string) => {
+    setMemoryEntries((prev) => [...prev, entry]);
+  }, []);
+
+  // debug
+  useEffect(() => {
+    console.log(`debug memory`, memoryEntries);
+  }, [memoryEntries]);
 
   return {
     query,
