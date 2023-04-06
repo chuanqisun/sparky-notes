@@ -15,7 +15,7 @@ export async function inflateReport(context: AppContext, input: InflateReportInp
   const goalMappingMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a report. Use the information from the context and make sure all required outline points are addressed. Respond the full report in plaintext.`,
+      content: `You are helping the user draft a report. Use the information from the context and make sure all required outline points are addressed. Make sure to fill the outline with great details. Respond the full report in plaintext.`,
     },
     {
       role: "user",
@@ -32,7 +32,7 @@ Full report:`.replaceAll(/\n\n\n+/gm, "\n\n"),
     },
   ];
 
-  const response = await context.getChat(goalMappingMessages, { max_tokens: 3000, temperature: 0.95, ...promptConfig });
+  const response = await context.getChat(goalMappingMessages, { max_tokens: 2500, temperature: 0.95, ...promptConfig });
   return {
     report: response.choices[0].message.content,
   };
@@ -51,20 +51,27 @@ export async function deflateReport(context: AppContext, input: DeflateReportInp
   const goalMappingMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user edit a report. Carefully fact-check the report against the fact context. The Revised report must only contain information either known or inferred from the context.`,
+      content: `You are helping the user finalize a draft report. 
+1. Remove any content that is not based on the known context.
+2. Add transitions and balance paragraph weights.
+3. Accurately cite or quote information from the context.
+4. Consolidate ideas into sections
+5. Improve coherence of sentences.
+
+You will always respond the final report in plaintext`,
     },
     {
       role: "user",
       content: `Goals:
 ${input.goal}
 
-${input.context ? "Fact context: " : ""}
+${input.context ? "Context: " : ""}
 ${input.context}
 
-${input.report ? "Report: " : ""}
+${input.report ? "Draft report: " : ""}
 ${input.report}
 
-Revised report:`.replaceAll(/\n\n\n+/gm, "\n\n"),
+Final report: `.replaceAll(/\n\n\n+/gm, "\n\n"),
     },
   ];
 
@@ -88,7 +95,7 @@ export async function evaluateReport(context: AppContext, input: AnalyzeReportIn
   const failureMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a well-researched report. Your job is to evaluate a draft against its goal and the required outline points. You must find all the the places where the report failed in meeting the goal and requirements. Respond with one failure point per line. Each point must start with "* "`,
+      content: `You are helping the user write a well-researched report. Your job is to evaluate a draft against its goal and the required outline points. You must find all the the places where the report is insufficient in meeting the goal and requirements. Respond with one evaluation per line. Each line must start with "* "`,
     },
     {
       role: "user",
@@ -101,7 +108,7 @@ ${input.requirements}
 ${input.report ? "Report: " : ""}
 ${input.report ? input.report : ""}
 
-Failures: `.replaceAll(/\n\n\n+/gm, "\n\n"),
+Evaluations: `.replaceAll(/\n\n\n+/gm, "\n\n"),
     },
   ];
 

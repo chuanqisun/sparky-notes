@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { type AppContext } from "../../main";
 import { EventLoop } from "../../utils/event-loop";
 import { arrayToBulletList } from "../openai/format";
@@ -94,7 +94,7 @@ export function Aligner(props: AlignerProps) {
     contextField.setText((prev) => [prev, arrayToBulletList(improvement.questions)].filter(Boolean).join("\n"));
   }, [goalField.text, contextField.text, contextField.setText, evaluationField.text]);
 
-  const autoRunSteps = [
+  const steps = [
     handleImproveContext,
     handleSimulateHumanEffort,
     handleUpdateRequirements,
@@ -105,16 +105,22 @@ export function Aligner(props: AlignerProps) {
     handleSimulateHumanEffort,
   ];
 
+  const autoRunSteps = useRef(steps);
+
+  useEffect(() => {
+    autoRunSteps.current = steps;
+  }, steps);
+
   useEffect(() => {
     const handleTick = async () => {
       try {
         stdout.append(`epoch ${currentEpoch}, step ${currentAutoRunStep}`);
-        const step = autoRunSteps[currentAutoRunStep];
+        const step = autoRunSteps.current[currentAutoRunStep];
         await step();
         if (autoEventLoop.isAborted()) return;
         stdout.appendInline(`...done`);
 
-        currentAutoRunStep = (currentAutoRunStep + 1) % autoRunSteps.length;
+        currentAutoRunStep = (currentAutoRunStep + 1) % autoRunSteps.current.length;
         if (currentAutoRunStep === 0) {
           currentEpoch++;
         }
@@ -145,7 +151,7 @@ export function Aligner(props: AlignerProps) {
       <menu>
         <button onClick={handleImproveContext}>Update context</button>
         <button onClick={handleSimulateHumanEffort}>Simulate human effort</button>
-        <button onClick={handleUpdateRequirements}>Update requirements</button>
+        <button onClick={handleUpdateRequirements}>Update outline</button>
         <button onClick={handleInflateReport}>Warm up report</button>
         <button onClick={handleDeflateReport}>Cool down report</button>
         <button onClick={handleEvaluateReport}>Evaluate report</button>
@@ -161,7 +167,7 @@ export function Aligner(props: AlignerProps) {
         rows={contextField.text.split("\n").length + 1}
         value={contextField.text}
       />
-      <label for="requirements">Requirements</label>
+      <label for="requirements">Outline</label>
       <textarea
         id="requirements"
         placeholder="Requirements"
