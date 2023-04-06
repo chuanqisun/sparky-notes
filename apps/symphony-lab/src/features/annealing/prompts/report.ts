@@ -15,7 +15,7 @@ export async function inflateReport(context: AppContext, input: InflateReportInp
   const goalMappingMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a report. Use the information from the context and make sure all requirements are met. Respond the full report in plaintext.`,
+      content: `You are helping the user write a report. Use the information from the context and make sure all required outline points are addressed. Respond the full report in plaintext.`,
     },
     {
       role: "user",
@@ -25,14 +25,14 @@ ${input.goal}
 ${input.context ? "Context: " : ""}
 ${input.context}
 
-${input.requirements ? "Requirements: " : ""}
+${input.requirements ? "Required outline points: " : ""}
 ${input.requirements}
 
 Full report:`.replaceAll(/\n\n\n+/gm, "\n\n"),
     },
   ];
 
-  const response = await context.getChat(goalMappingMessages, { max_tokens: 3000, ...promptConfig });
+  const response = await context.getChat(goalMappingMessages, { max_tokens: 3000, temperature: 0.95, ...promptConfig });
   return {
     report: response.choices[0].message.content,
   };
@@ -40,7 +40,7 @@ Full report:`.replaceAll(/\n\n\n+/gm, "\n\n"),
 
 export interface DeflateReportInput {
   goal: string;
-  requirements: string;
+  context: string;
   report: string;
 }
 
@@ -51,24 +51,24 @@ export async function deflateReport(context: AppContext, input: DeflateReportInp
   const goalMappingMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a report. Use the information from the context and make sure all requirements are met. Respond the full report in plaintext.`,
+      content: `You are helping the user edit a report. Carefully fact-check the report against the fact context. The Revised report must only contain information either known or inferred from the context.`,
     },
     {
       role: "user",
       content: `Goals:
 ${input.goal}
 
-${input.requirements ? "Requirements: " : ""}
-${input.requirements}
+${input.context ? "Fact context: " : ""}
+${input.context}
 
-${input.report ? "Context: " : ""}
+${input.report ? "Report: " : ""}
 ${input.report}
 
-Contextualized report:`.replaceAll(/\n\n\n+/gm, "\n\n"),
+Revised report:`.replaceAll(/\n\n\n+/gm, "\n\n"),
     },
   ];
 
-  const response = await context.getChat(goalMappingMessages, { max_tokens: 3000, ...promptConfig });
+  const response = await context.getChat(goalMappingMessages, { max_tokens: 3000, temperature: 0.75, ...promptConfig });
   return {
     report: response.choices[0].message.content,
   };
@@ -84,18 +84,18 @@ export interface AnalyzeReportOutput {
   failures: string[];
 }
 
-export async function analyzeReport(context: AppContext, input: AnalyzeReportInput, promptConfig?: Partial<OpenAIChatPayload>): Promise<AnalyzeReportOutput> {
+export async function evaluateReport(context: AppContext, input: AnalyzeReportInput, promptConfig?: Partial<OpenAIChatPayload>): Promise<AnalyzeReportOutput> {
   const failureMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a well-researched report. Your job is to evaluate a draft against the goal and requirements of the report. You must point out where the report failed in meeting the goal and requirements. Each point must start with "* "`,
+      content: `You are helping the user write a well-researched report. Your job is to evaluate a draft against its goal and the required outline points. You must find all the the places where the report failed in meeting the goal and requirements. Respond with one failure point per line. Each point must start with "* "`,
     },
     {
       role: "user",
       content: `Goals:
 ${input.goal}
 
-${input.requirements ? "Requirements: " : ""}
+${input.requirements ? "Required outline points: " : ""}
 ${input.requirements}
 
 ${input.report ? "Report: " : ""}

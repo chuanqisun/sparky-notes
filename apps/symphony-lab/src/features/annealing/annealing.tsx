@@ -1,43 +1,24 @@
 import { useCallback } from "preact/hooks";
 import { type AppContext } from "../../main";
 import { arrayToBulletList } from "../openai/format";
-import "./aligner.css";
-import { analyzeGoal, improveGoalContext } from "./prompts/goal";
-import { analyzeReport, deflateReport, improveReportContext, inflateReport } from "./prompts/report";
+import "./annealing.css";
+import { analyzeGoal, improveGoalContext, simulateHumanEffort } from "./prompts/goal";
+import { deflateReport, evaluateReport, improveReportContext, inflateReport } from "./prompts/report";
 import { useInputField } from "./use-input-field";
-import { useMemoryAgent } from "./use-memory-agent";
 import { useStdout } from "./use-stdout";
 
 export interface AlignerProps {
   context: AppContext;
 }
 export function Aligner(props: AlignerProps) {
-  const memoryAgent = useMemoryAgent({ context: props.context });
   const stdout = useStdout();
-
-  const handleQuery = useCallback(
-    async (query: string) => {
-      const response = await memoryAgent.query(query);
-      stdout.append(response);
-      return "";
-    },
-    [memoryAgent.query, stdout.append]
-  );
-
-  const handleCommand = useCallback(
-    async (command: string) => {
-      await memoryAgent.add(command);
-      stdout.append(`Executed ${command}`);
-      return "";
-    },
-    [memoryAgent.add, stdout.append]
-  );
 
   const goalField = useInputField();
   const requirementsField = useInputField();
   const contextField = useInputField();
 
-  const reportField = useInputField();
+  const warmReportField = useInputField();
+  const coolReportField = useInputField();
   const evaluationField = useInputField();
 
   const handleUpdateRequirements = useCallback(async () => {
@@ -59,35 +40,44 @@ export function Aligner(props: AlignerProps) {
     contextField.setText((prev) => [prev, arrayToBulletList(improvement.suggestions)].filter(Boolean).join("\n"));
   }, [goalField.text, contextField.text, contextField.setText, requirementsField.text]);
 
-  const handleUpdateReport = useCallback(async () => {
+  const handleSimulateHumanEffort = useCallback(async () => {
+    const { newContext } = await simulateHumanEffort(props.context, {
+      goal: goalField.text,
+      context: contextField.text,
+    });
+
+    contextField.setText((prev) => [prev, arrayToBulletList(newContext)].filter(Boolean).join("\n"));
+  }, [goalField.text, contextField.text, contextField.setText, requirementsField.text]);
+
+  const handleInflateReport = useCallback(async () => {
     const { report } = await inflateReport(props.context, {
       goal: goalField.text,
       context: contextField.text,
       requirements: requirementsField.text,
     });
 
-    reportField.setText(report);
-  }, [goalField.text, contextField.text, requirementsField.text, reportField.setText]);
+    warmReportField.setText(report);
+  }, [goalField.text, contextField.text, requirementsField.text, warmReportField.setText]);
 
   const handleDeflateReport = useCallback(async () => {
     const { report } = await deflateReport(props.context, {
       goal: goalField.text,
-      requirements: requirementsField.text,
-      report: reportField.text,
+      context: contextField.text,
+      report: warmReportField.text,
     });
 
-    reportField.setText(report);
-  }, [goalField.text, reportField.text, requirementsField.text, reportField.setText]);
+    coolReportField.setText(report);
+  }, [goalField.text, warmReportField.text, contextField.text, coolReportField.setText]);
 
   const handleEvaluateReport = useCallback(async () => {
-    const failureList = await analyzeReport(props.context, {
+    const failureList = await evaluateReport(props.context, {
       goal: goalField.text,
-      report: reportField.text,
+      report: coolReportField.text,
       requirements: requirementsField.text,
     });
 
     evaluationField.setText(arrayToBulletList(failureList.failures));
-  }, [stdout.append, goalField.text, reportField.text, requirementsField.text, evaluationField.setText]);
+  }, [stdout.append, goalField.text, coolReportField.text, requirementsField.text, evaluationField.setText]);
 
   const handleGetInfo = useCallback(async () => {
     const improvement = await improveReportContext(props.context, {
@@ -103,9 +93,10 @@ export function Aligner(props: AlignerProps) {
     <div class="c-duo">
       <menu>
         <button onClick={handleImproveContext}>Update context</button>
+        <button onClick={handleSimulateHumanEffort}>Simulate human effort</button>
         <button onClick={handleUpdateRequirements}>Update requirements</button>
-        <button onClick={handleUpdateReport}>Inflate report</button>
-        <button onClick={handleDeflateReport}>Deflate report</button>
+        <button onClick={handleInflateReport}>Warm up report</button>
+        <button onClick={handleDeflateReport}>Cool down report</button>
         <button onClick={handleEvaluateReport}>Evaluate report</button>
         <button onClick={handleGetInfo}>Request info</button>
       </menu>
@@ -127,8 +118,22 @@ export function Aligner(props: AlignerProps) {
         rows={requirementsField.text.split("\n").length + 1}
         value={requirementsField.text}
       />
-      <label for="report">Report</label>
-      <textarea id="report" placeholder="Report" onInput={reportField.handleInput} rows={reportField.text.split("\n").length + 1} value={reportField.text} />
+      <label for="report-warm">Report (warm)</label>
+      <textarea
+        id="report-warm"
+        placeholder="Report (warm)"
+        onInput={warmReportField.handleInput}
+        rows={warmReportField.text.split("\n").length + 1}
+        value={warmReportField.text}
+      />
+      <label for="report-cool">Report (cool)</label>
+      <textarea
+        id="report-cool"
+        placeholder="Report (cool)"
+        onInput={coolReportField.handleInput}
+        rows={coolReportField.text.split("\n").length + 1}
+        value={coolReportField.text}
+      />
       <label for="evaluation">Evaluation</label>
       <textarea
         id="evaluation"

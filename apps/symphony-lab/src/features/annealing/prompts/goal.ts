@@ -14,7 +14,7 @@ export async function analyzeGoal(context: AppContext, input: AnalyzeGoalInput, 
   const goalMappingMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a well-researched report. The user will provide you with goals. You must map the goal to a list of required points that the ideal document must have. Your must respond with one required point per line. Each line must start with "* "`,
+      content: `You are helping the user write a well-researched report. The user will provide you with goals. You must map the goal to a list of required outline points that the ideal document must have. Your must respond with one required outline point per line. Each line must start with "* "`,
     },
     {
       role: "user",
@@ -24,7 +24,7 @@ ${input.goal}
 ${input.context ? "Context: " : ""}
 ${input.context}
 
-Provide a list of required points based on the goals.`.replaceAll(/\n\n\n+/gm, "\n\n"),
+Required outline points:`.replaceAll(/\n\n\n+/gm, "\n\n"),
     },
   ];
 
@@ -55,7 +55,7 @@ export async function improveGoalContext(context: AppContext, input: ImproveGoal
       content: `Goals:
 ${input.goal}
 
-${input.requirements ? "Requirements: " : ""}
+${input.requirements ? "Required outline points: " : ""}
 ${input.requirements}
 
 ${input.context ? "Existing context: " : ""}
@@ -70,5 +70,55 @@ Questions for new context: `.replaceAll(/\n\n\n+/gm, "\n\n"),
 
   return {
     suggestions: list.listItems,
+  };
+}
+
+export interface SimulateHumanEffortInput {
+  goal: string;
+  context: string;
+}
+
+export interface SimulateHumanEffortOutput {
+  newContext: string[];
+}
+
+export async function simulateHumanEffort(
+  context: AppContext,
+  input: SimulateHumanEffortInput,
+  promptConfig?: Partial<OpenAIChatPayload>
+): Promise<SimulateHumanEffortOutput> {
+  const feedbackMessages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `You are going rephrase a list of sentences. When a sentence is a question, replace it with a full declarative sentence that contains the question and a best answer you can think of. When it is already a declarative sentence, leave it unchanged e.g.
+Mix of Questions and Declarative sentences:
+- What did you have for breakfast?
+- Top cities to visit in America?
+- The best gift idea is a good book
+- Average size of all countries?
+
+Declarative sentences:
+- I had bacon and eggs for breakfast
+- Top cities to visit in America: New York, San Francisco
+- The best gift idea is a good book
+- The average size of all countries require additional research`,
+    },
+    {
+      role: "user",
+      content: `Goals:
+${input.goal}
+
+${input.context ? "Mix of Questions and Declarative sentences: " : ""}
+${input.context ? input.context : ""}
+
+Declarative sentences: `.replaceAll(/\n\n\n+/gm, "\n\n"),
+    },
+  ];
+
+  const response = await context.getChat(feedbackMessages, { max_tokens: 500, ...promptConfig });
+  const list = responseToList(response.choices[0].message.content);
+
+  return {
+    newContext: list.listItems,
   };
 }
