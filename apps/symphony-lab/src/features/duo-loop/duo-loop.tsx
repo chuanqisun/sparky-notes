@@ -1,5 +1,5 @@
 import { useCallback } from "preact/hooks";
-import { AppContext } from "../../main";
+import { type AppContext } from "../../main";
 import "./duo-loop.css";
 import { useInputField } from "./use-input-field";
 import { useMemoryAgent } from "./use-memory-agent";

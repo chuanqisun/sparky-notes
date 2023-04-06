@@ -20,6 +20,27 @@ export function responseToArray(rawText: string) {
     .filter(Boolean);
 }
 
+export function responseToList(rawText: string) {
+  return {
+    listType: getListType(rawText),
+    listItems: coerceToFlatArray(rawText),
+  };
+}
+
+export function getListType(rawText: string): "ordered" | "unordered" | "none" {
+  for (const line of rawText.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.match(/^\d+\./) || trimmed.match(/^\(\d+\)/) || trimmed.match(/^\d+\)/)) {
+      return "ordered";
+    }
+    if (trimmed.match(/^-\s+/) || trimmed.match(/^\*\s+/)) {
+      return "unordered";
+    }
+  }
+
+  return "none";
+}
+
 export function coerceToBulletList(response: string) {
   return arrayToBulletList(responseToArray(response));
 }
@@ -35,4 +56,16 @@ export function parseListItem(line: string) {
     .replace(/^-\s*/, "")
     .replace(/^\*\s*/, "")
     .trim();
+}
+
+function coerceToFlatArray(rawText: string) {
+  return rawText
+    .split("\n")
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^(\(?\d+\)|\d+\.|-|\*)\s*/, "")
+        .trim()
+    )
+    .filter(Boolean);
 }

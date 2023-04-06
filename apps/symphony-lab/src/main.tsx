@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
+import { Aligner } from "./features/aligner/aligner";
 import { DuoLoop } from "./features/duo-loop/duo-loop";
 import { FrameTreeRoot } from "./features/frame-tree/frame-tree";
 import { Notebook } from "./features/notebook/notebook";
@@ -29,6 +30,10 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
+          <details>
+            <summary>Aligner demo</summary>
+            <Aligner context={appContext} />
+          </details>
           <details>
             <summary>Notebook demo</summary>
             <Notebook context={appContext} />
