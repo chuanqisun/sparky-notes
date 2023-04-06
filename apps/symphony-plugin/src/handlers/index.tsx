@@ -159,7 +159,7 @@ export const respondLinearContextGraph: Handler = async (context, message) => {
   context.webProxy.respond(message, { respondUpstreamGraph: graph.nodes.map(frameNodeToDisplayProgram) });
 };
 
-export const respondViewportPrograms: Handler = async (context, message) => {
+export const respondAmbientPrograms: Handler = async (context, message) => {
   if (!message.requestAmbientPrograms) return;
 
   const selectedNodes = message.requestAmbientPrograms.anchorIds.map((id) => figma.getNodeById(id)).filter(Boolean) as FrameNode[];

@@ -1,14 +1,14 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import {
-  HandlerContext,
   onSelectionChange,
   onShowNotification,
   onWebClientStarted,
+  respondAmbientPrograms,
   respondCreateProgram,
   respondCreateSpatialProgram,
   respondLinearContextGraph,
-  respondViewportPrograms as respondAmbientNodes,
+  type HandlerContext,
 } from "./handlers";
 import { frameNodeLayersToContextPath } from "./utils/display-program";
 import { $ } from "./utils/fq";
@@ -37,7 +37,7 @@ async function handleMessage(message: MessageToFigma) {
   respondCreateProgram(context, message);
   respondCreateSpatialProgram(context, message);
   respondLinearContextGraph(context, message);
-  respondAmbientNodes(context, message);
+  respondAmbientPrograms(context, message);
 
   // v1 handlers
   if (message.requestContextPath) {

@@ -5,9 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
-import { ChatMessage, getChatResponse, OpenAIChatPayload, OpenAIChatResponse } from "./modules/openai/chat";
-import { getCompletion, OpenAICompletionPayload, OpenAICompletionResponse } from "./modules/openai/completion";
-import { exploreLakoffSpace, HistoryContextEntry } from "./modules/prompts/lakoff";
+import { ChatMessage, OpenAIChatPayload, OpenAIChatResponse, getChatResponse } from "./modules/openai/chat";
+import { OpenAICompletionPayload, OpenAICompletionResponse, getCompletion } from "./modules/openai/completion";
+import { explore } from "./modules/prompts/explore";
+import { HistoryContextEntry, exploreLakoffSpace } from "./modules/prompts/lakoff";
 import { generateReasonAct } from "./modules/prompts/reason-act-v2";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -138,7 +139,14 @@ function App() {
     [runContext, selectedPrograms]
   );
 
-  const [navMode, setNavMode] = useState("semiauto");
+  const handleSimpleExplore = useCallback(async () => {
+    const { respondAmbientPrograms } = await runContext.figmaProxy.request({ requestAmbientPrograms: { anchorIds: selectedPrograms.map((p) => p.id) } });
+
+    const exploreResults = await explore(runContext, { thoughts: respondAmbientPrograms?.map((program) => program.input) ?? [] });
+    console.log(exploreResults);
+  }, [selectedPrograms]);
+
+  const [navMode, setNavMode] = useState("simple");
 
   return (
     <main>
@@ -149,8 +157,8 @@ function App() {
             <div class="navigator">
               <div class="navigator-mode">
                 <label>
-                  <input type="radio" name="navmode" value="auto" checked={navMode === "auto"} onInput={() => setNavMode("auto")} />
-                  Auto
+                  <input type="radio" name="navmode" value="simple" checked={navMode === "simple"} onInput={() => setNavMode("simple")} />
+                  Simple
                 </label>
                 <label>
                   <input type="radio" name="navmode" value="auto" checked={navMode === "semiauto"} onInput={() => setNavMode("semiauto")} />
@@ -161,10 +169,10 @@ function App() {
                   Manual
                 </label>
               </div>
-              {navMode === "auto" && (
+              {navMode === "simple" && (
                 <menu>
-                  <input type="text" placeholder="Goal" />
-                  <button>Start</button>
+                  <button onClick={handleSimpleExplore}>Explore</button>
+                  <button>Act</button>
                 </menu>
               )}
               {navMode === "semiauto" && (
