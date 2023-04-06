@@ -48,7 +48,7 @@ export async function improveGoalContext(context: AppContext, input: ImproveGoal
   const feedbackMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are helping the user write a well-researched report. Your job is to ask user for more context information that can be used to translate the goal into concrete document. Ask one question per line. Each new context line must start with "* " and end with a question mark "?"`,
+      content: `You are helping the user write a well-researched report. Your job is to ask user for more context information that can be used to translate the goal into concrete document. Be very comprehensive. Ask one question per line. Each new context line must start with "* " and end with a question mark "?"`,
     },
     {
       role: "user",
@@ -90,7 +90,7 @@ export async function simulateHumanEffort(
   const feedbackMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `You are going rephrase a list of sentences. When a sentence is a question, replace it with a full declarative sentence that contains the question and a best answer you can think of. When it is already a declarative sentence, leave it unchanged e.g.
+      content: `You are going rephrase a list of sentences. Rephrase the sentence one-by-one. Replace a question with a declarative sentence that contains the best answer you can think of. When it is already a declarative sentence, leave it unchanged e.g.
 Mix of Questions and Declarative sentences:
 - What did you have for breakfast?
 - Top cities to visit in America?

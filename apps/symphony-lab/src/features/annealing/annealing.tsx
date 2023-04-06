@@ -1,11 +1,16 @@
-import { useCallback } from "preact/hooks";
+import { useCallback, useEffect } from "preact/hooks";
 import { type AppContext } from "../../main";
+import { EventLoop } from "../../utils/event-loop";
 import { arrayToBulletList } from "../openai/format";
 import "./annealing.css";
 import { analyzeGoal, improveGoalContext, simulateHumanEffort } from "./prompts/goal";
 import { deflateReport, evaluateReport, improveReportContext, inflateReport } from "./prompts/report";
 import { useInputField } from "./use-input-field";
 import { useStdout } from "./use-stdout";
+
+const autoEventLoop = new EventLoop();
+let currentAutoRunStep = 0;
+let currentEpoch = 0;
 
 export interface AlignerProps {
   context: AppContext;
@@ -46,7 +51,7 @@ export function Aligner(props: AlignerProps) {
       context: contextField.text,
     });
 
-    contextField.setText((prev) => [prev, arrayToBulletList(newContext)].filter(Boolean).join("\n"));
+    contextField.setText([arrayToBulletList(newContext)].filter(Boolean).join("\n"));
   }, [goalField.text, contextField.text, contextField.setText, requirementsField.text]);
 
   const handleInflateReport = useCallback(async () => {
@@ -89,8 +94,54 @@ export function Aligner(props: AlignerProps) {
     contextField.setText((prev) => [prev, arrayToBulletList(improvement.questions)].filter(Boolean).join("\n"));
   }, [goalField.text, contextField.text, contextField.setText, evaluationField.text]);
 
+  const autoRunSteps = [
+    handleImproveContext,
+    handleSimulateHumanEffort,
+    handleUpdateRequirements,
+    handleInflateReport,
+    handleDeflateReport,
+    handleEvaluateReport,
+    handleGetInfo,
+    handleSimulateHumanEffort,
+  ];
+
+  useEffect(() => {
+    const handleTick = async () => {
+      try {
+        stdout.append(`epoch ${currentEpoch}, step ${currentAutoRunStep}`);
+        const step = autoRunSteps[currentAutoRunStep];
+        await step();
+        if (autoEventLoop.isAborted()) return;
+        stdout.appendInline(`...done`);
+
+        currentAutoRunStep = (currentAutoRunStep + 1) % autoRunSteps.length;
+        if (currentAutoRunStep === 0) {
+          currentEpoch++;
+        }
+      } catch (e: any) {
+        autoEventLoop.stop();
+        console.error(e);
+      }
+    };
+    const cleanUp = autoEventLoop.on("tick", handleTick);
+
+    return () => cleanUp();
+  }, []);
+
+  const handleStopRun = useCallback(async () => {
+    autoEventLoop.stop();
+  }, []);
+
+  const handleAutoRun = useCallback(async () => {
+    autoEventLoop.start();
+  }, []);
+
   return (
     <div class="c-duo">
+      <menu>
+        <button onClick={handleAutoRun}>Start</button>
+        <button onClick={handleStopRun}>Stop</button>
+      </menu>
       <menu>
         <button onClick={handleImproveContext}>Update context</button>
         <button onClick={handleSimulateHumanEffort}>Simulate human effort</button>
