@@ -17,7 +17,10 @@
   }
 
   .drag-bar {
-    cursor: move;
+    cursor: grab;
     user-select: none;
+  }
+  .drag-bar[data-active="true"] {
+    cursor: grabbing;
   }
 </style>
