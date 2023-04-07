@@ -46,6 +46,12 @@ function App() {
             <summary>Duo loop demo</summary>
             <DuoLoop context={appContext} />
           </details>
+          <details>
+            <summary>Studio demo</summary>
+            <div>
+              <a href="./studio.html">Open Studio</a>
+            </div>
+          </details>
         </>
       ) : null}
       {isConnected === false ? (
