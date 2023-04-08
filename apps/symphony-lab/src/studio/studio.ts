@@ -22,3 +22,8 @@ export interface Tool {
   name: string;
   description: string;
 }
+
+export interface ToolEffect {
+  updateTasks?: Task[];
+  createTasks?: Task[];
+}
