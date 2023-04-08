@@ -24,6 +24,9 @@ export interface Tool {
 }
 
 export interface ToolEffect {
-  updateTasks?: Task[];
   createTasks?: Task[];
+  deleteTasks?: string[];
+  updateTasks?: Task[];
+  createTools?: Tool[];
+  updateTools?: Tool[];
 }
