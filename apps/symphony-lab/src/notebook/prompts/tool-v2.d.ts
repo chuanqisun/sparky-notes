@@ -2,7 +2,7 @@ export interface Step {
   name: string; // Summarize Task description into short name
   analysis: string; // Describe what goal of the task, the expected outcome
   idealTool: string; // The ideal tool regardless of what is available for the step
-  chosenTool: null | keyof Tools; // Null means no tool matches the step
+  chosenTool: null | string; // Null means no tool matches the step. the string must be a key of Tools
   toolInput: Record<string, any>; // matches the input object
 }
 
@@ -12,7 +12,7 @@ export interface Tools {
   // wikipedia: good for factual information
   // arxiv: applied research papers
   // ux_db: UX research reports on Microsoft products
-  search(input: { provider: "google" | "wikipedia" | "arxiv" | "ux_db"; query: string; limit: number });
+  search(input: { provider: "google" | "wikipedia" | "arxiv" | "ux_db"; query: string; limit: number; skip: number });
 
   // Use a predicate to filter the list from the previous step
   // Predict is a Yes/No question to test each item.

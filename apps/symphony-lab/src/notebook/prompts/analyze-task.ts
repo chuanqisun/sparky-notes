@@ -1,5 +1,5 @@
 import type { ChatMessage, OpenAIChatPayloadWithModel } from "../../features/openai/chat";
-import type { AppContext } from "../../notebook";
+import type { NotebookAppContext } from "../../notebook";
 
 export interface ParsedTool {
   tool: string;
@@ -7,7 +7,7 @@ export interface ParsedTool {
   stepDisplayName: string;
 }
 
-export async function analyzeTask(context: AppContext, input: string, promptConfig?: Partial<OpenAIChatPayloadWithModel>): Promise<ParsedTool[]> {
+export async function analyzeTask(context: NotebookAppContext, input: string, promptConfig?: Partial<OpenAIChatPayloadWithModel>): Promise<ParsedTool[]> {
   const probeMessages: ChatMessage[] = [
     {
       role: "system",

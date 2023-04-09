@@ -1,12 +1,12 @@
 import { useCallback, useState } from "preact/hooks";
-import type { AppContext } from "../main";
+import type { NotebookAppContext } from "../notebook";
 import "./notebook.css";
 import { analyzeStep } from "./prompts/analyze-step";
 import type { Step } from "./prompts/tool-v2";
 import { useDraftStep } from "./use-draft-step";
 
 export interface NotebookProps {
-  appContext: AppContext;
+  appContext: NotebookAppContext;
 }
 
 export interface NotebookCell {
@@ -61,6 +61,28 @@ export function Notebook(props: NotebookProps) {
     onSubmit: handleSubmitDraftStep,
   });
 
+  const handleRun = useCallback(
+    async (id: string) => {
+      const found = cells.find((cell) => cell.id === id);
+      if (!found) return;
+
+      if (found.stepDefinition?.chosenTool !== "search") return;
+      if (found.stepDefinition?.toolInput.provider !== "ux_db") return;
+
+      const searchResult = await props.appContext.searchProxy.searchClaims({
+        queryType: "semantic",
+        queryLanguage: "en-US",
+        top: found.stepDefinition.toolInput.limit,
+        skip: found.stepDefinition.toolInput.skip,
+        search: found.stepDefinition.toolInput.query,
+        semanticConfiguration: "similar-claims",
+      });
+
+      console.log(searchResult);
+    },
+    [cells, props.appContext]
+  );
+
   return (
     <div class="c-notebook">
       <menu>
@@ -75,7 +97,7 @@ export function Notebook(props: NotebookProps) {
             <hr />
             <br />
             <menu>
-              <button>Run</button>
+              <button onClick={() => handleRun(cell.id)}>Run</button>
               <button onClick={() => deleteCell(cell.id)}>Delete</button>
             </menu>
             <label for={`task-${cell.id}`}>{cell.title ?? "New task"}</label>

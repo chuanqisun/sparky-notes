@@ -1,5 +1,5 @@
 import type { ChatMessage, OpenAIChatPayloadWithModel } from "../../features/openai/chat";
-import type { AppContext } from "../../notebook";
+import type { NotebookAppContext } from "../../notebook";
 import type { Step } from "./tool-v2";
 import toolDef from "./tool-v2.d.ts?raw";
 
@@ -7,7 +7,11 @@ export interface AnalyzeStepInput {
   previousSteps: Pick<Step, "name" | "analysis" | "chosenTool" | "toolInput">[];
   stepDescription: string;
 }
-export async function analyzeStep(context: AppContext, input: AnalyzeStepInput, promptConfig?: Partial<OpenAIChatPayloadWithModel>): Promise<Step | null> {
+export async function analyzeStep(
+  context: NotebookAppContext,
+  input: AnalyzeStepInput,
+  promptConfig?: Partial<OpenAIChatPayloadWithModel>
+): Promise<Step | null> {
   const probeMessages: ChatMessage[] = [
     {
       role: "system",
