@@ -29,14 +29,17 @@ axiosRetry(axiosInstance, {
   retryCondition: (error) => error.response?.status === 429,
 });
 
-export const chat: RequestHandler = async (req, res, next) => {
+export interface ChatConfig {
+  openaiChatEndpoint: string;
+}
+export const chat: (config: ChatConfig) => RequestHandler = (config) => async (req, res, next) => {
   try {
     let input: ChatInput = req.body;
     assert(Array.isArray(input?.messages), "messages must be an Array");
 
     const response = await axiosInstance({
       // TODO replace with env
-      url: process.env.OPENAI_CHAT_ENDPOINT,
+      url: config.openaiChatEndpoint,
       method: "post",
       data: input,
       headers: {
