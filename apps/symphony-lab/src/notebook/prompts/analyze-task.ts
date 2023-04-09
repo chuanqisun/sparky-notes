@@ -17,6 +17,7 @@ You are a planning assistant who is rational, efficient, and effective. You have
 - filter_out // Throw away information by a criterion. Input must be a Yes/No question. The Yes results will be thrown away
 - filter_in // Keep information by a criterion. Input must be a Yes/No question. The Yes results will be kept
 - categorize // Categorize information into groups. Input must be either a list of category names, or a criterion/aspect for categorization
+- map // Transform each item in the list. Input must be a description of the transformation
 - summarize // Reduce the information. Input must be empty string
 - sort // Order information based on a criterion. Input must be the criterion and the direction (ascending or descending)
 
@@ -24,7 +25,7 @@ Now choose a chain of tools to perform the task described by the user. You can o
 Task name: Summarize Task description into short name
 Task analysis: Describe what goal of the task, the expected outcome
 Ideal tool: The ideal tool regardless of what is available for such task
-Realistic tool chain exists (Y/N)?: Is it possible build the ideal tool from [web_search, filter_out, filter_in, categorize, summarize, sort]?
+Realistic tool chain exists (Y/N)?: Is it possible build the ideal tool from [web_search, filter_out, filter_in, categorize, map, summarize, sort]?
 Tool chain json: (only when tool chain exists)
 \`\`\` json
 [

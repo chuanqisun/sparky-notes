@@ -21,6 +21,7 @@ export function Notebook(props: NotebookProps) {
   const handleAddTask = useCallback(
     async (text: string) => {
       const tools = await analyzeTask(props.appContext, text, { model: "v4-8k" });
+      console.log(tools);
       setCells((prev) => [...prev, ...tools.map((tool) => ({ id: crypto.randomUUID(), task: `${tool.tool}(${tool.input})`, title: tool.stepDisplayName }))]);
     },
     [props.appContext]
