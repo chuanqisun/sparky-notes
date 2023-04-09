@@ -49,7 +49,7 @@ Tool chain json: (only when tool chain exists)
   const responseText = response.choices[0].message.content ?? "";
 
   // extract json string from markdown fence
-  const jsonString = responseText.match(/\`\`\` json((.|\s)*)\`\`\`/m)?.[1] ?? "[]";
+  const jsonString = responseText.match(/\`\`\` json((.|\s)*?)\`\`\`/m)?.[1] ?? "[]";
 
   try {
     return JSON.parse(jsonString) as ParsedTool[];

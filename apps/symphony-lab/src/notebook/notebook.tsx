@@ -1,8 +1,9 @@
 import { useCallback, useState } from "preact/hooks";
 import type { AppContext } from "../main";
 import "./notebook.css";
-import { analyzeTask } from "./prompts/analyze-task";
-import { useDraftTask } from "./use-draft-task";
+import { analyzeStep } from "./prompts/analyze-step";
+import type { Step } from "./prompts/tool-v2";
+import { useDraftStep } from "./use-draft-step";
 
 export interface NotebookProps {
   appContext: AppContext;
@@ -10,7 +11,8 @@ export interface NotebookProps {
 
 export interface NotebookCell {
   id: string;
-  task: string;
+  stepSource: string;
+  stepDefinition: Step | null;
   title?: string;
   input?: string;
 }
@@ -18,27 +20,45 @@ export interface NotebookCell {
 export function Notebook(props: NotebookProps) {
   const [cells, setCells] = useState<NotebookCell[]>([]);
 
-  const handleAddTask = useCallback(
+  const handleSubmitDraftStep = useCallback(
     async (text: string) => {
-      const tools = await analyzeTask(props.appContext, text, { model: "v4-8k" });
-      console.log(tools);
-      setCells((prev) => [...prev, ...tools.map((tool) => ({ id: crypto.randomUUID(), task: `${tool.tool}(${tool.input})`, title: tool.stepDisplayName }))]);
+      const step = await analyzeStep(
+        props.appContext,
+        { stepDescription: text, previousSteps: cells.filter((cell) => cell.stepDefinition).map((cell) => cell.stepDefinition!) },
+        { model: "v4-8k" }
+      );
+      console.log("step analyzed", step);
+      if (step?.chosenTool) {
+        setCells((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            stepSource: `${step.chosenTool}(${JSON.stringify(step.toolInput)})`,
+            title: step.name,
+            stepDefinition: step,
+          },
+        ]);
+      } else if (step) {
+        setCells((prev) => [...prev, { id: crypto.randomUUID(), stepSource: text, title: step.name, stepDefinition: step }]);
+      } else {
+        setCells((prev) => [...prev, { id: crypto.randomUUID(), stepSource: text, title: "Error creating step", stepDefinition: null }]);
+      }
     },
-    [props.appContext]
+    [props.appContext, cells]
   );
 
-  const deleteTask = useCallback((id: string) => setCells((prev) => prev.filter((cell) => cell.id !== id)), []);
-  const deleteAllTasks = useCallback(() => setCells([]), []);
+  const deleteCell = useCallback((id: string) => setCells((prev) => prev.filter((cell) => cell.id !== id)), []);
+  const deleteAllCells = useCallback(() => setCells([]), []);
 
-  const updateTask = useCallback(
+  const updateCell = useCallback(
     (id: string, update: Partial<NotebookCell>) => setCells((prev) => prev.map((cell) => (cell.id === id ? { ...cell, ...update } : cell))),
     []
   );
 
-  const handleTaskChange = useCallback((id: string, task: string) => updateTask(id, { task }), []);
+  const handleStepChange = useCallback((id: string, step: string) => updateCell(id, { stepSource: step }), []);
 
-  const { handleDraftTaskBlur, handleDraftTaskInput, handleDraftTaskKeydown, addDraftTask, draftTaskInputRef, isDrafting, draftTask } = useDraftTask({
-    onSubmit: handleAddTask,
+  const { handleDraftStepBlur, handleDraftStepInput, handleDraftStepKeydown, startDrafting, draftStepInputRef, isDrafting, draftStepText } = useDraftStep({
+    onSubmit: handleSubmitDraftStep,
   });
 
   return (
@@ -46,7 +66,7 @@ export function Notebook(props: NotebookProps) {
       <menu>
         <button>Run all</button>
         <button>Clear all</button>
-        <button onClick={deleteAllTasks}>Delete all</button>
+        <button onClick={deleteAllCells}>Delete all</button>
       </menu>
       <div class="cell-list">
         {cells.map((cell) => (
@@ -56,14 +76,14 @@ export function Notebook(props: NotebookProps) {
             <br />
             <menu>
               <button>Run</button>
-              <button onClick={() => deleteTask(cell.id)}>Delete</button>
+              <button onClick={() => deleteCell(cell.id)}>Delete</button>
             </menu>
             <label for={`task-${cell.id}`}>{cell.title ?? "New task"}</label>
             <textarea
               id={`task-${cell.id}`}
-              value={cell.task}
+              value={cell.stepSource}
               placeholder="What would you like to do?"
-              onInput={(e) => handleTaskChange(cell.id, (e.target as HTMLTextAreaElement).value)}
+              onInput={(e) => handleStepChange(cell.id, (e.target as HTMLTextAreaElement).value)}
             ></textarea>
             {cell.input ? (
               <>
@@ -80,16 +100,16 @@ export function Notebook(props: NotebookProps) {
       <menu>
         {isDrafting ? (
           <textarea
-            ref={draftTaskInputRef}
+            ref={draftStepInputRef}
             id={`new-task`}
-            value={draftTask}
+            value={draftStepText}
             placeholder="What would you like to do?"
-            onInput={handleDraftTaskInput}
-            onBlur={handleDraftTaskBlur}
-            onKeyDown={handleDraftTaskKeydown}
+            onInput={handleDraftStepInput}
+            onBlur={handleDraftStepBlur}
+            onKeyDown={handleDraftStepKeydown}
           ></textarea>
         ) : (
-          <button onClick={addDraftTask}>New task</button>
+          <button onClick={startDrafting}>New step</button>
         )}
       </menu>
     </div>
