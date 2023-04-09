@@ -8,6 +8,13 @@ export interface OpenAIChatPayload {
   stop: string | string[];
 }
 
+export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
+
+export interface OpenAIChatPayloadWithModel extends OpenAIChatPayload {
+  /** @default "v3.5-turbo" */
+  model?: ChatModel;
+}
+
 export interface ChatMessage {
   role: "assistant" | "user" | "system";
   content: string;
@@ -29,7 +36,24 @@ export type OpenAIChatResponse = {
   };
 };
 
-export async function getChatResponse(accessToken: string, messages: ChatMessage[], config?: Partial<OpenAIChatPayload>): Promise<OpenAIChatResponse> {
+export function modelToEndpoint(model?: ChatModel): string {
+  switch (model) {
+    case "v4-32k":
+      return import.meta.env.VITE_OPENAI_CHAT_ENDPOINT_V4_32K!;
+    case "v4-8k":
+      return import.meta.env.VITE_OPENAI_CHAT_ENDPOINT_V4_8K!;
+    case "v3.5-turbo":
+    default:
+      return import.meta.env.VITE_OPENAI_CHAT_ENDPOINT!;
+  }
+}
+
+export async function getChatResponse(
+  accessToken: string,
+  endpoint: string,
+  messages: ChatMessage[],
+  config?: Partial<OpenAIChatPayload>
+): Promise<OpenAIChatResponse> {
   const payload = {
     messages,
     temperature: 0.7,
@@ -42,7 +66,7 @@ export async function getChatResponse(accessToken: string, messages: ChatMessage
   };
 
   try {
-    const result: OpenAIChatResponse = await fetch(import.meta.env.VITE_OPENAI_CHAT_ENDPOINT!, {
+    const result: OpenAIChatResponse = await fetch(endpoint, {
       method: "post",
       headers: {
         Authorization: `Bearer ${accessToken}`,

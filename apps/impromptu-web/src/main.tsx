@@ -1,4 +1,4 @@
-import { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
+import type { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";

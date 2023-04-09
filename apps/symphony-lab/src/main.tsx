@@ -17,7 +17,7 @@ function App() {
 
   const appContext = useMemo<AppContext>(
     () => ({
-      getChat: getChatResponse.bind(null, accessToken),
+      getChat: getChatResponse.bind(null, accessToken, import.meta.env.VITE_OPENAI_CHAT_ENDPOINT!),
     }),
     [accessToken]
   );

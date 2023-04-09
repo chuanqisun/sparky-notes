@@ -1,4 +1,4 @@
-import { StickySummary } from "@impromptu/types";
+import type { StickySummary } from "@impromptu/types";
 
 export function StickyView(props: { stickySummaries: StickySummary[] }) {
   return (

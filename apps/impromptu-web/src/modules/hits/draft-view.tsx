@@ -1,4 +1,4 @@
-import { PrimaryDataNodeSummary } from "@impromptu/types";
+import { type PrimaryDataNodeSummary } from "@impromptu/types";
 import MarkdownIt from "markdown-it";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { notifyFigma, requestFigma } from "../figma/rpc";

@@ -1,12 +1,12 @@
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
-import { getChatResponse, type ChatMessage, type OpenAIChatPayload, type OpenAIChatResponse } from "./features/openai/chat";
+import { getChatResponse, modelToEndpoint, type ChatMessage, type OpenAIChatPayloadWithModel, type OpenAIChatResponse } from "./features/openai/chat";
 import "./notebook.css";
 import { Notebook } from "./notebook/notebook";
 
 export interface AppContext {
-  getChat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
+  getChat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayloadWithModel>) => Promise<OpenAIChatResponse>;
 }
 
 function App() {
@@ -14,7 +14,7 @@ function App() {
 
   const appContext = useMemo<AppContext>(
     () => ({
-      getChat: getChatResponse.bind(null, accessToken),
+      getChat: (message, config) => getChatResponse(accessToken, modelToEndpoint(config?.model), message, config),
     }),
     [accessToken]
   );

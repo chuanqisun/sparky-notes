@@ -1,6 +1,7 @@
 import { useCallback, useState } from "preact/hooks";
 import type { AppContext } from "../main";
 import "./notebook.css";
+import { analyzeTask } from "./prompts/analyze-task";
 import { useDraftTask } from "./use-draft-task";
 
 export interface NotebookProps {
@@ -17,9 +18,13 @@ export interface NotebookCell {
 export function Notebook(props: NotebookProps) {
   const [cells, setCells] = useState<NotebookCell[]>([]);
 
-  const handleAddTask = useCallback(async (text: string) => {
-    setCells((prev) => [...prev, { id: crypto.randomUUID(), task: text }]);
-  }, []);
+  const handleAddTask = useCallback(
+    async (text: string) => {
+      const taskTitle = await analyzeTask(props.appContext, text, { model: "v4-8k" });
+      setCells((prev) => [...prev, { id: crypto.randomUUID(), task: text, title: taskTitle }]);
+    },
+    [props.appContext]
+  );
 
   const deleteTask = useCallback((id: string) => setCells((prev) => prev.filter((cell) => cell.id !== id)), []);
   const deleteAllTasks = useCallback(() => setCells([]), []);

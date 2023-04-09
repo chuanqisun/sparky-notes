@@ -1,4 +1,4 @@
-import { CompletionErrorItem, CompletionInfoItem, LogEntry } from "@impromptu/types";
+import type { CompletionErrorItem, CompletionInfoItem, LogEntry } from "@impromptu/types";
 import "./log-entry-view.css";
 
 export function LogEntryView(props: { entry: LogEntry }) {
