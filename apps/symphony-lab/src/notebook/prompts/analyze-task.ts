@@ -1,7 +1,13 @@
 import type { ChatMessage, OpenAIChatPayloadWithModel } from "../../features/openai/chat";
 import type { AppContext } from "../../notebook";
 
-export async function analyzeTask(context: AppContext, input: string, promptConfig?: Partial<OpenAIChatPayloadWithModel>): Promise<string> {
+export interface ParsedTool {
+  tool: string;
+  input: string;
+  stepDisplayName: string;
+}
+
+export async function analyzeTask(context: AppContext, input: string, promptConfig?: Partial<OpenAIChatPayloadWithModel>): Promise<ParsedTool[]> {
   const probeMessages: ChatMessage[] = [
     {
       role: "system",
@@ -20,7 +26,7 @@ Task analysis: Describe what goal of the task, the expected outcome
 Ideal tool: The ideal tool regardless of what is available for such task
 Realistic tool chain exists (Y/N)?: Is it possible build the ideal tool from [web_search, filter_out, filter_in, categorize, summarize, sort]?
 Tool chain json: (only when tool chain exists)
-\`\`\`
+\`\`\` json
 [
   {
     "tool": "web_search" | "filter" | "categorize" "summarize" | "sort",
@@ -29,8 +35,7 @@ Tool chain json: (only when tool chain exists)
   },
   // ... repeat for each tool in the chain
 ]
-\`\`\`
-`,
+\`\`\``,
     },
     {
       role: "user",
@@ -40,5 +45,15 @@ Tool chain json: (only when tool chain exists)
 
   const response = await context.getChat(probeMessages, { max_tokens: 250, temperature: 0.25, stop: "Output:", ...promptConfig });
 
-  return response.choices[0].message.content;
+  const responseText = response.choices[0].message.content ?? "";
+
+  // extract json string from markdown fence
+  const jsonString = responseText.match(/\`\`\` json((.|\s)*)\`\`\`/m)?.[1] ?? "[]";
+
+  try {
+    return JSON.parse(jsonString) as ParsedTool[];
+  } catch (e) {
+    console.error("Tool chain parsing error", e);
+    return [];
+  }
 }

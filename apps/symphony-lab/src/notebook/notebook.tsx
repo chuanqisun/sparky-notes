@@ -20,8 +20,8 @@ export function Notebook(props: NotebookProps) {
 
   const handleAddTask = useCallback(
     async (text: string) => {
-      const taskTitle = await analyzeTask(props.appContext, text, { model: "v4-8k" });
-      setCells((prev) => [...prev, { id: crypto.randomUUID(), task: text, title: taskTitle }]);
+      const tools = await analyzeTask(props.appContext, text, { model: "v4-8k" });
+      setCells((prev) => [...prev, ...tools.map((tool) => ({ id: crypto.randomUUID(), task: `${tool.tool}(${tool.input})`, title: tool.stepDisplayName }))]);
     },
     [props.appContext]
   );

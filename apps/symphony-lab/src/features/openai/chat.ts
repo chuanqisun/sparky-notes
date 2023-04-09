@@ -25,7 +25,7 @@ export type OpenAIChatResponse = {
     finish_reason: "stop" | "length" | "content_filter" | null;
     index: number;
     message: {
-      content: string;
+      content?: string; // blank when content_filter is active
       role: "assistant";
     };
   }[];
@@ -78,7 +78,8 @@ export async function getChatResponse(
     console.log({
       title: `Chat ${result.usage.total_tokens} tokens`,
       messages: payload.messages,
-      response: result.choices[0].message,
+      response: result,
+      topChoice: result.choices[0].message?.content ?? "",
       tokenUsage: result.usage.total_tokens,
     });
 
