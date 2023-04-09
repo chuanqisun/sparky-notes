@@ -1,12 +1,9 @@
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
 import { useAuth } from "./features/account/use-auth";
-import { Aligner } from "./features/annealing/annealing";
-import { DuoLoop } from "./features/duo-loop/duo-loop";
-import { FrameTreeRoot } from "./features/frame-tree/frame-tree";
-import { Notebook } from "./features/notebook/notebook";
 import { getChatResponse, type ChatMessage, type OpenAIChatPayload, type OpenAIChatResponse } from "./features/openai/chat";
-import "./index.css";
+import "./notebook.css";
+import { Notebook } from "./notebook/notebook";
 
 export interface AppContext {
   getChat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
@@ -30,31 +27,7 @@ function App() {
           <menu>
             <button onClick={signOut}>Sign out</button>
           </menu>
-          <details>
-            <summary>Annealing demo</summary>
-            <Aligner context={appContext} />
-          </details>
-          <details>
-            <summary>Notebook demo</summary>
-            <Notebook context={appContext} />
-            <div>
-              <a href="./notebook.html">Standalone notebook</a>
-            </div>
-          </details>
-          <details>
-            <summary>Frame tree demo</summary>
-            <FrameTreeRoot context={appContext} />
-          </details>
-          <details>
-            <summary>Duo loop demo</summary>
-            <DuoLoop context={appContext} />
-          </details>
-          <details>
-            <summary>Studio demo</summary>
-            <div>
-              <a href="./studio.html">Open Studio</a>
-            </div>
-          </details>
+          <Notebook appContext={appContext} />
         </>
       ) : null}
       {isConnected === false ? (
