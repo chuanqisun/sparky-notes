@@ -1,5 +1,5 @@
 export interface SearchProxy {
-  searchClaims: (payload: SemanticPayload) => Promise<SemanticOutput>;
+  searchClaims: (payload: SemanticPayload) => Promise<SemanticItem[]>;
 }
 
 export function getSearchProxy(accessToken: string): SearchProxy {
@@ -12,7 +12,7 @@ export function getSearchProxy(accessToken: string): SearchProxy {
       body: JSON.stringify(payload),
     }).then((res) => res.json());
 
-    return result as SemanticOutput;
+    return (result as SemanticOutput)?.value ?? [];
   };
 
   return {

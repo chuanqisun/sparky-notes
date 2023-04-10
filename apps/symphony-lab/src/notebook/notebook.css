@@ -1,3 +1,7 @@
+.c-notebook {
+  display: grid;
+}
+
 .cell-list {
   display: grid;
   gap: 4px;
@@ -5,4 +9,26 @@
 
 .cell {
   display: grid;
+}
+
+.output-item {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.step-io__title {
+  font-weight: bold;
+}
+.step-io__body {
+  display: grid;
+}
+.source-code {
+  background: #333;
+  color: #fff;
+  font-size: 14px;
+  padding: 4px 8px;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
