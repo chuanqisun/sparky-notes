@@ -25,11 +25,11 @@ export interface Tools {
   // Items with Yes will be removed
   remove_by_filter(input: { predicate: string });
 
-  // Categorize information into provided number of groups. Labels will be derived from the result
-  categorize_unsupervised(input: { categoryCount: number });
-
   // Categorize information into predefined groups
   categorize_supervised(input: { labels: string[] });
+
+  // Categorize information by the provided criterion into the provided number of groups
+  categorize_unsupervised(input: { critierion: string; categoryCount: number });
 
   // Extract information from each item, based on what to focus on
   extract(input: { focus: string });

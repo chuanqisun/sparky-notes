@@ -3,6 +3,7 @@ import type { NotebookAppContext } from "../notebook";
 import { getCombo } from "../utils/keyboard";
 import "./notebook.css";
 import { analyzeStep } from "./prompts/analyze-step";
+import { categorizeSupervised } from "./prompts/categorize-supervised";
 import { filter } from "./prompts/filter";
 import type { Step } from "./prompts/tool-v2";
 import { useDraftStep } from "./use-draft-step";
@@ -49,16 +50,22 @@ export function Notebook(props: NotebookProps) {
       console.log("Run start");
       updateCellOutput(id, () => []);
 
-      switch (found.stepDefinition?.chosenTool) {
+      // Tool context
+      const prevCellOutput = cells.at(cells.indexOf(found) - 1)?.output ?? [];
+      const toolName = found.stepDefinition?.chosenTool;
+      const toolInput = found.stepDefinition?.toolInput;
+      if (!toolName || !toolInput) return;
+
+      switch (toolName) {
         case "search": {
-          if (found.stepDefinition?.toolInput.provider !== "hits") return;
+          if (toolInput.provider !== "hits") return;
 
           const items = await props.appContext.searchProxy.searchClaims({
             queryType: "semantic",
             queryLanguage: "en-US",
-            top: found.stepDefinition.toolInput.limit,
-            skip: found.stepDefinition.toolInput.skip,
-            search: found.stepDefinition.toolInput.query,
+            top: toolInput.limit,
+            skip: toolInput.skip,
+            search: toolInput.query,
             semanticConfiguration: "similar-claims",
           });
 
@@ -70,12 +77,10 @@ export function Notebook(props: NotebookProps) {
 
         case "keep_by_filter":
         case "remove_by_filter": {
-          const predicate = found.stepDefinition?.toolInput.predicate;
+          const predicate = toolInput.predicate;
           if (!predicate) return;
 
-          const prevCellOutput = cells.at(cells.indexOf(found) - 1)?.output ?? [];
-
-          const isKeep = found.stepDefinition?.chosenTool === "keep_by_filter";
+          const isKeep = toolName === "keep_by_filter";
 
           const resultPrefix = (raw: "yes" | "no" | "error") =>
             isKeep ? (raw === "yes" ? "keep" : raw === "no" ? "remove" : "error") : raw === "yes" ? "remove" : raw === "no" ? "keep" : "error";
@@ -89,8 +94,26 @@ export function Notebook(props: NotebookProps) {
             },
           });
 
-          updateCellOutput(id, () => (found.stepDefinition?.chosenTool === "keep_by_filter" ? result.yes : result.no));
+          updateCellOutput(id, () => (toolName === "keep_by_filter" ? result.yes : result.no));
           console.log(result);
+          break;
+        }
+
+        case "categorize_supervised": {
+          const labels = toolInput.labels;
+
+          const { results, errors } = await categorizeSupervised(props.appContext, {
+            labels,
+            list: prevCellOutput,
+            isStopRequested: () => stopRequested,
+            onProgress: (item, label) => {
+              updateCellOutput(id, (prevOutput) => [...prevOutput, `[${label}] ${item}`]);
+            },
+          });
+
+          updateCellOutput(id, () => results);
+          console.log({ results, errors });
+          break;
         }
       }
     },
