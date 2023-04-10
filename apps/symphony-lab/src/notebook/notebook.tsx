@@ -4,6 +4,7 @@ import { getCombo } from "../utils/keyboard";
 import "./notebook.css";
 import { analyzeStep } from "./prompts/analyze-step";
 import { categorizeSupervised } from "./prompts/categorize-supervised";
+import { categorizeUnsupervised } from "./prompts/categorize-unsupervised";
 import { filter } from "./prompts/filter";
 import type { Step } from "./prompts/tool-v2";
 import { useDraftStep } from "./use-draft-step";
@@ -113,6 +114,21 @@ export function Notebook(props: NotebookProps) {
 
           updateCellOutput(id, () => results);
           console.log({ results, errors });
+          break;
+        }
+
+        case "categorize_unsupervised": {
+          const { basedOn, categoryCount } = toolInput;
+
+          const nodes = await categorizeUnsupervised(props.appContext, {
+            basedOn,
+            idealCategoryCount: categoryCount,
+            list: prevCellOutput,
+          });
+
+          if (stopRequested) return;
+
+          updateCellOutput(id, () => nodes.map((node) => `# ${node.data}\n${node.children.map((child) => `  - ${child}`).join("\n")}`));
           break;
         }
       }

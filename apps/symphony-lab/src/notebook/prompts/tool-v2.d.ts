@@ -28,8 +28,8 @@ export interface Tools {
   // Categorize information into predefined groups
   categorize_supervised(input: { labels: string[] });
 
-  // Categorize information by the provided criterion into the provided number of groups
-  categorize_unsupervised(input: { critierion: string; categoryCount: number });
+  // Categorize information based on a criterion and desired number of groups
+  categorize_unsupervised(input: { basedOn: string; categoryCount: number });
 
   // Extract information from each item, based on what to focus on
   extract(input: { focus: string });

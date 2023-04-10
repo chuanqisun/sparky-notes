@@ -30,7 +30,7 @@ User:
 You:
 {
   "object": {"name": "pizza"},
-  "reason": "pizza is an Italian flat bread with toppings, which is considered food"
+  "reason": "pizza is an Italian flat bread with toppings, which is considered food",
   "bestLabel": "food"
 }
 
@@ -42,11 +42,11 @@ User:
 You: 
 {
   "object": {"eletronicDevice": "computer"},
-  "reason": "computer cannot be consumed as food, and it is not an animal"
+  "reason": "computer cannot be consumed as food, and it is not an animal",
   "bestLabel": "none"
 }
 
-Your response must be valid JSON string
+Your response must be a valid JSON string
 `,
     },
     {
@@ -72,9 +72,7 @@ Your response must be valid JSON string
       }
 
       const responseText = response.choices[0].message.content ?? "null";
-      debugger;
-      const jsonString = responseText.match(/\`\`\`json((.|\s)*?)\`\`\`/m)?.[1] ?? "{}";
-      const responseObject = JSON.parse(jsonString);
+      const responseObject = JSON.parse(responseText);
       const { bestLabel } = responseObject;
       if ([...input.labels, "none"].includes(bestLabel)) {
         input.onProgress?.(item, bestLabel);
