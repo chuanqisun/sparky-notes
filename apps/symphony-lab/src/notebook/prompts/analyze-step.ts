@@ -35,7 +35,7 @@ ${JSON.stringify(
 )}
 \`\`\`
 
-You always respond the full step implementation in a valid json string
+You always respond the full step implementation in a valid json string, including \`\`\` fence
 \`\`\`json
 {
   "name": ...
@@ -44,17 +44,20 @@ You always respond the full step implementation in a valid json string
     },
     {
       role: "user",
-      content: `Step description: ${input.stepDescription}`,
+      content: `Step description: ${input.stepDescription}
+Step (including \`\`\` fence)?
+      `,
     },
   ];
 
   const response = await context.getChat(probeMessages, { max_tokens: 500, temperature: 0.25, stop: "Output:", ...promptConfig });
 
   const responseText = response.choices[0].message.content ?? "null";
+  const jsonString = responseText.match(/\`\`\`json((.|\s)*?)\`\`\`/m)?.[1] ?? "[]";
 
   // extract json string from markdown fence
   try {
-    const maybeStep = JSON.parse(responseText) as null | Step;
+    const maybeStep = JSON.parse(jsonString) as null | Step;
     let parsedParams = typeof maybeStep?.toolInput === "string" ? JSON.parse(maybeStep.toolInput) : maybeStep?.toolInput;
     return { ...maybeStep, toolInput: parsedParams } as Step;
   } catch (e) {

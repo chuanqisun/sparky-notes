@@ -5,6 +5,7 @@ export interface FilterInput {
   list: string[];
   predicate: string;
   onProgress?: (item: any, answer: "yes" | "no" | "error") => any;
+  isStopRequested?: () => boolean;
   isNegated?: boolean;
 }
 export interface FilterResult {
@@ -55,6 +56,12 @@ Output: `,
   for (const item of input.list) {
     try {
       const response = await context.getChat(getMessage(item), { max_tokens: 100, temperature: 0, ...promptConfig });
+      if (input.isStopRequested?.())
+        return {
+          yes,
+          no,
+          error,
+        };
       const responseText = response.choices[0].message.content ?? "";
       if (responseText.toLocaleLowerCase().includes("yes")) {
         input.onProgress?.(item, "yes");

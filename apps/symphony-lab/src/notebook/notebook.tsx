@@ -12,37 +12,43 @@ export interface NotebookProps {
 
 export interface NotebookCell {
   id: string;
-  stepSource: string;
+  editableDescription: string;
   stepDefinition: Step | null;
   title?: string;
   output?: any[];
 }
+
+let stopRequested = false;
 
 export function Notebook(props: NotebookProps) {
   const [cells, setCells] = useState<NotebookCell[]>([]);
 
   const handleSubmitDraftStep = useCallback(
     async (text: string) => {
+      stopRequested = false;
       const step = await analyzeStep(
         props.appContext,
         { stepDescription: text, previousSteps: cells.filter((cell) => cell.stepDefinition).map((cell) => cell.stepDefinition!) },
         { model: "v4-8k" }
       );
+
+      if (stopRequested) return;
+
       console.log("step analyzed", step);
       if (step?.chosenTool) {
         setCells((prev) => [
           ...prev,
           {
             id: crypto.randomUUID(),
-            stepSource: step.pseudoCode,
+            editableDescription: step.description,
             title: step.name,
             stepDefinition: step,
           },
         ]);
       } else if (step) {
-        setCells((prev) => [...prev, { id: crypto.randomUUID(), stepSource: text, title: step.name, stepDefinition: step }]);
+        setCells((prev) => [...prev, { id: crypto.randomUUID(), editableDescription: text, title: step.name, stepDefinition: step }]);
       } else {
-        setCells((prev) => [...prev, { id: crypto.randomUUID(), stepSource: text, title: "Error creating step", stepDefinition: null }]);
+        setCells((prev) => [...prev, { id: crypto.randomUUID(), editableDescription: text, title: "Error creating step", stepDefinition: null }]);
       }
     },
     [props.appContext, cells]
@@ -50,35 +56,33 @@ export function Notebook(props: NotebookProps) {
 
   const handleRegenerate = useCallback(
     async (id: string) => {
+      stopRequested = false;
       const cell = cells.find((cell) => cell.id === id);
       if (!cell) return;
+
       const step = await analyzeStep(
         props.appContext,
-        { stepDescription: cell.stepDefinition!.pseudoCode, previousSteps: cells.filter((cell) => cell.stepDefinition).map((cell) => cell.stepDefinition!) },
+        { stepDescription: cell.editableDescription, previousSteps: cells.filter((cell) => cell.stepDefinition).map((cell) => cell.stepDefinition!) },
         { model: "v4-8k" }
       );
+
+      if (stopRequested) return;
+
       console.log("step analyzed", step);
       if (step?.chosenTool) {
-        setCells((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            stepSource: `${step.chosenTool}(${JSON.stringify(step.toolInput)})`,
-            title: step.name,
-            stepDefinition: step,
-          },
-        ]);
-      } else if (step) {
-        setCells((prev) => [...prev, { id: crypto.randomUUID(), stepSource: cell.stepSource, title: step.name, stepDefinition: step }]);
-      } else {
-        setCells((prev) => [...prev, { id: crypto.randomUUID(), stepSource: cell.stepSource, title: "Error creating step", stepDefinition: null }]);
+        setCells((prev) =>
+          prev.map((prevCell) =>
+            prevCell.id === id ? { ...prevCell, editableDescription: step.description, title: step.name, stepDefinition: step } : prevCell
+          )
+        );
       }
     },
     [props.appContext, cells]
   );
 
   const deleteCell = useCallback((id: string) => setCells((prev) => prev.filter((cell) => cell.id !== id)), []);
-  const deleteAllCells = useCallback(() => setCells([]), []);
+  const handleDeleteAllCells = useCallback(() => setCells([]), []);
+  const handleClearAllCells = useCallback(() => setCells((prev) => prev.map((cell) => ({ ...cell, output: [] }))), []);
 
   const updateCell = useCallback(
     (id: string, update: Partial<NotebookCell>) => setCells((prev) => prev.map((cell) => (cell.id === id ? { ...cell, ...update } : cell))),
@@ -90,7 +94,7 @@ export function Notebook(props: NotebookProps) {
     []
   );
 
-  const handleStepChange = useCallback((id: string, step: string) => updateCell(id, { stepSource: step }), []);
+  const handleStepChange = useCallback((id: string, step: string) => updateCell(id, { editableDescription: step }), []);
   const handleClearCell = useCallback((id: string) => updateCell(id, { output: [] }), []);
 
   const { handleDraftStepBlur, handleDraftStepInput, handleDraftStepKeydown, startDrafting, draftStepInputRef, isDrafting, draftStepText } = useDraftStep({
@@ -130,6 +134,7 @@ export function Notebook(props: NotebookProps) {
           const result = await filter(props.appContext, {
             predicate,
             list: prevCellOutput,
+            isStopRequested: () => stopRequested,
             onProgress: (item, answer) => {
               updateCellOutput(id, (prevOutput) => [...prevOutput, `[${answer}] ${item}`]);
             },
@@ -146,9 +151,16 @@ export function Notebook(props: NotebookProps) {
   return (
     <div class="c-notebook">
       <menu>
-        <button>Run all</button>
-        <button>Clear all</button>
-        <button onClick={deleteAllCells}>Delete all</button>
+        <button disabled>Run all</button>
+        <button
+          onClick={() => {
+            stopRequested = true;
+          }}
+        >
+          Stop all
+        </button>
+        <button onClick={handleClearAllCells}>Clear all</button>
+        <button onClick={handleDeleteAllCells}>Delete all</button>
       </menu>
       <div class="cell-list">
         {cells.map((cell) => (
@@ -163,13 +175,13 @@ export function Notebook(props: NotebookProps) {
               <button onClick={() => deleteCell(cell.id)}>Delete</button>
             </menu>
 
-            <details class="step-io">
+            <details class="step-io" open={true}>
               <summary class="step-io__title">{cell.title ?? "New task"}</summary>
               <div class="step-io__body">
                 <label for={`task-${cell.id}-pseudo`}>Action</label>
                 <textarea
                   id={`task-${cell.id}-pseudo`}
-                  value={cell.stepDefinition?.pseudoCode}
+                  value={cell.editableDescription}
                   placeholder="What would you like to do?"
                   onInput={(e) => handleStepChange(cell.id, (e.target as HTMLTextAreaElement).value)}
                 ></textarea>

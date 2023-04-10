@@ -1,10 +1,10 @@
 export interface Step {
   name: string; // Summarize Task description into short name
   analysis: string; // Describe what goal of the task, the expected outcome
-  pseudoCode: string; // Precisely describe how the step works in natural language
   idealTool: string; // The ideal tool regardless of what is available for the step
   chosenTool: null | string; // Null means no tool matches the step. the string must be a key of Tools
   toolInput: Record<string, any>; // matches the input object
+  description: string; // Precisely state the chosen tool and input in natural language
 }
 
 export interface Tools {
