@@ -12,16 +12,18 @@ export interface Tools {
   // google: general search. The results cannot be trusted
   // wikipedia: good for factual information
   // arxiv: applied research papers
-  // ux_db: UX research reports on Microsoft products
-  search(input: { provider: "google" | "wikipedia" | "arxiv" | "ux_db"; query: string; limit: number; skip: number });
+  // hits: UX research reports on Microsoft products
+  search(input: { provider: "google" | "wikipedia" | "arxiv" | "hits"; query: string; limit: number; skip: number });
 
   // Use a predicate to filter the list from the previous step
-  // Predict is a Yes/No question to test each item.
+  // Predicate describes what items to keep
   // Items with Yes will be kept
-  filter_in(input: { predicate: string });
+  keep_by_filter(input: { predicate: string });
 
+  // Use a predicate to filter the list from the previous step
+  // Predicate describes what items to remove
   // Items with Yes will be removed
-  filter_out(input: { predicate: string });
+  remove_by_filter(input: { predicate: string });
 
   // Categorize information into provided number of groups. Labels will be derived from the result
   categorize_unsupervised(input: { categoryCount: number });

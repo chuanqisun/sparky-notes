@@ -27,11 +27,10 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]);
-// theoretical 300 for gpt 3.5, 10 for gpt 4
-app.post("/openai/chat", [rateLimit(200), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
-app.post("/openai/chat/v3.5-turbo", [rateLimit(200), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
-app.post("/openai/chat/v4-8k", [rateLimit(10), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K! })]);
-app.post("/openai/chat/v4-32k", [rateLimit(10), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K! })]);
+app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
+app.post("/openai/chat/v3.5-turbo", [rateLimit(300), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
+app.post("/openai/chat/v4-8k", [rateLimit(12), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K! })]);
+app.post("/openai/chat/v4-32k", [rateLimit(12), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K! })]);
 
 app.post("/web/search", [validateHitsToken, webSearch]);
 app.post("/web/crawl", [validateHitsToken, webCrawl]);

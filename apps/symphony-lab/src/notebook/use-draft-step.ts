@@ -9,7 +9,7 @@ export function useDraftStep(props: UseDraftTaskProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const handleKeydown = useCallback(
     (e: Event) => {
-      if (getCombo(e as KeyboardEvent) === "enter") {
+      if (getCombo(e as KeyboardEvent) === "ctrl+enter") {
         e.preventDefault();
         props?.onSubmit?.((e.target as HTMLTextAreaElement).value);
         setDraftStep({ isDrafting: false, text: "" });

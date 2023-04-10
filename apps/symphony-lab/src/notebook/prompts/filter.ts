@@ -18,12 +18,12 @@ export async function filter(context: NotebookAppContext, input: FilterInput, pr
     {
       role: "system",
       content: `
-User will provide you with a json object and a Yes/No predicate question. You provide the answer in a single word "Yes" or "No", with no additional explanation. For example:
+User will provide you with a json object and a predicate. You provide the answer in a single word "Yes" or "No", with no additional explanation. For example:
 Input:
 \`\`\`json
 {
   "object": {"name": "pizza"},
-  "predicateQuestion": "Is it food?"
+  "predicateQuestion": "Food items"
 }
 Output: Yes
 
@@ -31,7 +31,7 @@ Input:
 \`\`\`json
 {
   "object": {"concept": "puzzy"},
-  "predicateQuestion": "Is it a plant?"
+  "predicateQuestion": "Animal"
 }
 Output: No`,
     },
