@@ -31,12 +31,15 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
             {EntityIconComponent[node.entityType]()}
             <div class="hits-item__text">
               <span class={`hits-item__title ${isParent ? "hits-item__title--parent" : ""}`} dangerouslySetInnerHTML={{ __html: node.titleHtml }} />{" "}
-              {isParent && (
+              {isParent ? (
                 <>
                   {node.researchers && <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: node.researchersHtml }} />}
+                  &nbsp;· <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: node.idHtml }} />
                   &nbsp;· <span class="hits-item__meta-field">{node.updatedOn.toLocaleDateString()}</span>
                 </>
-              )}
+              ) : !isParent && node.id !== node.idHtml ? (
+                <span class="hits-item__meta-field" dangerouslySetInnerHTML={{ __html: node.idHtml }} />
+              ) : null}
             </div>
           </article>
         </button>

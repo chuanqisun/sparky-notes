@@ -24,7 +24,7 @@ export interface SearchResultItem {
   highlights: null | Record<HighlightableField, string[] | undefined>;
 }
 
-export type HighlightableField = "title" | "contents" | "children/Title" | "children/Contents" | "researchers/Name";
+export type HighlightableField = "id" | "title" | "contents" | "children/Id" | "children/Title" | "children/Contents" | "researchers/Name";
 
 export interface SearchResultDocument {
   id: string;

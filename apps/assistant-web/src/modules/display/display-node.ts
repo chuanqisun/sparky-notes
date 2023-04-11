@@ -7,6 +7,7 @@ export interface HitsDisplayNode {
   children: HitsDisplayChildNode[];
   entityType: number;
   id: string;
+  idHtml: string;
   title: string;
   researchers: {
     id: number;
@@ -20,6 +21,7 @@ export interface HitsDisplayChildNode {
   entityType: number;
   hasHighlight: boolean;
   id: string;
+  idHtml: string;
   isNative: boolean;
   title: string;
   titleHtml: string;
@@ -28,18 +30,21 @@ export interface HitsDisplayChildNode {
 export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNode {
   const { document, highlights } = searchResult;
 
+  const idHighlightWords = [...new Set([...(highlights?.id ?? []), ...(highlights?.["children/Id"] ?? [])]?.flatMap(extractBoldElements))];
   const titleHighlightWords = [...new Set((highlights?.title ?? [])?.flatMap(extractBoldElements))];
   const childTitleHighlightWords = [...new Set((highlights?.["children/Title"] ?? [])?.flatMap(extractBoldElements))];
-  const researcherWods = [...new Set((highlights?.["researchers/Name"] ?? [])?.flatMap(extractBoldElements))];
+  const researcherWords = [...new Set((highlights?.["researchers/Name"] ?? [])?.flatMap(extractBoldElements))];
   const title = document.title.length ? document.title : "Untitled";
   const researchers = document.researchers.map(withDisplayName);
   const researchersString = researchers.map((r) => r.displayName).join(", ");
-  const researchersHtml = getHighlightHtml(researcherWods, ["<mark>", "</mark>"], researchersString) ?? escapeHtml(researchersString);
+  const researchersHtml = getHighlightHtml(researcherWords, ["<mark>", "</mark>"], researchersString) ?? escapeHtml(researchersString);
+  const idHtml = getHighlightHtml(idHighlightWords, ["<mark>", "</mark>"], document.id) ?? document.id;
 
   return {
     title,
     titleHtml: getHighlightHtml(titleHighlightWords, ["<mark>", "</mark>"], document.title) ?? escapeHtml(title),
     id: document.id,
+    idHtml: idHtml,
     entityType: document.entityType,
     updatedOn: getUpdatedOn(document),
     researchers,
@@ -50,12 +55,14 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
       .map((claim) => {
         const childTitle = claim.title?.trim()?.length ? claim.title.trim() : "Untitled";
         const childTitleHtml = getHighlightHtml(childTitleHighlightWords, ["<mark>", "</mark>"], childTitle) ?? escapeHtml(childTitle);
+        const childIdHtml = getHighlightHtml(idHighlightWords, ["<mark>", "</mark>"], claim.id) ?? claim.id;
 
         return {
           title: childTitle,
           titleHtml: childTitleHtml,
-          hasHighlight: childTitle !== childTitleHtml,
           id: claim.id,
+          idHtml: childIdHtml,
+          hasHighlight: childTitle !== childTitleHtml || claim.id !== childIdHtml,
           entityType: claim.entityType,
           isNative: claim.isNative,
         };
