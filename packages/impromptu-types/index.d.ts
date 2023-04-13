@@ -14,6 +14,7 @@ export interface MessageToFigma {
   clear?: boolean;
   createProgram?: string;
   hitsConfig?: HitsConfig;
+  importTextFile?: ImportTextFileConfig;
   programConfigChanged?: ProgramConfigSummary;
   requestDataNodeSynthesis?: SynthesisRequest;
   runSelected?: {
@@ -64,6 +65,11 @@ export interface ProgramConfigSummary {
 
 export interface HitsConfig {
   accessToken: string;
+}
+
+export interface ImportTextFileConfig {
+  type: string;
+  text: string;
 }
 
 export interface OpenAIConnection {

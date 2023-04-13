@@ -1,7 +1,9 @@
 import { MessageToFigma } from "@impromptu/types";
 import { ArxivSearchProxy, getArxivSearchProxy } from "./arxiv/search";
-import { getSearchProxy, SearchProxy } from "./hits/proxy";
+import { SearchProxy, getSearchProxy } from "./hits/proxy";
 import { getSynthesis } from "./hits/synthesis";
+import { importTextFile } from "./import/import";
+import { ChatProxy, getChatResponse, modelToEndpoint } from "./openai/chat";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
 import { AnswerProgram } from "./programs/answer";
@@ -10,7 +12,7 @@ import { CategorizeProgram } from "./programs/categorize";
 import { CollectProgram } from "./programs/collect";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
-import { filterToProgramNode, findMatchedProgram, Program, ProgramContext, PROGRAME_NAME_KEY, ReflectionContext } from "./programs/program";
+import { PROGRAME_NAME_KEY, Program, ProgramContext, ReflectionContext, filterToProgramNode, findMatchedProgram } from "./programs/program";
 import { RelateProgram } from "./programs/relate";
 import { ResearchInsightsProgram } from "./programs/research-insights";
 import { ResearchRecommendationsProgram } from "./programs/research-recommendations";
@@ -20,7 +22,7 @@ import { TemplateProgram } from "./programs/template";
 import { ThemeProgram } from "./programs/theme";
 import { WebBrowseProgram } from "./programs/web-browse";
 import { WebSearchProgram } from "./programs/web-search";
-import { emptySections, joinWithConnector, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
+import { createTargetNodes, emptySections, joinWithConnector, moveStickiesToSection, moveToDownstreamPosition, moveToUpstreamPosition } from "./utils/edit";
 import { AdhocEventLoop, EventLoop } from "./utils/event-loop";
 import { ensureStickyFont } from "./utils/font";
 import { getExecutionOrder, getNextNodes, getPrevNodes } from "./utils/graph";
@@ -37,8 +39,8 @@ import {
   getSelectedStickies,
 } from "./utils/selection";
 import { moveToViewportCenter, zoomToFit } from "./utils/viewport";
-import { getWebCrawlProxy, WebCrawlProxy } from "./web/crawl";
-import { getWebSearchProxy, WebSearchProxy } from "./web/search";
+import { WebCrawlProxy, getWebCrawlProxy } from "./web/crawl";
+import { WebSearchProxy, getWebSearchProxy } from "./web/search";
 
 console.log(`Impromptu timestamp`, process.env.VITE_TIMESTAMP);
 
@@ -48,6 +50,7 @@ let fontInitPromise = ensureStickyFont();
 
 let arxivSearch: ArxivSearchProxy;
 let completion!: CompletionProxy;
+let chat!: ChatProxy;
 let hitsSearch!: SearchProxy;
 let webSearch: WebSearchProxy;
 let webCrawl: WebCrawlProxy;
@@ -276,12 +279,31 @@ const handleUIMessage = async (message: MessageToFigma) => {
     figma.currentPage.selection = allNewNodes;
   }
 
+  if (message.importTextFile) {
+    const lineCount = message.importTextFile.text.split("\n").length;
+    replaceNotification(`Converting... (about ${Math.ceil(lineCount / 1.4)} seconds)`, { timeout: Infinity });
+    console.log("Importing", message.importTextFile);
+    importTextFile(chat, message.importTextFile)
+      .then((results) => {
+        const container = createTargetNodes(["Imported"])[0];
+        for (const result of results) {
+          const sticky = figma.createSticky();
+          sticky.text.characters = result;
+          moveStickiesToSection([sticky], container);
+        }
+
+        replaceNotification("✅ Successfully imported");
+      })
+      .catch((e) => replaceNotification(`Import failed: ${(e as any).name} ${(e as any).message}`));
+  }
+
   if (message.hitsConfig) {
+    arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
+    chat = (messages, config) => getChatResponse(message.hitsConfig!.accessToken, modelToEndpoint(config.model), messages, config);
     completion = getCompletionProxy(message.hitsConfig.accessToken, logger);
     hitsSearch = getSearchProxy(message.hitsConfig.accessToken, logger);
-    webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
-    arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
+    webSearch = getWebSearchProxy(message.hitsConfig.accessToken, logger);
   }
 
   if (message.requestDataNodeSynthesis) {

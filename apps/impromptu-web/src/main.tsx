@@ -1,4 +1,5 @@
 import type { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
+import GPT3Tokenizer from "gpt3-tokenizer";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
@@ -72,6 +73,36 @@ function App() {
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
 
+  const [importingStatus, setImportingStatus] = useState("");
+  // Import UX
+  const handleImportFileSelection = useCallback(async (e: Event) => {
+    const textFile = [((e.target as HTMLInputElement).files ?? [])[0]].filter(
+      (file) => file.type.startsWith("text") || file.type.startsWith("application/json")
+    )[0];
+
+    if (!textFile) return;
+
+    (e.target as HTMLInputElement).value = "";
+
+    setImportingStatus("Tokenizing...");
+    const importedFile = {
+      type: textFile.type,
+      content: await textFile.text(),
+    };
+
+    setImportingStatus("");
+
+    const tokenizer = new GPT3Tokenizer({ type: "gpt3" });
+    const tokenCount = tokenizer.encode(importedFile.content).bpe.length;
+    // chunk the file and exit early when token exceeds limit
+    if (tokenCount > 3000) {
+      setImportingStatus(`Error: Too many tokens (${tokenCount} found, 3000 max)`);
+      return; // TO many tokens
+    }
+
+    notifyFigma({ importTextFile: { text: importedFile.content, type: importedFile.type } });
+  }, []);
+
   return (
     <main>
       {isConnected && (
@@ -117,6 +148,11 @@ function App() {
               <button data-program="web-browse">Web browse</button>
               <button data-program="web-search">Web search</button>
             </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Import</legend>
+            <input id="import-file" type="file" accept="text/plain, text/csv" onInput={handleImportFileSelection} />
+            {importingStatus}
           </fieldset>
           <fieldset>
             <legend>Export</legend>
