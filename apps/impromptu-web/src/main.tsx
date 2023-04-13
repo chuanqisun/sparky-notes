@@ -138,6 +138,7 @@ function App() {
               <button data-program="collect">Collect</button>
               <button data-program="completion">Completion</button>
               <button data-program="filter">Filter</button>
+              <button data-program="join">Join</button>
               <button data-program="relate">Relate</button>
               <button data-program="research-insights">Research Insights</button>
               <button data-program="research-recommendations">Research Recommendations</button>

@@ -12,6 +12,7 @@ import { CategorizeProgram } from "./programs/categorize";
 import { CollectProgram } from "./programs/collect";
 import { CompletionProgram } from "./programs/completion";
 import { FilterProgram } from "./programs/filter";
+import { JoinProgram } from "./programs/join";
 import { PROGRAME_NAME_KEY, Program, ProgramContext, ReflectionContext, filterToProgramNode, findMatchedProgram } from "./programs/program";
 import { RelateProgram } from "./programs/relate";
 import { ResearchInsightsProgram } from "./programs/research-insights";
@@ -63,6 +64,7 @@ const programs: Program[] = [
   new CollectProgram(),
   new CompletionProgram(),
   new FilterProgram(),
+  new JoinProgram(),
   new RelateProgram(),
   new ResearchInsightsProgram(),
   new ResearchRecommendationsProgram(),

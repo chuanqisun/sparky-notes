@@ -1,11 +1,13 @@
 import { ArxivSearchProxy } from "../arxiv/search";
 import { SearchProxy } from "../hits/proxy";
+import { ChatProxy } from "../openai/chat";
 import { CompletionProxy } from "../openai/completion";
 import { WebCrawlProxy } from "../web/crawl";
 import { WebSearchProxy } from "../web/search";
 
 export interface ProgramContext {
   arxivSearch: ArxivSearchProxy;
+  chat: ChatProxy;
   completion: CompletionProxy;
   hitsSearch: SearchProxy;
   webCrawl: WebCrawlProxy;
