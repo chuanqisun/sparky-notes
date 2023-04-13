@@ -1,3 +1,6 @@
+import { CompletionInfoItem } from "@impromptu/types";
+import { Logger } from "../utils/logger";
+
 export interface OpenAIChatPayload {
   messages: ChatMessage[];
   temperature: number;
@@ -57,7 +60,8 @@ export async function getChatResponse(
   accessToken: string,
   endpoint: string,
   messages: ChatMessage[],
-  config?: Partial<OpenAIChatPayload>
+  config?: Partial<OpenAIChatPayload>,
+  logger?: Logger
 ): Promise<OpenAIChatResponse> {
   const payload = {
     messages,
@@ -85,6 +89,13 @@ export async function getChatResponse(
       messages: payload.messages,
       response: result,
       topChoice: result.choices[0].message?.content ?? "",
+      tokenUsage: result.usage.total_tokens,
+    });
+
+    logger?.log<CompletionInfoItem>({
+      title: `Chat ${result.usage.total_tokens} tokens`,
+      prompt: payload.messages.map((m) => `${m.role}: ${m.content}`).join("\n"),
+      completion: `\n\nassistant: ${result.choices[0].message.content ?? ""}`,
       tokenUsage: result.usage.total_tokens,
     });
 

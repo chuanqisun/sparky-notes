@@ -16,7 +16,7 @@ export class JoinProgram implements Program {
   public name = "join";
 
   public getSummary(node: FrameNode) {
-    return `Joining with relation "${getFieldByLabel("Relation", node)!.value.characters}"...`;
+    return `Joining "${getFieldByLabel("Relation", node)!.value.characters}"...`;
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
@@ -67,44 +67,55 @@ export class JoinProgram implements Program {
       setFillColor(stickyColors.Green, newKeyNode);
       moveStickiesToSectionNewLine([newKeyNode], targetSection);
 
-      for (const valueNode of valueNodes) {
-        const messages: ChatMessage[] = [
-          {
-            role: "system",
-            content: `Help the user test if relationship exists between Text A and Text. First, respond with reason, then respond with Yes/No. e.g.
-User: 
-Text A: Food
-Text B: Human
-Relation: can be consumed by
-
-You: 
-Reason: Human eats food
-Answer: Yes
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content: `You help the user test if a given relation holds true from a concept to the provided options. Respond with a json array of matched indices. When there is no match, response with []. For example
 
 User:
-Text A: Page
-Text B: Book
-Relation: contains
+Concept: Food
+Relation: can be consumed by
+Options:
+1. Human
+3. Car
+4. Computer
+5. Cat
+6. Plants
 
-You:
-Reason: Page is contained by the Book, not the opposite
-Answer: No`,
-          },
-          {
-            role: "user",
-            content: `
-Text A: ${combineWhitespace(`${keyNode.text.characters} ${keyNode.getPluginData("shortContext")}`)}
-Text B: ${combineWhitespace(`${valueNode.text.characters} ${valueNode.getPluginData("shortContext")}`)}
-Relation: ${getFieldByLabel("Relation", node)!.value.characters}`,
-          },
-        ];
+You: [1,5]
 
-        replaceNotification(`Joining "${shortenToWordCount(5, keyNode.text.characters)}" with "${shortenToWordCount(5, valueNode.text.characters)}"`);
-        const fullResponse = ((await context.chat(messages, { max_tokens: 500 })).choices[0].message.content ?? "").trim();
+User:
+Concept: Pen
+Relation: is bigger than
+Options:
+1. Paper
+2. Tree
+3. PC
 
-        if (context.isAborted() || context.isChanged()) return;
+You: []`,
+        },
+        {
+          role: "user",
+          content: `
+Concept: ${combineWhitespace(keyNode.text.characters)}
+Relation: ${getFieldByLabel("Relation", node)!.value.characters}
+Options:
+${valueNodes.map((valueNode, index) => `${index + 1}. ${combineWhitespace(`${valueNode.text.characters}`)}`).join("\n")}`.trim(),
+        },
+      ];
 
-        if (fullResponse.match(/Answer\:\sYes/im)) {
+      replaceNotification(`Evaluting "${shortenToWordCount(5, keyNode.text.characters)} ${getFieldByLabel("Relation", node)!.value.characters}?"`, {
+        timeout: Infinity,
+      });
+      const fullResponse = ((await context.chat(messages, { max_tokens: 500, temperature: 0.25, model: "v4-8k" })).choices[0].message.content ?? "").trim();
+
+      if (context.isAborted() || context.isChanged()) return;
+
+      try {
+        const answerPositions = JSON.parse(fullResponse.match(/(\[.*?\])/)?.[1] ?? "[]");
+        const selectedValueNodes = answerPositions.map((position: number) => valueNodes[position - 1]).filter(Boolean);
+
+        for (const valueNode of selectedValueNodes) {
           const combinedSticky = valueNode.clone();
           combinedSticky.text.characters = valueNode.text.characters;
 
@@ -113,6 +124,9 @@ Relation: ${getFieldByLabel("Relation", node)!.value.characters}`,
           setFillColor(stickyColors.Yellow, combinedSticky);
           moveStickiesToSectionNoWrap([combinedSticky], targetSection);
         }
+      } catch (e) {
+        replaceNotification("Error joining stickies. Please adjust the relation and try again", { error: true });
+        return;
       }
     }
   }

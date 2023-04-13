@@ -168,6 +168,7 @@ const handleEventLoopTick = async (context: EventLoopContext, eventLoop: EventLo
     const programContext: ProgramContext = {
       sourceNodes: getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION")),
       arxivSearch,
+      chat,
       hitsSearch,
       completion,
       webCrawl,
@@ -301,7 +302,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
 
   if (message.hitsConfig) {
     arxivSearch = getArxivSearchProxy(message.hitsConfig.accessToken, logger);
-    chat = (messages, config) => getChatResponse(message.hitsConfig!.accessToken, modelToEndpoint(config.model), messages, config);
+    chat = (messages, config) => getChatResponse(message.hitsConfig!.accessToken, modelToEndpoint(config.model), messages, config, logger);
     completion = getCompletionProxy(message.hitsConfig.accessToken, logger);
     hitsSearch = getSearchProxy(message.hitsConfig.accessToken, logger);
     webCrawl = getWebCrawlProxy(message.hitsConfig.accessToken, logger);
@@ -349,6 +350,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
         sourceNodes: getPrevNodes(currentNode).filter(filterToType<SectionNode>("SECTION")),
         arxivSearch,
         hitsSearch,
+        chat,
         completion,
         webCrawl,
         webSearch,
