@@ -207,6 +207,14 @@ function App() {
           </div>
         )}
       </fieldset>
+      {isConnected === true && (
+        <fieldset>
+          <legend>Help</legend>
+          <a target="_blank" href="https://www.figma.com/file/DO4WmH5XhvczYeYnC24AXk/Impromptu-User-Guide">
+            User guide
+          </a>
+        </fieldset>
+      )}
     </main>
   );
 }
