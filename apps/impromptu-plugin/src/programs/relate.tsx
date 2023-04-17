@@ -70,7 +70,7 @@ export class RelateProgram implements Program {
           {
             role: "system",
             content:
-              'You help user identify relationship between concepts. The user will provide you two concepts such that there exists a relation from Concept A to concept B. You will respond with the relation or "N/A"',
+              'You help user identify relationship between concepts. The user will provide you Concept A and concept B. You will check if there exists a relation from Concept A to Concept B. You will respond with the relation or "N/A" when there is no significant relation',
           },
           {
             role: "user",
@@ -94,6 +94,21 @@ Concept B details: ...
           {
             role: "assistant",
             content: `N/A`,
+          },
+          {
+            role: "user",
+            content: `
+Concept A: Global warming
+Concept A details: ...
+Concept B: Space travel
+Concept B details: ...
+    `,
+          },
+          {
+            role: "assistant",
+            content: `N/A
+However, Global Warming and Space travel might be indirectly connected. The rocket fuel that Space travel consumes could be the cause of Global warming
+            `,
           },
           {
             role: "user",
