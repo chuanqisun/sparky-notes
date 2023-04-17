@@ -1,5 +1,5 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
 import { Description, FormTitle, getTextByContent } from "../utils/form";
@@ -64,63 +64,67 @@ export class RelateProgram implements Program {
       moveStickiesToSectionNewLine([newKeyNode], targetSection);
 
       for (const valueNode of valueNodes) {
-        const prompt = `
-Read the Left-side text and the Right-side text. Answer the following question.
-
-Left-side text: ${combineWhitespace(`${keyNode.text.characters} ${keyNode.getPluginData("shortContext")}`)}
-
-Right-side text: ${combineWhitespace(`${valueNode.text.characters} ${valueNode.getPluginData("shortContext")}`)}
-
-Question: Is the Left-side text closely related to the Right-side text?
-Answer (Yes/No): `;
-
         replaceNotification(`Relating "${shortenToWordCount(5, keyNode.text.characters)}" with "${shortenToWordCount(5, valueNode.text.characters)}"`);
-        const binaryAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 3 })).choices[0].text.trim();
+
+        const messages: ChatMessage[] = [
+          {
+            role: "system",
+            content:
+              'You help user identify relationship between concepts. The user will provide you two concepts such that there exists a relation from Concept A to concept B. You will respond with the relation or "N/A"',
+          },
+          {
+            role: "user",
+            content: `
+Concept A: Homeless problem in Seattle
+Concept A details: ...
+Concept B: Racial justice for low income population
+Concept B details: ...
+    `,
+          },
+          { role: "assistant", content: "Homeless problem can be the result of the lack of Racial justice" },
+          {
+            role: "user",
+            content: `
+Concept A: Homeless problem in Seattle
+Concept A details: ...
+Concept B: Surfing is fun
+Concept B details: ...
+    `,
+          },
+          {
+            role: "assistant",
+            content: `N/A`,
+          },
+          {
+            role: "user",
+            content: `
+Concept A: ${combineWhitespace(`${keyNode.text.characters}`)}
+Concept A details: ${combineWhitespace(`${keyNode.getPluginData("shortContext")}`)}
+Concept B: ${combineWhitespace(`${valueNode.text.characters}`)}
+Concept B details: ${combineWhitespace(`${valueNode.getPluginData("shortContext")}`)}
+    `,
+          },
+        ];
+
+        const fullAnswer = (await context.chat(messages, { max_tokens: 300 })).choices[0].message.content?.trim() ?? "N/A";
 
         if (context.isAborted() || context.isChanged()) return;
 
-        if (binaryAnswer.toLocaleLowerCase().includes("no")) {
-          const combinedSticky = figma.createSticky();
-          combinedSticky.text.characters = `=== Right-side ===
+        const isRealted = !fullAnswer.includes("N/A");
+
+        const combinedSticky = valueNode.clone();
+        combinedSticky.text.characters = `=== Right-side ===
 
 ${valueNode.text.characters}
 
-=== Not related ===
-`;
-
-          const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
-          if (!targetSection) return;
-          setFillColor(stickyColors.LightGray, combinedSticky);
-          moveStickiesToSectionNoWrap([combinedSticky], targetSection);
-        } else {
-          const followupPrompt = `
-Read the Left-side text and the Right-side text. Answer the following question about the relations between the two texts.
-
-Left-side text: ${combineWhitespace(`${keyNode.text.characters} ${keyNode.getPluginData("shortContext")}`)}
-
-Right-side text: ${combineWhitespace(`${valueNode.text.characters} ${valueNode.getPluginData("shortContext")}`)}
-
-Question: The Left-side text and Right-side text are closely related, what is the relation in short?
-Answer: `;
-
-          const fullAnswer = (await getCompletion(context.completion, followupPrompt, { max_tokens: 100 })).choices[0].text.trim();
-
-          if (context.isAborted() || context.isChanged()) return;
-
-          const combinedSticky = valueNode.clone();
-          combinedSticky.text.characters = `=== Right-side ===
-
-${valueNode.text.characters}
-
-=== Related ===
+${isRealted ? "=== Related ===" : "=== Not related==="}
 
 ${fullAnswer}`;
 
-          const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
-          if (!targetSection) return;
-          setFillColor(stickyColors.Green, combinedSticky);
-          moveStickiesToSectionNoWrap([combinedSticky], targetSection);
-        }
+        const targetSection = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+        if (!targetSection) return;
+        setFillColor(isRealted ? stickyColors.Green : stickyColors.LightGray, combinedSticky);
+        moveStickiesToSectionNoWrap([combinedSticky], targetSection);
       }
     }
   }
