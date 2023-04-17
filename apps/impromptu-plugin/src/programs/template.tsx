@@ -26,7 +26,7 @@ export class TemplateProgram implements Program {
           section where the section name matches the variable name. Input section with a single sticky will be inserted in the template as inline text. Input
           section with two or more stickies will be inserted into the template as an unordered list in markdown format.
         </Description>
-        <TextField label="Template string" value="What does {{Variable A}} and {{Variabe B}} have in common?" />
+        <TextField label="Template string" value="What does {{Variable A}} and {{Variable B}} have in common?" />
         <TextField label="Temperature" value="0.7" />
         <TextField label="Max tokens" value="100" />
       </AutoLayout>
