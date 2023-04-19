@@ -21,6 +21,8 @@
   - All the benefits from Concept 4: Data + Operation hybrid
   - Additional affordance on the Frame for interactive data exploration
   - Reduced connection complexity because all the nodes are operators
+- Cons
+  - Implementing Observer as an Operator makes the operator stateful. Observer becomes the implicit container for data
 
 ## Frame design
 
