@@ -1,5 +1,3 @@
-You are a programming expert with heavy influenced from Functional Programming and Bret Victor. You have designed the following visual programming system for UX researchers. Based the on the system design, answer the questions from a real UX researcher who is reviewing your design.
-
 # A Visual programing, reasoning, and analysis IDE for UX researchers
 
 ## Mental Model
@@ -12,24 +10,49 @@ You are a programming expert with heavy influenced from Functional Programming a
   - Pipeline: a pipeline may compose other Pipelines
 - Workspace: a set of disjoint Pipelines
 
-## Operation types
-
-- Create: create a new Frame from any unframed data
-- Transform: create a new Frame from an existing Frame of data
-- Fork: creates multiple Frames of data from an existing Frame of data
-- Join: creates a single Frame of data from multiple existing Frames of data
-
 ## Visual representation
-
-### Chosen concept: Operation first, Data as Operation
 
 - Affordance
   - Node is Operator
-  - Frame is special Observer Operator
+  - Frame is Operator
+  - Observer is implemented as an Operator too
+  - Link is the connection from Node to Node
 - Pros
   - All the benefits from Concept 4: Data + Operation hybrid
   - Additional affordance on the Frame for interactive data exploration
   - Reduced connection complexity because all the nodes are operators
+
+## Frame design
+
+- Flexible Underlying data structure
+  - Plaintext, list, table, or graph
+- Universal query interface
+  - Schema reflection
+  - Precise: GraphQL like structural query on JSON
+  - Fuzzy: Keyword search and embedding based search
+  - With pagination
+  - Iteratable
+- Immutable by nature, Operator should create new Frame instead of mutating existing Frames
+  - Replace the need for mutation with the composition of Query and Construction
+- Universal construction interface
+
+## Operator design
+
+- Create: create a new Frame from any unframed data (fp e.g. lift)
+- Transform: create a new Frame from an existing Frame of data (fp e.g. map)
+- Fork: creates multiple Frames of data from an existing Frame of data
+- Join: creates a single Frame of data from multiple existing Frames of data
+- Observe: provide a specific view of the data without changing the Frame or the data (tap)
+
+## Example workflow for UX Researcher
+
+## Appendix I. Issues with Impromptu
+
+- Sizing change of data sections, forcing the user to adopt a linear layout
+- Impossible to work with dynamically generated sections and retain reuseability
+- Stickies afford at most two dimensions. The higher the dimension, the less the interoperability
+
+## Appendix II. Alternative visual representations
 
 ### Concept 1: Data first
 
@@ -55,7 +78,7 @@ You are a programming expert with heavy influenced from Functional Programming a
   - Difficult to implement Fork and Join Operators beyond simple cloning and merging
   - Difficult to represent the heads and tails of the Pipelines
 
-### Concept 4: Data + Operation closed semantics
+### Concept 3: Data + Operation closed semantics
 
 - Affordance
   - Node is either a Frame, an Operator, or an Observer
@@ -84,13 +107,3 @@ You are a programming expert with heavy influenced from Functional Programming a
 - Con
   - Most difficult to implement
   - Most difficult to learn
-
-## Example workflow for UX Researcher
-
-## Appendix
-
-### Issues with Impromptu
-
-- Sizing change of data sections, forcing the user to adopt a linear layout
-- Impossible to work with dynamically generated sections and retain reuseability
-- Stickies afford at most two dimensions. The higher the dimension, the less the interoperability
