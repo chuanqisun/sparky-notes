@@ -14,15 +14,15 @@
 
 - Affordance
   - Node is Operator
-  - Frame is Operator
-  - Observer is implemented as an Operator too
+  - Frame is contained in Node
+  - Observer is special type of Operator for human readability
   - Link is the connection from Node to Node
 - Pros
-  - All the benefits from Concept 4: Data + Operation hybrid
-  - Additional affordance on the Frame for interactive data exploration
-  - Reduced connection complexity because all the nodes are operators
+  - Clear ownership of data (it belongs to the operator)
+  - Simple UX with Node and Connection
 - Cons
-  - Implementing Observer as an Operator makes the operator stateful. Observer becomes the implicit container for data
+  - All operators are stateful
+  - Fork requires pre-fork selector
 
 ## Frame design
 
@@ -108,3 +108,17 @@
 - Con
   - Most difficult to implement
   - Most difficult to learn
+
+### Concept 5: Data is Operator
+
+- Affordance
+  - Node is Operator
+  - Frame is Operator
+  - Observer is implemented as an Operator too
+  - Link is the connection from Node to Node
+- Pros
+  - All the benefits from Concept 4: Data + Operation hybrid
+  - Additional affordance on the Frame for interactive data exploration
+  - Reduced connection complexity because all the nodes are operators
+- Cons
+  - Implementing Observer as an Operator makes the operator stateful. Observer becomes the implicit container for data
