@@ -21,6 +21,16 @@ You are a programming expert with heavy influenced from Functional Programming a
 
 ## Visual representation
 
+### Chosen concept: Operation first, Data as Operation
+
+- Affordance
+  - Node is Operator
+  - Frame is special Observer Operator
+- Pros
+  - All the benefits from Concept 4: Data + Operation hybrid
+  - Additional affordance on the Frame for interactive data exploration
+  - Reduced connection complexity because all the nodes are operators
+
 ### Concept 1: Data first
 
 - Affordance
@@ -76,3 +86,11 @@ You are a programming expert with heavy influenced from Functional Programming a
   - Most difficult to learn
 
 ## Example workflow for UX Researcher
+
+## Appendix
+
+### Issues with Impromptu
+
+- Sizing change of data sections, forcing the user to adopt a linear layout
+- Impossible to work with dynamically generated sections and retain reuseability
+- Stickies afford at most two dimensions. The higher the dimension, the less the interoperability
