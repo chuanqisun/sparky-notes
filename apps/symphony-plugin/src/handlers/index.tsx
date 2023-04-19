@@ -1,5 +1,6 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
+import { DebugNode } from "../components/debug-node";
 import { ActionNode, ObservationNode, ThoughtNode } from "../components/program-node";
 import { getFieldByLabel } from "../components/text-field";
 import { ChangeTracker } from "../utils/change-tracker";
@@ -35,6 +36,22 @@ export type Handler = (context: HandlerContext, message: MessageToFigma) => any;
 export interface HandlerContext {
   webProxy: WebProxy<MessageToWeb, MessageToFigma>;
 }
+
+export const onNotifyCreateDebugOperator: Handler = async (context, message) => {
+  if (!message.notifyCreateDebugOperator) return;
+
+  console.log(message.notifyCreateDebugOperator);
+
+  const node = $([
+    await figma.createNodeFromJSXAsync(<DebugNode sourceCode={JSON.stringify({ ...message.notifyCreateDebugOperator, data: {} })} />),
+  ]).setPluginData({
+    type: "operator",
+    subtype: message.notifyCreateDebugOperator.name,
+    data: JSON.stringify({}),
+  });
+
+  node.appendTo(figma.currentPage);
+};
 
 export const onShowNotification: Handler = (_context, message) => {
   if (!message.showNotification) return;

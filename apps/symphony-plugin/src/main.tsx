@@ -1,6 +1,7 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import {
+  onNotifyCreateDebugOperator,
   onSelectionChange,
   onShowNotification,
   onWebClientStarted,
@@ -28,6 +29,7 @@ async function handleMessage(message: MessageToFigma) {
     webProxy,
   };
 
+  onNotifyCreateDebugOperator(context, message);
   onShowNotification(context, message);
   onWebClientStarted(context, message);
   respondCreateProgram(context, message);

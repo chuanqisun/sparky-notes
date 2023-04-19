@@ -9,6 +9,7 @@ export interface MessageToWeb {
 
 // messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
+  notifyCreateDebugOperator?: CreateDebugOperatorInput;
   requestAmbientPrograms?: ViewportNodesInput;
   requestContextPath?: string; // includes nodes before and above the selected node
   requestCreateProgram?: CreateProgramInput;
@@ -25,6 +26,12 @@ export interface MessageToFigma {
     };
   };
   webClientStarted?: boolean;
+}
+
+export interface CreateDebugOperatorInput {
+  name: string;
+  config: any;
+  data: any;
 }
 
 export interface GraphSelection {

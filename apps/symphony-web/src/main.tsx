@@ -48,13 +48,15 @@ function App() {
     figmaProxy.notify({ webClientStarted: true });
   }, []);
 
-  const handleCreateNode = useCallback(
-    async (e: Event) => {
-      e.preventDefault();
-      console.log("submit");
-    },
-    [runContext, selectedPrograms]
-  );
+  const handleCreateNode = useCallback(async () => {
+    figmaProxy.notify({
+      notifyCreateDebugOperator: {
+        name: "fileUpload",
+        config: {},
+        data: null,
+      },
+    });
+  }, [runContext, selectedPrograms]);
 
   return (
     <main>
