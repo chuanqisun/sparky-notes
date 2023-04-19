@@ -26,12 +26,11 @@
 
 - Flexible Underlying data structure
   - Plaintext, list, table, or graph
-- Universal query interface
-  - Schema reflection
-  - Precise: GraphQL like structural query on JSON
-  - Fuzzy: Keyword search and embedding based search
-  - With pagination
-  - Iteratable
+- Universal traits
+  - Iterable (required)
+  - Schema reflectable (required)
+  - Structural queryable (optional)
+  - Embedding queryable (optional)
 - Immutable by nature, Operator should create new Frame instead of mutating existing Frames
   - Replace the need for mutation with the composition of Query and Construction
 - Universal construction interface
