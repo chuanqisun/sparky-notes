@@ -50,15 +50,19 @@ function App() {
     figmaProxy.notify({ webClientStarted: true });
   }, []);
 
-  const handleCreateNode = useCallback(() => {
-    figmaProxy.notify({
-      createDebugOperator: {
-        name: "File",
-        config: "{}",
-        data: "",
-      },
-    });
-  }, [runContext, selectedOperators]);
+  const handleCreateNode = useCallback(
+    (name: string, config: string, data: string) => {
+      figmaProxy.notify({
+        createDebugOperator: {
+          parentIds: selectedOperators.map((operator) => operator.id),
+          name,
+          config,
+          data,
+        },
+      });
+    },
+    [runContext, selectedOperators]
+  );
 
   const handleRunNode = useCallback(async () => {
     for (const operator of selectedOperators) {
@@ -115,7 +119,8 @@ function App() {
           <fieldset>
             <legend>Add</legend>
             <menu>
-              <button onClick={handleCreateNode}>File</button>
+              <button onClick={() => handleCreateNode("File", "{}", "")}>File</button>
+              <button onClick={() => handleCreateNode("JSON", "{}", "")}>JSON</button>
               <button onClick={() => {}}>Filter</button>
               <button onClick={() => {}}>Reject</button>
               <button onClick={() => {}}>Categorize Open</button>

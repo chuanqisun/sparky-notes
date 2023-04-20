@@ -45,6 +45,13 @@ export const onNotifyCreateDebugOperator: Handler = async (context, message) => 
   });
 
   node.appendTo(figma.currentPage);
+
+  const parentNodes = message.createDebugOperator.parentIds.map((id) => figma.getNodeById(id) as FrameNode);
+  if (parentNodes.length) {
+    node.moveToGraphTargetPosition(parentNodes).scrollOrZoomOutViewToContain().connectFromNodes(parentNodes);
+  } else {
+    node.moveToViewCenter().zoomOutViewToContain();
+  }
 };
 
 export const onSetOperatorData: Handler = (context, message) => {

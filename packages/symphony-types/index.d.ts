@@ -21,6 +21,7 @@ export interface MessageToFigma {
 }
 
 export interface CreateDebugOperatorInput {
+  parentIds: string[];
   name: string;
   config: string;
   data: string;
