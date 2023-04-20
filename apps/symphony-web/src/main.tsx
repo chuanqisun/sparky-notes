@@ -71,12 +71,8 @@ function App() {
             fileInput.type = "file";
             fileInput.addEventListener("input", async (e) => {
               const maybeTextFile = fileInput.files?.[0];
-              if (!maybeTextFile?.type.startsWith("application/json")) {
-                resolve();
-                return;
-              }
 
-              const fileContent = await maybeTextFile.text();
+              const fileContent = (await maybeTextFile?.text()) ?? "";
 
               try {
                 const fileObject = JSON.parse(fileContent);
