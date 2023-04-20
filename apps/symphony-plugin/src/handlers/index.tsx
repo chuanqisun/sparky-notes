@@ -35,7 +35,7 @@ export interface HandlerContext {
   webProxy: WebProxy<MessageToWeb, MessageToFigma>;
 }
 
-export const onNotifyCreateDebugOperator: Handler = async (context, message) => {
+export const handleCreateDebugOperator: Handler = async (context, message) => {
   if (!message.createDebugOperator) return;
 
   const node = $([await figma.createNodeFromJSXAsync(<DebugNode {...message.createDebugOperator} />)]).setPluginData({
@@ -54,7 +54,21 @@ export const onNotifyCreateDebugOperator: Handler = async (context, message) => 
   }
 };
 
-export const onSetOperatorData: Handler = (context, message) => {
+export const handleRequestUpstreamOperators: Handler = (context, message) => {
+  if (!message.requestUpstreamOperators) return;
+
+  if (!message.requestUpstreamOperators?.currentOperatorId) {
+    context.webProxy.notify({ respondUpstreamOperators: [] });
+    return;
+  }
+
+  const currentNode = figma.getNodeById(message.requestUpstreamOperators.currentOperatorId) as FrameNode;
+  const upstreamOperators = ($([currentNode]).graphUpstream().toNodes() as FrameNode[]).map(frameNodeToOperatorNode);
+
+  context.webProxy.respond(message, { respondUpstreamOperators: upstreamOperators });
+};
+
+export const handleSetOperatorData: Handler = (context, message) => {
   if (!message.setOperatorData) return;
 
   const node = figma.getNodeById(message.setOperatorData.id) as FrameNode;
@@ -64,12 +78,12 @@ export const onSetOperatorData: Handler = (context, message) => {
   getFieldByLabel("Data", node)!.value.characters = `Updated on ${new Date().toLocaleTimeString()}`;
 };
 
-export const onShowNotification: Handler = (_context, message) => {
+export const handleShowNotification: Handler = (_context, message) => {
   if (!message.showNotification) return;
   replaceNotification(message.showNotification.message, message.showNotification.config);
 };
 
-export const onWebClientStarted: Handler = (context, message) => {
+export const handleWebClientStarted: Handler = (context, message) => {
   if (!message.webClientStarted) return;
   onSelectionChange(context, figma.currentPage.selection);
 };

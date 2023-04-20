@@ -1,5 +1,6 @@
 import { FigmaProxy, getFigmaProxy } from "@h20/figma-relay";
 import { MessageToFigma, MessageToWeb, OperatorNode } from "@symphony/types";
+import { promised } from "jq-web-wasm/jq.wasm";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
@@ -77,44 +78,26 @@ function App() {
               const maybeTextFile = fileInput.files?.[0];
 
               // TODO support CSV, Excel
-              const fileContent = (await maybeTextFile?.text()) ?? "";
-
-              await maybeTextFile
-                ?.text()
-                .then((fileContent) => {
-                  const fileObject = JSON.parse(fileContent);
-                  const ast = reflectJsonAst(fileObject);
-                  const ts = jsonTypeToTs(ast);
-
-                  console.log(ts);
-                  runContext.figmaProxy.notify({
-                    setOperatorData: {
-                      id: operator.id,
-                      data: JSON.stringify({
-                        raw: fileContent,
-                        typing: ts,
-                      }),
-                    },
-                  });
-                })
-                .catch((e) => {
-                  console.log(`JSON parse error, fallback to plaintext`, e);
-                  const lines = fileContent.split("\n").filter(Boolean);
-                  const ast = reflectJsonAst(lines);
-                  const ts = jsonTypeToTs(ast);
-
-                  return runContext.figmaProxy.notify({
-                    setOperatorData: {
-                      id: operator.id,
-                      data: JSON.stringify({
-                        raw: fileContent,
-                        typing: ts,
-                      }),
-                    },
-                  });
+              try {
+                const fileContent = (await maybeTextFile?.text()) ?? "";
+                runContext.figmaProxy.notify({
+                  setOperatorData: {
+                    id: operator.id,
+                    data: fileContent,
+                  },
                 });
+              } catch (e) {
+                console.log(`Error decoding text file`, e);
 
-              resolve();
+                runContext.figmaProxy.notify({
+                  setOperatorData: {
+                    id: operator.id,
+                    data: "",
+                  },
+                });
+              } finally {
+                resolve();
+              }
             });
 
             fileInput.click();
@@ -124,12 +107,58 @@ function App() {
 
         case "NLP Query": {
           // get input data
-          runContext.figmaProxy.request({ requestParentOperators: { currentOperatorId: operator.id } }).then(({ respondParentOperators }) => {
-            if (!respondParentOperators?.length) return;
-            // current only current one parent
+          const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
 
-            console.log("debug parent", respondParentOperators[0].data);
-          });
+          if (!respondUpstreamOperators?.length) return;
+          // current only current one parent
+          const parentData = respondUpstreamOperators[0].data;
+
+          const fileObject = JSON.parse(parentData);
+          const ast = reflectJsonAst(fileObject);
+          const ts = jsonTypeToTs(ast);
+
+          const messages: ChatMessage[] = [
+            {
+              role: "system",
+              content: `
+You are an expert in json. You are helping the user design a jq query. The input is an array of objects of the following typing
+\`\`\`typescript
+${ts}
+\`\`\`
+
+The user will provide a query goal, and you respond with the jq query. Use this format:
+
+Reason: <Analyze user goal against object type>
+jq: \`<The jq string>\``,
+            },
+            {
+              role: "user",
+              content: JSON.parse(operator.config).query,
+            },
+          ];
+
+          const responseText = (await runContext.getChat(messages, { temperature: 0, model: "v4-8k" })).choices[0].message.content ?? "";
+
+          const jqString = responseText.match(/^jq\:\s*`(.+?)`/m)?.[1] ?? "";
+          const normalizedTarget = jqString.startsWith(".[]") ? (Array.isArray(fileObject) ? fileObject : [fileObject]) : fileObject;
+          if (jqString) {
+            console.log({
+              jq: jqString,
+              input: normalizedTarget,
+            });
+            const result = await promised.json(normalizedTarget, jqString);
+            console.log({
+              jq: jqString,
+              output: result,
+            });
+
+            runContext.figmaProxy.notify({
+              setOperatorData: {
+                id: operator.id,
+                data: JSON.stringify(result),
+              },
+            });
+          }
           break;
         }
       }

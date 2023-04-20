@@ -1,16 +1,12 @@
 export interface MessageToWeb {
   upstreamGraphChanged?: OperatorNode[];
-  respondParentOperators?: OperatorNode[];
-  respondUpstreamGraph?: OperatorNode[];
+  respondUpstreamOperators?: OperatorNode[];
 }
 
 // messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
   createDebugOperator?: CreateDebugOperatorInput;
-  requestUpstreamGraph?: {
-    leafIds: string[];
-  };
-  requestParentOperators?: {
+  requestUpstreamOperators?: {
     currentOperatorId: string;
   };
   runSelectedOperators?: RunSelectedOperatorsInput;

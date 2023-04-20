@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "jq-web-wasm": "^0.5.3",
     "preact": "^10.13.0"
   },
   "devDependencies": {

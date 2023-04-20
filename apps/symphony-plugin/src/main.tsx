@@ -1,6 +1,14 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import { onNotifyCreateDebugOperator, onSelectionChange, onSetOperatorData, onShowNotification, onWebClientStarted, type HandlerContext } from "./handlers";
+import {
+  handleCreateDebugOperator,
+  handleRequestUpstreamOperators,
+  handleSetOperatorData,
+  handleShowNotification,
+  handleWebClientStarted,
+  onSelectionChange,
+  type HandlerContext,
+} from "./handlers";
 import { ensureFont } from "./utils/font";
 import { showUI } from "./utils/show-ui";
 
@@ -23,8 +31,9 @@ async function handleMessage(message: MessageToFigma) {
 
   await fontReady;
 
-  onNotifyCreateDebugOperator(context, message);
-  onSetOperatorData(context, message);
-  onShowNotification(context, message);
-  onWebClientStarted(context, message);
+  handleCreateDebugOperator(context, message);
+  handleRequestUpstreamOperators(context, message);
+  handleSetOperatorData(context, message);
+  handleShowNotification(context, message);
+  handleWebClientStarted(context, message);
 }
