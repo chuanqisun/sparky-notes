@@ -14,7 +14,7 @@ export function InspectorView(props: { operators: OperatorNode[] }) {
             <dt>Selected</dt>
             <dd>{JSON.stringify(operator.isSelected)}</dd>
             <dt>Config</dt>
-            <dd>{JSON.stringify(operator.config, null, 2)}</dd>
+            <JsonTree jsonString={operator.config} />
             <dt>Data</dt>
             <JsonTree jsonString={operator.data} />
           </dl>
