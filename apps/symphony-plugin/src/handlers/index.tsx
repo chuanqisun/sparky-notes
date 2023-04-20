@@ -1,28 +1,25 @@
 import type { WebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
 import { DebugNode } from "../components/debug-node";
-import { ActionNode, ObservationNode, ThoughtNode } from "../components/program-node";
-import { getFieldByLabel } from "../components/text-field";
 import { ChangeTracker } from "../utils/change-tracker";
-import { frameNodeToDisplayProgram, selectionNodesToLivePrograms } from "../utils/display-program";
-import { $, FigmaQuery } from "../utils/fq";
+import { $ } from "../utils/fq";
 import { getLinearUpstreamGraph } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
-import { filterToHaveWidgetDataKey, getAbsoluteBoundingBox, sortByDistance } from "../utils/query";
+import { frameNodeToOperatorNode, selectionToOperatorNodes } from "../utils/operator-node";
 
 // selection handler
 const selectedProgramChangeTracker = new ChangeTracker();
 
 export const onSelectionChange = (context: HandlerContext, selection: readonly SceneNode[]) => {
-  const selectedPrograms = selectionNodesToLivePrograms(selection);
+  const selectedPrograms = selectionToOperatorNodes(selection);
 
-  if (selectedProgramChangeTracker.next(selectedPrograms.flatMap((p) => [p.id, p.input]).join(","))) {
+  if (selectedProgramChangeTracker.next(selectedPrograms.map((p) => JSON.stringify({ id: p.id, config: p.config })))) {
     const upstreamGraph = getLinearUpstreamGraph(selectedPrograms.map((p) => p.id));
     if (upstreamGraph.hasCycle) replaceNotification("Remove the cycle to continue", { error: true });
 
     context.webProxy.notify({
       upstreamGraphChanged: upstreamGraph.nodes.map((node) => ({
-        ...frameNodeToDisplayProgram(node),
+        ...frameNodeToOperatorNode(node),
         isSelected: selectedPrograms.some((p) => p.id === node.id),
       })),
     });
@@ -39,6 +36,8 @@ export interface HandlerContext {
 
 export const onNotifyCreateDebugOperator: Handler = async (context, message) => {
   if (!message.notifyCreateDebugOperator) return;
+
+  console.log(message);
 
   const node = $([await figma.createNodeFromJSXAsync(<DebugNode {...message.notifyCreateDebugOperator} />)]).setPluginData({
     type: "operator",
@@ -59,103 +58,6 @@ export const onWebClientStarted: Handler = (context, message) => {
   onSelectionChange(context, figma.currentPage.selection);
 };
 
-export const respondCreateProgram: Handler = async (context, message) => {
-  if (!message.requestCreateProgram) {
-    return;
-  }
-
-  const messageData = message.requestCreateProgram;
-  let fqNode: FigmaQuery;
-
-  switch (messageData.subtype) {
-    case "Thought": {
-      fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Thought", context: "[]", dirFromAnchor: "Start" });
-      break;
-    }
-    case "Action": {
-      fqNode = $([await figma.createNodeFromJSXAsync(<ActionNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Action", context: "[]", dirFromAnchor: "Start" });
-      break;
-    }
-    case "Observation": {
-      fqNode = $([await figma.createNodeFromJSXAsync(<ObservationNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Observation", context: "[]", dirFromAnchor: "Start" });
-      break;
-    }
-    default:
-      replaceNotification(`Invalid subtype "${message.requestCreateProgram}"`, { error: true });
-      return;
-  }
-
-  if (fqNode) {
-    fqNode.appendTo(figma.currentPage);
-
-    const parentNodes = messageData.parentIds.map((id) => figma.getNodeById(id) as FrameNode);
-    if (parentNodes.length) {
-      fqNode.moveToGraphTargetPosition(parentNodes).scrollOrZoomOutViewToContain().connectFromNodes(parentNodes);
-    } else {
-      fqNode.moveToViewCenter().zoomOutViewToContain();
-    }
-    context.webProxy.respond(message, { respondCreateProgram: frameNodeToDisplayProgram(fqNode.toNodes()[0] as FrameNode) });
-  }
-};
-
-export const respondCreateSpatialProgram: Handler = async (context, message) => {
-  if (!message.requestCreateSpatialProgram) {
-    return;
-  }
-
-  const messageData = message.requestCreateSpatialProgram;
-  let fqNode: FigmaQuery;
-
-  switch (messageData.subtype) {
-    case "Thought": {
-      fqNode = $([await figma.createNodeFromJSXAsync(<ThoughtNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Thought" });
-      break;
-    }
-    case "Action": {
-      fqNode = $([await figma.createNodeFromJSXAsync(<ActionNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Action" });
-      break;
-    }
-    case "Observation": {
-      fqNode = $([await figma.createNodeFromJSXAsync(<ObservationNode input={messageData.input} />)]);
-      fqNode.setPluginData({ type: "programNode", subtype: "Observation" });
-      break;
-    }
-    default:
-      replaceNotification(`Invalid subtype "${message.requestCreateProgram}"`, { error: true });
-      return;
-  }
-
-  if (fqNode) {
-    fqNode.appendTo(figma.currentPage);
-    const anchorNode = messageData.anchorId ? (figma.getNodeById(messageData.anchorId) as SceneNode) : null;
-    if (anchorNode) {
-      fqNode.setPluginData({
-        dirFromAnchor: messageData.directionFromAnchor ?? "Down",
-        context: [
-          JSON.stringify([
-            ...JSON.parse(anchorNode.getPluginData("context") ?? "[]"),
-            {
-              id: anchorNode.id,
-              direction: anchorNode.getPluginData("dirFromAnchor") ?? "Start",
-              subtype: anchorNode.getPluginData("subtype"),
-              input: getFieldByLabel(anchorNode.getPluginData("subtype"), anchorNode as FrameNode)!.value.characters,
-            },
-          ]),
-        ].join("\n"),
-      });
-      fqNode.moveToDirection(messageData.directionFromAnchor ?? "Down", [anchorNode]).scrollOrZoomOutViewToContain();
-    } else {
-      fqNode.moveToViewCenter().zoomOutViewToContain();
-    }
-    context.webProxy.respond(message, { respondCreateProgram: frameNodeToDisplayProgram(fqNode.toNodes()[0] as FrameNode) });
-  }
-};
-
 export const respondLinearContextGraph: Handler = async (context, message) => {
   if (!message.requestUpstreamGraph) return;
 
@@ -169,21 +71,5 @@ export const respondLinearContextGraph: Handler = async (context, message) => {
     return;
   }
 
-  context.webProxy.respond(message, { respondUpstreamGraph: graph.nodes.map(frameNodeToDisplayProgram) });
-};
-
-export const respondAmbientPrograms: Handler = async (context, message) => {
-  if (!message.requestAmbientPrograms) return;
-
-  const selectedNodes = message.requestAmbientPrograms.anchorIds.map((id) => figma.getNodeById(id)).filter(Boolean) as FrameNode[];
-
-  const viewportNodes = $(figma.currentPage.findAll(filterToHaveWidgetDataKey("type")))
-    .viewportIntersections()
-    .toNodes()
-    .filter((node) => selectedNodes.every((selectedNode) => selectedNode.id !== node.id));
-
-  const measuringCenter = selectedNodes.length ? getAbsoluteBoundingBox(selectedNodes) : figma.viewport.center;
-
-  const sorted = sortByDistance(viewportNodes as FrameNode[], measuringCenter).map(frameNodeToDisplayProgram);
-  context.webProxy.respond(message, { respondAmbientPrograms: sorted });
+  context.webProxy.respond(message, { respondUpstreamGraph: graph.nodes.map(frameNodeToOperatorNode) });
 };

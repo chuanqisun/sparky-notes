@@ -36,6 +36,26 @@ fieldset > *:not(legend) {
   margin-inline-start: 2px;
 }
 
+summary {
+  cursor: pointer;
+}
+
+dl {
+  font-size: 14px;
+}
+dt {
+  font-weight: 600;
+}
+dt + dd {
+  margin-block-start: 4px;
+}
+dd + dt {
+  margin-block-start: 8px;
+}
+dd {
+  margin-inline-start: 20px;
+}
+
 ul {
   margin: 0;
   padding: 0;

@@ -10,7 +10,7 @@ export function DebugNode(props: DebugNodeProps) {
     <AutoLayout direction="vertical" spacing={8} padding={12} cornerRadius={12} width={400} fill="#0D99FF">
       <AutoLayout direction="vertical" spacing={4} width="fill-parent">
         <Text fill="#fff" fontWeight={700} fontSize={16} width="fill-parent">
-          Operator
+          Name
         </Text>
         <Input
           inputBehavior="multiline"

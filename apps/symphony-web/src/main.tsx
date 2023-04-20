@@ -1,10 +1,11 @@
 import { FigmaProxy, getFigmaProxy } from "@h20/figma-relay";
-import { LiveProgram, MessageToFigma, MessageToWeb } from "@symphony/types";
+import { MessageToFigma, MessageToWeb, OperatorNode } from "@symphony/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
+import { InspectorView } from "./modules/inspector/inspector";
 import { ChatMessage, OpenAIChatPayloadWithModel, OpenAIChatResponse, getChatResponse, modelToEndpoint } from "./modules/openai/chat";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -18,7 +19,7 @@ function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth();
   const [inviteCode, setInviteCode] = useState("");
   const isInviteCodeValid = useInvitieCode(inviteCode);
-  const [contextPrograms, setContextPrograms] = useState<LiveProgram[]>([]);
+  const [contextGraph, setContextGraph] = useState<OperatorNode[]>([]);
 
   const runContext = useMemo<RunContext>(
     () => ({
@@ -33,7 +34,7 @@ function App() {
       const message = e.data.pluginMessage as MessageToWeb;
 
       if (message.upstreamGraphChanged) {
-        setContextPrograms(message.upstreamGraphChanged);
+        setContextGraph(message.upstreamGraphChanged);
       }
     };
 
@@ -41,7 +42,7 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  const selectedPrograms = useMemo(() => contextPrograms.filter((program) => program.isSelected), [contextPrograms]);
+  const selectedPrograms = useMemo(() => contextGraph.filter((program) => program.isSelected), [contextGraph]);
 
   // request initial selection
   useEffect(() => {
@@ -67,7 +68,7 @@ function App() {
           <fieldset>
             <legend>Run</legend>
             <menu>
-              <button onClick={handleCreateNode}>Run</button>
+              <button onClick={handleRunNode}>Run</button>
             </menu>
           </fieldset>
           <fieldset>
@@ -77,10 +78,17 @@ function App() {
             </menu>
           </fieldset>
           <fieldset>
+            <legend>Inspector</legend>
+            <InspectorView operators={selectedPrograms} />
+          </fieldset>
+          <fieldset>
             <legend>Context</legend>
             <div>
-              {contextPrograms.map((program) => (
-                <div key={program.id}>{program.input}</div>
+              {contextGraph.map((program) => (
+                <div key={program.id} data-selected={program.isSelected}>
+                  {program.isSelected ? "*" : ""}
+                  {program.name} ({program.id})
+                </div>
               ))}
             </div>
           </fieldset>

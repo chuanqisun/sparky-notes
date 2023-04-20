@@ -5,9 +5,6 @@ import {
   onSelectionChange,
   onShowNotification,
   onWebClientStarted,
-  respondAmbientPrograms,
-  respondCreateProgram,
-  respondCreateSpatialProgram,
   respondLinearContextGraph,
   type HandlerContext,
 } from "./handlers";
@@ -32,8 +29,5 @@ async function handleMessage(message: MessageToFigma) {
   onNotifyCreateDebugOperator(context, message);
   onShowNotification(context, message);
   onWebClientStarted(context, message);
-  respondCreateProgram(context, message);
-  respondCreateSpatialProgram(context, message);
   respondLinearContextGraph(context, message);
-  respondAmbientPrograms(context, message);
 }
