@@ -42,7 +42,7 @@ function App() {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  const selectedPrograms = useMemo(() => contextGraph.filter((program) => program.isSelected), [contextGraph]);
+  const selectedOperators = useMemo(() => contextGraph.filter((operator) => operator.isSelected), [contextGraph]);
 
   // request initial selection
   useEffect(() => {
@@ -57,9 +57,28 @@ function App() {
         data: [],
       },
     });
-  }, [runContext, selectedPrograms]);
+  }, [runContext, selectedOperators]);
 
-  const handleRunNode = useCallback(() => {}, []);
+  const handleRunNode = useCallback(() => {
+    for (const operator of selectedOperators) {
+      runContext.figmaProxy.notify({ showNotification: { message: `Running ${operator.name}` } });
+
+      switch (operator.name) {
+        case "fileUpload": {
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.addEventListener("input", (e) => console.log(fileInput.files));
+          fileInput.click();
+
+          console.log(fileInput.files);
+          console.log("wiil upload");
+          break;
+        }
+      }
+
+      runContext.figmaProxy.notify({ showNotification: { message: `✅ Done` } });
+    }
+  }, [runContext, selectedOperators]);
 
   return (
     <main>
@@ -79,7 +98,7 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Inspector</legend>
-            <InspectorView operators={selectedPrograms} />
+            <InspectorView operators={selectedOperators} />
           </fieldset>
           <fieldset>
             <legend>Context</legend>

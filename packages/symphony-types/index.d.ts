@@ -6,6 +6,7 @@ export interface MessageToWeb {
 // messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
   notifyCreateDebugOperator?: CreateDebugOperatorInput;
+  notifyRunSelectedOperators?: RunSelectedOperatorsInput;
   requestUpstreamGraph?: {
     leafIds: string[];
   };
@@ -22,6 +23,10 @@ export interface CreateDebugOperatorInput {
   name: string;
   config: Record<string, any>;
   data: any[];
+}
+
+export interface RunSelectedOperatorsInput {
+  nodeIds: string[];
 }
 
 export interface OperatorNode {
