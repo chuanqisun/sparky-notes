@@ -52,7 +52,7 @@ function App() {
   const handleCreateNode = useCallback(() => {
     figmaProxy.notify({
       notifyCreateDebugOperator: {
-        name: "fileUpload",
+        name: "File",
         config: {},
         data: [],
       },
@@ -64,7 +64,7 @@ function App() {
       runContext.figmaProxy.notify({ showNotification: { message: `Running ${operator.name}` } });
 
       switch (operator.name) {
-        case "fileUpload": {
+        case "File": {
           const fileInput = document.createElement("input");
           fileInput.type = "file";
           fileInput.addEventListener("input", (e) => console.log(fileInput.files));
@@ -91,9 +91,13 @@ function App() {
             </menu>
           </fieldset>
           <fieldset>
-            <legend>Create</legend>
+            <legend>Add</legend>
             <menu>
-              <button onClick={handleCreateNode}>File upload</button>
+              <button onClick={handleCreateNode}>File</button>
+              <button onClick={() => {}}>Filter</button>
+              <button onClick={() => {}}>Reject</button>
+              <button onClick={() => {}}>Categorize Open</button>
+              <button onClick={() => {}}>Categorize Closed</button>
             </menu>
           </fieldset>
           <fieldset>
