@@ -7,6 +7,7 @@ import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { InspectorView } from "./modules/inspector/inspector";
 import { ChatMessage, OpenAIChatPayloadWithModel, OpenAIChatResponse, getChatResponse, modelToEndpoint } from "./modules/openai/chat";
+import { jsonTypeToTs, reflectJsonAst } from "./modules/reflection/json-to-typing";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
@@ -76,15 +77,23 @@ function App() {
               }
 
               const fileContent = await maybeTextFile.text();
-              console.log("file content", fileContent);
 
-              runContext.figmaProxy.notify({
-                setOperatorData: {
-                  id: operator.id,
-                  data: fileContent,
-                },
-              });
-              resolve();
+              try {
+                const fileObject = JSON.parse(fileContent);
+                const ast = reflectJsonAst(fileObject);
+                const ts = jsonTypeToTs(ast);
+
+                console.log("typing", ts);
+
+                runContext.figmaProxy.notify({
+                  setOperatorData: {
+                    id: operator.id,
+                    data: fileContent,
+                  },
+                });
+              } finally {
+                resolve();
+              }
             });
 
             fileInput.click();
