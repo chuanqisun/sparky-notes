@@ -57,19 +57,3 @@ export const onWebClientStarted: Handler = (context, message) => {
   if (!message.webClientStarted) return;
   onSelectionChange(context, figma.currentPage.selection);
 };
-
-export const respondLinearContextGraph: Handler = async (context, message) => {
-  if (!message.requestUpstreamGraph) return;
-
-  const graph = getLinearUpstreamGraph(message.requestUpstreamGraph.leafIds);
-  if (graph.hasCycle) {
-    replaceNotification("Cycle detected in graph", { error: true });
-    return;
-  }
-  if (!graph.nodes.length) {
-    replaceNotification("Selection not found", { error: true });
-    return;
-  }
-
-  context.webProxy.respond(message, { respondUpstreamGraph: graph.nodes.map(frameNodeToOperatorNode) });
-};

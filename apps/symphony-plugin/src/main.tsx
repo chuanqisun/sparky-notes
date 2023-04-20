@@ -1,13 +1,6 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import {
-  onNotifyCreateDebugOperator,
-  onSelectionChange,
-  onShowNotification,
-  onWebClientStarted,
-  respondLinearContextGraph,
-  type HandlerContext,
-} from "./handlers";
+import { onNotifyCreateDebugOperator, onSelectionChange, onShowNotification, onWebClientStarted, type HandlerContext } from "./handlers";
 import { showUI } from "./utils/show-ui";
 
 const webProxy = getWebProxy<MessageToWeb, MessageToFigma>();
@@ -29,5 +22,4 @@ async function handleMessage(message: MessageToFigma) {
   onNotifyCreateDebugOperator(context, message);
   onShowNotification(context, message);
   onWebClientStarted(context, message);
-  respondLinearContextGraph(context, message);
 }
