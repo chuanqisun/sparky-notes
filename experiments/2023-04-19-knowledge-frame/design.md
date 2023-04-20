@@ -47,6 +47,16 @@
 
 ## Example workflow for UX Researcher
 
+In this example, a UX researcher is using the Grounded Theory approach to analyze a large number of in-app user feedback. The Grounded Theory involves coding, categorizing, and identifying patterns/themes in the data.
+
+1. Import data: First, the researcher imports the raw user feedback data (e.g., JSON, CSV) into the visual programming system using a "Create" Operator. This will create a Frame containing the raw data.
+2. Pre-process data: The researcher may want to clean and pre-process the data, such as removing irrelevant information, filtering, or normalizing text. They can use "Transform" Operators to create new Frames containing the pre-processed data.
+3. Coding: The researcher starts by coding the data, i.e., assigning labels to different segments of the text. They can use a "Fork" Operator to create separate Frames for each coded segment of the feedback.
+4. Categorizing: The researcher now groups the coded segments into categories based on their similarities. They can use "Join" Operators to merge Frames with similar codes, creating new Frames representing the categories.
+5. Identifying patterns/themes: The researcher iteratively refines the categories and identifies patterns or themes in the data. They can use "Transform" Operators to further analyze the categories and "Join" Operators to consolidate them into higher-level categories or themes.
+6. Visualization: To better understand the patterns and themes, the researcher can use "Observe" Operators to create visual representations of the data (e.g., word clouds, bar charts, network graphs).
+7. Exporting: Finally, the researcher can export the analyzed data and visualizations using an "Export" Operator, which allows them to share their findings with others or use them in other applications. Throughout the entire process, the researcher can create multiple Pipelines to handle different stages of the analysis and combine them as needed. The visual programming system will enable the researcher to easily track and manipulate the data in a clear and organized manner, making the Grounded Theory analysis more efficient and comprehensive.
+
 ## Appendix I. Issues with Impromptu
 
 - Size change of data sections, forcing the user to adopt a linear layout
