@@ -54,7 +54,7 @@ function App() {
       createDebugOperator: {
         name: "File",
         config: "{}",
-        data: "[]",
+        data: "",
       },
     });
   }, [runContext, selectedOperators]);
