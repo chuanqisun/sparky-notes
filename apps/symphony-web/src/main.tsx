@@ -51,27 +51,44 @@ function App() {
 
   const handleCreateNode = useCallback(() => {
     figmaProxy.notify({
-      notifyCreateDebugOperator: {
+      createDebugOperator: {
         name: "File",
-        config: {},
-        data: [],
+        config: "{}",
+        data: "[]",
       },
     });
   }, [runContext, selectedOperators]);
 
-  const handleRunNode = useCallback(() => {
+  const handleRunNode = useCallback(async () => {
     for (const operator of selectedOperators) {
       runContext.figmaProxy.notify({ showNotification: { message: `Running ${operator.name}` } });
 
       switch (operator.name) {
         case "File": {
-          const fileInput = document.createElement("input");
-          fileInput.type = "file";
-          fileInput.addEventListener("input", (e) => console.log(fileInput.files));
-          fileInput.click();
+          await new Promise<void>((resolve) => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.addEventListener("input", async (e) => {
+              const maybeTextFile = fileInput.files?.[0];
+              if (!maybeTextFile?.type.startsWith("application/json")) {
+                resolve();
+                return;
+              }
 
-          console.log(fileInput.files);
-          console.log("wiil upload");
+              const fileContent = await maybeTextFile.text();
+              console.log("file content", fileContent);
+
+              runContext.figmaProxy.notify({
+                setOperatorData: {
+                  id: operator.id,
+                  data: fileContent,
+                },
+              });
+              resolve();
+            });
+
+            fileInput.click();
+          });
           break;
         }
       }

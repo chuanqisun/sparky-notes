@@ -1,9 +1,11 @@
 import { getWebProxy } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@symphony/types";
-import { onNotifyCreateDebugOperator, onSelectionChange, onShowNotification, onWebClientStarted, type HandlerContext } from "./handlers";
+import { onNotifyCreateDebugOperator, onSelectionChange, onSetOperatorData, onShowNotification, onWebClientStarted, type HandlerContext } from "./handlers";
+import { ensureFont } from "./utils/font";
 import { showUI } from "./utils/show-ui";
 
 const webProxy = getWebProxy<MessageToWeb, MessageToFigma>();
+const fontReady = ensureFont();
 
 async function main() {
   figma.on("selectionchange", () => onSelectionChange({ webProxy }, figma.currentPage.selection));
@@ -19,7 +21,10 @@ async function handleMessage(message: MessageToFigma) {
     webProxy,
   };
 
+  await fontReady;
+
   onNotifyCreateDebugOperator(context, message);
+  onSetOperatorData(context, message);
   onShowNotification(context, message);
   onWebClientStarted(context, message);
 }

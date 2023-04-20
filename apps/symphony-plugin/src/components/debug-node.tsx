@@ -2,8 +2,8 @@ const { useEffect, Text, AutoLayout, Input, Fragment } = figma.widget;
 
 export interface DebugNodeProps {
   name: string;
-  config: any;
-  data: any;
+  config: string;
+  data: string;
 }
 export function DebugNode(props: DebugNodeProps) {
   return (
@@ -30,7 +30,7 @@ export function DebugNode(props: DebugNodeProps) {
           inputFrameProps={{ fill: "#fff", padding: 8, cornerRadius: 8 }}
           fill="#333"
           width="fill-parent"
-          value={JSON.stringify(props.config)}
+          value={props.config}
           onTextEditEnd={() => {}}
         />
       </AutoLayout>
@@ -43,7 +43,7 @@ export function DebugNode(props: DebugNodeProps) {
           inputFrameProps={{ fill: "#333", padding: 8, cornerRadius: 8 }}
           fill="#fff"
           width="fill-parent"
-          value={JSON.stringify(props.data)}
+          value={props.data}
           onTextEditEnd={() => {}}
         />
       </AutoLayout>

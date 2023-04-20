@@ -5,11 +5,12 @@ export interface MessageToWeb {
 
 // messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
-  notifyCreateDebugOperator?: CreateDebugOperatorInput;
-  notifyRunSelectedOperators?: RunSelectedOperatorsInput;
+  createDebugOperator?: CreateDebugOperatorInput;
   requestUpstreamGraph?: {
     leafIds: string[];
   };
+  runSelectedOperators?: RunSelectedOperatorsInput;
+  setOperatorData?: SetOperatorDataInput;
   showNotification?: {
     message: string;
     config?: {
@@ -21,18 +22,22 @@ export interface MessageToFigma {
 
 export interface CreateDebugOperatorInput {
   name: string;
-  config: Record<string, any>;
-  data: any[];
+  config: string;
+  data: string;
 }
 
 export interface RunSelectedOperatorsInput {
   nodeIds: string[];
 }
+export interface SetOperatorDataInput {
+  id: string;
+  data: string;
+}
 
 export interface OperatorNode {
   id: string;
   name: string;
-  config: Record<string, any>;
-  data: any[];
+  config: string;
+  data: string;
   isSelected?: boolean;
 }

@@ -4,11 +4,11 @@ import { $ } from "./fq";
 
 export function frameNodeToOperatorNode(node: FrameNode): OperatorNode {
   const subtype = node.getPluginData("subtype");
-  const data = JSON.parse(node.getPluginData("data"));
+  const data = node.getPluginData("data");
   return {
     id: node.id,
     name: subtype,
-    config: JSON.parse(getFieldByLabel("Config", node)!.value.characters.trim()),
+    config: getFieldByLabel("Config", node)!.value.characters.trim(),
     data,
   };
 }

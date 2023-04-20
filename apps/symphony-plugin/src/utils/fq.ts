@@ -1,20 +1,19 @@
-import type { SpatialDirection } from "@symphony/types";
 import {
-  AttachedConnector,
   collectAllExcept,
   connect,
-  ConnectorConfig,
   filterToAttachedMagnetConnector,
-  MagnetPosition,
   matchConnectors,
   selectOutEdgesBelowStartNodes,
   traverse,
+  type AttachedConnector,
+  type ConnectorConfig,
+  type MagnetPosition,
 } from "./graph";
 import { graphHorizonalDefaultGap, graphVerticalDefaultGap } from "./layout";
 import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, getEssentialAnchorNode, isInnerOuter } from "./query";
 import { doesRectIntersect } from "./range";
 
-export type ConnectorDirection = "left" | "right" | "up" | "down";
+export type Direction = "Up" | "Down" | "Left" | "Right";
 
 export class FigmaQuery {
   static createFromNodes(nodes: readonly SceneNode[]) {
@@ -203,13 +202,13 @@ export class FigmaQuery {
     }
   }
 
-  moveToDirection(direction: SpatialDirection, anchorNodes: SceneNode[], verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
+  moveToDirection(direction: Direction, anchorNodes: SceneNode[], verticalGap = graphVerticalDefaultGap, horizontalGap = graphHorizonalDefaultGap) {
     if (!this.nodes.length) return this;
     if (!anchorNodes.length) return this;
 
     const selfRect = getAbsoluteBoundingBox(this.nodes);
 
-    const essentialAnchor = getEssentialAnchorNode(direction, anchorNodes);
+    const essentialAnchor = getEssentialAnchorNode(direction, anchorNodes)!;
 
     switch (direction) {
       case "Up": {
