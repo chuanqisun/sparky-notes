@@ -49,9 +49,14 @@
 
 ## Appendix I. Issues with Impromptu
 
-- Sizing change of data sections, forcing the user to adopt a linear layout
+- Size change of data sections, forcing the user to adopt a linear layout
+  - Solution: fixed window size for data preview. Details available via Observer or popup
 - Impossible to work with dynamically generated sections and retain reuseability
+  - Solution: monadic operations allow nested JSON arrays and dynamic schema interpretation by LLM
 - Stickies afford at most two dimensions. The higher the dimension, the less the interoperability
+  - Solution: ibid
+- Operator vocabulary is too large and varies in levels of abastraction
+  - Solution: use LLM to assist Operator selector as well as LLM-based Operator creation
 
 ## Appendix II. Alternative visual representations
 
