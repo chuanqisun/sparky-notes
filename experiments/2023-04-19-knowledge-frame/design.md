@@ -137,3 +137,16 @@ In this example, a UX researcher is using the Grounded Theory approach to analyz
   - Reduced connection complexity because all the nodes are operators
 - Cons
   - Implementing Observer as an Operator makes the operator stateful. Observer becomes the implicit container for data
+
+## Appendix III. External inspirations
+
+### Visual programming
+
+- Data rabbit
+- Grasshopper
+
+### Functional thinking
+
+- jq + json
+- datalog + cozo
+- monad at massive scale
