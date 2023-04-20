@@ -40,14 +40,10 @@ export interface HandlerContext {
 export const onNotifyCreateDebugOperator: Handler = async (context, message) => {
   if (!message.notifyCreateDebugOperator) return;
 
-  console.log(message.notifyCreateDebugOperator);
-
-  const node = $([
-    await figma.createNodeFromJSXAsync(<DebugNode sourceCode={JSON.stringify({ ...message.notifyCreateDebugOperator, data: {} })} />),
-  ]).setPluginData({
+  const node = $([await figma.createNodeFromJSXAsync(<DebugNode {...message.notifyCreateDebugOperator} />)]).setPluginData({
     type: "operator",
     subtype: message.notifyCreateDebugOperator.name,
-    data: JSON.stringify({}),
+    data: JSON.stringify(message.notifyCreateDebugOperator.data),
   });
 
   node.appendTo(figma.currentPage);

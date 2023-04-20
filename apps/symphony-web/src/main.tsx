@@ -48,25 +48,41 @@ function App() {
     figmaProxy.notify({ webClientStarted: true });
   }, []);
 
-  const handleCreateNode = useCallback(async () => {
+  const handleCreateNode = useCallback(() => {
     figmaProxy.notify({
       notifyCreateDebugOperator: {
         name: "fileUpload",
         config: {},
-        data: null,
+        data: [],
       },
     });
   }, [runContext, selectedPrograms]);
+
+  const handleRunNode = useCallback(() => {}, []);
 
   return (
     <main>
       {isConnected ? (
         <>
           <fieldset>
-            <legend>Node</legend>
+            <legend>Run</legend>
+            <menu>
+              <button onClick={handleCreateNode}>Run</button>
+            </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Create</legend>
             <menu>
               <button onClick={handleCreateNode}>File upload</button>
             </menu>
+          </fieldset>
+          <fieldset>
+            <legend>Context</legend>
+            <div>
+              {contextPrograms.map((program) => (
+                <div key={program.id}>{program.input}</div>
+              ))}
+            </div>
           </fieldset>
         </>
       ) : null}

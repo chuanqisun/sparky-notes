@@ -30,8 +30,8 @@ export interface MessageToFigma {
 
 export interface CreateDebugOperatorInput {
   name: string;
-  config: any;
-  data: any;
+  config: Record<string, any>;
+  data: any[];
 }
 
 export interface GraphSelection {
@@ -45,6 +45,15 @@ export interface DisplayProgram {
   context: string;
   dirFromAnchor: SpatialDirection;
 }
+
+export interface OperatorNode {
+  id: string;
+  name: string;
+  config: Record<string, any>;
+  data: any[];
+}
+
+export interface LiverOperatorNode extends OperatorNode {}
 
 export interface LiveProgram extends DisplayProgram {
   isSelected: boolean;
