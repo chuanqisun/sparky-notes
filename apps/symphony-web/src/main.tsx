@@ -76,24 +76,45 @@ function App() {
             fileInput.addEventListener("input", async (e) => {
               const maybeTextFile = fileInput.files?.[0];
 
+              // TODO support CSV, Excel
               const fileContent = (await maybeTextFile?.text()) ?? "";
 
-              try {
-                const fileObject = JSON.parse(fileContent);
-                const ast = reflectJsonAst(fileObject);
-                const ts = jsonTypeToTs(ast);
+              await maybeTextFile
+                ?.text()
+                .then((fileContent) => {
+                  const fileObject = JSON.parse(fileContent);
+                  const ast = reflectJsonAst(fileObject);
+                  const ts = jsonTypeToTs(ast);
 
-                console.log("typing", ts);
+                  console.log(ts);
+                  runContext.figmaProxy.notify({
+                    setOperatorData: {
+                      id: operator.id,
+                      data: JSON.stringify({
+                        raw: fileContent,
+                        typing: ts,
+                      }),
+                    },
+                  });
+                })
+                .catch((e) => {
+                  console.log(`JSON parse error, fallback to plaintext`, e);
+                  const lines = fileContent.split("\n").filter(Boolean);
+                  const ast = reflectJsonAst(lines);
+                  const ts = jsonTypeToTs(ast);
 
-                runContext.figmaProxy.notify({
-                  setOperatorData: {
-                    id: operator.id,
-                    data: fileContent,
-                  },
+                  return runContext.figmaProxy.notify({
+                    setOperatorData: {
+                      id: operator.id,
+                      data: JSON.stringify({
+                        raw: fileContent,
+                        typing: ts,
+                      }),
+                    },
+                  });
                 });
-              } finally {
-                resolve();
-              }
+
+              resolve();
             });
 
             fileInput.click();
@@ -120,7 +141,7 @@ function App() {
             <legend>Add</legend>
             <menu>
               <button onClick={() => handleCreateNode("File", "{}", "")}>File</button>
-              <button onClick={() => handleCreateNode("JSON", "{}", "")}>JSON</button>
+              <button onClick={() => handleCreateNode("NLP Query", `{"query": "First 10 chat messages"}`, "")}>NLP query</button>
               <button onClick={() => {}}>Filter</button>
               <button onClick={() => {}}>Reject</button>
               <button onClick={() => {}}>Categorize Open</button>

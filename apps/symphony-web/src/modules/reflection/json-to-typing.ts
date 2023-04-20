@@ -7,6 +7,7 @@ export interface TypeNode {
   children: Record<string, TypeNode>;
 }
 
+// TODO this does not handle root array type
 // TODO this does not handle recursive type
 // TODO this does not support literal string enum type
 
