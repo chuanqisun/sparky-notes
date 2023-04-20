@@ -1,5 +1,6 @@
 export interface MessageToWeb {
   upstreamGraphChanged?: OperatorNode[];
+  respondParentOperators?: OperatorNode[];
   respondUpstreamGraph?: OperatorNode[];
 }
 
@@ -8,6 +9,9 @@ export interface MessageToFigma {
   createDebugOperator?: CreateDebugOperatorInput;
   requestUpstreamGraph?: {
     leafIds: string[];
+  };
+  requestParentOperators?: {
+    currentOperatorId: string;
   };
   runSelectedOperators?: RunSelectedOperatorsInput;
   setOperatorData?: SetOperatorDataInput;

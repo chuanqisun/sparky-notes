@@ -121,6 +121,17 @@ function App() {
           });
           break;
         }
+
+        case "NLP Query": {
+          // get input data
+          runContext.figmaProxy.request({ requestParentOperators: { currentOperatorId: operator.id } }).then(({ respondParentOperators }) => {
+            if (!respondParentOperators?.length) return;
+            // current only current one parent
+
+            console.log("debug parent", respondParentOperators[0].data);
+          });
+          break;
+        }
       }
 
       runContext.figmaProxy.notify({ showNotification: { message: `✅ Done` } });
