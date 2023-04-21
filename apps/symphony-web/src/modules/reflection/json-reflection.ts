@@ -6,11 +6,9 @@ export function printJsonTyping(object: any, rootName = "Root"): string {
   return [
     `type ${capitalizeFirstChar(rootName)}${emitResult.valueType.endsWith("[]") ? "Array" : ""} = ${emitResult.valueType};`,
     ...emitResult.interfaces.map(
-      (emittedInterface) => `
-interface ${emittedInterface.name} {
+      (emittedInterface) => `interface ${emittedInterface.name} {
 ${emittedInterface.records.map((record) => `  ${record.key}: ${record.value};`).join("\n")}
-}
-  `
+}`
     ),
   ].join("\n\n");
 }

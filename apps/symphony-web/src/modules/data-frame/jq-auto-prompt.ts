@@ -3,6 +3,7 @@ import { ChatMessage } from "../openai/chat";
 
 export interface GetSystemMessageInput {
   dataFrame: any;
+  responseTemplate: string;
 }
 
 export interface GetUserMessageInput {
@@ -37,7 +38,15 @@ export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
   } = config;
 
   const currentUserMessage: ChatMessage = { role: "user", content: onGetUserMessage({ lastError: lastError ? lastError : undefined }) };
-  const systemMessage: ChatMessage = { role: "system", content: getSystemMessage({ dataFrame }) };
+  const systemMessage: ChatMessage = {
+    role: "system",
+    content: `
+${getSystemMessage({
+  dataFrame,
+  responseTemplate: `Reason: <Analyze the user goal, the input, and any previous errors>
+jq: '<query string surrounded by single quotes>'`,
+}).trim()}`.trim(),
+  };
   const responseText = await onGetChat([systemMessage, ...previousMessages, currentUserMessage]);
 
   if (onShouldAbort?.()) {
