@@ -18,6 +18,7 @@ export interface JqAutoPromptConfig {
   onJqString?: (jqString: string) => any;
   onRetry?: (errorMessage: string) => any;
   onShouldAbort?: () => boolean;
+  onValidateResult?: (result: any) => any;
   previousMessages?: ChatMessage[];
   retryLeft?: number;
   getSystemMessage: (input: GetSystemMessageInput) => string;
@@ -32,6 +33,7 @@ export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
     onJqString,
     onRetry,
     onShouldAbort,
+    onValidateResult,
     previousMessages = [],
     retryLeft = 3,
     getSystemMessage,
@@ -64,6 +66,9 @@ jq: '<query string surrounded by single quotes>'`,
     }
 
     const result = await promised.json(dataFrame, jqString);
+
+    onValidateResult?.(result);
+
     return result;
   } catch (e: any) {
     if (retryLeft <= 0) {
@@ -71,7 +76,7 @@ jq: '<query string surrounded by single quotes>'`,
       throw new Error("Auto prompt engineering failed to converge. All retries used up");
     }
 
-    const errorMessage = [e?.name, e?.message, e?.stack].filter(Boolean).join(" ").trim();
+    const errorMessage = [e?.name, e?.message ?? e?.stack].filter(Boolean).join(" ").trim();
     onRetry?.(errorMessage);
 
     return jqAutoPrompt({
