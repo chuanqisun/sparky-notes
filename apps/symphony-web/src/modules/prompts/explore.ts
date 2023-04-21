@@ -29,7 +29,7 @@ What are the new Thoughts and Questions?`,
 
   const response = await context.getChat(messages, { max_tokens: 300, ...promptConfig });
 
-  const raw = response.choices[0].message.content.trim();
+  const raw = response.choices[0].message.content?.trim() ?? "";
 
   return responseToList(raw);
 }

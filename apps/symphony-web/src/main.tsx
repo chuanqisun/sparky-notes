@@ -8,6 +8,7 @@ import { useInvitieCode } from "./modules/account/use-invite-code";
 import { InspectorView } from "./modules/inspector/inspector";
 import { onRunFile } from "./modules/nodes/file";
 import { onRunJq } from "./modules/nodes/jq";
+import { onRunSemanticJq } from "./modules/nodes/semantic-jq";
 import { ChatMessage, OpenAIChatPayloadWithModel, OpenAIChatResponse, getChatResponse, modelToEndpoint } from "./modules/openai/chat";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -77,6 +78,11 @@ function App() {
 
         case "Structured query": {
           await onRunJq(runContext, operator);
+          break;
+        }
+
+        case "Semantic query": {
+          await onRunSemanticJq(runContext, operator);
           break;
         }
 

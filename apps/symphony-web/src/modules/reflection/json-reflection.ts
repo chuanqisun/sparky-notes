@@ -15,6 +15,46 @@ ${emittedInterface.records.map((record) => `  ${record.key}: ${record.value};`).
   ].join("\n\n");
 }
 
+// Walk the entire json tree and output a reduced json object by sampling the input
+// long strings will be cropped
+// arrays will be cropped to 3 elements (head, middle, tail)
+export function sampleJsonContent(object: any): any {
+  const type = typeof object;
+  switch (type) {
+    case "object":
+      if (object === null) {
+        return null;
+      } else if (Array.isArray(object)) {
+        // sample head, middle, tail
+        if (!object.length) return [];
+        const samplePoints = [0, Math.floor(object.length / 2), -1].map((index) => object.at(index));
+        const uniqueSamples = [...new Set(samplePoints)];
+
+        return uniqueSamples.map(sampleJsonContent);
+      } else {
+        return Object.fromEntries(
+          Object.entries(object).map(([key, value]) => {
+            return [key, sampleJsonContent(value)];
+          })
+        );
+      }
+    case "string":
+      return trimTextIfOverflow(48)(object); // for reference: uuid is 36 char long
+    default:
+      return object;
+  }
+}
+
+function trimTextIfOverflow(length: number) {
+  return (text: string) => {
+    if (text.length > length) {
+      return text.slice(0, length) + "...";
+    } else {
+      return text;
+    }
+  };
+}
+
 export interface JsonAstNode {
   key: string | number;
   type: string;

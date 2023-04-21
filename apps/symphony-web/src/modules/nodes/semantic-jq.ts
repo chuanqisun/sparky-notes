@@ -2,18 +2,18 @@ import { OperatorNode } from "@symphony/types";
 import { promised } from "jq-web-wasm/jq.wasm";
 import { RunContext } from "../../main";
 import { ChatMessage } from "../openai/chat";
-import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
+import { printJsonTyping } from "../reflection/json-reflection";
 
-export async function onRunJq(runContext: RunContext, operator: OperatorNode) {
+export async function onRunSemanticJq(runContext: RunContext, operator: OperatorNode) {
   const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
 
   if (!respondUpstreamOperators?.length) return;
   // current only current one parent
-  const dataFrame = respondUpstreamOperators[0].data;
+  const parentData = respondUpstreamOperators[0].data;
 
-  const fileObject = JSON.parse(dataFrame);
+  const dataFrame = JSON.parse(parentData);
 
-  await iterateOnJqUntilSuccess(runContext, fileObject, operator.config, [])
+  await iterateOnJqUntilSuccess(runContext, dataFrame, operator.config, [])
     .then((result) => {
       runContext.figmaProxy.notify({
         setOperatorData: {
@@ -44,23 +44,13 @@ async function iterateOnJqUntilSuccess(
     content: lastError ? `The previous query failed with error: ${lastError}. Try a different query` : nlpQuery,
   };
 
-  const typingInterface = printJsonTyping(dataFrame);
-  const sampleContent = JSON.stringify(sampleJsonContent(dataFrame), null, 2);
-
-  console.log({ typingInterface, sampleContent });
-
   const messages: ChatMessage[] = [
     {
       role: "system",
       content: `
 You are an expert in querying json with jq. The input is defined by the following type
 \`\`\`typescript
-${typingInterface}
-\`\`\`
-
-Sample input:
-\`\`\`json
-${sampleContent}
+${printJsonTyping(dataFrame)}
 \`\`\`
 
 The user will provide a query goal, and you will respond with the jq query. Use this format:
