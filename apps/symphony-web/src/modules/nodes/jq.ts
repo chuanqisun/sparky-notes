@@ -66,7 +66,7 @@ ${sampleContent}
 The user will provide a query goal, and you will respond with the jq query. Use this format:
 
 Reason: <Analyze user goal, input type, and any previous errors>
-jq: \`<unquoted query, only surround with backticks>\``,
+jq: '<query string surrounded by single quotes>'`,
     },
     ...previousMessage,
     userMessage,
@@ -75,7 +75,7 @@ jq: \`<unquoted query, only surround with backticks>\``,
   runContext.figmaProxy.notify({ showNotification: { message: `Designing query` } });
   const responseText = (await runContext.getChat(messages, { temperature: 0, model: "v4-8k", max_tokens: 800 })).choices[0].message.content ?? "";
 
-  const jqString = responseText.match(/^jq\:\s*`(.+?)`/m)?.[1] ?? "";
+  const jqString = responseText.match(/^jq\:\s*'(.+?)'/m)?.[1] ?? "";
   const normalizedTarget = dataFrame;
   if (!jqString) {
     throw new Error("Query planning error");
