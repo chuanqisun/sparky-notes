@@ -1,10 +1,10 @@
-export function printJsonTyping(object: any): string {
-  const ast = getJsonAst(object, "root");
+export function printJsonTyping(object: any, rootName = "Root"): string {
+  const ast = getJsonAst(object, rootName);
 
   const emitResult = emitNode(ast);
 
   return [
-    `type Root = ${emitResult.valueType};`,
+    `type ${capitalizeFirstChar(rootName)}${emitResult.valueType.endsWith("[]") ? "Array" : ""} = ${emitResult.valueType};`,
     ...emitResult.interfaces.map(
       (emittedInterface) => `
 interface ${emittedInterface.name} {
@@ -30,7 +30,7 @@ export function getJsonAst(object: any, key: string | number): JsonAstNode {
         return {
           key,
           type: "array",
-          children: [getJsonAst(object[0], 0)],
+          ...(object.length ? { children: [getJsonAst(object[0], 0)] } : undefined),
         };
       } else {
         return {
@@ -47,34 +47,36 @@ export function getJsonAst(object: any, key: string | number): JsonAstNode {
 }
 
 interface EmittedNode {
-  valueType: string; // TODO with keys path too?
+  valueType: string;
   interfaces: EmittedInterface[];
 }
 interface EmittedInterface {
-  keysPath: string[]; // TODO use this to get the correct interfacde name;
-  name: string; // TODO deprecate
+  keysPath: (string | number)[];
+  name: string;
   records: { key: string; value: string }[];
 }
 
-function emitNode(node: JsonAstNode, parentKeysPath: string[] = []): EmittedNode {
-  const currentKeysPath = [...parentKeysPath, node.key].filter(filterToNamedKey);
+function emitNode(node: JsonAstNode, parentKeysPath: (string | number)[] = []): EmittedNode {
+  const currentKeysPath = [...parentKeysPath, node.key];
 
   if (node.type === "object") {
     const children = (node.children ?? []).map((child) => ({ key: child.key as string, emittedNode: emitNode(child, currentKeysPath) }));
 
-    // FIXME, wrong name for array item
-
     const selfInterface: EmittedInterface = {
       keysPath: currentKeysPath,
-      name: node.key as string, // TODO node.key can be number
+      name: getInterfaceName(currentKeysPath),
       records: children.map(({ key, emittedNode }) => ({ key, value: emittedNode.valueType })),
     };
 
     const childrenInterfaces: EmittedInterface[] = children.flatMap(({ emittedNode }) => emittedNode.interfaces);
     return { valueType: selfInterface.name, interfaces: [selfInterface, ...childrenInterfaces] };
   } else if (node.type === "array") {
-    const { valueType, interfaces } = emitNode(node.children![0], currentKeysPath); // TODO handle empty array
-    return { valueType: `${valueType}[]`, interfaces };
+    if (!node.children?.length) {
+      return { valueType: `unknown[]`, interfaces: [] };
+    } else {
+      const { valueType, interfaces } = emitNode(node.children![0], currentKeysPath);
+      return { valueType: `${valueType}[]`, interfaces };
+    }
   } else {
     return { valueType: node.type, interfaces: [] };
   }
@@ -82,7 +84,7 @@ function emitNode(node: JsonAstNode, parentKeysPath: string[] = []): EmittedNode
 
 function getInterfaceName(keysPath: (string | number)[]) {
   return `I${keysPath
-    .filter(filterToNamedKey)
+    .map(indexToItemKey)
     .map((key) => capitalizeFirstChar(key))
     .join("")}`;
 }
@@ -91,6 +93,6 @@ function capitalizeFirstChar(text: string): any {
   return text[0].toUpperCase() + text.slice(1);
 }
 
-function filterToNamedKey(key: string | number): key is string {
-  return typeof key === "string";
+function indexToItemKey(key: string | number): string {
+  return typeof key === "string" ? key : `item`;
 }
