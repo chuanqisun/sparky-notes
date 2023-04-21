@@ -1,14 +1,14 @@
 import { FigmaProxy, getFigmaProxy } from "@h20/figma-relay";
 import { MessageToFigma, MessageToWeb, OperatorNode } from "@symphony/types";
-import { promised } from "jq-web-wasm/jq.wasm";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { InspectorView } from "./modules/inspector/inspector";
+import { onRunFile } from "./modules/nodes/file";
+import { onRunJq } from "./modules/nodes/jq";
 import { ChatMessage, OpenAIChatPayloadWithModel, OpenAIChatResponse, getChatResponse, modelToEndpoint } from "./modules/openai/chat";
-import { jsonTypeToTs, reflectJsonAst } from "./modules/reflection/json-to-typing";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
@@ -71,94 +71,12 @@ function App() {
 
       switch (operator.name) {
         case "File": {
-          await new Promise<void>((resolve) => {
-            const fileInput = document.createElement("input");
-            fileInput.type = "file";
-            fileInput.addEventListener("input", async (e) => {
-              const maybeTextFile = fileInput.files?.[0];
-
-              // TODO support CSV, Excel
-              try {
-                const fileContent = (await maybeTextFile?.text()) ?? "";
-                runContext.figmaProxy.notify({
-                  setOperatorData: {
-                    id: operator.id,
-                    data: fileContent,
-                  },
-                });
-              } catch (e) {
-                console.log(`Error decoding text file`, e);
-
-                runContext.figmaProxy.notify({
-                  setOperatorData: {
-                    id: operator.id,
-                    data: "",
-                  },
-                });
-              } finally {
-                resolve();
-              }
-            });
-
-            fileInput.click();
-          });
+          await onRunFile(runContext, operator);
           break;
         }
 
         case "NLP Query": {
-          // get input data
-          const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
-
-          if (!respondUpstreamOperators?.length) return;
-          // current only current one parent
-          const parentData = respondUpstreamOperators[0].data;
-
-          const fileObject = JSON.parse(parentData);
-          const ast = reflectJsonAst(fileObject);
-          const ts = jsonTypeToTs(ast);
-
-          const messages: ChatMessage[] = [
-            {
-              role: "system",
-              content: `
-You are an expert in json. You are helping the user design a jq query. The input is an array of objects of the following typing
-\`\`\`typescript
-${ts}
-\`\`\`
-
-The user will provide a query goal, and you respond with the jq query. Use this format:
-
-Reason: <Analyze user goal against object type>
-jq: \`<The jq string>\``,
-            },
-            {
-              role: "user",
-              content: JSON.parse(operator.config).query,
-            },
-          ];
-
-          const responseText = (await runContext.getChat(messages, { temperature: 0, model: "v4-8k" })).choices[0].message.content ?? "";
-
-          const jqString = responseText.match(/^jq\:\s*`(.+?)`/m)?.[1] ?? "";
-          const normalizedTarget = jqString.startsWith(".[]") ? (Array.isArray(fileObject) ? fileObject : [fileObject]) : fileObject;
-          if (jqString) {
-            console.log({
-              jq: jqString,
-              input: normalizedTarget,
-            });
-            const result = await promised.json(normalizedTarget, jqString);
-            console.log({
-              jq: jqString,
-              output: result,
-            });
-
-            runContext.figmaProxy.notify({
-              setOperatorData: {
-                id: operator.id,
-                data: JSON.stringify(result),
-              },
-            });
-          }
+          await onRunJq(runContext, operator);
           break;
         }
       }
