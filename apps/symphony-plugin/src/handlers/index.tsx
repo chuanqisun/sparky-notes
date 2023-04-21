@@ -75,7 +75,7 @@ export const handleSetOperatorData: Handler = (context, message) => {
   if (!node) return;
 
   $([node]).setPluginData({ data: message.setOperatorData.data });
-  getFieldByLabel("Data", node)!.value.characters = `Updated on ${new Date().toLocaleTimeString()}`;
+  getFieldByLabel("Log", node)!.value.characters = `Updated on ${new Date().toLocaleTimeString()}`;
 };
 
 export const handleShowNotification: Handler = (_context, message) => {

@@ -36,7 +36,7 @@ export function DebugNode(props: DebugNodeProps) {
       </AutoLayout>
       <AutoLayout direction="vertical" spacing={4} width="fill-parent">
         <Text fill="#fff" fontWeight={700} fontSize={16} width="fill-parent">
-          Data
+          Log
         </Text>
         <Input
           inputBehavior="multiline"

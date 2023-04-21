@@ -13,7 +13,7 @@ export async function onRunJq(runContext: RunContext, operator: OperatorNode) {
 
   const fileObject = JSON.parse(parentData);
 
-  await iterateOnJqUntilSuccess(runContext, fileObject, JSON.parse(operator.config).query, [])
+  await iterateOnJqUntilSuccess(runContext, fileObject, operator.config, [])
     .then((result) => {
       runContext.figmaProxy.notify({
         setOperatorData: {
@@ -62,6 +62,7 @@ jq: \`<unquoted query, only surround with backticks>\``,
     userMessage,
   ];
 
+  runContext.figmaProxy.notify({ showNotification: { message: `Designing query` } });
   const responseText = (await runContext.getChat(messages, { temperature: 0, model: "v4-8k", max_tokens: 800 })).choices[0].message.content ?? "";
 
   const jqString = responseText.match(/^jq\:\s*`(.+?)`/m)?.[1] ?? "";
@@ -73,6 +74,7 @@ jq: \`<unquoted query, only surround with backticks>\``,
   try {
     console.log("jq", jqString);
     console.log("jq input", normalizedTarget);
+    runContext.figmaProxy.notify({ showNotification: { message: `Executing query ${jqString}` } });
     const result = await promised.json(normalizedTarget, jqString);
     console.log("jq output", result);
     return result;
@@ -83,6 +85,7 @@ jq: \`<unquoted query, only surround with backticks>\``,
 
     const errorMessage = `${e?.name} ${e?.message} ${e?.stack}`;
     console.log(`jq error`, errorMessage);
+    runContext.figmaProxy.notify({ showNotification: { message: `Revising query based on error message` } });
 
     return iterateOnJqUntilSuccess(
       runContext,

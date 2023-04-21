@@ -75,14 +75,17 @@ function App() {
           break;
         }
 
-        case "NLP Query": {
+        case "Structured query": {
           await onRunJq(runContext, operator);
           break;
         }
-      }
 
-      runContext.figmaProxy.notify({ showNotification: { message: `✅ Done` } });
+        default: {
+          break;
+        }
+      }
     }
+    runContext.figmaProxy.notify({ showNotification: { message: `✅ Done` } });
   }, [runContext, selectedOperators]);
 
   return (
@@ -98,9 +101,9 @@ function App() {
           <fieldset>
             <legend>Add</legend>
             <menu>
-              <button onClick={() => handleCreateNode("File", "{}", "")}>File</button>
-              <button onClick={() => handleCreateNode("NLP Query", `{"query": "First 10 chat messages"}`, "")}>NLP query</button>
-              <button onClick={() => {}}>Filter</button>
+              <button onClick={() => handleCreateNode("File", "", "")}>File</button>
+              <button onClick={() => handleCreateNode("Structured query", `First 10 messages`, "")}>Structured query</button>
+              <button onClick={() => handleCreateNode("Semantic query", `Summarize`, "")}>Semantic query</button>
               <button onClick={() => {}}>Reject</button>
               <button onClick={() => {}}>Categorize Open</button>
               <button onClick={() => {}}>Categorize Closed</button>
