@@ -7,8 +7,8 @@ import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { InspectorView } from "./modules/inspector/inspector";
 import { onRunFile } from "./modules/nodes/file";
-import { onRunJq } from "./modules/nodes/jq";
-import { onRunSemanticJq } from "./modules/nodes/semantic-jq";
+import { onRunSemanticQuery } from "./modules/nodes/jq-semantic";
+import { onRunStructuredQuery } from "./modules/nodes/jq-structured";
 import { ChatMessage, OpenAIChatPayloadWithModel, OpenAIChatResponse, getChatResponse, modelToEndpoint } from "./modules/openai/chat";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -77,12 +77,12 @@ function App() {
         }
 
         case "Structured query": {
-          await onRunJq(runContext, operator);
+          await onRunStructuredQuery(runContext, operator);
           break;
         }
 
         case "Semantic query": {
-          await onRunSemanticJq(runContext, operator);
+          await onRunSemanticQuery(runContext, operator);
           break;
         }
 

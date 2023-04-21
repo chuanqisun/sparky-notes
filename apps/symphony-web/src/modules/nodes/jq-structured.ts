@@ -5,7 +5,7 @@ import { tapAndLog } from "../log/tap-and-log";
 import { ChatMessage } from "../openai/chat";
 import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
 
-export async function onRunSemanticJq(runContext: RunContext, operator: OperatorNode) {
+export async function onRunStructuredQuery(runContext: RunContext, operator: OperatorNode) {
   const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
 
   if (!respondUpstreamOperators?.length) return;
@@ -29,7 +29,7 @@ export async function onRunSemanticJq(runContext: RunContext, operator: Operator
     onRetry: (errorMessage: string) => logAndNotify(`Revising query based on error ${errorMessage}`),
     onShouldAbort: () => false, // TODO implement flow control
     getSystemMessage: ({ dataFrame, responseTemplate }) => `
-You are an expert in NLP data preparation in json with jq. The input is defined by the following type
+    You are an expert in querying json with jq. The input is defined by the following type
 \`\`\`typescript
 ${tapAndLog("[jq/interface]", printJsonTyping(dataFrame))}
 \`\`\`
@@ -39,8 +39,7 @@ Sample input:
 ${JSON.stringify(tapAndLog("[jq/sample json]", sampleJsonContent(dataFrame)), null, 2)}
 \`\`\`
 
-The user will provide a query goal. You need to infer the data processing task. Based on the task, use jq to shape the input into a flat json array. So user can perform the task on the array.
-Make sure all the fields on the array are needed for the task.
+The user will provide a query goal, and you will respond with the jq query.
 
 Response format:
 

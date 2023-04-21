@@ -5,7 +5,7 @@ import { tapAndLog } from "../log/tap-and-log";
 import { ChatMessage } from "../openai/chat";
 import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
 
-export async function onRunJq(runContext: RunContext, operator: OperatorNode) {
+export async function onRunSemanticQuery(runContext: RunContext, operator: OperatorNode) {
   const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
 
   if (!respondUpstreamOperators?.length) return;
@@ -20,7 +20,7 @@ export async function onRunJq(runContext: RunContext, operator: OperatorNode) {
     runContext.figmaProxy.notify({ showNotification: { message } });
   };
 
-  await jqAutoPrompt({
+  const collectionData = await jqAutoPrompt({
     dataFrame,
     onGetChat: (messages: ChatMessage[]) =>
       runContext.getChat(messages, { max_tokens: 800, model: "v4-8k" }).then((res) => res.choices[0].message.content ?? ""),
@@ -28,8 +28,11 @@ export async function onRunJq(runContext: RunContext, operator: OperatorNode) {
     onJqString: (jqString: string) => logAndNotify(`Executing query ${jqString}`),
     onRetry: (errorMessage: string) => logAndNotify(`Revising query based on error ${errorMessage}`),
     onShouldAbort: () => false, // TODO implement flow control
+    onValidateResult: (result) => {
+      if (!Array.isArray(result)) throw new Error("The result must be an array");
+    },
     getSystemMessage: ({ dataFrame, responseTemplate }) => `
-    You are an expert in querying json with jq. The input is defined by the following type
+You are an expert in NLP data preparation in json with jq. The input is defined by the following type
 \`\`\`typescript
 ${tapAndLog("[jq/interface]", printJsonTyping(dataFrame))}
 \`\`\`
@@ -39,7 +42,8 @@ Sample input:
 ${JSON.stringify(tapAndLog("[jq/sample json]", sampleJsonContent(dataFrame)), null, 2)}
 \`\`\`
 
-The user will provide a query goal, and you will respond with the jq query.
+The user will provide a query goal. You need to infer the data processing task. Based on the task, use jq to shape the input into a flat json array. So user can perform the task on the array.
+Make sure all the fields on the array are needed for the task.
 
 Response format:
 
