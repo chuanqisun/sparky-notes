@@ -6,9 +6,9 @@ import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { InspectorView } from "./modules/inspector/inspector";
+import { onRunDeterministicQuery } from "./modules/nodes/deterministic-query";
 import { onRunFile } from "./modules/nodes/file";
-import { onRunSemanticQuery } from "./modules/nodes/jq-semantic";
-import { onRunStructuredQuery } from "./modules/nodes/jq-structured";
+import { onRunGenerativeQuery } from "./modules/nodes/generative-query";
 import { ChatMessage, OpenAIChatPayloadWithModel, OpenAIChatResponse, getChatResponse, modelToEndpoint } from "./modules/openai/chat";
 
 const figmaProxy = getFigmaProxy<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -76,13 +76,13 @@ function App() {
           break;
         }
 
-        case "Structured query": {
-          await onRunStructuredQuery(runContext, operator);
+        case "Deterministic query": {
+          await onRunDeterministicQuery(runContext, operator);
           break;
         }
 
-        case "Semantic query": {
-          await onRunSemanticQuery(runContext, operator);
+        case "Generative query": {
+          await onRunGenerativeQuery(runContext, operator);
           break;
         }
 
@@ -108,8 +108,8 @@ function App() {
             <legend>Add</legend>
             <menu>
               <button onClick={() => handleCreateNode("File", "", "")}>File</button>
-              <button onClick={() => handleCreateNode("Structured query", `First 10 messages`, "")}>Structured query</button>
-              <button onClick={() => handleCreateNode("Semantic query", `Summarize`, "")}>Semantic query</button>
+              <button onClick={() => handleCreateNode("Deterministic query", `First 10 messages`, "")}>Deterministic query</button>
+              <button onClick={() => handleCreateNode("Generative query", `Summarize`, "")}>Generative query</button>
               <button onClick={() => {}}>Reject</button>
               <button onClick={() => {}}>Categorize Open</button>
               <button onClick={() => {}}>Categorize Closed</button>
