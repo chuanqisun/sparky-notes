@@ -3,7 +3,7 @@ import { RunContext } from "../../main";
 import { jqAutoPrompt } from "../data-frame/jq-auto-prompt";
 import { tapAndLog } from "../log/tap-and-log";
 import { ChatMessage } from "../openai/chat";
-import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
+import { jsonToTyping, sampleJsonContent } from "../reflection/json-reflection";
 
 export async function onRunDeterministicQuery(runContext: RunContext, operator: OperatorNode) {
   const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
@@ -31,7 +31,7 @@ export async function onRunDeterministicQuery(runContext: RunContext, operator: 
     getSystemMessage: ({ dataFrame, responseTemplate }) => `
     You are an expert in querying json with jq. The input is defined by the following type
 \`\`\`typescript
-${tapAndLog("[jq/interface]", printJsonTyping(dataFrame))}
+${tapAndLog("[jq/interface]", jsonToTyping(dataFrame))}
 \`\`\`
 
 Sample input:

@@ -14,6 +14,7 @@ export interface MessageToFigma {
   showNotification?: {
     message: string;
     config?: {
+      timeout?: number;
       error?: boolean;
     };
   };

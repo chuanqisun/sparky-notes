@@ -67,31 +67,42 @@ function App() {
   );
 
   const handleRunNode = useCallback(async () => {
-    for (const operator of selectedOperators) {
-      runContext.figmaProxy.notify({ showNotification: { message: `Running ${operator.name}` } });
+    try {
+      for (const operator of selectedOperators) {
+        runContext.figmaProxy.notify({ showNotification: { message: `Running ${operator.name}` } });
 
-      switch (operator.name) {
-        case "File": {
-          await onRunFile(runContext, operator);
-          break;
-        }
+        switch (operator.name) {
+          case "File": {
+            await onRunFile(runContext, operator);
+            break;
+          }
 
-        case "Deterministic query": {
-          await onRunDeterministicQuery(runContext, operator);
-          break;
-        }
+          case "Deterministic query": {
+            await onRunDeterministicQuery(runContext, operator);
+            break;
+          }
 
-        case "Generative query": {
-          await onRunGenerativeQuery(runContext, operator);
-          break;
-        }
+          case "Generative query": {
+            await onRunGenerativeQuery(runContext, operator);
+            break;
+          }
 
-        default: {
-          break;
+          default: {
+            break;
+          }
         }
       }
+      runContext.figmaProxy.notify({ showNotification: { message: `✅ Done` } });
+    } catch (e: any) {
+      runContext.figmaProxy.notify({
+        showNotification: {
+          message: `Error: ${e?.name} ${e?.message}`,
+          config: {
+            error: true,
+          },
+        },
+      });
     }
-    runContext.figmaProxy.notify({ showNotification: { message: `✅ Done` } });
   }, [runContext, selectedOperators]);
 
   return (

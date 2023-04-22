@@ -1,18 +1,25 @@
 import { threePointSampleArrayItems } from "../../utils/array";
 
-export function printJsonTyping(object: any, rootName = "Root"): string {
+export function jsonToTyping(object: any, rootName = "Root"): string {
   const ast = getJsonAst(object, rootName);
-
   const emitResult = emitNode(ast);
+  return printEmittedResult(emitResult, rootName);
+}
 
-  return [
-    `type ${capitalizeFirstChar(rootName)}${emitResult.valueType.endsWith("[]") ? "Array" : ""} = ${emitResult.valueType};`,
-    ...emitResult.interfaces.map(
-      (emittedInterface) => `interface ${emittedInterface.name} {
+export function printEmittedResult(emittedNode: EmittedNode, rootName = "Root"): string {
+  return [getRootLevelTyping(emittedNode, rootName), ...getInterfaceTyping(emittedNode)].join("\n\n");
+}
+
+export function getRootLevelTyping(emittedNode: EmittedNode, rootName = "Root"): string {
+  return `type ${capitalizeFirstChar(rootName)}${emittedNode.valueType.endsWith("[]") ? "Array" : ""} = ${emittedNode.valueType};`;
+}
+
+export function getInterfaceTyping(emittedNode: EmittedNode): string[] {
+  return emittedNode.interfaces.map(
+    (emittedInterface) => `interface ${emittedInterface.name} {
 ${emittedInterface.records.map((record) => `  ${record.key}: ${record.value};`).join("\n")}
 }`
-    ),
-  ].join("\n\n");
+  );
 }
 
 // Walk the entire json tree and output a reduced json object by sampling the input
@@ -94,7 +101,7 @@ interface EmittedInterface {
   records: { key: string; value: string }[];
 }
 
-function emitNode(node: JsonAstNode, parentKeysPath: (string | number)[] = []): EmittedNode {
+export function emitNode(node: JsonAstNode, parentKeysPath: (string | number)[] = []): EmittedNode {
   const currentKeysPath = [...parentKeysPath, node.key];
 
   if (node.type === "object") {
@@ -128,6 +135,7 @@ function getInterfaceName(keysPath: (string | number)[]) {
 }
 
 function capitalizeFirstChar(text: string): any {
+  if (!text.length) return text;
   return text[0].toUpperCase() + text.slice(1);
 }
 

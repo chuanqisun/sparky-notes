@@ -4,7 +4,7 @@ import { jqAutoPrompt } from "../data-frame/jq-auto-prompt";
 import { map } from "../data-frame/map";
 import { tapAndLog } from "../log/tap-and-log";
 import { ChatMessage } from "../openai/chat";
-import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
+import { jsonToTyping, sampleJsonContent } from "../reflection/json-reflection";
 
 export async function onRunGenerativeQuery(runContext: RunContext, operator: OperatorNode) {
   const { respondUpstreamOperators } = await runContext.figmaProxy.request({ requestUpstreamOperators: { currentOperatorId: operator.id } });
@@ -36,7 +36,7 @@ export async function onRunGenerativeQuery(runContext: RunContext, operator: Ope
       getSystemMessage: ({ dataFrame, responseTemplate }) => `
 You are an expert in NLP data preparation in json with jq. The input is defined by the following type
 \`\`\`typescript
-${tapAndLog("[jq/interface]", printJsonTyping(dataFrame))}
+${tapAndLog("[jq/interface]", jsonToTyping(dataFrame))}
 \`\`\`
 
 Sample input:
@@ -52,12 +52,21 @@ Response format:
 ${responseTemplate}`,
     });
 
+    console.log(`[generative/collection ready]`, collectionData);
+
     const mapResults = await map({
       dataFrame: collectionData,
       query: nlpQuery,
       onGetDesignerChat: (messages) => runContext.getChat(messages, { max_tokens: 800, model: "v4-8k" }).then((res) => res.choices[0].message.content ?? ""),
       onGetMapperChat: (messages) =>
         runContext.getChat(messages, { max_tokens: 4000, model: "v3.5-turbo" }).then((res) => res.choices[0].message.content ?? ""),
+      onProgress: (progress) =>
+        runContext.figmaProxy.notify({
+          showNotification: {
+            message: `${progress.total - progress.success - progress.error} chunks left, ${progress.error} errors`,
+            config: { timeout: Infinity },
+          },
+        }),
     });
 
     console.log(mapResults);
@@ -74,5 +83,6 @@ ${responseTemplate}`,
         data: `${e?.name} ${e?.message}`,
       },
     });
+    throw e;
   }
 }

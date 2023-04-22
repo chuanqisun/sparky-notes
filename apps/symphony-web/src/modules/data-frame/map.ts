@@ -2,42 +2,50 @@ import GPT3Tokenizer from "gpt3-tokenizer";
 import { getChunks, randomSampleArrayItems } from "../../utils/array";
 import { tapAndLog } from "../log/tap-and-log";
 import { ChatMessage } from "../openai/chat";
-import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
+import { emitNode, getInterfaceTyping, getJsonAst, sampleJsonContent } from "../reflection/json-reflection";
 
 export interface MapConfig {
   dataFrame: any;
   query: string;
   onGetDesignerChat: (messages: ChatMessage[]) => Promise<string>;
   onGetMapperChat: (messages: ChatMessage[]) => Promise<string>;
+  onProgress?: (progress: { total: number; error: number; success: number }) => any;
   onShouldAbort?: () => boolean;
 }
 
 export async function map(config: MapConfig) {
-  const { dataFrame, query, onGetDesignerChat, onGetMapperChat } = config;
+  const { dataFrame, query, onGetDesignerChat, onGetMapperChat, onProgress } = config;
 
   if (!Array.isArray(dataFrame)) throw new Error("The input must be an array");
+  if (!dataFrame.length) return [];
+
+  const ast = getJsonAst(dataFrame[0], "item");
+  const emitResult = emitNode(ast);
 
   // step 1 design output schema
   const schemaDesignMessages: ChatMessage[] = [
     {
       role: "system",
-      content: `
-    You are an expert in analyzing data in json. The input is a json array defined by the following type
+      content: `You are a research assistant specializec in analyzing textual data in json. The input is a list of items. Each item is defined by the type \`${
+        emitResult.valueType
+      }\`:
 \`\`\`typescript
-${tapAndLog("[map/input interface design]", printJsonTyping(dataFrame))}
+${tapAndLog("[map/input item interface]", getInterfaceTyping(emitResult))}
 \`\`\`
 
-Sample input:
-\`\`\`json
-${JSON.stringify(tapAndLog("[jq/sample json]", sampleJsonContent(dataFrame)), null, 2)}
-\`\`\`
+Sample input list:
+${(sampleJsonContent(dataFrame) as any[]).map((sampleItem, index) => `Input ${index + 1}: ${JSON.stringify(sampleItem, null, 2)}`).join("\n")}
 
-The user will provide a query goal, and you will analyze the data and design a json structure that best fits the goal.
+The user will provide a query goal, and you will design an output type for each item. Requirements:
+1. The output type must be an object with a single key-value pair
+2. The key must be descriptive of what the query is trying to achieve
+3. The key must be different from the existing keys in the input
+4. To save space, do not copy existing data into the result
 
 Use this format:
 
 Reason: <Analyze the user goal and input>
-Output type: 
+Output item type: 
 \`\`\`typescript
 <The typescript interface that represents the output>
 \`\`\``,
@@ -47,10 +55,8 @@ Output type:
 
   const responseTemplate = await onGetDesignerChat(schemaDesignMessages);
 
-  const interfacePattern = responseTemplate.match(/^\`\`\`typescript((.|\s)+?)\`\`\`/m)?.[0].trim();
+  const interfacePattern = responseTemplate.match(/^\`\`\`typescript((.|\s)+?)\`\`\`/m)?.[1].trim();
   if (!interfacePattern) throw new Error("Error designing solution format");
-
-  console.log("[map/output interface design]", interfacePattern);
 
   // step 2 divide and conquer
   // estimate token density per item
@@ -62,7 +68,8 @@ Output type:
 
   console.log("[map/token density]", tokenDensity);
 
-  const targetTokenCountPerChunk = 500;
+  // TODO prevent tail orphans in the chunks
+  const targetTokenCountPerChunk = 1000;
   const chunkSize = Math.ceil(targetTokenCountPerChunk / tokenDensity);
   const chunks = getChunks(dataFrame, chunkSize);
 
@@ -72,51 +79,77 @@ Output type:
   const getMapMessages: (collectionData: any[]) => ChatMessage[] = (collectionData) => [
     {
       role: "system",
-      content: `
-    You are an expert in analyzing data in json. You will perform a query provided by the user to map the data from the input type to the output type.
-Input type:
+      content: `You are a research assistant specializec in analyzing textual data in json. You will analyze each item in the input list best you can, and respond with is an output list.
+Each input item is defined by the type \`${emitResult.valueType}\`:
 \`\`\`typescript
-${printJsonTyping(dataFrame)}
+${getInterfaceTyping(emitResult)}
 \`\`\`
 
-Input data:
-\`\`\`json
-${JSON.stringify(collectionData, null, 2)}
-\`\`\`
-
-Output type:
+Each output item is defined by the type:
 \`\`\`typescript
-${printJsonTyping(dataFrame)}
+${interfacePattern}
 \`\`\`
+      
+Input list:
+${(collectionData as any[]).map((sampleItem, index) => `Input ${index + 1}: ${JSON.stringify(sampleItem, null, 2)}`).join("\n")}
 
-Respond in this format:
+The user will provide a query goal, and you will respond the Output list. Requirements:
+1. Each input item must be mapped to exactly 1 output item
+2. Output list must have exactly ${collectionData.length} items
+3. Each output item must conform to the output type
+4. Each output item must be valid JSON string
+5. One line per output item.
 
-Plan: <Describe the analysis task needed to map the input to the output>
-Output: 
-\`\`\`json
-<The json object>
-\`\`\``,
+Use this format:
+Output 1: { "<key>": ... }
+Output 2: { "<key>": ... }
+...
+`,
     },
     { role: "user", content: query },
   ];
 
-  const chunkResponses: any[] = [];
+  // TODO add auto prompt engineering with just 1 item
+  // TODO handle error
+  let successCount = 0;
+  let errorCount = 0;
 
-  for (let i = 0; i < chunks.length; i++) {
-    console.log(`[map/start chunk] ${i + 1}/${chunks.length}`);
-    const chunkResponse = await onGetMapperChat(getMapMessages(chunks[i]));
-    const outputObjectString = chunkResponse.match(/^\`\`\`json((.|\s)+?)\`\`\`/m)?.[1].trim() ?? "[]";
+  const chunksResult = await Promise.all(
+    chunks.map(async (chunk, index) => {
+      const chunkResponse = await onGetMapperChat(getMapMessages(chunk));
+      const outputItems = chunkResponse
+        .split("\n")
+        .filter((line) => line.toLocaleLowerCase().startsWith("output"))
+        .map(
+          (line) =>
+            line
+              .trim()
+              .toLocaleLowerCase()
+              .match(/^output\s*\d+\:\s*(.+)/)?.[1] ?? "{}"
+        )
+        .map((itemString) => {
+          console.log("Mapped", itemString);
+          try {
+            return JSON.parse(itemString);
+          } catch {
+            return {};
+          }
+        });
 
-    // TODO add auto prompt engineering with just 1 item
-    // TODO perf hack: use id to correlate. No need to repeat the input text?
-    // TODO handle error
-    const outputObject = JSON.parse(outputObjectString);
+      if (chunk.length !== outputItems.length) {
+        console.log("The output list must have the same length as the input list, chunk discarded");
+        onProgress?.({ total: chunks.length, error: ++errorCount, success: successCount });
+        return [];
+      }
+      const mergedArray = chunk.map((inputItem, index) => ({ ...inputItem, ...outputItems[index] }));
 
-    console.log(`[map/finished chunk] ${i + 1}/${chunks.length}`, outputObject);
-    chunkResponses.push(outputObject);
-  }
+      console.log(`[map/finished chunk] ${index + 1}`, mergedArray);
+      onProgress?.({ total: chunks.length, error: errorCount, success: ++successCount });
+      return mergedArray;
+    })
+  );
 
-  const flatResults = chunkResponses.flat();
+  const flatResults = chunksResult.flat();
 
   console.log("[map/complete]", flatResults);
 
