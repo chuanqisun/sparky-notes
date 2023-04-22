@@ -1,3 +1,5 @@
+import { threePointSampleArrayItems } from "../../utils/array";
+
 export function printJsonTyping(object: any, rootName = "Root"): string {
   const ast = getJsonAst(object, rootName);
 
@@ -25,9 +27,7 @@ export function sampleJsonContent(object: any): any {
       } else if (Array.isArray(object)) {
         // sample head, middle, tail
         if (!object.length) return [];
-        const samplePoints = [0, Math.floor(object.length / 2), -1].map((index) => object.at(index));
-        const uniqueSamples = [...new Set(samplePoints)];
-
+        const uniqueSamples = threePointSampleArrayItems(object);
         return uniqueSamples.map(sampleJsonContent);
       } else {
         return Object.fromEntries(

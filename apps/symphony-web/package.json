@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@pgrabovets/json-view": "^2.7.1",
+    "gpt3-tokenizer": "^1.1.5",
     "jq-web-wasm": "^0.5.3",
     "npm": "^9.6.5",
     "preact": "^10.13.0"

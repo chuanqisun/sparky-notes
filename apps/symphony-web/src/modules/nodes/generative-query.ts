@@ -1,6 +1,7 @@
 import { OperatorNode } from "@symphony/types";
 import { RunContext } from "../../main";
 import { jqAutoPrompt } from "../data-frame/jq-auto-prompt";
+import { map } from "../data-frame/map";
 import { tapAndLog } from "../log/tap-and-log";
 import { ChatMessage } from "../openai/chat";
 import { printJsonTyping, sampleJsonContent } from "../reflection/json-reflection";
@@ -20,18 +21,19 @@ export async function onRunGenerativeQuery(runContext: RunContext, operator: Ope
     runContext.figmaProxy.notify({ showNotification: { message } });
   };
 
-  await jqAutoPrompt({
-    dataFrame,
-    onGetChat: (messages: ChatMessage[]) =>
-      runContext.getChat(messages, { max_tokens: 800, model: "v4-8k" }).then((res) => res.choices[0].message.content ?? ""),
-    onGetUserMessage: ({ lastError }) => (lastError ? `The previous query failed with error: ${lastError}. Try a different query` : nlpQuery),
-    onJqString: (jqString: string) => logAndNotify(`Executing query ${jqString}`),
-    onRetry: (errorMessage: string) => logAndNotify(`Revising query based on error ${errorMessage}`),
-    onShouldAbort: () => false, // TODO implement flow control
-    onValidateResult: (result) => {
-      if (!Array.isArray(result)) throw new Error("The result must be an array");
-    },
-    getSystemMessage: ({ dataFrame, responseTemplate }) => `
+  try {
+    const collectionData = await jqAutoPrompt({
+      dataFrame,
+      onGetChat: (messages: ChatMessage[]) =>
+        runContext.getChat(messages, { max_tokens: 800, model: "v4-8k" }).then((res) => res.choices[0].message.content ?? ""),
+      onGetUserMessage: ({ lastError }) => (lastError ? `The previous query failed with error: ${lastError}. Try a different query` : nlpQuery),
+      onJqString: (jqString: string) => logAndNotify(`Executing query ${jqString}`),
+      onRetry: (errorMessage: string) => logAndNotify(`Revising query based on error ${errorMessage}`),
+      onShouldAbort: () => false, // TODO implement flow control
+      onValidateResult: (result) => {
+        if (!Array.isArray(result)) throw new Error("The result must be an array");
+      },
+      getSystemMessage: ({ dataFrame, responseTemplate }) => `
 You are an expert in NLP data preparation in json with jq. The input is defined by the following type
 \`\`\`typescript
 ${tapAndLog("[jq/interface]", printJsonTyping(dataFrame))}
@@ -48,14 +50,29 @@ Make sure all the fields on the array are needed for the task.
 Response format:
 
 ${responseTemplate}`,
-  })
-    .then((collectionData) => {})
-    .catch((e: any) => {
-      runContext.figmaProxy.notify({
-        setOperatorData: {
-          id: operator.id,
-          data: `${e?.name} ${e?.message}`,
-        },
-      });
     });
+
+    const mapResults = await map({
+      dataFrame: collectionData,
+      query: nlpQuery,
+      onGetDesignerChat: (messages) => runContext.getChat(messages, { max_tokens: 800, model: "v4-8k" }).then((res) => res.choices[0].message.content ?? ""),
+      onGetMapperChat: (messages) =>
+        runContext.getChat(messages, { max_tokens: 4000, model: "v3.5-turbo" }).then((res) => res.choices[0].message.content ?? ""),
+    });
+
+    console.log(mapResults);
+    runContext.figmaProxy.notify({
+      setOperatorData: {
+        id: operator.id,
+        data: JSON.stringify(mapResults),
+      },
+    });
+  } catch (e: any) {
+    runContext.figmaProxy.notify({
+      setOperatorData: {
+        id: operator.id,
+        data: `${e?.name} ${e?.message}`,
+      },
+    });
+  }
 }
