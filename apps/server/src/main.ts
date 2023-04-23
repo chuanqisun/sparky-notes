@@ -14,6 +14,7 @@ import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { chat } from "./modules/openai/chat";
 import { completions } from "./modules/openai/completion";
+import { embedding } from "./modules/openai/embedding";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
 import { webCrawl } from "./modules/web/crawl";
 import { webSearch } from "./modules/web/search";
@@ -32,6 +33,7 @@ app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ openaiChatEn
 app.post("/openai/chat/v3.5-turbo", [rateLimit(300), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
 app.post("/openai/chat/v4-8k", [rateLimit(12), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K! })]);
 app.post("/openai/chat/v4-32k", [rateLimit(12), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K! })]);
+app.post("/openai/embeddings", [rateLimit(300), validateHitsToken, embedding({ openaiEmbeddingEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K! })]);
 
 app.post("/web/search", [validateHitsToken, webSearch]);
 app.post("/web/crawl", [validateHitsToken, webCrawl]);
