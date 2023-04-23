@@ -1,4 +1,4 @@
-import { cognitiveSearchJsonProxy, type CognitiveSearchInput, type CognitiveSearchOutput } from "../azure/cognitive-search";
+import { getCognitiveSearchJsonProxy, type CognitiveSearchInput, type CognitiveSearchOutput } from "../azure/cognitive-search";
 
 export function getClaimCountInput(entityType: number): CognitiveSearchInput {
   return {
@@ -23,7 +23,7 @@ export function getClaimsPageInput(entityType: number, top: number, skip: number
 }
 
 export function getClaimIndexProxy<InputType extends CognitiveSearchInput, OutputType extends CognitiveSearchOutput<ClaimDocument>>(apiKey: string) {
-  return cognitiveSearchJsonProxy<CognitiveSearchInput, CognitiveSearchOutput<ClaimDocument>>(
+  return getCognitiveSearchJsonProxy<CognitiveSearchInput, CognitiveSearchOutput<ClaimDocument>>(
     apiKey,
     `https://hits-stage.search.windows.net/indexes/hits-claims/docs/search?api-version=2021-04-30-Preview`!
   );

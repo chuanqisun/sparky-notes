@@ -3,7 +3,7 @@ import { jsonProxy } from "../http/json-proxy";
 import http from "http";
 import https from "https";
 
-export function cognitiveSearchJsonProxy<RequestType, ResponseType>(apiKey: string, endpoint: string) {
+export function getCognitiveSearchJsonProxy<RequestType, ResponseType>(apiKey: string, endpoint: string) {
   return jsonProxy<RequestType, ResponseType>(endpoint, {
     axiosConfig: {
       headers: {
