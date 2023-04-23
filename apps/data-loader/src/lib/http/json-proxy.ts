@@ -17,6 +17,7 @@ export function jsonProxy<RequestType, ResponseType>(config: ProxyConfig): JsonP
       console.log(`Retry: ${count}`);
       return count * 2000;
     },
+    shouldResetTimeout: true,
     retryCondition: () => true,
   });
 
@@ -29,6 +30,7 @@ export function jsonProxy<RequestType, ResponseType>(config: ProxyConfig): JsonP
         },
         httpAgent: config.httpAgent,
         httpsAgent: config.httpsAgent,
+        timeout: 5000,
       })
       .then((res) => res.data);
   };

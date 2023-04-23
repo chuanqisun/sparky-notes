@@ -22,12 +22,13 @@ export async function exportClaimByType(entityType: number, path: string) {
   const pageStartIndices = Array.from({ length: pageCount }, (_, i) => i * pageSize);
   await Promise.allSettled(
     pageStartIndices.map(async (skip) => {
-      // await new Promise((resolve) => setTimeout(resolve, Math.random() * 1000));
       return claimIndexProxy(getClaimsPageInput(entityType, pageSize, skip))
         .then((response) => response.value)
         .then((claims) => {
           if (!claims?.length) throw new Error("Unexpected empty response");
-          const documents = claims.map(({ ["@search.score"]: _, ...rest }) => rest);
+          const documents = claims.map(({ ["@search.score"]: _, ...rest }) =>
+            Object.fromEntries(Object.entries(rest).map(([key, value]) => [firstLetterToLowerCase(key), value]))
+          );
           return writeFile(
             `${path}/${EntityName[entityType]}-chunk-${skip.toString().padStart(`${count}`.length, "0")}.json`,
             JSON.stringify(documents, null, 2)
@@ -41,4 +42,8 @@ export async function exportClaimByType(entityType: number, path: string) {
         .finally(() => console.log(`${EntityName[entityType]} progress: `, JSON.stringify(progress)));
     })
   ).then(() => console.log(`${EntityName[entityType]} done`, progress));
+}
+
+function firstLetterToLowerCase(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }

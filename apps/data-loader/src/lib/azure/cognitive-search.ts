@@ -9,8 +9,8 @@ export function cognitiveSearchJsonProxy<RequestType, ResponseType>(apiKey: stri
       "api-key": apiKey,
     },
     endpoint,
-    httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 5000, maxTotalSockets: 20, maxSockets: 10 }),
-    httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 5000, maxTotalSockets: 20, maxSockets: 10 }),
+    httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
+    httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
   });
 }
 
