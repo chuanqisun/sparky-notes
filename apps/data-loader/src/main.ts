@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 
 import { mkdir, readdir, rm } from "fs/promises";
+import { getSimpleChatProxy } from "./lib/azure/chat";
 import { getEmbeddingProxy } from "./lib/azure/embedding";
 import { exportClaimByType, type ExportedClaim } from "./lib/hits/claim-export";
 import { EntityType } from "./lib/hits/entity";
@@ -30,6 +31,7 @@ Usage: npm start -- [program]
 
 Programs:
   export-claims: export all HITS claims
+  parse-claims: parse claim into ontology entities and relations
 `);
     }
   }
@@ -41,13 +43,13 @@ async function parseClaims() {
   const claimChunkFiles = await readdir("./data/claims");
   console.log(`Will parse ${claimChunkFiles.length} files`);
 
-  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!, process.env.OPENAI_EMBEDDINGS_ENDPOINT!);
+  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!);
 
   let i = 0;
   for (let filename of claimChunkFiles) {
     const claims: ExportedClaim[] = (await import("../data/claims/" + filename, { assert: { type: "json" } })).default;
-    const embedding = (await embeddingProxy({ input: claims[0].claimTitle })).data[0].embedding;
-    console.log(new Date().toLocaleTimeString(), embedding.length);
+    const response = (await chatProxy({ messages: [{ role: "user", content: "hello!" }] })).choices[0].message.content ?? "";
+    console.log(response);
     i++;
     if (i > 5) break;
   }

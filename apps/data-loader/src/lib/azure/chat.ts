@@ -3,6 +3,48 @@ import { jsonProxy } from "../http/json-proxy";
 import http from "http";
 import https from "https";
 
+export interface SimpleChatProxy {
+  (input: SimpleChatInput): Promise<ChatOutput>;
+}
+
+export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
+
+export type SimpleChatInput = Partial<ChatInput> &
+  Pick<ChatInput, "messages"> & {
+    /** @default "v3.5-turbo" */
+    model?: ChatModel;
+  };
+
+export function getSimpleChatProxy(apiKey: string): SimpleChatProxy {
+  const simpleProxy: SimpleChatProxy = async (input) => {
+    const fullInput: ChatInput = {
+      temperature: 0,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      max_tokens: 60,
+      stop: "",
+      ...input,
+    };
+    const fullProxy = getChatProxy(apiKey, modelToEndpoint(input.model ?? "v3.5-turbo"));
+    return fullProxy(fullInput);
+  };
+
+  return simpleProxy;
+}
+
+export function modelToEndpoint(model?: ChatModel): string {
+  switch (model) {
+    case "v4-32k":
+      return process.env.OPENAI_CHAT_ENDPOINT_V4_32K!;
+    case "v4-8k":
+      return process.env.OPENAI_CHAT_ENDPOINT_V4_8K!;
+    case "v3.5-turbo":
+    default:
+      return process.env.OPENAI_CHAT_ENDPOINT!;
+  }
+}
+
 export function getChatProxy(apiKey: string, endpoint: string) {
   return jsonProxy<ChatInput, ChatOutput>(endpoint, {
     axiosConfig: {
