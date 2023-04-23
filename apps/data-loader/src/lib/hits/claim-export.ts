@@ -47,3 +47,10 @@ export async function exportClaimByType(entityType: number, path: string) {
 function firstLetterToLowerCase(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
+
+export interface ExportedClaim {
+  claimId: string;
+  claimType: number;
+  claimTitle: string;
+  claimContent: string;
+}

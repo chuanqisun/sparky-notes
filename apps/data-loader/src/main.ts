@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 
-import { mkdir, rm } from "fs/promises";
-import { exportClaimByType } from "./lib/hits/claim-export";
+import { mkdir, readdir, rm } from "fs/promises";
+import { exportClaimByType, type ExportedClaim } from "./lib/hits/claim-export";
 import { EntityType } from "./lib/hits/entity";
 
 dotenv.config();
@@ -11,6 +11,10 @@ console.log("Data loader started with params", params);
 
 async function main() {
   switch (true) {
+    case params.includes("embed-claims"): {
+      embedClaims();
+      break;
+    }
     case params.includes("export-claims"): {
       exportClaims();
       break;
@@ -23,6 +27,17 @@ Programs:
   export-claims: export all HITS claims
 `);
     }
+  }
+}
+
+async function embedClaims() {
+  const claimChunkFiles = await readdir("./data/claims");
+  console.log(`Will embed ${claimChunkFiles.length} files`);
+
+  for (let filename of claimChunkFiles) {
+    const claims: ExportedClaim[] = (await import("../data/claims/" + filename, { assert: { type: "json" } })).default;
+    console.log(claims[0].claimTitle);
+    break;
   }
 }
 
