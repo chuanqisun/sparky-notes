@@ -1,7 +1,7 @@
 import { readdir } from "fs/promises";
 import path from "path";
 import { getSimpleChatProxy } from "../azure/chat";
-import type { ExportedClaim } from "./claim-export";
+import type { ExportedClaim } from "./export-claims";
 
 export async function parseClaims(claimsDir: string) {
   const claimChunkFiles = await readdir(claimsDir);

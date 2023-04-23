@@ -1,6 +1,6 @@
 import { readdir } from "fs/promises";
 import { getEmbeddingProxy } from "../azure/embedding";
-import type { ExportedClaim } from "./claim-export";
+import type { ExportedClaim } from "./export-claims";
 
 // TODO this is a WIP
 export async function embedClaims() {
