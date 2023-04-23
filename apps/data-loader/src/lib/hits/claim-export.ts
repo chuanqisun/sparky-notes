@@ -1,7 +1,14 @@
 import assert from "assert";
-import { writeFile } from "fs/promises";
+import { mkdir, rm, writeFile } from "fs/promises";
 import { getClaimCountInput, getClaimIndexProxy, getClaimsPageInput } from "./claim-search";
-import { EntityName } from "./entity";
+import { EntityName, EntityType } from "./entity";
+
+export async function exportClaims(outputDir: string) {
+  await rm(outputDir, { recursive: true }).catch();
+  await mkdir(outputDir, { recursive: true });
+  await exportClaimByType(EntityType.Insight, outputDir);
+  await exportClaimByType(EntityType.Recommendation, outputDir);
+}
 
 export async function exportClaimByType(entityType: number, path: string) {
   const claimIndexProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);

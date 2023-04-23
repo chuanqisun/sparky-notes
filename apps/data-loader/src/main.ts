@@ -1,10 +1,9 @@
 import dotenv from "dotenv";
 
-import { mkdir, readdir, rm } from "fs/promises";
-import { getSimpleChatProxy } from "./lib/azure/chat";
-import { getEmbeddingProxy } from "./lib/azure/embedding";
-import { exportClaimByType, type ExportedClaim } from "./lib/hits/claim-export";
-import { EntityType } from "./lib/hits/entity";
+import path from "path";
+import { embedClaims } from "./lib/hits/claim-embed";
+import { exportClaims } from "./lib/hits/claim-export";
+import { parseClaims } from "./lib/hits/claim-parse";
 
 dotenv.config();
 
@@ -14,7 +13,7 @@ console.log("Data loader started with params", params);
 async function main() {
   switch (true) {
     case params.includes("parse-claims"): {
-      parseClaims();
+      parseClaims(path.resolve("./data/claims"));
       break;
     }
     case params.includes("embed-claims"): {
@@ -22,7 +21,7 @@ async function main() {
       break;
     }
     case params.includes("export-claims"): {
-      exportClaims();
+      exportClaims(path.resolve("./data/claims"));
       break;
     }
     default: {
@@ -38,42 +37,3 @@ Programs:
 }
 
 main();
-
-async function parseClaims() {
-  const claimChunkFiles = await readdir("./data/claims");
-  console.log(`Will parse ${claimChunkFiles.length} files`);
-
-  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!);
-
-  let i = 0;
-  for (let filename of claimChunkFiles) {
-    const claims: ExportedClaim[] = (await import("../data/claims/" + filename, { assert: { type: "json" } })).default;
-    const response = (await chatProxy({ messages: [{ role: "user", content: "hello!" }] })).choices[0].message.content ?? "";
-    console.log(response);
-    i++;
-    if (i > 5) break;
-  }
-}
-
-async function exportClaims() {
-  await rm("./data/claims", { recursive: true }).catch();
-  await mkdir("./data/claims", { recursive: true });
-  await exportClaimByType(EntityType.Insight, "./data/claims");
-  await exportClaimByType(EntityType.Recommendation, "./data/claims");
-}
-
-async function embedClaims() {
-  const claimChunkFiles = await readdir("./data/claims");
-  console.log(`Will embed ${claimChunkFiles.length} files`);
-
-  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!, process.env.OPENAI_EMBEDDINGS_ENDPOINT!);
-
-  let i = 0;
-  for (let filename of claimChunkFiles) {
-    const claims: ExportedClaim[] = (await import("../data/claims/" + filename, { assert: { type: "json" } })).default;
-    const embedding = (await embeddingProxy({ input: claims[0].claimTitle })).data[0].embedding;
-    console.log(new Date().toLocaleTimeString(), embedding.length);
-    i++;
-    if (i > 5) break;
-  }
-}
