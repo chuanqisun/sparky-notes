@@ -4,13 +4,24 @@ import http from "http";
 import https from "https";
 
 export function cognitiveSearchJsonProxy<RequestType, ResponseType>(apiKey: string, endpoint: string) {
-  return jsonProxy<RequestType, ResponseType>({
-    header: {
-      "api-key": apiKey,
+  return jsonProxy<RequestType, ResponseType>(endpoint, {
+    axiosConfig: {
+      headers: {
+        "api-key": apiKey,
+      },
+      httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
+      httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
+      timeout: 5000,
     },
-    endpoint,
-    httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
-    httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
+    retryConfig: {
+      retries: 3,
+      retryDelay: (count) => {
+        console.log(`Retry: ${count}`);
+        return count * 2000;
+      },
+      shouldResetTimeout: true,
+      retryCondition: () => true,
+    },
   });
 }
 

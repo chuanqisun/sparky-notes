@@ -1,36 +1,24 @@
 import axios, { type AxiosRequestConfig } from "axios";
-import axiosRetry from "axios-retry";
+import axiosRetry, { type IAxiosRetryConfig } from "axios-retry";
 
 export type JsonProxy<RequestType, ResponseType> = (payload: RequestType) => Promise<ResponseType>;
 
 export interface ProxyConfig {
-  header?: Record<string, string>;
-  endpoint: string;
-  httpAgent?: AxiosRequestConfig["httpAgent"];
-  httpsAgent?: AxiosRequestConfig["httpsAgent"];
+  axiosConfig?: AxiosRequestConfig;
+  retryConfig?: IAxiosRetryConfig;
 }
-export function jsonProxy<RequestType, ResponseType>(config: ProxyConfig): JsonProxy<RequestType, ResponseType> {
+export function jsonProxy<RequestType, ResponseType>(endpoint: string, config?: ProxyConfig): JsonProxy<RequestType, ResponseType> {
   const axiosInstance = axios.create();
-  axiosRetry(axiosInstance, {
-    retries: 3,
-    retryDelay: (count) => {
-      console.log(`Retry: ${count}`);
-      return count * 2000;
-    },
-    shouldResetTimeout: true,
-    retryCondition: () => true,
-  });
+  axiosRetry(axiosInstance, config?.retryConfig);
 
   return async (payload) => {
     return axiosInstance
-      .post(config.endpoint, payload, {
+      .post(endpoint, payload, {
+        ...config?.axiosConfig,
         headers: {
           "Content-Type": "application/json",
-          ...config.header,
+          ...config?.axiosConfig?.headers,
         },
-        httpAgent: config.httpAgent,
-        httpsAgent: config.httpsAgent,
-        timeout: 5000,
       })
       .then((res) => res.data);
   };
