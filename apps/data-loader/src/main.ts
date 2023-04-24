@@ -20,7 +20,7 @@ async function main() {
       break;
     }
     case params.includes("parse-claims"): {
-      parseClaims(path.resolve(CLAIMS_DIR), "general-purpose");
+      parseClaims(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
       break;
     }
     case params.includes("embed-claims"): {
