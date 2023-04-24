@@ -2,6 +2,7 @@ import { jsonProxy } from "../http/json-proxy";
 
 import http from "http";
 import https from "https";
+import { throttle } from "../http/throttle";
 
 export interface SimpleChatProxy {
   (input: SimpleChatInput): Promise<ChatOutput>;
@@ -9,13 +10,12 @@ export interface SimpleChatProxy {
 
 export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
 
-export type SimpleChatInput = Partial<ChatInput> &
-  Pick<ChatInput, "messages"> & {
-    /** @default "v3.5-turbo" */
-    model?: ChatModel;
-  };
+export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
 
-export function getSimpleChatProxy(apiKey: string): SimpleChatProxy {
+export function getSimpleChatProxy(apiKey: string, model?: ChatModel): SimpleChatProxy {
+  const selectedModel = model ?? "v3.5-turbo";
+  console.log("chat proxy selection", selectedModel);
+
   const simpleProxy: SimpleChatProxy = async (input) => {
     const fullInput: ChatInput = {
       temperature: 0,
@@ -26,11 +26,13 @@ export function getSimpleChatProxy(apiKey: string): SimpleChatProxy {
       stop: "",
       ...input,
     };
-    const fullProxy = getChatProxy(apiKey, modelToEndpoint(input.model ?? "v3.5-turbo"));
+    const fullProxy = getChatProxy(apiKey, modelToEndpoint(selectedModel));
     return fullProxy(fullInput);
   };
 
-  return simpleProxy;
+  const throttledProxy = throttle(simpleProxy, (1.1 * (60 * 1000)) / modelToRequestsPerMinute(selectedModel));
+
+  return throttledProxy;
 }
 
 export function modelToEndpoint(model?: ChatModel): string {
@@ -45,6 +47,18 @@ export function modelToEndpoint(model?: ChatModel): string {
   }
 }
 
+export function modelToRequestsPerMinute(model?: ChatModel): number {
+  switch (model) {
+    case "v4-32k":
+      return 120;
+    case "v4-8k":
+      return 120;
+    case "v3.5-turbo":
+    default:
+      return 300;
+  }
+}
+
 export function getChatProxy(apiKey: string, endpoint: string) {
   return jsonProxy<ChatInput, ChatOutput>(endpoint, {
     axiosConfig: {
@@ -53,7 +67,7 @@ export function getChatProxy(apiKey: string, endpoint: string) {
       },
       httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
       httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
-      timeout: 5000,
+      timeout: 20000,
     },
     retryConfig: {
       retries: 3,

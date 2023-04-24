@@ -60,4 +60,9 @@ export interface ExportedClaim {
   claimType: number;
   claimTitle: string;
   claimContent: string;
+  products: string[];
+  topics: string[];
+  methods: string[];
+  rootDocumentTitle: string;
+  rootDocumentContext: string;
 }
