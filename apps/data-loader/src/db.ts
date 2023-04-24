@@ -1,11 +1,13 @@
 import { CozoDb } from "cozo-node";
 import crypto from "crypto";
-import { readdir } from "fs/promises";
+import { readdir, writeFile } from "fs/promises";
 
 // const db = new CozoDb("sqlite", "./data/data.sqlite");
 const db = new CozoDb();
 
-const dataDir = "claims-ux-domain-concepts-2023-04-24";
+const dbVerstion = "20240424v1";
+const dataDir = "claims-ux-domain-concepts-20240424v1";
+const reindexFromDisk = 0;
 
 function printQuery(query: string, params?: {}) {
   return db
@@ -14,17 +16,40 @@ function printQuery(query: string, params?: {}) {
     .catch((err) => console.error(err.display || err.message));
 }
 
+function saveQuery(query: string, params?: {}) {
+  return db
+    .run(query.trim(), params)
+    .then((data) =>
+      writeFile(
+        `./data/query-${Date.now()}.text`,
+        data.rows
+          .map((columns: any[]) =>
+            `
+---
+https://hits.microsoft.com/insight/${columns[2]}
+- Insight: ${columns[4]}
+  - Concept: ${columns[0]}
+https://hits.microsoft.com/insight/${columns[3]}
+- Insight: ${columns[5]}
+  - Concept: ${columns[1]}
+    `.trim()
+          )
+          .join("\n\n---\n\n")
+      )
+    )
+    .catch((err) => console.error(err.display || err.message));
+}
+
 function quietQuery(query: string, params?: {}) {
   return db.run(query.trim(), params).catch((err) => console.error("!", err.display || err.message));
 }
 
 async function main() {
-  let rebuild = 0;
-  if (rebuild) {
+  if (reindexFromDisk) {
     await initDb();
     await loadClaimsFromDisk();
   } else {
-    await db.restore("./data/backup-v01.db");
+    await db.restore(`./data/backup-${dbVerstion}.db`);
   }
 
   await printQuery(`::relations`);
@@ -33,12 +58,12 @@ async function main() {
   // ?[id, text] := *concept {id, text}
   // `);
 
-  await printQuery(`
+  await saveQuery(`
   
   ?[fr_text,to_text, source_claim_id, target_claim_id, source_claim_title, target_claim_title, dist] := *concept:semantic {layer: 0, fr_id, to_id, dist},
     *concept {id: fr_id, text: fr_text},
     *concept {id: to_id, text: to_text},
-    fr_id != to_id,
+    fr_id < to_id,  
     fr_text != to_text,
     *claim_concept {conceptId: fr_id, claimId: source_claim_id},
     *claim_concept {conceptId: to_id, claimId: target_claim_id},
@@ -51,8 +76,8 @@ async function main() {
   :limit 40
     `);
 
-  if (rebuild) {
-    await db.backup("./data/backup-v01.db");
+  if (reindexFromDisk) {
+    await db.backup(`./data/backup-${dbVerstion}.db`);
   }
 }
 
@@ -102,6 +127,9 @@ async function loadClaimsFromDisk() {
     // return;
     for (let file of files) {
       const claimChunk = (await import(`../data/${dataDir}/` + file)).default;
+
+      // current bug preventing large index from being built
+      if (claimCount > 2700) break;
 
       for (let claim of claimChunk) {
         claimCount++;
