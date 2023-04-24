@@ -1,9 +1,10 @@
 {
   "configurations": [
     {
-      "name": "Debug all",
+      "name": "Debug data loader",
       "request": "launch",
-      "runtimeArgs": ["run-script", "dev"],
+      "runtimeArgs": ["run-script", "start", "--", "parse-claims"],
+      "cwd": "${workspaceFolder}/apps/data-loader",
       "runtimeVersion": "18",
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],

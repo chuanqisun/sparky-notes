@@ -1,11 +1,9 @@
 import assert from "assert";
-import { mkdir, rm, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { EntityName, EntityType } from "./entity";
 import { getClaimCountInput, getClaimIndexProxy, getClaimsPageInput } from "./search-claims";
 
 export async function exportClaims(outputDir: string) {
-  await rm(outputDir, { recursive: true }).catch();
-  await mkdir(outputDir, { recursive: true });
   await exportClaimByType(EntityType.Insight, outputDir);
   await exportClaimByType(EntityType.Recommendation, outputDir);
 }

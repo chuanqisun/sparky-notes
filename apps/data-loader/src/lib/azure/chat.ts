@@ -15,6 +15,8 @@ export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
 export function getSimpleChatProxy(apiKey: string, model?: ChatModel): SimpleChatProxy {
   const selectedModel = model ?? "v3.5-turbo";
   console.log("chat proxy selection", selectedModel);
+  const throttledInterval = (1.1 * (60 * 1000)) / modelToRequestsPerMinute(selectedModel);
+  console.log("throttle", throttledInterval);
 
   const simpleProxy: SimpleChatProxy = async (input) => {
     const fullInput: ChatInput = {
@@ -30,7 +32,7 @@ export function getSimpleChatProxy(apiKey: string, model?: ChatModel): SimpleCha
     return fullProxy(fullInput);
   };
 
-  const throttledProxy = throttle(simpleProxy, (1.1 * (60 * 1000)) / modelToRequestsPerMinute(selectedModel));
+  const throttledProxy = throttle(simpleProxy, throttledInterval);
 
   return throttledProxy;
 }

@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 
 import path from "path";
+import { clearClaims } from "./lib/hits/clear-claims";
 import { embedClaims } from "./lib/hits/embed-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { parseClaims } from "./lib/hits/parse-claims";
@@ -14,8 +15,12 @@ console.log("Data loader started with params", params);
 
 async function main() {
   switch (true) {
+    case params.includes("clear-claims"): {
+      clearClaims(path.resolve(CLAIMS_DIR));
+      break;
+    }
     case params.includes("parse-claims"): {
-      parseClaims(path.resolve(CLAIMS_DIR));
+      parseClaims(path.resolve(CLAIMS_DIR), "general-purpose");
       break;
     }
     case params.includes("embed-claims"): {
