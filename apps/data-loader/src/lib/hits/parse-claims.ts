@@ -137,14 +137,10 @@ Concept 2 summary: ...
           claim.methods.length ? `Methods in the context: ${claim.methods.join(", ")}` : "",
           claim.topics.length ? `Topics in the context: ${claim.topics.join(", ")}` : "",
           claim.products.length ? `Products in the context: ${claim.products.join(", ")}` : "",
-          `
-              Report in the context:
-
+          `Report in the context: ${[claim.rootDocumentTitle].join(" ")}`,
+          `Based on the context, extract concepts for the following claim:
               ${[claim.claimTitle, claim.claimContent].join(" ")}
-              `,
-          `Extract concepts for the following claim:
-          
-${[claim.rootDocumentTitle, claim.rootDocumentContext].join(" ")}`,
+`,
         ].join("\n\n"),
       },
     ],

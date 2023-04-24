@@ -4,7 +4,8 @@
   "description": "",
   "main": "./src/main.ts",
   "scripts": {
-    "start": "tsx ./src/main.ts"
+    "start": "tsx ./src/main.ts",
+    "test:db": "tsx ./src/db.ts"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,7 @@
   "devDependencies": {
     "axios": "^1.3.6",
     "axios-retry": "^3.4.0",
+    "cozo-node": "^0.6.0",
     "dotenv": "^16.0.3",
     "tsx": "^3.12.6"
   }
