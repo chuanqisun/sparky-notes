@@ -6,9 +6,9 @@ import type { ExportedClaim } from "./export-claims";
 
 export async function parseClaims(claimsDir: string, lensName = "ux-domain-concepts") {
   const claimChunkFiles = await readdir(claimsDir);
-  console.log(`Will parse ${claimChunkFiles.length} files`);
+  console.log(`Chunk discovered:`, claimChunkFiles.length);
 
-  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v3.5-turbo");
+  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v4-8k");
 
   const progress = {
     success: 0,
@@ -57,21 +57,28 @@ You are an ontology engineer and UX research domain expert. You are analyzing th
 ${[claim.rootDocumentTitle, claim.rootDocumentContext].join(" ")} 
               `,
           `
-You must interprete claim in the context of a report and extract a list of concepts in the UX research domain. Such concepts include:
-- UI design patterns
-- UI elements, components, and widgets
-- Usability issues
-- Design principles
-- User behavior patterns
-- Recommended designs
-- Causal relationships between concepts
-...
-`,
+You must interprete claim in the context of a report and extract a list of concepts for the UX research domain. Focus on these types:
+- UI design pattern
+- UI element, component, and widget
+- Usability issue
+- Design principle
+- User behavior
+- User pain point
+- Recommended design
+- Research question
+- Known issues
+- Follow up question`,
           `
 Respond with one concept per line, 5 concepts at most. in a list like this:
 
+Type of concept 1: ...
 Concept 1: ...
+
+Type of concept 2: ...
 Concept 2: ...
+
+...
+
 `,
         ]
           .map((str) => str.trim())
@@ -98,7 +105,7 @@ Concept 2: ...
 
   const concepts = responseText
     .split("\n")
-    .map((line) => line.trim().match(/^concept\s*\d+\:(.+?)/im)?.[1] ?? "")
+    .map((line) => line.trim().match(/^concept\s*\d+\:(.+)/i)?.[1] ?? "")
     .filter(Boolean);
 
   console.log(`

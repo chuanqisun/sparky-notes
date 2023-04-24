@@ -2,7 +2,7 @@ import { jsonProxy } from "../http/json-proxy";
 
 import http from "http";
 import https from "https";
-import { throttle } from "../http/throttle";
+import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 
 export interface SimpleChatProxy {
   (input: SimpleChatInput): Promise<ChatOutput>;
@@ -14,9 +14,9 @@ export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
 
 export function getSimpleChatProxy(apiKey: string, model?: ChatModel): SimpleChatProxy {
   const selectedModel = model ?? "v3.5-turbo";
-  console.log("chat proxy selection", selectedModel);
-  const throttledInterval = (1.1 * (60 * 1000)) / modelToRequestsPerMinute(selectedModel);
-  console.log("throttle", throttledInterval);
+  console.log("Model selection", selectedModel);
+  const maxRequestsPerMiniute = modelToRequestsPerMinute(selectedModel);
+  console.log("Model max rpm", maxRequestsPerMiniute);
 
   const simpleProxy: SimpleChatProxy = async (input) => {
     const fullInput: ChatInput = {
@@ -32,9 +32,9 @@ export function getSimpleChatProxy(apiKey: string, model?: ChatModel): SimpleCha
     return fullProxy(fullInput);
   };
 
-  const throttledProxy = throttle(simpleProxy, throttledInterval);
-
-  return throttledProxy;
+  const queue = rateLimitQueue(maxRequestsPerMiniute, 0.1);
+  const rateLimitedProxy = withAsyncQueue(queue, simpleProxy);
+  return rateLimitedProxy;
 }
 
 export function modelToEndpoint(model?: ChatModel): string {
