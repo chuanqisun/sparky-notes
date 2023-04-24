@@ -2,7 +2,10 @@ import { CozoDb } from "cozo-node";
 import crypto from "crypto";
 import { readdir } from "fs/promises";
 
-const db = new CozoDb("sqlite", "./data/data.sqlite");
+// const db = new CozoDb("sqlite", "./data/data.sqlite");
+const db = new CozoDb();
+
+const dataDir = "claims-ux-domain-concepts-2023-04-24";
 
 function printQuery(query: string, params?: {}) {
   return db
@@ -16,8 +19,13 @@ function quietQuery(query: string, params?: {}) {
 }
 
 async function main() {
-  // await initDb();
-  // await loadClaimsFromDisk();
+  let rebuild = 0;
+  if (rebuild) {
+    await initDb();
+    await loadClaimsFromDisk();
+  } else {
+    await db.restore("./data/backup-v01.db");
+  }
 
   await printQuery(`::relations`);
 
@@ -42,6 +50,10 @@ async function main() {
   :order dist
   :limit 40
     `);
+
+  if (rebuild) {
+    await db.backup("./data/backup-v01.db");
+  }
 }
 
 main();
@@ -86,10 +98,10 @@ async function initDb() {
 async function loadClaimsFromDisk() {
   let claimCount = 0;
 
-  await readdir("./data/claims-ux-domain-concepts").then(async (files) => {
+  await readdir(`./data/${dataDir}`).then(async (files) => {
     // return;
     for (let file of files) {
-      const claimChunk = (await import("../data/claims-ux-domain-concepts/" + file)).default;
+      const claimChunk = (await import(`../data/${dataDir}/` + file)).default;
 
       for (let claim of claimChunk) {
         claimCount++;

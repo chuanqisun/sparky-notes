@@ -4,8 +4,8 @@
   "description": "",
   "main": "./src/main.ts",
   "scripts": {
-    "start": "tsx ./src/main.ts",
-    "test:db": "tsx ./src/db.ts"
+    "start:parse": "tsx ./src/main.ts parse-claims",
+    "start:db": "tsx ./src/db.ts"
   },
   "keywords": [],
   "author": "",
