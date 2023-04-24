@@ -2,16 +2,17 @@ import { jsonProxy } from "../http/json-proxy";
 
 import http from "http";
 import https from "https";
+import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 
-export function getEmbeddingProxy(apiKey: string, endpoint: string) {
-  return jsonProxy<EmbeddingInput, EmbeddingOutput>(endpoint, {
+export function getEmbeddingProxy(apiKey: string) {
+  const rawProxy = jsonProxy<EmbeddingInput, EmbeddingOutput>(process.env.OPENAI_EMBEDDINGS_ENDPOINT!, {
     axiosConfig: {
       headers: {
         "api-key": apiKey,
       },
       httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
       httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
-      timeout: 5000,
+      timeout: 10000,
     },
     retryConfig: {
       retries: 3,
@@ -23,6 +24,11 @@ export function getEmbeddingProxy(apiKey: string, endpoint: string) {
       retryCondition: () => true,
     },
   });
+
+  const queue = rateLimitQueue(300, 0.1);
+  const rateLimitedProxy = withAsyncQueue(queue, rawProxy);
+
+  return rateLimitedProxy;
 }
 
 export interface EmbeddingInput {

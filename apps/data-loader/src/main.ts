@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 
 import path from "path";
 import { clearClaims } from "./lib/hits/clear-claims";
-import { embedClaims } from "./lib/hits/embed-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { parseClaims } from "./lib/hits/parse-claims";
 
@@ -21,10 +20,6 @@ async function main() {
     }
     case params.includes("parse-claims"): {
       parseClaims(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
-      break;
-    }
-    case params.includes("embed-claims"): {
-      embedClaims();
       break;
     }
     case params.includes("export-claims"): {

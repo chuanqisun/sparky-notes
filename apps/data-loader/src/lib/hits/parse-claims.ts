@@ -1,6 +1,7 @@
-import { readdir, writeFile } from "fs/promises";
+import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { getSimpleChatProxy, type SimpleChatProxy } from "../azure/chat";
+import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
@@ -11,7 +12,10 @@ export async function parseClaims(claimsDir: string, lensName = "ux-domain-conce
   const outputDir = path.resolve(claimsDir, `../claims-${lensName}`);
   console.log(`Output dir`, outputDir);
 
-  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v3.5-turbo");
+  await mkdir(outputDir, { recursive: true });
+
+  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v4-8k");
+  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
 
   const progress = {
     success: 0,
@@ -28,16 +32,34 @@ export async function parseClaims(claimsDir: string, lensName = "ux-domain-conce
 
     let bufferIndex = 0;
     let fileWriteBuffer: ExportedClaim[] = [];
-    const bufferLimit = 10;
+    const bufferLimit = 20;
 
     await Promise.all(
       claims.map((claim) =>
         getUXDomainConcepts(chatProxy, claim)
           .then((concepts) => {
+            return Promise.all(
+              concepts.map(async (concept) => {
+                return embeddingProxy({ input: concept })
+                  .then((result) => ({
+                    concept,
+                    embedding: result.data[0].embedding,
+                  }))
+                  .catch((e) => {
+                    console.error("Embedding failed", e);
+                    return {
+                      concept,
+                      embedding: [],
+                    };
+                  });
+              })
+            );
+          })
+          .then((embeddedConcepts) => {
             progress.success++;
             return {
               ...claim,
-              concepts,
+              concepts: embeddedConcepts.filter((concept) => concept.embedding.length > 0),
             };
           })
           .catch((e) => {
@@ -50,15 +72,18 @@ export async function parseClaims(claimsDir: string, lensName = "ux-domain-conce
           })
           .then((result) => {
             fileWriteBuffer.push(result);
-            if (fileWriteBuffer.length >= bufferLimit) {
+            if (fileWriteBuffer.length >= bufferLimit || progress.success + progress.error === progress.total) {
               const buffer = fileWriteBuffer;
               fileWriteBuffer = [];
               return writeFile(
                 path.join(
                   outputDir,
-                  `${chunkFilename.replace(".json", "")}-buffer-${`${bufferIndex++}`.padStart(Math.ceil(claims.length / bufferLimit), "0")}.json`
+                  `${chunkFilename.replace(".json", "")}-buffer-${`${bufferIndex++}`.padStart(
+                    Math.ceil(claims.length / bufferLimit).toString().length,
+                    "0"
+                  )}.json`
                 ),
-                JSON.stringify(buffer, null, 2)
+                JSON.stringify(buffer)
               );
             }
           })
@@ -93,7 +118,7 @@ You are an ontology engineer and UX (user experience) domain expert. You can det
 - User feedback
 - Follow up question`,
           `
-Now analyze a claim in the provided context and detect UX domain concepts. Respond with 3 - 8 concepts in total, use this format:
+Now analyze a claim in the provided context and detect UX domain concepts. Respond with 3 - 5 most useful concepts, use this format:
 
 Concept 1 type: <Which type the concept below is?>
 Concept 1 summary: <Summary of Concept 1, shorten to newspaper headline>
@@ -130,13 +155,19 @@ ${[claim.rootDocumentTitle, claim.rootDocumentContext].join(" ")}`,
 
   const concepts = responseText
     .split("\n")
-    .map((line) => line.trim().match(/^concept\s*\d+\s+summary\:(.+)/i)?.[1] ?? "")
+    .map(
+      (line) =>
+        line
+          .trim()
+          .match(/^concept\s*\d+\s+summary\:(.+)/i)?.[1]
+          .trim() ?? ""
+    )
     .filter(Boolean);
 
   console.log(`
 ---      
 https://hits.microsoft.com/${EntityName[claim.claimType]}/${claim.claimId}
-Tokens usage: ${response.usage.total_tokens}
+Tokens usage: ${response.usage.completion_tokens} output, ${response.usage.total_tokens} total
 ${concepts.map((concept) => `- ${concept}`).join("\n")}
   `);
 

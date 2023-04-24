@@ -2,7 +2,7 @@ import { throttle } from "./throttle";
 
 export function withAsyncQueue<T extends any[], K extends any>(asyncQueue: AsyncQueue, func: (...args: T) => Promise<K>) {
   return async (...args: T) =>
-    new Promise<any>((resolve, reject) =>
+    new Promise<K>((resolve, reject) =>
       asyncQueue.enqueue(async () =>
         func(...args)
           .then(resolve)
