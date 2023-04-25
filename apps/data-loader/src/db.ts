@@ -199,17 +199,16 @@ function saveQuery(query: string, params?: {}) {
     .run(query.trim(), params)
     .then((data) =>
       writeFile(
-        `./data/query-${Date.now()}.txt`,
+        `./data/query-${Date.now()}.md`,
         data.rows
           .map((columns: any[]) =>
             `
----
-https://hits.microsoft.com/insight/${columns[2]}
-- Insight: ${columns[4]}
-  - Concept: ${columns[0]}
-https://hits.microsoft.com/insight/${columns[3]}
-- Insight: ${columns[5]}
-  - Concept: ${columns[1]}
+- https://hits.microsoft.com/insight/${columns[2]}
+  - Insight: ${columns[4]}
+    - Concept: ${columns[0]}
+- https://hits.microsoft.com/insight/${columns[3]}
+  - Insight: ${columns[5]}
+    - Concept: ${columns[1]}
     `.trim()
           )
           .join("\n\n---\n\n")
