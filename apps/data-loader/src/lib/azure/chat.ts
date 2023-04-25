@@ -12,11 +12,11 @@ export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
 
 export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
 
-export function getSimpleChatProxy(apiKey: string, model?: ChatModel): SimpleChatProxy {
+export function getSimpleChatProxy(apiKey: string, model?: ChatModel, silent?: boolean): SimpleChatProxy {
   const selectedModel = model ?? "v3.5-turbo";
-  console.log("Model selection", selectedModel);
+  if (!silent) console.log("Model selection", selectedModel);
   const maxRequestsPerMiniute = modelToRequestsPerMinute(selectedModel);
-  console.log("Model max rpm", maxRequestsPerMiniute);
+  if (!silent) console.log("Model max rpm", maxRequestsPerMiniute);
 
   const simpleProxy: SimpleChatProxy = async (input) => {
     const fullInput: ChatInput = {

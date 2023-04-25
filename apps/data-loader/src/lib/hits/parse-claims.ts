@@ -97,6 +97,70 @@ export async function parseClaims(claimsDir: string, lensName = "ux-domain-conce
   }
 }
 
+export async function parseClaimQuery(query: string): Promise<string[]> {
+  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v4-8k", true);
+
+  const response = await chatProxy({
+    messages: [
+      {
+        role: "system",
+        content: [
+          `You are an ontology engineer and UX (user experience) domain expert. You can detect abstract concepts in the UX domain, in one of these types:
+- UI design pattern
+- UI element, component, and widget
+- Usability issue
+- Design principle
+- User behavior
+- User pain point
+- Recommended design
+- Research question
+- Known issues
+- Design feedback
+- User feedback
+- Follow up question
+
+Now analyze a statement and first respond with the goal behind the statement, and then detect UX domain concepts. Respond with 2-4 most useful concepts, use this format:
+
+Goal: <What is the goal behind the statement?>
+
+Concept 1 type: <Which type the concept below is?>
+Concept 1 summary: <Summary of Concept 1, shorten to newspaper headline>
+
+Concept 2 type: ...
+Concept 2 summary: ...
+`,
+        ].join("\n"),
+      },
+      {
+        role: "user",
+        content: `Statement: ${query}`,
+      },
+    ],
+    max_tokens: 500,
+  });
+
+  const responseText = response.choices[0].message.content ?? "";
+
+  const concepts = responseText
+    .split("\n")
+    .map(
+      (line) =>
+        line
+          .trim()
+          .match(/^concept\s*\d+\s+summary\:(.+)/i)?.[1]
+          .trim() ?? ""
+    )
+    .filter(Boolean);
+
+  return concepts;
+}
+
+export function bulkEmbed(texts: string[]): Promise<number[][]> {
+  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
+
+  return Promise.all(texts.map((text) => embeddingProxy({ input: text }).then((res) => res.data[0].embedding)));
+}
+
 async function getUXDomainConcepts(chatProxy: SimpleChatProxy, claim: ExportedClaim): Promise<string[]> {
   const response = await chatProxy({
     messages: [

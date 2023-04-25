@@ -3,7 +3,7 @@
     {
       "name": "Debug data loader",
       "request": "launch",
-      "runtimeArgs": ["run-script", "start", "--", "parse-claims"],
+      "runtimeArgs": ["run-script", "start:repl"],
       "cwd": "${workspaceFolder}/apps/data-loader",
       "runtimeVersion": "18",
       "runtimeExecutable": "npm",
