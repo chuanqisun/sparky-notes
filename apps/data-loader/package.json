@@ -4,6 +4,7 @@
   "description": "",
   "main": "./src/main.ts",
   "scripts": {
+    "start:repl": "tsx ./src/main.ts repl",
     "start:parse": "tsx ./src/main.ts parse-claims",
     "start:db": "tsx ./src/db.ts"
   },

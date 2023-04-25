@@ -9,41 +9,6 @@ const dbVerstion = "20240424v1";
 const dataDir = "claims-ux-domain-concepts-20240424v1";
 const reindexFromDisk = 0;
 
-function printQuery(query: string, params?: {}) {
-  return db
-    .run(query.trim(), params)
-    .then((data) => console.log("OK\n", data))
-    .catch((err) => console.error(err.display || err.message));
-}
-
-function saveQuery(query: string, params?: {}) {
-  return db
-    .run(query.trim(), params)
-    .then((data) =>
-      writeFile(
-        `./data/query-${Date.now()}.text`,
-        data.rows
-          .map((columns: any[]) =>
-            `
----
-https://hits.microsoft.com/insight/${columns[2]}
-- Insight: ${columns[4]}
-  - Concept: ${columns[0]}
-https://hits.microsoft.com/insight/${columns[3]}
-- Insight: ${columns[5]}
-  - Concept: ${columns[1]}
-    `.trim()
-          )
-          .join("\n\n---\n\n")
-      )
-    )
-    .catch((err) => console.error(err.display || err.message));
-}
-
-function quietQuery(query: string, params?: {}) {
-  return db.run(query.trim(), params).catch((err) => console.error("!", err.display || err.message));
-}
-
 async function main() {
   if (reindexFromDisk) {
     await initDb();
@@ -54,27 +19,7 @@ async function main() {
 
   await printQuery(`::relations`);
 
-  // await printQuery(`
-  // ?[id, text] := *concept {id, text}
-  // `);
-
-  await saveQuery(`
-  
-  ?[fr_text,to_text, source_claim_id, target_claim_id, source_claim_title, target_claim_title, dist] := *concept:semantic {layer: 0, fr_id, to_id, dist},
-    *concept {id: fr_id, text: fr_text},
-    *concept {id: to_id, text: to_text},
-    fr_id < to_id,  
-    fr_text != to_text,
-    *claim_concept {conceptId: fr_id, claimId: source_claim_id},
-    *claim_concept {conceptId: to_id, claimId: target_claim_id},
-    *claim {id: source_claim_id, title: source_claim_title, rootTitle: source_claim_root_title},
-    *claim {id: target_claim_id, title: target_claim_title, rootTitle: target_claim_root_title},
-    source_claim_id != target_claim_id,
-    source_claim_root_title != target_claim_root_title
-
-  :order dist
-  :limit 40
-    `);
+  await getClosePairs();
 
   if (reindexFromDisk) {
     await db.backup(`./data/backup-${dbVerstion}.db`);
@@ -118,6 +63,26 @@ async function initDb() {
   ef: 16,
   m: 32,
 }`);
+}
+
+async function getClosePairs() {
+  return await saveQuery(`
+  
+  ?[fr_text,to_text, source_claim_id, target_claim_id, source_claim_title, target_claim_title, dist] := *concept:semantic {layer: 0, fr_id, to_id, dist},
+    *concept {id: fr_id, text: fr_text},
+    *concept {id: to_id, text: to_text},
+    fr_id < to_id,  
+    fr_text != to_text,
+    *claim_concept {conceptId: fr_id, claimId: source_claim_id},
+    *claim_concept {conceptId: to_id, claimId: target_claim_id},
+    *claim {id: source_claim_id, title: source_claim_title, rootTitle: source_claim_root_title},
+    *claim {id: target_claim_id, title: target_claim_title, rootTitle: target_claim_root_title},
+    source_claim_id != target_claim_id,
+    source_claim_root_title != target_claim_root_title
+
+  :order dist
+  :limit 40
+    `);
 }
 
 async function loadClaimsFromDisk() {
@@ -220,4 +185,39 @@ async function addConcept(claim: { id: string; textVec: number[]; text: string }
   `,
     claim
   );
+}
+
+function printQuery(query: string, params?: {}) {
+  return db
+    .run(query.trim(), params)
+    .then((data) => console.log("OK\n", data))
+    .catch((err) => console.error(err.display || err.message));
+}
+
+function saveQuery(query: string, params?: {}) {
+  return db
+    .run(query.trim(), params)
+    .then((data) =>
+      writeFile(
+        `./data/query-${Date.now()}.txt`,
+        data.rows
+          .map((columns: any[]) =>
+            `
+---
+https://hits.microsoft.com/insight/${columns[2]}
+- Insight: ${columns[4]}
+  - Concept: ${columns[0]}
+https://hits.microsoft.com/insight/${columns[3]}
+- Insight: ${columns[5]}
+  - Concept: ${columns[1]}
+    `.trim()
+          )
+          .join("\n\n---\n\n")
+      )
+    )
+    .catch((err) => console.error(err.display || err.message));
+}
+
+function quietQuery(query: string, params?: {}) {
+  return db.run(query.trim(), params).catch((err) => console.error("!", err.display || err.message));
 }
