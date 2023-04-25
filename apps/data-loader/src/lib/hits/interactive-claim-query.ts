@@ -89,7 +89,7 @@ dist < 0.35,
     let outputLines = "";
 
     const logAndWrite = (line: string) => {
-      outputLines += line + "\n";
+      outputLines += line + "  \n";
       console.log(line);
     };
 
@@ -137,9 +137,9 @@ Now answer the Question: ${command}
         logAndWrite(`🔗 https://hits.microsoft.com/insight/${item.claimId}`);
       }
 
-      logAndWrite(``);
+      logAndWrite(`\n---\n`);
 
-      await writeFile("./data/query-out.txt", outputLines).catch();
+      await writeFile("./data/query-out.md", outputLines).catch();
     }
   });
 }
