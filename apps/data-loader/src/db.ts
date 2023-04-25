@@ -199,7 +199,7 @@ function saveQuery(query: string, params?: {}) {
     .run(query.trim(), params)
     .then((data) =>
       writeFile(
-        `./data/query-${Date.now()}.md`,
+        `./data/raw-query-${Date.now()}.md`,
         data.rows
           .map((columns: any[]) =>
             `

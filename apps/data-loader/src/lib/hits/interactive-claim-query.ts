@@ -139,7 +139,7 @@ Now answer the Question: ${command}
 
       logAndWrite(`\n---\n`);
 
-      await writeFile("./data/query-out.md", outputLines).catch();
+      await writeFile(`./data/repl-query-${Date.now()}.md`, outputLines).catch();
     }
   });
 }
