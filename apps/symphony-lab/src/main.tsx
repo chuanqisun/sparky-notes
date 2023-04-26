@@ -1,69 +1,32 @@
-import { render } from "preact";
-import { useMemo } from "preact/hooks";
-import { useAuth } from "./features/account/use-auth";
-import { Aligner } from "./features/annealing/annealing";
-import { DuoLoop } from "./features/duo-loop/duo-loop";
-import { FrameTreeRoot } from "./features/frame-tree/frame-tree";
-import { Notebook } from "./features/notebook/notebook";
-import { getChatResponse, type ChatMessage, type OpenAIChatPayload, type OpenAIChatResponse } from "./features/openai/chat";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { AccountContextProvider } from "./account/account-context";
+import { ConnectionSetupDialog } from "./account/connection-setup-form";
 import "./index.css";
-
-export interface AppContext {
-  getChat: (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => Promise<OpenAIChatResponse>;
-}
+import { useDialog } from "./utils/use-dialog";
 
 function App() {
-  const { isConnected, signIn, signOut, accessToken } = useAuth();
-
-  const appContext = useMemo<AppContext>(
-    () => ({
-      getChat: getChatResponse.bind(null, accessToken, import.meta.env.VITE_OPENAI_CHAT_ENDPOINT!),
-    }),
-    [accessToken]
-  );
+  const { DialogComponent, open, close } = useDialog();
+  const handleConnectionsButtonClick = () => open();
 
   return (
-    <main>
-      {isConnected === undefined ? <>Authenticating...</> : null}
-      {isConnected === true ? (
-        <>
-          <menu>
-            <button onClick={signOut}>Sign out</button>
-          </menu>
-          <details>
-            <summary>Annealing demo</summary>
-            <Aligner context={appContext} />
-          </details>
-          <details>
-            <summary>Notebook demo</summary>
-            <Notebook context={appContext} />
-            <div>
-              <a href="./notebook.html">Standalone notebook</a>
-            </div>
-          </details>
-          <details>
-            <summary>Frame tree demo</summary>
-            <FrameTreeRoot context={appContext} />
-          </details>
-          <details>
-            <summary>Duo loop demo</summary>
-            <DuoLoop context={appContext} />
-          </details>
-          <details>
-            <summary>Studio demo</summary>
-            <div>
-              <a href="./studio.html">Open Studio</a>
-            </div>
-          </details>
-        </>
-      ) : null}
-      {isConnected === false ? (
-        <menu>
-          <button onClick={signIn}>Sign in</button>
-        </menu>
-      ) : null}
-    </main>
+    <>
+      <nav>
+        <button onClick={handleConnectionsButtonClick}>Connections</button>
+        <DialogComponent>
+          <ConnectionSetupDialog onClose={close} />
+        </DialogComponent>
+      </nav>
+    </>
   );
 }
 
-render(<App />, document.getElementById("app") as HTMLElement);
+export default App;
+
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <React.StrictMode>
+    <AccountContextProvider>
+      <App />
+    </AccountContextProvider>
+  </React.StrictMode>
+);

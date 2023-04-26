@@ -7,10 +7,11 @@ import { useAccountContext } from "./account-context";
 export interface ValidModel {
   id: string;
   displayName: string;
-  model: string;
 }
 
-const toDisplayModel = (deployment: ModelDeployment) => ({ id: deployment.id, model: deployment.model, displayName: deployment.id });
+function toDisplayModel(deployment: ModelDeployment): ValidModel {
+  return { id: deployment.id, displayName: deployment.model };
+}
 
 export const ConnectionSetupDialog: React.FC<{ onClose: () => any }> = (props) => {
   const accountContext = useAccountContext();

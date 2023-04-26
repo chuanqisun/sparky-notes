@@ -1,4 +1,4 @@
-import { handleOAuthRedirect } from "./account/auth";
+import { handleOAuthRedirect } from "./features/account/auth";
 
 handleOAuthRedirect().then((res) => {
   setTimeout(() => {
