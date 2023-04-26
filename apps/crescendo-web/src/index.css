@@ -1,0 +1,13 @@
+:root {
+  --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  font-family: var(--system-font);
+}
+
+* {
+  box-sizing: border-box;
+  font-size: inherit;
+  font-family: inherit;
+}

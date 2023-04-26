@@ -1,22 +1,22 @@
-import React, { useRef } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
+import { AccountContextProvider } from "./account/account-context";
+import { ConnectionSetupDialog } from "./account/connection-setup-form";
 import "./index.css";
+import { useDialog } from "./utils/use-dialog";
 
 function App() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const handleConnectionsButtonClick = () => dialogRef.current?.showModal();
+  const { DialogComponent, open, close } = useDialog();
+  const handleConnectionsButtonClick = () => open();
 
   return (
     <>
       <nav>
         <button onClick={handleConnectionsButtonClick}>Connections</button>
-        <dialog ref={dialogRef}>
-          <button>Connet to Chat API</button>
-          <button>Connect to Embedding API</button>
-          <button>Connect to HITS Graph</button>
-        </dialog>
+        <DialogComponent>
+          <ConnectionSetupDialog onClose={close} />
+        </DialogComponent>
       </nav>
-      <h1>Vite + React</h1>
     </>
   );
 }
@@ -25,6 +25,8 @@ export default App;
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <AccountContextProvider>
+      <App />
+    </AccountContextProvider>
   </React.StrictMode>
 );
