@@ -1,13 +1,25 @@
 :root {
+  color-scheme: light dark;
   --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --theme-rice: #dfd4c7;
+  --theme-coal: #2e2b2b;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
   font-family: var(--system-font);
+  overflow-y: scroll;
+  background-color: var(--theme-rice);
+  color: var(--theme-coal);
 }
 
 * {
   box-sizing: border-box;
   font-size: inherit;
   font-family: inherit;
+  margin: 0;
 }

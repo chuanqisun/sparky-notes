@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "preact/hooks";
+import { useCallback, useRef, useState } from "react";
 import { getJson, setJson } from "./storage";
 
 export interface UseLocalStorageProps<T = any> {
