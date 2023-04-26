@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { ConnectionSetupDialog } from "../account/connection-setup-form";
 import { useAuth } from "../account/use-auth";
@@ -10,7 +11,9 @@ export function Nav() {
 
   return (
     <NavLayout>
-      <h1>Symphony</h1>
+      <h1>
+        <Link to="/"> Symphony Lab</Link>
+      </h1>
       <StyledMenu>
         {isConnected === false ? <button onClick={signIn}>Sign in</button> : null}
         {isConnected === true && (
@@ -28,6 +31,7 @@ export function Nav() {
 }
 
 const NavLayout = styled.nav`
+  color-scheme: dark;
   position: sticky;
   top: 0%;
   height: 36px;
