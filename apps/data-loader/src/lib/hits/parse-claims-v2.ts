@@ -121,6 +121,10 @@ export function bulkEmbed(texts: string[]): Promise<number[][]> {
   return Promise.all(texts.map((text) => embeddingProxy({ input: text }).then((res) => res.data[0].embedding)));
 }
 
+// prompt issues:
+// one to many and many to one relations can be condensed
+// underscore should not appear as a variable name in the result.
+
 async function uxClaimToTriples(chatProxy: SimpleChatProxy, claim: ExportedClaim): Promise<string[]> {
   const messages: ChatMessage[] = [
     {
