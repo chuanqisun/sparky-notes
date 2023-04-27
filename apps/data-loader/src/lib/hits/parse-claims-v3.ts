@@ -5,11 +5,11 @@ import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
-export async function parseClaimsV2(claimsDir: string, lensName: string) {
+export async function parseClaimsV3(claimsDir: string, lensName: string) {
   const claimChunkFiles = await readdir(claimsDir);
   console.log(`Chunk discovered:`, claimChunkFiles.length);
 
-  const SHOULD_RESUME = true;
+  const SHOULD_RESUME = false;
 
   const startChunkIndex = SHOULD_RESUME ? 6 : 0; // to resume, start chunk should be the last unfinished chunk from previous run
   const startBufferIndex = SHOULD_RESUME ? 27 : 0; // to resume, start buffer should be the last unfinished buffer from previous run
@@ -57,29 +57,13 @@ export async function parseClaimsV2(claimsDir: string, lensName: string) {
     await Promise.all(
       remainingClaims.map((claim) =>
         uxClaimToTriples(chatProxy, claim)
-          .then((concepts) => {
-            return Promise.all(
-              concepts.map(async (concept) => {
-                return embeddingProxy({ input: concept })
-                  .then((result) => ({
-                    concept,
-                    embedding: result.data[0].embedding,
-                  }))
-                  .catch((e) => {
-                    console.error("Embedding failed", e);
-                    return {
-                      concept,
-                      embedding: [],
-                    };
-                  });
-              })
-            );
-          })
-          .then((embeddedConcepts) => {
+          .then((triples) => {
             progress.success++;
             return {
               ...claim,
-              concepts: embeddedConcepts.filter((concept) => concept.embedding.length > 0),
+              ontology: {
+                triples,
+              },
             };
           })
           .catch((e) => {
@@ -87,7 +71,9 @@ export async function parseClaimsV2(claimsDir: string, lensName: string) {
             console.error(e);
             return {
               ...claim,
-              concepts: [],
+              ontology: {
+                triples: [],
+              },
             };
           })
           .then((result) => {

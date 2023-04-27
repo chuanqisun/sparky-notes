@@ -1,7 +1,8 @@
 import type { CozoDb } from "cozo-node";
 import { writeFile } from "fs/promises";
 import { getSimpleChatProxy, type ChatMessage } from "../azure/chat";
-import { bulkEmbed, parseClaimQuery } from "./parse-claims";
+import { bulkEmbed } from "./bulk-embed";
+import { parseClaimQuery } from "./parse-claims";
 
 export async function semantcQueryHandler(db: CozoDb, command: string) {
   // query expansion
