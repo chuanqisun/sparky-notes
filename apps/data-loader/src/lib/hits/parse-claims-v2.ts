@@ -36,7 +36,7 @@ export async function parseClaimsV2(claimsDir: string, lensName = "ux-domain-ont
 
     await Promise.all(
       claims.map((claim) =>
-        getUXDomainConcepts(chatProxy, claim)
+        uxClaimToTriples(chatProxy, claim)
           .then((concepts) => {
             return Promise.all(
               concepts.map(async (concept) => {
@@ -204,18 +204,19 @@ export function bulkEmbed(texts: string[]): Promise<number[][]> {
   return Promise.all(texts.map((text) => embeddingProxy({ input: text }).then((res) => res.data[0].embedding)));
 }
 
-async function getUXDomainConcepts(chatProxy: SimpleChatProxy, claim: ExportedClaim): Promise<string[]> {
+async function uxClaimToTriples(chatProxy: SimpleChatProxy, claim: ExportedClaim): Promise<string[]> {
   const response = await chatProxy({
     messages: [
       {
         role: "system",
         content: [
           `
-You are an ontology engineer with UX Research and Design domain expertise. You can parse a statement into triples: Subject -> Predicate -> Object. 
+You are an ontology engineer with UX Research and Design domain expertise. You can parse a claim into triples: Subject -> Predicate -> Object. 
 
 Requirements:
 - The Subject and Object must be related to the UX Research and Design domain.
-- The Subject and Object must be generic enough to be used in other contexts.
+- The Subject and Object must be abstract concepts.
+- The Subject and Object must not contain personal information.
 
 You will use this format:
 
@@ -231,7 +232,7 @@ You will use this format:
       {
         role: "user",
         content: [
-          `Now use the ontology to parse the following into triples:   
+          `Now parse the following claim into ontology triples:   
 ${[claim.claimTitle, claim.claimContent].join("\n")}
           `.trim(),
           [
@@ -255,10 +256,13 @@ ${[claim.claimTitle, claim.claimContent].join("\n")}
       (line) =>
         line
           .trim()
-          .match(/Based on known triple\:(.+)/i)?.[1]
+          .match(/triple\s*\d+\:\s*(.+)/i)?.[1]
           .trim() ?? ""
     )
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((line) => line.split("->").map((item) => item.trim()))
+    .filter((triple) => triple.length === 3)
+    .map((triple) => triple.join(" -> "));
 
   console.log(`
 ---      
