@@ -5,6 +5,7 @@
   "main": "./src/main.ts",
   "scripts": {
     "start:repl": "tsx ./src/main.ts repl",
+    "start:export": "tsx ./src/main.ts export-claims",
     "start:parse": "tsx ./src/main.ts parse-claims",
     "start:db": "tsx ./src/db.ts"
   },

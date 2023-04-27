@@ -25,6 +25,11 @@ async function main() {
       parseClaims(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
       break;
     }
+    case params.includes("parse-claims-v2"): {
+      parseClaims(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
+      break;
+    }
+
     case params.includes("export-claims"): {
       exportClaims(path.resolve(CLAIMS_DIR));
       break;
