@@ -6,7 +6,7 @@ import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
 import { parseClaims } from "./lib/hits/parse-claims";
-import { parseClaimsV2 } from "./lib/hits/parse-claims-v2";
+import { fixClaimsV2, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
 import { startRepl } from "./lib/repl/start";
 
@@ -29,6 +29,10 @@ async function main() {
     }
     case params.includes("parse-claims-v2"): {
       parseClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
+      break;
+    }
+    case params.includes("fix-claims-v2"): {
+      fixClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
     }
     case params.includes("parse-claims-v3"): {

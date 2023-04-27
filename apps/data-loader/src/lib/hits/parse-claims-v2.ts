@@ -5,6 +5,91 @@ import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
+export async function fixClaimsV2(claimsDir: string, lensName: string) {
+  // reparse items that do not have concept items
+  const dirTimestamp = "1682558698713"; // replace with target dirname
+  const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${dirTimestamp}`);
+  const bufferFiles = await readdir(outputDir);
+  console.log(`Output dir`, outputDir);
+
+  const chatProxy = getLoadBalancedChatProxy(process.env.OPENAI_API_KEY!, ["v4-8k", "v4-32k"]);
+  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
+
+  const progress = {
+    success: 0,
+    error: 0,
+    empty: 0,
+    total: 0,
+    currentBuffer: 0,
+    bufferCount: bufferFiles.length,
+  };
+
+  for (const bufferFile of bufferFiles) {
+    progress.currentBuffer++;
+
+    const fileContent = await readFile(path.join(outputDir, bufferFile), "utf8");
+    const claims = JSON.parse(fileContent) as (ExportedClaim & { concepts: { concept: string; embedding: number[] }[] })[];
+    const failedClaims = claims.filter((claim) => claim.concepts.length === 0);
+    if (failedClaims.length === 0) continue;
+
+    progress.total += failedClaims.length;
+
+    await Promise.all(
+      failedClaims.map((fixedClaim) =>
+        uxClaimToTriples(chatProxy, fixedClaim)
+          .then((concepts) => {
+            return Promise.all(
+              concepts.map(async (concept) => {
+                return embeddingProxy({ input: concept })
+                  .then((result) => ({
+                    concept,
+                    embedding: result.data[0].embedding,
+                  }))
+                  .catch((e) => {
+                    console.error("Embedding failed", e);
+                    return {
+                      concept,
+                      embedding: [],
+                    };
+                  });
+              })
+            );
+          })
+          .then((embeddedConcepts) => {
+            if (embeddedConcepts.length === 0) {
+              progress.empty++;
+            } else {
+              progress.success++;
+            }
+            return {
+              ...fixedClaim,
+              concepts: embeddedConcepts.filter((concept) => concept.embedding.length > 0),
+            };
+          })
+          .catch((e) => {
+            progress.error++;
+            console.error(e);
+            return {
+              ...fixedClaim,
+              concepts: [],
+            };
+          })
+          .then((result) => {
+            claims.find((claim) => claim.claimId === fixedClaim.claimId)!.concepts = result.concepts;
+
+            console.log("flushed buffer", path.join(outputDir, bufferFile));
+            return writeFile(path.join(outputDir, bufferFile), JSON.stringify(claims));
+          })
+          .finally(() => {
+            console.log(`Progress: ${JSON.stringify(progress)}`);
+          })
+      )
+    );
+
+    console.log(failedClaims.map((claim) => claim.claimId));
+  }
+}
+
 export async function parseClaimsV2(claimsDir: string, lensName: string) {
   const claimChunkFiles = await readdir(claimsDir);
   console.log(`Chunk discovered:`, claimChunkFiles.length);
@@ -161,7 +246,7 @@ ${[claim.claimTitle, claim.claimContent].join("\n")}
 
   const response = await chatProxy({
     messages,
-    temperature: 0,
+    temperature: 0.7,
     max_tokens: 500,
   });
 
