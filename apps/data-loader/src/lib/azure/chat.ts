@@ -12,6 +12,20 @@ export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
 
 export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
 
+export function getLoadBalancedChatProxy(apiKey: string, models: ChatModel[], slient?: boolean): SimpleChatProxy {
+  const internalProxies = models.map((model) => getSimpleChatProxy(apiKey, model, slient));
+
+  let currentProxy = 0;
+
+  const balancedProxy: SimpleChatProxy = async (input) => {
+    const proxy = internalProxies[currentProxy];
+    currentProxy = (currentProxy + 1) % internalProxies.length;
+    return proxy(input);
+  };
+
+  return balancedProxy;
+}
+
 export function getSimpleChatProxy(apiKey: string, model?: ChatModel, silent?: boolean): SimpleChatProxy {
   const selectedModel = model ?? "v3.5-turbo";
   if (!silent) console.log("Model selection", selectedModel);
@@ -52,9 +66,9 @@ export function modelToEndpoint(model?: ChatModel): string {
 export function modelToRequestsPerMinute(model?: ChatModel): number {
   switch (model) {
     case "v4-32k":
-      return 120;
+      return 18;
     case "v4-8k":
-      return 120;
+      return 18;
     case "v3.5-turbo":
     default:
       return 300;
@@ -67,8 +81,8 @@ export function getChatProxy(apiKey: string, endpoint: string) {
       headers: {
         "api-key": apiKey,
       },
-      httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
-      httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
+      httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 4, maxSockets: 4 }),
+      httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 4, maxSockets: 4 }),
       timeout: 20000,
     },
     retryConfig: {

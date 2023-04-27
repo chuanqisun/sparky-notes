@@ -1,6 +1,6 @@
-import { mkdir, readdir, writeFile } from "fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "fs/promises";
 import path from "path";
-import { getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
+import { getLoadBalancedChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
@@ -9,33 +9,53 @@ export async function parseClaimsV2(claimsDir: string, lensName: string) {
   const claimChunkFiles = await readdir(claimsDir);
   console.log(`Chunk discovered:`, claimChunkFiles.length);
 
-  const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${Date.now()}`);
+  const SHOULD_RESUME = true;
+
+  const startChunkIndex = SHOULD_RESUME ? 6 : 0; // to resume, start chunk should be the last unfinished chunk from previous run
+  const startBufferIndex = SHOULD_RESUME ? 27 : 0; // to resume, start buffer should be the last unfinished buffer from previous run
+  const bufferLimit = 20;
+  const startFromTimestamp = SHOULD_RESUME ? 1682558698713 : Date.now();
+
+  const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${startFromTimestamp}`);
   console.log(`Output dir`, outputDir);
 
   await mkdir(outputDir, { recursive: true });
 
-  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v4-8k");
+  const chatProxy = getLoadBalancedChatProxy(process.env.OPENAI_API_KEY!, ["v4-8k", "v4-32k"]);
   const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
+
+  const knownIds = new Set<string>();
+  const knownBuffers = await readdir(outputDir);
+
+  for (let knownBuffer of knownBuffers) {
+    const knownClaims = await readFile(path.join(outputDir, knownBuffer), "utf8");
+    const matchInstances = [...knownClaims.matchAll(/"claimId":"(\d+)"/g)];
+    matchInstances.map((matchInstance) => knownIds.add(matchInstance[1]));
+  }
+
+  console.log(`Resume from chunk ${startChunkIndex}, buffer ${startBufferIndex}, ${knownIds.size} known ids, ${knownBuffers.length} known buffers`);
 
   const progress = {
     success: 0,
     error: 0,
     total: 0,
-    currentChunk: 0,
+    currentChunk: startChunkIndex,
     chunkTotal: claimChunkFiles.length,
   };
 
-  for (let chunkIndex = 0; chunkIndex < claimChunkFiles.length; chunkIndex++) {
+  for (let chunkIndex = startChunkIndex; chunkIndex < claimChunkFiles.length; chunkIndex++) {
     const chunkFilename = claimChunkFiles[chunkIndex];
     const claims: ExportedClaim[] = (await import(path.join(claimsDir, chunkFilename), { assert: { type: "json" } })).default;
-    progress.total += claims.length;
 
-    let bufferIndex = 0;
+    const isResumingChunk = chunkIndex === startChunkIndex;
+    const remainingClaims = claims.filter((claim) => (isResumingChunk ? !knownIds.has(claim.claimId) : true));
+    progress.total += remainingClaims.length;
+
+    let bufferIndex = isResumingChunk ? startBufferIndex : 0;
     let fileWriteBuffer: ExportedClaim[] = [];
-    const bufferLimit = 20;
 
     await Promise.all(
-      claims.map((claim) =>
+      remainingClaims.map((claim) =>
         uxClaimToTriples(chatProxy, claim)
           .then((concepts) => {
             return Promise.all(
@@ -75,16 +95,14 @@ export async function parseClaimsV2(claimsDir: string, lensName: string) {
             if (fileWriteBuffer.length >= bufferLimit || progress.success + progress.error === progress.total) {
               const buffer = fileWriteBuffer;
               fileWriteBuffer = [];
-              return writeFile(
-                path.join(
-                  outputDir,
-                  `${chunkFilename.replace(".json", "")}-buffer-${`${bufferIndex++}`.padStart(
-                    Math.ceil(claims.length / bufferLimit).toString().length,
-                    "0"
-                  )}.json`
-                ),
-                JSON.stringify(buffer)
-              );
+
+              const bufferFilename = `${chunkFilename.replace(".json", "")}-buffer-${`${bufferIndex++}`.padStart(
+                Math.ceil(claims.length / bufferLimit).toString().length,
+                "0"
+              )}.json`;
+              console.log("Buffer flush", bufferFilename);
+
+              return writeFile(path.join(outputDir, bufferFilename), JSON.stringify(buffer));
             }
           })
           .finally(() => {
