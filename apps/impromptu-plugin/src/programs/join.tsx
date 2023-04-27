@@ -107,7 +107,7 @@ ${valueNodes.map((valueNode, index) => `${index + 1}. ${combineWhitespace(`${val
       replaceNotification(`Evaluting "${shortenToWordCount(5, keyNode.text.characters)} ${getFieldByLabel("Relation", node)!.value.characters}?"`, {
         timeout: Infinity,
       });
-      const fullResponse = ((await context.chat(messages, { max_tokens: 500, temperature: 0.25, model: "v4-8k" })).choices[0].message.content ?? "").trim();
+      const fullResponse = ((await context.chat(messages, { max_tokens: 500, temperature: 0.25, model: "v4-32k" })).choices[0].message.content ?? "").trim();
 
       if (context.isAborted() || context.isChanged()) return;
 
