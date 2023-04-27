@@ -1,9 +1,9 @@
 import { getCognitiveSearchJsonProxy, type CognitiveSearchInput, type CognitiveSearchOutput } from "../azure/cognitive-search";
 
-export function getClaimCountInput(entityType: number): CognitiveSearchInput {
+export function getClaimCountInput(filter: string): CognitiveSearchInput {
   return {
     count: true,
-    filter: `ClaimType eq ${entityType}`,
+    filter,
     search: "*",
     searchFields: "",
     top: 0,
@@ -11,10 +11,10 @@ export function getClaimCountInput(entityType: number): CognitiveSearchInput {
   };
 }
 
-export function getClaimsPageInput(entityType: number, top: number, skip: number): CognitiveSearchInput {
+export function getClaimsPageInput(filter: string, top: number, skip: number): CognitiveSearchInput {
   return {
     count: false,
-    filter: `ClaimType eq ${entityType}`,
+    filter,
     search: "*",
     searchFields: "",
     top,

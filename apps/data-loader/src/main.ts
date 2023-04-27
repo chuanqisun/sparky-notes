@@ -6,6 +6,7 @@ import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
 import { parseClaims } from "./lib/hits/parse-claims";
+import { parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { startRepl } from "./lib/repl/start";
 
 dotenv.config();
@@ -26,7 +27,7 @@ async function main() {
       break;
     }
     case params.includes("parse-claims-v2"): {
-      parseClaims(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
+      parseClaimsV2(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
       break;
     }
 

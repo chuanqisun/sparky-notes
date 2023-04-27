@@ -6,13 +6,15 @@
   "scripts": {
     "start:repl": "tsx ./src/main.ts repl",
     "start:export": "tsx ./src/main.ts export-claims",
-    "start:parse": "tsx ./src/main.ts parse-claims",
+    "start:parse-v1": "tsx ./src/main.ts parse-claims-v1",
+    "start:parse-v2": "tsx ./src/main.ts parse-claims-v2",
     "start:db": "tsx ./src/db.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "acs-expression-builder": "^0.0.2",
     "axios": "^1.3.6",
     "axios-retry": "^3.4.0",
     "cozo-node": "^0.6.0",

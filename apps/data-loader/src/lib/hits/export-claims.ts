@@ -1,17 +1,22 @@
+import { field, ifAll } from "acs-expression-builder";
 import assert from "assert";
 import { mkdir, writeFile } from "fs/promises";
 import { EntityName, EntityType } from "./entity";
+
 import { getClaimCountInput, getClaimIndexProxy, getClaimsPageInput } from "./search-claims";
 
 export async function exportClaims(outputDir: string) {
   await mkdir(outputDir, { recursive: true });
   await exportClaimByType(EntityType.Insight, outputDir);
-  await exportClaimByType(EntityType.Recommendation, outputDir);
+  // await exportClaimByType(EntityType.Recommendation, outputDir);
 }
 
 export async function exportClaimByType(entityType: number, path: string) {
   const claimIndexProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
-  const count = (await claimIndexProxy(getClaimCountInput(entityType)))["@odata.count"];
+
+  const filter = ifAll([field("ClaimType").eq(entityType), field("Products").any((product) => product().isOneOf(["Azure", "Windows"]))]).toString();
+  console.log(filter);
+  const count = (await claimIndexProxy(getClaimCountInput(filter)))["@odata.count"];
   assert(typeof count === "number");
   console.log(EntityName[entityType], count);
 
@@ -28,7 +33,7 @@ export async function exportClaimByType(entityType: number, path: string) {
   const pageStartIndices = Array.from({ length: pageCount }, (_, i) => i * pageSize);
   await Promise.allSettled(
     pageStartIndices.map(async (skip) => {
-      return claimIndexProxy(getClaimsPageInput(entityType, pageSize, skip))
+      return claimIndexProxy(getClaimsPageInput(filter, pageSize, skip))
         .then((response) => response.value)
         .then((claims) => {
           if (!claims?.length) throw new Error("Unexpected empty response");
