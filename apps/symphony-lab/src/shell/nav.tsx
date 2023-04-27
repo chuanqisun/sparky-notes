@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { ConnectionSetupDialog } from "../account/connection-setup-form";
 import { useAuth } from "../account/use-auth";
+import { BasicFormButton } from "../form/basic-form";
 import { useDialog } from "../utils/use-dialog";
 
 export function Nav() {
@@ -12,17 +13,17 @@ export function Nav() {
   return (
     <NavLayout>
       <h1>
-        <Link to="/"> Symphony Lab</Link>
+        <Link to="/"> Symphony</Link>
       </h1>
       <StyledMenu>
         {isConnected === false ? <button onClick={signIn}>Sign in</button> : null}
         {isConnected === true && (
           <>
-            <button onClick={handleConnectionsButtonClick}>Connections</button>
+            <BasicFormButton onClick={handleConnectionsButtonClick}>Connections</BasicFormButton>
             <DialogComponent>
               <ConnectionSetupDialog onClose={close} />
             </DialogComponent>
-            <button onClick={signOut}>Sign out</button>
+            <BasicFormButton onClick={signOut}>Sign out</BasicFormButton>
           </>
         )}
       </StyledMenu>
@@ -36,7 +37,7 @@ const NavLayout = styled.nav`
   top: 0%;
   height: 36px;
   display: flex;
-  gap: 16px;
+  gap: 8px;
   padding: 0 8px;
   justify-content: space-between;
   align-items: center;
@@ -46,5 +47,6 @@ const NavLayout = styled.nav`
 
 const StyledMenu = styled.menu`
   display: flex;
+  padding: 0;
   gap: 4px;
 `;

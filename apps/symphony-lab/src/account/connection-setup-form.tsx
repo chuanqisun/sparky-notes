@@ -1,5 +1,6 @@
 import React, { useEffect, useState, type FormEventHandler } from "react";
 import { styled } from "styled-components";
+import { BasicForm, BasicFormField, DialogActionGroup } from "../form/basic-form";
 import { deduplicateByModelName, isNeeded, isSucceeded, listDeployments, newerFirst, type ModelDeployment } from "../openai/model-management";
 import { preventDefault } from "../utils/event";
 import { useAccountContext } from "./account-context";
@@ -103,13 +104,13 @@ export const ConnectionSetupDialog: React.FC<{ onClose: () => any }> = (props) =
             </UnstyledList>
           ) : null}
           {message ? <div>{message}</div> : null}
-          <ActionGroup>
+          <DialogActionGroup>
             <button type="submit" onClick={handleConnect}>
               {accountContext.azureOpenAIConnection ? "Update" : "Connect"}
             </button>
             {accountContext.azureOpenAIConnection && <button onClick={handleDisconnect}>Disconnect</button>}
             <button onClick={props.onClose}>Close</button>
-          </ActionGroup>
+          </DialogActionGroup>
         </BasicForm>
       </fieldset>
     </>
@@ -120,20 +121,4 @@ const UnstyledList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0;
-`;
-
-const ActionGroup = styled.div`
-  display: flex;
-  justify-content: end;
-  gap: 8px;
-`;
-
-const BasicForm = styled.form`
-  display: grid;
-  gap: 8px;
-`;
-
-const BasicFormField = styled.div`
-  display: grid;
-  gap: 4px;
 `;

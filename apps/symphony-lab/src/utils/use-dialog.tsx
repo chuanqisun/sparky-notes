@@ -18,5 +18,6 @@ export function useDialog() {
 const StyledDialog = styled.dialog`
   // adaptive width with clamp
   margin: auto;
+  color-scheme: light;
   width: clamp(300px, 80vw, 600px);
 `;
