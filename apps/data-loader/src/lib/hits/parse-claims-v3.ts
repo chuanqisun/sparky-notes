@@ -1,7 +1,6 @@
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { getLoadBalancedChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
-import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
@@ -13,7 +12,7 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
 
   const startChunkIndex = SHOULD_RESUME ? 6 : 0; // to resume, start chunk should be the last unfinished chunk from previous run
   const startBufferIndex = SHOULD_RESUME ? 27 : 0; // to resume, start buffer should be the last unfinished buffer from previous run
-  const bufferLimit = 20;
+  const bufferLimit = 3;
   const startFromTimestamp = SHOULD_RESUME ? 1682558698713 : Date.now();
 
   const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${startFromTimestamp}`);
@@ -22,7 +21,6 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
   await mkdir(outputDir, { recursive: true });
 
   const chatProxy = getLoadBalancedChatProxy(process.env.OPENAI_API_KEY!, ["v4-8k", "v4-32k"]);
-  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
 
   const knownIds = new Set<string>();
   const knownBuffers = await readdir(outputDir);
@@ -40,7 +38,7 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
     error: 0,
     total: 0,
     currentChunk: startChunkIndex,
-    chunkTotal: claimChunkFiles.length,
+    chunkMaxIndex: claimChunkFiles.length - 1,
   };
 
   for (let chunkIndex = startChunkIndex; chunkIndex < claimChunkFiles.length; chunkIndex++) {
@@ -61,9 +59,7 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
             progress.success++;
             return {
               ...claim,
-              ontology: {
-                triples,
-              },
+              triples,
             };
           })
           .catch((e) => {
@@ -71,9 +67,7 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
             console.error(e);
             return {
               ...claim,
-              ontology: {
-                triples: [],
-              },
+              triples: [],
             };
           })
           .then((result) => {

@@ -8,6 +8,7 @@
     "start:export": "tsx ./src/main.ts export-claims",
     "start:parse-v1": "tsx ./src/main.ts parse-claims-v1",
     "start:parse-v2": "tsx ./src/main.ts parse-claims-v2",
+    "start:parse-v3": "tsx ./src/main.ts parse-claims-v3",
     "start:db": "tsx ./src/db.ts"
   },
   "keywords": [],

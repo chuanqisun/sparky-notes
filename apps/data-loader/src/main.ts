@@ -7,6 +7,7 @@ import { exportClaims } from "./lib/hits/export-claims";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
 import { parseClaims } from "./lib/hits/parse-claims";
 import { parseClaimsV2 } from "./lib/hits/parse-claims-v2";
+import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
 import { startRepl } from "./lib/repl/start";
 
 dotenv.config();
@@ -30,7 +31,10 @@ async function main() {
       parseClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
     }
-
+    case params.includes("parse-claims-v3"): {
+      parseClaimsV3(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
+      break;
+    }
     case params.includes("export-claims"): {
       exportClaims(path.resolve(CLAIMS_DIR));
       break;
