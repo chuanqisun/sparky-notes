@@ -23,11 +23,11 @@ async function main() {
       break;
     }
     case params.includes("parse-claims"): {
-      parseClaims(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
+      parseClaims(path.resolve(CLAIMS_DIR), `ux-domain-concepts`);
       break;
     }
     case params.includes("parse-claims-v2"): {
-      parseClaimsV2(path.resolve(CLAIMS_DIR), "ux-domain-concepts");
+      parseClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
     }
 

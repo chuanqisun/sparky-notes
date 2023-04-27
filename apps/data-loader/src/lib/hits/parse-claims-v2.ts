@@ -5,11 +5,11 @@ import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
-export async function parseClaimsV2(claimsDir: string, lensName = "ux-domain-ontology") {
+export async function parseClaimsV2(claimsDir: string, lensName: string) {
   const claimChunkFiles = await readdir(claimsDir);
   console.log(`Chunk discovered:`, claimChunkFiles.length);
 
-  const outputDir = path.resolve(claimsDir, `../claims-${lensName}`);
+  const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${Date.now()}`);
   console.log(`Output dir`, outputDir);
 
   await mkdir(outputDir, { recursive: true });
@@ -144,6 +144,7 @@ ${[claim.claimTitle, claim.claimContent].join("\n")}
         ].join("\n\n"),
       },
     ],
+    temperature: 0,
     max_tokens: 500,
   });
 
