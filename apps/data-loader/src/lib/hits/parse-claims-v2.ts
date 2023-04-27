@@ -1,6 +1,6 @@
 import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
-import { getSimpleChatProxy, type SimpleChatProxy } from "../azure/chat";
+import { getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
@@ -104,12 +104,11 @@ export function bulkEmbed(texts: string[]): Promise<number[][]> {
 }
 
 async function uxClaimToTriples(chatProxy: SimpleChatProxy, claim: ExportedClaim): Promise<string[]> {
-  const response = await chatProxy({
-    messages: [
-      {
-        role: "system",
-        content: [
-          `
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: [
+        `
 You are an ontology engineer with UX Research and Design domain expertise. You can parse a claim into triples: Subject -> Predicate -> Object. 
 
 Requirements:
@@ -117,33 +116,35 @@ Requirements:
 - The Subject and Object must be abstract concepts.
 - The Subject and Object must not contain personal information.
 
-You will use this format:
-
+Use this format:
 - Triple 1: Subject -> Predicate -> Object 
 - Triple 2: Subject -> Predicate -> Object 
 - ...
 `,
-        ]
-          .map((str) => str.trim())
-          .join("\n\n")
-          .trim(),
-      },
-      {
-        role: "user",
-        content: [
-          `Now parse the following claim into ontology triples:   
+      ]
+        .map((str) => str.trim())
+        .join("\n\n")
+        .trim(),
+    },
+    {
+      role: "user",
+      content: [
+        `Now parse the following claim into ontology triples:   
 ${[claim.claimTitle, claim.claimContent].join("\n")}
-          `.trim(),
-          [
-            // `Additional metadata:`,
-            // claim.methods.length ? `Methods: ${claim.methods.join(", ")}` : "",
-            // claim.topics.length ? `Topics: ${claim.topics.join(", ")}` : "",
-            // claim.products.length ? `Products: ${claim.products.join(", ")}` : "",
-            `-- Source: ${[claim.rootDocumentTitle].join(" ")}`,
-          ].join("\n"),
-        ].join("\n\n"),
-      },
-    ],
+        `.trim(),
+        [
+          // `Additional metadata:`,
+          // claim.methods.length ? `Methods: ${claim.methods.join(", ")}` : "",
+          // claim.topics.length ? `Topics: ${claim.topics.join(", ")}` : "",
+          // claim.products.length ? `Products: ${claim.products.join(", ")}` : "",
+          `-- Source: ${[claim.rootDocumentTitle].join(" ")}`,
+        ].join("\n"),
+      ].join("\n"),
+    },
+  ];
+
+  const response = await chatProxy({
+    messages,
     temperature: 0,
     max_tokens: 500,
   });
@@ -164,14 +165,14 @@ ${[claim.claimTitle, claim.claimContent].join("\n")}
     .filter((triple) => triple.length === 3)
     .map((triple) => triple.join(" -> "));
 
+  console.log(`---`);
+  // console.log(`Raw request`, messages.map((message) => `${message.role}\n${message.content}`).join("\n\n"));
+  console.log(`Raw response:`, responseText);
   console.log(`
----      
 https://hits.microsoft.com/${EntityName[claim.claimType]}/${claim.claimId}
 Tokens usage: ${response.usage.completion_tokens} output, ${response.usage.total_tokens} total
 ${triples.map((triple) => `- ${triple}`).join("\n")}
   `);
-
-  console.log(`Raw response:`, responseText);
 
   return triples;
 }
