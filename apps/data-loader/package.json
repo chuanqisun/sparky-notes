@@ -4,6 +4,7 @@
   "description": "",
   "main": "./src/main.ts",
   "scripts": {
+    "start": "tsx ./src/main.ts",
     "start:repl": "tsx ./src/main.ts repl",
     "start:embed": "tsx ./src/main.ts embed-claims",
     "start:export": "tsx ./src/main.ts export-claims",

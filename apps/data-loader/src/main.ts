@@ -5,6 +5,7 @@ import path from "path";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
+import { buildGraph } from "./lib/hits/graph";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
 import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
@@ -20,6 +21,13 @@ console.log("Data loader started with params", params);
 
 async function main() {
   switch (true) {
+    case params.includes("build-graph"): {
+      const embeddingDbPath = path.resolve("./data/embeddings.db");
+      const graphDbPath = path.resolve("./data/graph.db");
+      const claimsDir = path.resolve("./data/claims-ux-domain-ontology-1682697637390");
+      buildGraph(claimsDir, embeddingDbPath, graphDbPath);
+      break;
+    }
     case params.includes("clear-claims"): {
       clearClaims(path.resolve(CLAIMS_DIR));
       break;
