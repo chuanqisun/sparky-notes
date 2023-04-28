@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { getLoadBalancedChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { getEmbeddingProxy } from "../azure/embedding";
+import { deleteEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
@@ -23,6 +24,52 @@ export async function claimV2ToV3(claimsDir: string, lensName: string) {
 
     await writeFile(path.join(outputDir, bufferFile), JSON.stringify(v3Claims, null, 2), "utf8");
   }
+}
+
+export async function fixClaimsV2Db(dbPath: string, claimsDir: string, lensName: string) {
+  // remove underscore terms in db
+
+  const startBufferIndex = 0;
+
+  const db = await initializeEmbeddingsDb(dbPath);
+
+  const dirTimestamp = "1682643076670"; // replace with target dirname
+  const inputDir = path.resolve(claimsDir, `../claims-${lensName}-${dirTimestamp}`);
+  const bufferFiles = await readdir(inputDir);
+  console.log(`Input dir`, inputDir);
+
+  const progress = {
+    fix: 0,
+    skip: 0,
+    currentBuffer: startBufferIndex,
+    bufferCount: bufferFiles.length,
+  };
+
+  for (const bufferFile of bufferFiles.slice(startBufferIndex)) {
+    progress.currentBuffer++;
+
+    const fileContent = await readFile(path.join(inputDir, bufferFile), "utf8");
+    const claims = JSON.parse(fileContent) as (ExportedClaim & { triples: string[] })[];
+
+    for (const claim of claims) {
+      await Promise.all(
+        claim.triples.map(async (relation) => {
+          const triples = relation.split(" -> ");
+          for (let triple of triples) {
+            if (triple.includes("_")) {
+              await deleteEmbedding(db, triple);
+              console.log(`Deleted: |${triple}|`);
+              progress.fix++;
+            } else {
+              progress.skip++;
+            }
+          }
+        })
+      );
+    }
+  }
+
+  console.log(`Progress: ${JSON.stringify(progress)}`);
 }
 
 export async function fixClaimsV2Underscore(claimsDir: string, lensName: string) {

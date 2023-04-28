@@ -7,7 +7,7 @@ import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
 import { parseClaims } from "./lib/hits/parse-claims";
-import { claimV2ToV3, fixClaimsV2, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
+import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
 import { startRepl } from "./lib/repl/start";
 
@@ -28,7 +28,7 @@ async function main() {
       const dbPath = "./data/embeddings.db";
       const logPath = "./data/embeddings.log";
       const db = await initializeEmbeddingsDb(dbPath);
-      embedClaims(db, "./data/claims-ux-domain-ontology-1682643076670", logPath);
+      embedClaims(db, "./data/claims-ux-domain-ontology-1682697637390", logPath);
       break;
     }
     case params.includes("parse-claims"): {
@@ -45,6 +45,10 @@ async function main() {
     }
     case params.includes("fix-claims-v2-underscore"): {
       fixClaimsV2Underscore(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
+      break;
+    }
+    case params.includes("fix-claims-v2-db"): {
+      fixClaimsV2Db("./data/embeddings.db", path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
     }
     case params.includes("migrate-claims-v2"): {

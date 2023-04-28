@@ -17,3 +17,7 @@ SELECT vec FROM Embedding WHERE id = ?
 export const HAS_EMBEDDING = `
 SELECT COUNT(*) as count FROM Embedding WHERE id = ?
 `;
+
+export const DELETE_EMBEDDING = `
+DELETE FROM Embedding WHERE id = ?
+`;

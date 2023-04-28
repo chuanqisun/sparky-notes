@@ -11,6 +11,7 @@
     "start:parse-v2": "tsx ./src/main.ts parse-claims-v2",
     "start:fix-v2": "tsx ./src/main.ts fix-claims-v2",
     "start:fix-v2-underscore": "tsx ./src/main.ts fix-claims-v2-underscore",
+    "start:fix-v2-db": "tsx ./src/main.ts fix-claims-v2-db",
     "start:migrate-v2": "tsx ./src/main.ts migrate-claims-v2",
     "start:parse-v3": "tsx ./src/main.ts parse-claims-v3",
     "start:db": "tsx ./src/db.ts"

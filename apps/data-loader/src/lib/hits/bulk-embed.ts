@@ -3,7 +3,7 @@ import { appendFile, readdir } from "fs/promises";
 import path from "path";
 import { AsyncDatabase } from "promised-sqlite3";
 import { getEmbeddingProxy } from "../azure/embedding";
-import { GET_EMBEDDING, HAS_EMBEDDING, SCHEMA, UPSERT_EMBEDDING } from "./sql/schema";
+import { DELETE_EMBEDDING, GET_EMBEDDING, HAS_EMBEDDING, SCHEMA, UPSERT_EMBEDDING } from "./sql/schema";
 
 export interface WithEmbedding {
   triples: string[];
@@ -80,4 +80,9 @@ export async function hasEmbedding(db: AsyncDatabase, text: string): Promise<boo
   const key = createHash("sha1").update(text).digest("hex");
   const row = await db.get<{ count: number }>(HAS_EMBEDDING, [key]);
   return !!row?.count;
+}
+
+export async function deleteEmbedding(db: AsyncDatabase, text: string): Promise<void> {
+  const key = createHash("sha1").update(text).digest("hex");
+  const row = await db.run(DELETE_EMBEDDING, [key]);
 }
