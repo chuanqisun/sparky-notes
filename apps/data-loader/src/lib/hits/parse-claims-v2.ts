@@ -27,6 +27,9 @@ export async function claimV2ToV3(claimsDir: string, lensName: string) {
 
 export async function fixClaimsV2(claimsDir: string, lensName: string) {
   // reparse items that do not have concept items
+
+  const startBufferIndex = 0;
+
   const dirTimestamp = "1682558698713"; // replace with target dirname
   const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${dirTimestamp}`);
   const bufferFiles = await readdir(outputDir);
@@ -40,16 +43,16 @@ export async function fixClaimsV2(claimsDir: string, lensName: string) {
     error: 0,
     empty: 0,
     total: 0,
-    currentBuffer: 0,
+    currentBuffer: startBufferIndex,
     bufferCount: bufferFiles.length,
   };
 
-  for (const bufferFile of bufferFiles) {
+  for (const bufferFile of bufferFiles.slice(startBufferIndex)) {
     progress.currentBuffer++;
 
     const fileContent = await readFile(path.join(outputDir, bufferFile), "utf8");
-    const claims = JSON.parse(fileContent) as (ExportedClaim & { concepts: { concept: string; embedding: number[] }[] })[];
-    const failedClaims = claims.filter((claim) => claim.concepts.length === 0);
+    const claims = JSON.parse(fileContent) as (ExportedClaim & { concepts: { concept: string; embedding: number[] }[]; conceptsError?: boolean })[];
+    const failedClaims = claims.filter((claim) => claim.concepts.length === 0); // todo, only consider claims with conceptsError
     if (failedClaims.length === 0) continue;
 
     progress.total += failedClaims.length;
@@ -92,6 +95,7 @@ export async function fixClaimsV2(claimsDir: string, lensName: string) {
             return {
               ...fixedClaim,
               concepts: [],
+              conceptsError: true,
             };
           })
           .then((result) => {
