@@ -158,7 +158,7 @@ ${[claim.claimTitle, claim.claimContent].join("\n")}
           .trim() ?? ""
     )
     .filter(Boolean)
-    .map((line) => line.split("->").map((item) => item.trim()))
+    .map((line) => line.split("->").map((item) => item.trim().replaceAll("_", " ")))
     .filter((triple) => triple.length === 3)
     .map((triple) => triple.join(" -> "));
 

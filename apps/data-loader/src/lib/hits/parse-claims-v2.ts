@@ -25,6 +25,52 @@ export async function claimV2ToV3(claimsDir: string, lensName: string) {
   }
 }
 
+export async function fixClaimsV2Underscore(claimsDir: string, lensName: string) {
+  // reparse items that do not have concept items
+
+  const startBufferIndex = 0;
+
+  const dirTimestamp = "1682643076670"; // replace with target dirname
+  const inputDir = path.resolve(claimsDir, `../claims-${lensName}-${dirTimestamp}`);
+  const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${Date.now()}`);
+  await mkdir(outputDir, { recursive: true });
+  const bufferFiles = await readdir(inputDir);
+  console.log(`Input dir`, inputDir);
+  console.log(`Output dir`, outputDir);
+
+  const progress = {
+    fix: 0,
+    skip: 0,
+    currentBuffer: startBufferIndex,
+    bufferCount: bufferFiles.length,
+  };
+
+  for (const bufferFile of bufferFiles.slice(startBufferIndex)) {
+    progress.currentBuffer++;
+
+    const fileContent = await readFile(path.join(inputDir, bufferFile), "utf8");
+    const claims = JSON.parse(fileContent) as (ExportedClaim & { triples: string[] })[];
+
+    claims.forEach((claim) => {
+      claim.triples = claim.triples.map((triple) => {
+        if (triple.includes("_")) {
+          const fixedTripleLine = triple.replaceAll("_", " ");
+          console.log(` |${triple}| => |${fixedTripleLine}|`);
+          progress.fix++;
+          return fixedTripleLine;
+        } else {
+          progress.skip++;
+          return triple;
+        }
+      });
+    });
+
+    writeFile(path.join(outputDir, bufferFile), JSON.stringify(claims, null, 2));
+  }
+
+  console.log(`Progress: ${JSON.stringify(progress)}`);
+}
+
 export async function fixClaimsV2(claimsDir: string, lensName: string) {
   // reparse items that do not have concept items
 
