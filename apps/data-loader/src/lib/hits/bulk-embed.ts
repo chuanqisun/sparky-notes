@@ -12,9 +12,8 @@ export interface WithEmbedding {
 export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logPath: string) {
   const files = await readdir(sourceDataDir);
 
-  let counter = 0;
-
   for (let i = 0; i < files.length; i++) {
+    let counter = 0;
     const filename = files[i];
     const text: WithEmbedding[] = await (await import(path.resolve(sourceDataDir, filename))).default;
     const atoms = text.flatMap((t) => t.triples.flatMap((triple) => triple.split(" -> ")));
@@ -24,13 +23,13 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
       Boolean
     ) as string[];
 
-    console.log(`file ${i + 1} of ${files.length}: ${atoms.length} texts, ${uniqueAtoms.length} unique, ${newAtoms.length} new`);
+    console.log(`file ${i + 1}/${files.length}: ${atoms.length} texts, ${uniqueAtoms.length} unique, ${newAtoms.length} new`);
 
     await bulkEmbedV2(
       newAtoms,
       async (text, embedding) => {
         await putEmbedding(db, text, embedding);
-        console.log(`embedded ${counter++}: |${text.slice(0, 60)}${text.length > 60 ? "..." : ""}|`);
+        console.log(`file ${i + 1}/${files.length} | atom ${++counter}/${newAtoms.length}: |${text.slice(0, 60)}${text.length > 60 ? "..." : ""}|`);
       },
       (text, error) => {
         appendFile(logPath, `${text}\n`);
