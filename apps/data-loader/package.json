@@ -5,6 +5,7 @@
   "main": "./src/main.ts",
   "scripts": {
     "start:repl": "tsx ./src/main.ts repl",
+    "start:embed": "tsx ./src/main.ts embed-claims",
     "start:export": "tsx ./src/main.ts export-claims",
     "start:parse-v1": "tsx ./src/main.ts parse-claims-v1",
     "start:parse-v2": "tsx ./src/main.ts parse-claims-v2",
@@ -22,6 +23,8 @@
     "axios-retry": "^3.4.0",
     "cozo-node": "^0.6.0",
     "dotenv": "^16.0.3",
+    "promised-sqlite3": "^2.0.1",
+    "sqlite3": "^5.1.6",
     "tsx": "^3.12.6"
   }
 }

@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 
 import { CozoDb } from "cozo-node";
 import path from "path";
+import { ensureDb, getEmbedding, putEmbedding } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
@@ -21,6 +22,12 @@ async function main() {
   switch (true) {
     case params.includes("clear-claims"): {
       clearClaims(path.resolve(CLAIMS_DIR));
+      break;
+    }
+    case params.includes("embed-claims"): {
+      const db = await ensureDb();
+      await putEmbedding(db, "hello", [1, 2, 3]);
+      console.log(await getEmbedding(db, "heallo"));
       break;
     }
     case params.includes("parse-claims"): {
