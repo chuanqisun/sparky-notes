@@ -81,8 +81,8 @@ export function getChatProxy(apiKey: string, endpoint: string) {
       headers: {
         "api-key": apiKey,
       },
-      httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 4, maxSockets: 4 }),
-      httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 4, maxSockets: 4 }),
+      httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 5, maxSockets: 5 }),
+      httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 5, maxSockets: 5 }),
       timeout: 20000,
     },
     retryConfig: {
