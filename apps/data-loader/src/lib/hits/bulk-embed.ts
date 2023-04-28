@@ -29,7 +29,7 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
       newAtoms,
       async (text, embedding) => {
         await putEmbedding(db, text, embedding);
-        console.log(`file ${i + 1}/${files.length} | atom ${++counter}/${newAtoms.length}: |${text.slice(0, 60)}${text.length > 60 ? "..." : ""}|`);
+        console.log(`file ${i + 1}/${files.length}|atom ${++counter}/${newAtoms.length}|${text.slice(0, 60)}${text.length > 60 ? "..." : ""}|`);
       },
       (text, error) => {
         appendFile(logPath, `${text}\n`);
