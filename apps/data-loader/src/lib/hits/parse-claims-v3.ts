@@ -68,6 +68,7 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
             return {
               ...claim,
               triples: [],
+              triplesError: true,
             };
           })
           .then((result) => {

@@ -9,6 +9,7 @@
     "start:parse-v1": "tsx ./src/main.ts parse-claims-v1",
     "start:parse-v2": "tsx ./src/main.ts parse-claims-v2",
     "start:fix-v2": "tsx ./src/main.ts fix-claims-v2",
+    "start:migrate-v2": "tsx ./src/main.ts migrate-claims-v2",
     "start:parse-v3": "tsx ./src/main.ts parse-claims-v3",
     "start:db": "tsx ./src/db.ts"
   },

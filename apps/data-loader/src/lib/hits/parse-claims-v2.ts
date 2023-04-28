@@ -5,12 +5,32 @@ import { getEmbeddingProxy } from "../azure/embedding";
 import { EntityName } from "./entity";
 import type { ExportedClaim } from "./export-claims";
 
+export async function claimV2ToV3(claimsDir: string, lensName: string) {
+  const dirTimestamp = "1682558698713"; // replace with target dirname
+  const inputDir = path.resolve(claimsDir, `../claims-${lensName}-${dirTimestamp}`);
+  const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${Date.now()}`);
+  const bufferFiles = await readdir(inputDir);
+  console.log(`Input dir`, inputDir);
+
+  await mkdir(outputDir, { recursive: true });
+  console.log("Ouput dir", outputDir);
+
+  for (const bufferFile of bufferFiles) {
+    const fileContent = await readFile(path.join(inputDir, bufferFile), "utf8");
+    const claims = JSON.parse(fileContent) as (ExportedClaim & { concepts: { concept: string; embedding: number[] }[] })[];
+
+    const v3Claims = claims.map((claim) => ({ ...claim, concepts: undefined, triples: claim.concepts.map((concept) => concept.concept) }));
+
+    await writeFile(path.join(outputDir, bufferFile), JSON.stringify(v3Claims), "utf8");
+  }
+}
+
 export async function fixClaimsV2(claimsDir: string, lensName: string) {
   // reparse items that do not have concept items
   const dirTimestamp = "1682558698713"; // replace with target dirname
   const outputDir = path.resolve(claimsDir, `../claims-${lensName}-${dirTimestamp}`);
   const bufferFiles = await readdir(outputDir);
-  console.log(`Output dir`, outputDir);
+  console.log(`Input dir`, outputDir);
 
   const chatProxy = getLoadBalancedChatProxy(process.env.OPENAI_API_KEY!, ["v4-8k", "v4-32k"]);
   const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
