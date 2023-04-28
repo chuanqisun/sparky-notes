@@ -13,3 +13,7 @@ ON CONFLICT(id) DO UPDATE SET vec = excluded.vec;
 export const GET_EMBEDDING = `
 SELECT vec FROM Embedding WHERE id = ?
 `;
+
+export const HAS_EMBEDDING = `
+SELECT COUNT(*) as count FROM Embedding WHERE id = ?
+`;

@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 import { CozoDb } from "cozo-node";
 import path from "path";
-import { ensureDb, getEmbedding, putEmbedding } from "./lib/hits/bulk-embed";
+import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
@@ -25,9 +25,10 @@ async function main() {
       break;
     }
     case params.includes("embed-claims"): {
-      const db = await ensureDb();
-      await putEmbedding(db, "hello", [1, 2, 3]);
-      console.log(await getEmbedding(db, "heallo"));
+      const dbPath = "./data/embeddings.db";
+      const logPath = "./data/embeddings.log";
+      const db = await initializeEmbeddingsDb(dbPath);
+      embedClaims(db, "./data/claims-ux-domain-ontology-1682643076670", logPath);
       break;
     }
     case params.includes("parse-claims"): {
