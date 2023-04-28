@@ -21,7 +21,7 @@ export async function claimV2ToV3(claimsDir: string, lensName: string) {
 
     const v3Claims = claims.map((claim) => ({ ...claim, concepts: undefined, triples: claim.concepts.map((concept) => concept.concept) }));
 
-    await writeFile(path.join(outputDir, bufferFile), JSON.stringify(v3Claims), "utf8");
+    await writeFile(path.join(outputDir, bufferFile), JSON.stringify(v3Claims, null, 2), "utf8");
   }
 }
 

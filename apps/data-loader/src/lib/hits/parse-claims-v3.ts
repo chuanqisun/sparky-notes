@@ -83,7 +83,7 @@ export async function parseClaimsV3(claimsDir: string, lensName: string) {
               )}.json`;
               console.log("Buffer flush", bufferFilename);
 
-              return writeFile(path.join(outputDir, bufferFilename), JSON.stringify(buffer));
+              return writeFile(path.join(outputDir, bufferFilename), JSON.stringify(buffer, null, 2));
             }
           })
           .finally(() => {
