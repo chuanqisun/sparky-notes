@@ -1,3 +1,7 @@
+export const GET_RELATIONS = `
+::relations
+`;
+
 export const CREATE_GRAPH_SCHEMA = `
 :create entity {
   text: String

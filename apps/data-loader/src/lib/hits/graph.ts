@@ -1,31 +1,24 @@
 import { CozoDb } from "cozo-node";
-import { existsSync } from "fs";
 import { readdir } from "fs/promises";
-import path from "path";
 import type { AsyncDatabase } from "promised-sqlite3";
-import { CozoProxy } from "../cozo/cozo-proxy";
 import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
-import { CREATE_GRAPH_SCHEMA, CREATE_HNSW_INDEX, PUT_ENTITY } from "./cozo-scripts/cozo-scripts";
+import { CREATE_GRAPH_SCHEMA, CREATE_HNSW_INDEX, GET_RELATIONS, PUT_ENTITY } from "./cozo-scripts/cozo-scripts";
 import type { ClaimWithTriples } from "./data";
 
 export async function queryGraph(graphDbPath: string) {
-  const graph = new CozoProxy({ workerPath: path.resolve("./src/lib/cozo/cozo-worker.ts"), dbPath: graphDbPath, initSchema: CREATE_GRAPH_SCHEMA });
-  const result = await graph.run(`
+  const db = await initGraphDb(graphDbPath);
+  const result = await db.run(`
   ?[text] := *entity{text}
   :limit 10
     `);
 
-  graph.stop();
+  db.close();
   console.log(result);
 }
 
 export async function buildGraph(claimsDir: string, embeddingsDbPath: string, graphDbPath: string) {
   const embeddingsDb = await initializeEmbeddingsDb(embeddingsDbPath);
-  const useWorker = false;
-
-  const graph = useWorker
-    ? new CozoProxy({ workerPath: path.resolve("./src/lib/cozo/cozo-worker.ts"), dbPath: graphDbPath, initSchema: CREATE_GRAPH_SCHEMA })
-    : await initGraphDb(graphDbPath);
+  const graph = await initGraphDb(graphDbPath);
 
   const claimsIter = iterateClaims(claimsDir);
   const progress = {
@@ -86,17 +79,20 @@ async function* iterateClaims(claimsDir: string, batchSize?: string): AsyncGener
 }
 
 async function initGraphDb(graphDbBackupPath: string) {
-  if (existsSync(graphDbBackupPath)) {
-    const db = new CozoDb("rocksdb", graphDbBackupPath);
-    console.log(`Restore graph: ${graphDbBackupPath}`);
-    return db;
-  } else {
-    const db = new CozoDb("rocksdb", graphDbBackupPath);
+  const db = new CozoDb("rocksdb", graphDbBackupPath);
+  const relations = await db.run(GET_RELATIONS);
+  const existingRelations = new Set<string>(relations.rows.map((row: any[]) => row[0]));
+  if (!existingRelations.has("entity")) {
+    console.log(`create entity schema`);
     await db.run(CREATE_GRAPH_SCHEMA);
-    await db.run(CREATE_HNSW_INDEX);
-    console.log(`Create graph: ${graphDbBackupPath}`);
-    return db;
   }
+  if (!existingRelations.has("entity:semantic")) {
+    console.log(`create NHSW index`);
+    await db.run(CREATE_HNSW_INDEX);
+  }
+
+  console.log(`DB ready: ${graphDbBackupPath}`);
+  return db;
 }
 
 async function getRelations(embeddingsDb: AsyncDatabase, claim: ClaimWithTriples): Promise<EmbeddedRelation[]> {
