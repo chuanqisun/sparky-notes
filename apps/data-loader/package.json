@@ -15,8 +15,7 @@
     "start:fix-v2-db": "tsx ./src/main.ts fix-claims-v2-db",
     "start:migrate-v2": "tsx ./src/main.ts migrate-claims-v2",
     "start:parse-v3": "tsx ./src/main.ts parse-claims-v3",
-    "start:db": "tsx ./src/db.ts",
-    "start:db-v2": "tsx ./src/db-v2.ts"
+    "start:db": "tsx ./src/db.ts"
   },
   "keywords": [],
   "author": "",
