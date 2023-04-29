@@ -1,45 +1,30 @@
 export const CREATE_GRAPH_SCHEMA = `
-:create triple {
-  id: String
-  => 
-  s: String,
-  p: String,
-  o: String,
-  sVec: <F32; 1536>,
-  pVec: <F32; 1536>,
-  oVec: <F32; 1536>,
+:create entity {
+  text: String
+  =>
+  vec: <F32; 1536>,
 }
 `;
 
 export const CREATE_HNSW_INDEX = `
-::hnsw create triple:semantic{
-  fields: [sVec, pVec, oVec],
+::hnsw create entity:semantic{
+  fields: [vec],
   dim: 1536,
   ef: 16,
   m: 32,
 }
 `;
 
-export const PUT_CLAIM_TRIPLE = `
-?[id, s, p, o, sVec, pVec, oVec] <- [[
-  $id,
-  $s,
-  $p,
-  $o,
-  $sVec,
-  $pVec,
-  $oVec,
+export const PUT_ENTITY = `
+?[text, vec] <- [[
+  $text,
+  $vec,
 ]]
 
-:put triple {
-  id
+:put entity {
+  text,
   =>
-  s,
-  p,
-  o,
-  sVec,
-  pVec,
-  oVec,
+  vec,
 }
 
 :timeout 0

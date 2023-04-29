@@ -5,13 +5,13 @@ import path from "path";
 import type { AsyncDatabase } from "promised-sqlite3";
 import { CozoProxy } from "../cozo/cozo-proxy";
 import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
-import { CREATE_GRAPH_SCHEMA, CREATE_HNSW_INDEX, PUT_CLAIM_TRIPLE } from "./cozo-scripts/cozo-scripts";
+import { CREATE_GRAPH_SCHEMA, CREATE_HNSW_INDEX, PUT_ENTITY } from "./cozo-scripts/cozo-scripts";
 import type { ClaimWithTriples } from "./data";
 
 export async function queryGraph(graphDbPath: string) {
   const graph = new CozoProxy({ workerPath: path.resolve("./src/lib/cozo/cozo-worker.ts"), dbPath: graphDbPath, initSchema: CREATE_GRAPH_SCHEMA });
   const result = await graph.run(`
-  ?[id] := *triple{id}
+  ?[text] := *entity{text}
   :limit 10
     `);
 
@@ -39,14 +39,17 @@ export async function buildGraph(claimsDir: string, embeddingsDbPath: string, gr
 
     for (const relation of relations) {
       try {
-        await graph.run(PUT_CLAIM_TRIPLE, {
-          id: claim.claimId,
-          s: relation.s.text,
-          p: relation.p.text,
-          o: relation.o.text,
-          sVec: relation.s.vec,
-          pVec: relation.p.vec,
-          oVec: relation.o.vec,
+        await graph.run(PUT_ENTITY, {
+          text: relation.s.text,
+          vec: relation.s.vec,
+        });
+        await graph.run(PUT_ENTITY, {
+          text: relation.p.text,
+          vec: relation.p.vec,
+        });
+        await graph.run(PUT_ENTITY, {
+          text: relation.o.text,
+          vec: relation.o.vec,
         });
         progress.tripleSuccess++;
       } catch (e: any) {
