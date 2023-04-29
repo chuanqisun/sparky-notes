@@ -83,16 +83,16 @@ async function* iterateClaims(claimsDir: string, batchSize?: string): AsyncGener
 }
 
 async function initGraphDb(graphDbBackupPath: string) {
-  const db = new CozoDb("rocksdb", graphDbBackupPath);
-
   if (existsSync(graphDbBackupPath)) {
-    // await db.restore(graphDbBackupPath);
+    const db = new CozoDb("rocksdb", graphDbBackupPath);
     console.log(`Restore graph: ${graphDbBackupPath}`);
+    return db;
   } else {
+    const db = new CozoDb("rocksdb", graphDbBackupPath);
     await db.run(CREATE_GRAPH_SCHEMA);
     console.log(`Create graph: ${graphDbBackupPath}`);
+    return db;
   }
-  return db;
 }
 
 async function getRelations(embeddingsDb: AsyncDatabase, claim: ClaimWithTriples): Promise<EmbeddedRelation[]> {
