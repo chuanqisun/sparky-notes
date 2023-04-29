@@ -34,7 +34,7 @@ export class CozoProxy {
   private async createWorker() {
     const worker = fork(this.config.workerPath, ["rocksdb", this.config.dbPath], { stdio: ["inherit", "inherit", "inherit", "ipc"] });
     await this.request(worker, { ensureSchema: this.config.initSchema });
-    console.log("worker created");
+    console.log("[worker proxy] created");
 
     return worker;
   }
@@ -65,5 +65,6 @@ export class CozoProxy {
     await this.request(await this.workerPromise, { close: true });
     const worker = await this.workerPromise;
     worker.kill();
+    console.log("[worker proxy] killed");
   }
 }

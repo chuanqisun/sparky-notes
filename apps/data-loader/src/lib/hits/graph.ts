@@ -8,6 +8,17 @@ import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
 import { CREATE_GRAPH_SCHEMA, PUT_CLAIM_TRIPLE } from "./cozo-scripts/cozo-scripts";
 import type { ClaimWithTriples } from "./data";
 
+export async function queryGraph(graphDbPath: string) {
+  const graph = new CozoProxy({ workerPath: path.resolve("./src/lib/cozo/cozo-worker.ts"), dbPath: graphDbPath, initSchema: CREATE_GRAPH_SCHEMA });
+  const result = await graph.run(`
+  ?[id] := *triple{id}
+  :limit 10
+    `);
+
+  graph.stop();
+  console.log(result);
+}
+
 export async function buildGraph(claimsDir: string, embeddingsDbPath: string, graphDbPath: string) {
   const embeddingsDb = await initializeEmbeddingsDb(embeddingsDbPath);
   const useWorker = false;

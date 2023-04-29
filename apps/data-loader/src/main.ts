@@ -5,7 +5,7 @@ import path from "path";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
-import { buildGraph } from "./lib/hits/graph";
+import { buildGraph, queryGraph } from "./lib/hits/graph";
 import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
 import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
@@ -66,6 +66,10 @@ async function main() {
     }
     case params.includes("parse-claims-v3"): {
       parseClaimsV3(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
+      break;
+    }
+    case params.includes("query-graph"): {
+      queryGraph(path.resolve("./data/graph-db"));
       break;
     }
     case params.includes("export-claims"): {
