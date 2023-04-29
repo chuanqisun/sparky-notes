@@ -5,7 +5,7 @@ import path from "path";
 import type { AsyncDatabase } from "promised-sqlite3";
 import { CozoProxy } from "../cozo/cozo-proxy";
 import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
-import { CREATE_GRAPH_SCHEMA, PUT_CLAIM_TRIPLE } from "./cozo-scripts/cozo-scripts";
+import { CREATE_GRAPH_SCHEMA, CREATE_HNSW_INDEX, PUT_CLAIM_TRIPLE } from "./cozo-scripts/cozo-scripts";
 import type { ClaimWithTriples } from "./data";
 
 export async function queryGraph(graphDbPath: string) {
@@ -90,6 +90,7 @@ async function initGraphDb(graphDbBackupPath: string) {
   } else {
     const db = new CozoDb("rocksdb", graphDbBackupPath);
     await db.run(CREATE_GRAPH_SCHEMA);
+    await db.run(CREATE_HNSW_INDEX);
     console.log(`Create graph: ${graphDbBackupPath}`);
     return db;
   }

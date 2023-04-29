@@ -11,6 +11,15 @@ export const CREATE_GRAPH_SCHEMA = `
 }
 `;
 
+export const CREATE_HNSW_INDEX = `
+::hnsw create triple:semantic{
+  fields: [sVec, pVec, oVec],
+  dim: 1536,
+  ef: 16,
+  m: 32,
+}
+`;
+
 export const PUT_CLAIM_TRIPLE = `
 ?[id, s, p, o, sVec, pVec, oVec] <- [[
   $id,
