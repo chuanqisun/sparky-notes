@@ -1,17 +1,20 @@
 import { CozoDb } from "cozo-node";
 import { existsSync } from "fs";
 import { readdir } from "fs/promises";
+import path from "path";
 import type { AsyncDatabase } from "promised-sqlite3";
+import { CozoProxy } from "../cozo/cozo-proxy";
 import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
 import { CREATE_GRAPH_SCHEMA, PUT_CLAIM_TRIPLE } from "./cozo-scripts/cozo-scripts";
 import type { ClaimWithTriples } from "./data";
 
 export async function buildGraph(claimsDir: string, embeddingsDbPath: string, graphDbPath: string) {
   const embeddingsDb = await initializeEmbeddingsDb(embeddingsDbPath);
+  const useWorker = false;
 
-  const mutableDb = {
-    db: await initGraphDb(graphDbPath),
-  };
+  const graph = useWorker
+    ? new CozoProxy({ workerPath: path.resolve("./src/lib/cozo/cozo-worker.ts"), dbPath: graphDbPath, initSchema: CREATE_GRAPH_SCHEMA })
+    : await initGraphDb(graphDbPath);
 
   const claimsIter = iterateClaims(claimsDir);
   const progress = {
@@ -25,7 +28,7 @@ export async function buildGraph(claimsDir: string, embeddingsDbPath: string, gr
 
     for (const relation of relations) {
       try {
-        await mutableDb.db.run(PUT_CLAIM_TRIPLE, {
+        await graph.run(PUT_CLAIM_TRIPLE, {
           id: claim.claimId,
           s: relation.s.text,
           p: relation.p.text,
@@ -69,10 +72,10 @@ async function* iterateClaims(claimsDir: string, batchSize?: string): AsyncGener
 }
 
 async function initGraphDb(graphDbBackupPath: string) {
-  const db = new CozoDb();
+  const db = new CozoDb("rocksdb", graphDbBackupPath);
 
   if (existsSync(graphDbBackupPath)) {
-    await db.restore(graphDbBackupPath);
+    // await db.restore(graphDbBackupPath);
     console.log(`Restore graph: ${graphDbBackupPath}`);
   } else {
     await db.run(CREATE_GRAPH_SCHEMA);

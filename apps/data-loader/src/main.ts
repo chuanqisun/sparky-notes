@@ -23,11 +23,12 @@ async function main() {
   switch (true) {
     case params.includes("build-graph"): {
       const embeddingDbPath = path.resolve("./data/embeddings.db");
-      const graphDbBackupPath = path.resolve("./data/graph.db");
+      const graphDbBackupPath = path.resolve("./data/graph-db");
       const claimsDir = path.resolve("./data/claims-ux-domain-ontology-1682697637390");
       buildGraph(claimsDir, embeddingDbPath, graphDbBackupPath);
       break;
     }
+
     case params.includes("clear-claims"): {
       clearClaims(path.resolve(CLAIMS_DIR));
       break;

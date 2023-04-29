@@ -32,4 +32,6 @@ export const PUT_CLAIM_TRIPLE = `
   pVec,
   oVec,
 }
+
+:timeout 0
 `;
