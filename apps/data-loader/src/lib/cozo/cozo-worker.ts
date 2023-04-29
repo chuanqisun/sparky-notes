@@ -9,7 +9,7 @@ const db = new CozoDb(dbEngine, dbPath);
 console.log(`[worker] Started ${dbEngine} ${dbPath}`);
 
 export interface DbWorkerRequest {
-  _mid: string;
+  _mid: number;
 
   run?: {
     query: string;
