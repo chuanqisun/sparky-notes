@@ -41,7 +41,7 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
       const toE = entities[i + 1];
       const forwardPredicates = await joinWithPredicateEdge(fromE, toE);
       const backwardPredicates = await joinWithPredicateEdge(toE, fromE);
-      const isSimilarEntityPair = await isSimilar(fromE, toE);
+      const isSimilarEntityPair = await isSimilar(0.2, fromE, toE);
 
       minigraph.push(...forwardPredicates.map((p) => `(${fromE})-[${p}]->(${toE})`));
       minigraph.push(...backwardPredicates.map((p) => `(${toE})-[${p}]->(${fromE})`));
@@ -67,17 +67,30 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
     return raw.rows.map((row: string[]) => row[1]);
   }
 
-  async function isSimilar(fromE: string, toE: string): Promise<Boolean> {
-    const raw = await db.run(
-      `
-      ?[dist] := *entity:semantic{layer: 0, fr_text: $fromE, to_text: $toE, dist}, dist < 0.2
-`,
-      {
-        fromE,
-        toE,
-      }
-    );
+  async function isSimilar(threshold: number, fromE: string, toE: string): Promise<Boolean> {
+    const dist = await getL2Distance(fromE, toE);
+    return dist === null ? false : dist < threshold;
+  }
 
-    return raw.rows.length > 0;
+  async function getL2Distance(fromText: string, toText: string): Promise<number | null> {
+    const result = await db
+      .run(
+        `
+  ?[dist] := *entity { text: $fromText, vec: from }, *entity { text: $toText, vec: to }, dist = l2_dist(from, to) 
+
+  :limit 10
+  `,
+        {
+          fromText,
+          toText,
+        }
+      )
+      .then((res) => (res.rows[0]?.[0] as number) ?? null)
+      .catch((e) => {
+        console.log(e?.display ?? e);
+        return null;
+      });
+
+    return result;
   }
 }
