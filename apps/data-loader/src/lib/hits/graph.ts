@@ -17,8 +17,14 @@ import type { ClaimWithTriples } from "./data";
 export async function queryGraph(graphDbPath: string) {
   const db = await initGraphDb(graphDbPath);
   const result = await db.run(`
+{
   ?[text] := *entity{text}
-  :limit 10
+  :limit 5
+}
+{
+  ?[claimTitle, topics, products] := *claim{claimTitle, topics, products}
+  :limit 5
+}
     `);
 
   db.close();
