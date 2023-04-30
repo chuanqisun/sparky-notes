@@ -8,7 +8,12 @@ export interface Triple {
   o: string;
 }
 
-export async function ontologicalQuery(triples: Triple): Promise<ClaimTriple[]> {
+export async function fullTripleQuery(triples: Triple): Promise<ClaimTriple[]> {
+  // to be implemented
+  return [];
+}
+
+export async function entityQuery(entity: string): Promise<ClaimTriple[]> {
   // to be implemented
   return [];
 }

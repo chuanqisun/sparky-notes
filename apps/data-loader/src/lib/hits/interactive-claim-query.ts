@@ -1,7 +1,7 @@
 import type { CozoDb } from "cozo-node";
 import { writeFile } from "fs/promises";
 import { getSimpleChatProxy, type ChatMessage } from "../azure/chat";
-import { bulkEmbed } from "./bulk-embed";
+import { bulkEmbedLegacy } from "./bulk-embed";
 import { parseClaimQuery } from "./parse-claims";
 
 export async function semantcQueryHandler(db: CozoDb, command: string) {
@@ -12,7 +12,7 @@ export async function semantcQueryHandler(db: CozoDb, command: string) {
 
   // embedding parser
   console.log(`🤖 Vectorizing...`);
-  await bulkEmbed(concepts).then(async (embeddings) => {
+  await bulkEmbedLegacy(concepts).then(async (embeddings) => {
     console.log(`🤖 Affinitizing known concepts...`);
 
     const conceptsGrid = await Promise.all(
