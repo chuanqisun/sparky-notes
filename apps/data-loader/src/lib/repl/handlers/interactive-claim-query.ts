@@ -1,13 +1,17 @@
 import type { CozoDb } from "cozo-node";
 import { writeFile } from "fs/promises";
-import { getSimpleChatProxy, type ChatMessage } from "../azure/chat";
-import { bulkEmbedLegacy } from "./bulk-embed";
-import { parseClaimQuery } from "./parse-claims";
+import { getSimpleChatProxy, type ChatMessage } from "../../azure/chat";
+import { bulkEmbedLegacy } from "../../hits/bulk-embed";
+import { parseClaimQuery } from "../../hits/parse-claims";
 
 export async function semantcQueryHandler(db: CozoDb, command: string) {
+  if (!command.startsWith("qna:")) return;
+
+  const query = command.replace("qna:", "").trim();
+
   // query expansion
   console.log(`🤖 Conceptualizing...`);
-  const concepts = await parseClaimQuery(command);
+  const concepts = await parseClaimQuery(query);
   concepts.map((concept) => console.log(`🧠 Concept: ${concept}`));
 
   // embedding parser
@@ -100,7 +104,7 @@ dist < 0.35,
           role: "system",
           content: `
 You are a UX researcher working at Microsoft. You have profound domain knowledge in user experience research. You are analyzing the following question:
-${command}
+${query}
 
 The user will provide a specific claim from an existing research report. You must use the claim to answer the question. Use the following format:
 Analysis: <Analyze the key concept in the question and the claim>
@@ -116,7 +120,7 @@ Claim details: ${item.claimContent}
 Key concept in the claim: ${item.text}
 Key concept in the question: ${item.userConcept}
 
-Now answer the Question: ${command}
+Now answer the Question: ${query}
         `.trim(),
         },
       ];
