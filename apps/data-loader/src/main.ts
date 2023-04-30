@@ -88,9 +88,6 @@ async function main() {
 
       break;
     }
-    case params.includes("repl-v2"): {
-      break;
-    }
     default: {
       console.log(`
 Usage: npm start -- [program]
