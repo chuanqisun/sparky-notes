@@ -2,7 +2,16 @@ import { CozoDb } from "cozo-node";
 import { readdir } from "fs/promises";
 import type { AsyncDatabase } from "promised-sqlite3";
 import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
-import { CREATE_CLAIM_TRIPLE_SCHEMA, CREATE_ENTITY_SCHEMA, CREATE_HNSW_INDEX, GET_RELATIONS, PUT_CLAIM_TRIPLE, PUT_ENTITY } from "./cozo-scripts/cozo-scripts";
+import {
+  CREATE_CLAIM_SCHEMA,
+  CREATE_CLAIM_TRIPLE_SCHEMA,
+  CREATE_ENTITY_SCHEMA,
+  CREATE_HNSW_INDEX,
+  GET_RELATIONS,
+  PUT_CLAIM,
+  PUT_CLAIM_TRIPLE,
+  PUT_ENTITY,
+} from "./cozo-scripts/cozo-scripts";
 import type { ClaimWithTriples } from "./data";
 
 export async function queryGraph(graphDbPath: string) {
@@ -33,14 +42,26 @@ export async function buildGraph(claimsDir: string, embeddingsDbPath: string, gr
 
     for (const relation of relations) {
       try {
+        await graph.run(PUT_CLAIM, {
+          claimId: claim.claimId,
+          claimType: claim.claimType,
+          claimTitle: claim.claimTitle,
+          claimContent: claim.claimContent,
+          rootDocumentId: claim.rootDocumentId,
+          rootDocumentTitle: claim.rootDocumentTitle,
+          rootDocumentContext: claim.rootDocumentContext,
+          methods: claim.methods,
+          products: claim.products,
+          topics: claim.topics,
+          researchers: claim.researchers,
+        });
+
         await graph.run(PUT_CLAIM_TRIPLE, {
           claimId: claim.claimId,
           s: relation.s.text,
           o: relation.o.text,
           p: relation.p.text,
         });
-
-        progress.tripleSuccess++;
 
         await graph.run(PUT_ENTITY, {
           text: relation.s.text,
@@ -104,6 +125,10 @@ async function initGraphDb(graphDbBackupPath: string) {
   if (!existingRelations.has("claimTriple")) {
     console.log(`create claim triple schema`);
     await db.run(CREATE_CLAIM_TRIPLE_SCHEMA);
+  }
+  if (!existingRelations.has("claim")) {
+    console.log(`create claim schema`);
+    await db.run(CREATE_CLAIM_SCHEMA);
   }
 
   console.log(`DB ready: ${graphDbBackupPath}`);

@@ -10,6 +10,23 @@ export const CREATE_ENTITY_SCHEMA = `
 }
 `;
 
+export const CREATE_CLAIM_SCHEMA = `
+:create claim {
+  claimId: String
+  =>
+  claimType: Int,
+  claimTitle: String,
+  claimContent: String,
+  rootDocumentId: String,
+  rootDocumentTitle: String,
+  rootDocumentContext: String,
+  methods: [String],
+  products: [String],
+  topics: [String],
+  researchers: [String],
+}
+`;
+
 export const CREATE_CLAIM_TRIPLE_SCHEMA = `
 :create claimTriple {
   claimId: String,
@@ -27,6 +44,39 @@ export const CREATE_HNSW_INDEX = `
 }
 `;
 
+export const PUT_CLAIM = `
+?[claimId, claimType, claimTitle, claimContent, rootDocumentId, rootDocumentTitle, rootDocumentContext, methods, products, topics, researchers] <- [[
+  $claimId,
+  $claimType,
+  $claimTitle,
+  $claimContent,
+  $rootDocumentId,
+  $rootDocumentTitle,
+  $rootDocumentContext,
+  $methods,
+  $products,
+  $topics,
+  $researchers,
+]]
+
+:put claim {
+  claimId
+  =>
+  claimType,
+  claimTitle,
+  claimContent,
+  rootDocumentId,
+  rootDocumentTitle,
+  rootDocumentContext,
+  methods,
+  products,
+  topics,
+  researchers,
+}
+
+:timeout 0
+`;
+
 export const PUT_ENTITY = `
 ?[text, vec] <- [[
   $text,
@@ -34,7 +84,7 @@ export const PUT_ENTITY = `
 ]]
 
 :put entity {
-  text,
+  text
   =>
   vec,
 }
