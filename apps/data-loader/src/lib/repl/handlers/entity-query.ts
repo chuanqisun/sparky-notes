@@ -15,25 +15,17 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
       dist = 0.3
 
     entitySimilarityEdge[sim_from, sim_to, dist] :=
-      *entity:semantic{layer: 0, fr_text: sim_from, to_text: sim_to, dist}, dist < 0.1
+      *entity:semantic{layer: 0, fr_text: sim_from, to_text: sim_to, dist}, dist < 0.2
 
     allEdges[from, to, dist] := 
       hardEdge[from, to, dist] or
       entitySimilarityEdge[from, to, dist]
 
 
-#?[from, to, dist] := allEdges[from, to, dist], dist = 0.01
-
-#?[sem_from, sem_to, dist] := semanticEdge[sem_from, sem_to, dist]
-
     starting[] <- [['Azure']]
     goal[] <- [['Windows']]
 
     ?[starting, goal, distance, path] <~ KShortestPathYen(allEdges[], starting[], goal[], k: 10)
-
-:sort distance
-:limit 10
-
   `
     )
     .catch((e) => console.log(e?.display ?? e));
@@ -49,11 +41,11 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
       const toE = entities[i + 1];
       const forwardPredicates = await joinWithPredicateEdge(fromE, toE);
       const backwardPredicates = await joinWithPredicateEdge(toE, fromE);
-      const similarityPairs = await joinWithSemanticEdge(fromE, toE);
+      const isSimilarEntityPair = await isSimilar(fromE, toE);
 
       minigraph.push(...forwardPredicates.map((p) => `(${fromE})-[${p}]->(${toE})`));
       minigraph.push(...backwardPredicates.map((p) => `(${toE})-[${p}]->(${fromE})`));
-      minigraph.push(...similarityPairs.map((p) => `(${p[0]})-[similar to]->(${p[1]})`));
+      minigraph.push(...(isSimilarEntityPair ? [`(${fromE})-[similar to]->(${toE})`] : []));
     }
 
     console.log("---");
@@ -75,11 +67,10 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
     return raw.rows.map((row: string[]) => row[1]);
   }
 
-  async function joinWithSemanticEdge(fromE: string, toE: string): Promise<[string, string][]> {
+  async function isSimilar(fromE: string, toE: string): Promise<Boolean> {
     const raw = await db.run(
       `
-      semanticEdge[sem_from, sem_to] <- [[$fromE, $toE]]
-      ?[sem_from, sem_to, dist] := semanticEdge[sem_from, sem_to], *entity:semantic{layer: 0, fr_text: sem_from, to_text: sem_to, dist}, dist < 0.1, sem_from < sem_to
+      ?[dist] := *entity:semantic{layer: 0, fr_text: $fromE, to_text: $toE, dist}, dist < 0.2
 `,
       {
         fromE,
@@ -87,6 +78,6 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
       }
     );
 
-    return raw.rows.map((row: string[]) => [row[0], row[1]] as const);
+    return raw.rows.length > 0;
   }
 }
