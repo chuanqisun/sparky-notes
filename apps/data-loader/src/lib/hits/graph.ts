@@ -116,7 +116,7 @@ async function* iterateClaims(claimsDir: string, batchSize?: string): AsyncGener
   }
 }
 
-async function initGraphDb(graphDbBackupPath: string) {
+export async function initGraphDb(graphDbBackupPath: string) {
   const db = new CozoDb("rocksdb", graphDbBackupPath);
   const relations = await db.run(GET_RELATIONS);
   const existingRelations = new Set<string>(relations.rows.map((row: any[]) => row[0]));
