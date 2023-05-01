@@ -26,7 +26,7 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
 
     console.log(`file ${i + 1}/${files.length}: ${atoms.length} texts, ${uniqueAtoms.length} unique, ${newAtoms.length} new`);
 
-    await bulkEmbed(
+    await bulkGetEmbeddings(
       newAtoms,
       async (text, embedding) => {
         await putEmbedding(db, text, embedding);
@@ -40,18 +40,22 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
   }
 }
 
-export async function bulkEmbed(texts: string[], onSuccess?: (text: string, embedding: number[]) => any, onError?: (text: string, error: string) => any) {
+export async function bulkGetEmbeddings(
+  texts: string[],
+  onSuccess?: (text: string, embedding: number[]) => any,
+  onError?: (text: string, error: string) => any
+) {
   const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
 
   return await Promise.all(
-    texts.map((uniqueText) =>
+    [...new Set(texts)].map((uniqueText) =>
       embeddingProxy({ input: uniqueText })
         .then((res) => {
           const embeddingArray = res.data[0].embedding;
           onSuccess?.(uniqueText, embeddingArray);
           assert(Array.isArray(embeddingArray), `embedding for ${uniqueText} is not an array`);
 
-          return embeddingArray;
+          return { text: uniqueText, vec: embeddingArray };
         })
         .catch((error) => {
           onError?.(uniqueText, `${error?.name}: ${error.message}`);

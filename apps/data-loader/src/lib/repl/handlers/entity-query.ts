@@ -1,16 +1,38 @@
 import type { CozoDb } from "cozo-node";
-import { bulkEmbed } from "../../hits/bulk-embed";
+import { bulkGetEmbeddings } from "../../hits/bulk-embed";
+import { PUT_ENTITY } from "../../hits/cozo-scripts/cozo-scripts";
 
 export async function entityQueryHandler(db: CozoDb, command: string) {
   // if (!command.startsWith("e:")) return;
 
   const query = command.replace("e:", "").trim();
   // TODO implement minimum query interpreter
-  const keywords = query.split(",").map((k) => k.trim());
 
-  console.log(`🤖 Query expansion for [${keywords.join(", ")}]`);
-  console.log(await Promise.all(keywords.map((keyword) => keywordToEntites(db, keyword))));
+  const [fromKeywords, toKeywords] = query
+    .split("->")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) =>
+      part
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean)
+    );
 
+  const allKeywords = [...new Set([...fromKeywords, ...toKeywords])];
+
+  // todo boost perf with cache
+  console.log(`🤖 Update embeddings [${allKeywords.join(", ")}]`);
+  const entities = await bulkGetEmbeddings(allKeywords);
+
+  for (const entity of entities) {
+    await db.run(PUT_ENTITY, {
+      text: entity.text,
+      vec: entity.vec,
+    });
+  }
+
+  console.log(`🤖 Ontology graph analysis`);
   const rawResult = await db
     .run(
       `
@@ -27,11 +49,15 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
       entitySimilarityEdge[from, to, dist]
 
 
-    starting[] <- [['Azure']]
-    goal[] <- [['Windows']]
+    sourceNodes[] <- [$sourceNodes]
+    targetNodes[] <- [$targetNodes]
 
-    ?[starting, goal, distance, path] <~ KShortestPathYen(allEdges[], starting[], goal[], k: 10)
-  `
+    ?[sourceNodes, targetNodes, distance, path] <~ KShortestPathYen(allEdges[], sourceNodes[], targetNodes[], k: 10)
+  `,
+      {
+        sourceNodes: fromKeywords,
+        targetNodes: toKeywords,
+      }
     )
     .catch((e) => console.log(e?.display ?? e));
 
@@ -75,7 +101,7 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
 
 async function keywordToEntites(db: CozoDb, keyword: string): Promise<string[]> {
   // keyword to vec
-  const [vec] = await bulkEmbed([keyword]);
+  const [vec] = await bulkGetEmbeddings([keyword]);
 
   // vector search nearest neighbors
 
