@@ -1,36 +1,110 @@
-export const CREATE_GRAPH_SCHEMA = `
-:create triple {
-  id: String
-  => 
-  s: String,
-  p: String,
-  o: String,
-  sVec: <F32; 1536>,
-  pVec: <F32; 1536>,
-  oVec: <F32; 1536>,
+export const GET_RELATIONS = `
+::relations
+`;
+
+export const CREATE_ENTITY_SCHEMA = `
+:create entity {
+  text: String
+  =>
+  vec: <F32; 1536>,
 }
 `;
 
+export const CREATE_CLAIM_SCHEMA = `
+:create claim {
+  claimId: String
+  =>
+  claimType: Int,
+  claimTitle: String,
+  claimContent: String,
+  rootDocumentId: String,
+  rootDocumentTitle: String,
+  rootDocumentContext: String,
+  methods: [String],
+  products: [String],
+  topics: [String],
+  researchers: [String],
+}
+`;
+
+export const CREATE_CLAIM_TRIPLE_SCHEMA = `
+:create claimTriple {
+  claimId: String,
+  s: String,
+  p: String,
+  o: String,
+}`;
+
+export const CREATE_HNSW_INDEX = `
+::hnsw create entity:semantic{
+  fields: [vec],
+  dim: 1536,
+  ef: 16,
+  m: 32,
+}
+`;
+
+export const PUT_CLAIM = `
+?[claimId, claimType, claimTitle, claimContent, rootDocumentId, rootDocumentTitle, rootDocumentContext, methods, products, topics, researchers] <- [[
+  $claimId,
+  $claimType,
+  $claimTitle,
+  $claimContent,
+  $rootDocumentId,
+  $rootDocumentTitle,
+  $rootDocumentContext,
+  $methods,
+  $products,
+  $topics,
+  $researchers,
+]]
+
+:put claim {
+  claimId
+  =>
+  claimType,
+  claimTitle,
+  claimContent,
+  rootDocumentId,
+  rootDocumentTitle,
+  rootDocumentContext,
+  methods,
+  products,
+  topics,
+  researchers,
+}
+
+:timeout 0
+`;
+
+export const PUT_ENTITY = `
+?[text, vec] <- [[
+  $text,
+  $vec,
+]]
+
+:put entity {
+  text
+  =>
+  vec,
+}
+
+:timeout 0
+`;
+
 export const PUT_CLAIM_TRIPLE = `
-?[id, s, p, o, sVec, pVec, oVec] <- [[
-  $id,
+?[claimId, s, p, o] <- [[
+  $claimId,
   $s,
   $p,
   $o,
-  $sVec,
-  $pVec,
-  $oVec,
 ]]
 
-:put triple {
-  id
-  =>
+:put claimTriple {
+  claimId,
   s,
   p,
   o,
-  sVec,
-  pVec,
-  oVec,
 }
 
 :timeout 0

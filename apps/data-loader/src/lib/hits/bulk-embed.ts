@@ -25,7 +25,7 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
 
     console.log(`file ${i + 1}/${files.length}: ${atoms.length} texts, ${uniqueAtoms.length} unique, ${newAtoms.length} new`);
 
-    await bulkEmbedV2(
+    await bulkEmbed(
       newAtoms,
       async (text, embedding) => {
         await putEmbedding(db, text, embedding);
@@ -39,13 +39,7 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
   }
 }
 
-export function bulkEmbed(texts: string[]): Promise<number[][]> {
-  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
-
-  return Promise.all(texts.map((text) => embeddingProxy({ input: text }).then((res) => res.data[0].embedding)));
-}
-
-export async function bulkEmbedV2(texts: string[], onSuccess?: (text: string, embedding: number[]) => any, onError?: (text: string, error: string) => any) {
+export async function bulkEmbed(texts: string[], onSuccess?: (text: string, embedding: number[]) => any, onError?: (text: string, error: string) => any) {
   const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
 
   await Promise.all(
@@ -85,4 +79,10 @@ export async function hasEmbedding(db: AsyncDatabase, text: string): Promise<boo
 export async function deleteEmbedding(db: AsyncDatabase, text: string): Promise<void> {
   const key = createHash("sha1").update(text).digest("hex");
   const row = await db.run(DELETE_EMBEDDING, [key]);
+}
+
+export function bulkEmbedLegacy(texts: string[]): Promise<number[][]> {
+  const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
+
+  return Promise.all(texts.map((text) => embeddingProxy({ input: text }).then((res) => res.data[0].embedding)));
 }

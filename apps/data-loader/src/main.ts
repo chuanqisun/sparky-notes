@@ -5,11 +5,12 @@ import path from "path";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
-import { buildGraph, queryGraph } from "./lib/hits/graph";
-import { semantcQueryHandler } from "./lib/hits/interactive-claim-query";
+import { buildGraph, initGraphDb, queryGraph } from "./lib/hits/graph";
 import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
+import { entityQueryHandler } from "./lib/repl/handlers/entity-query";
+import { semantcQueryHandler } from "./lib/repl/handlers/interactive-claim-query";
 import { startRepl } from "./lib/repl/start";
 
 dotenv.config();
@@ -85,6 +86,14 @@ async function main() {
       console.log("✅ Human interace ready");
 
       startRepl([semantcQueryHandler.bind(null, db)]);
+
+      break;
+    }
+    case params.includes("explorer"): {
+      const db = await initGraphDb(path.resolve("./data/graph-db"));
+      console.log("✅ HNSW Database online");
+
+      startRepl([entityQueryHandler.bind(null, db)]);
 
       break;
     }
