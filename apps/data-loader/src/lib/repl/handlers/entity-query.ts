@@ -1,4 +1,7 @@
 import type { CozoDb } from "cozo-node";
+import { appendFile } from "fs/promises";
+import path from "path";
+import { getLoadBalancedChatProxy, type ChatMessage } from "../../azure/chat";
 import { bulkGetEmbeddings } from "../../hits/bulk-embed";
 import { PUT_ENTITY } from "../../hits/cozo-scripts/cozo-scripts";
 
@@ -66,28 +69,101 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
     )
     .catch((e) => console.log(e?.display ?? e));
 
+  const knownPath = new Set<string>();
+
+  const logPath = path.resolve(`./data/repl-query-${Date.now()}.md`);
+  await appendFile(logPath, `Query: \`[${fromKeywords.join(",")}] -> [${toKeywords.join(",")}]\`\n\n`).catch();
+
   for (const row of rawResult.rows) {
     const entities = row[3];
-    const minigraph: string[] = [];
+    const edges: PredicateEdge[] = [];
 
     for (let i = 0; i < entities.length - 1; i++) {
       const fromE = entities[i];
       const toE = entities[i + 1];
-      // const forwardPredicates = await joinWithPredicateEdge(db, fromE, toE);
-      // const backwardPredicates = await joinWithPredicateEdge(db, toE, fromE);
-      // const isSimilarEntityPair = await isSimilar(db, 0.2, fromE, toE);
+      const isSimilarEntityPair = await isSimilar(db, 0.2, fromE, toE);
 
-      const bidiEdges = await getBidiPredicateEdge(db, fromE, toE);
-      console.log(bidiEdges);
-
-      // minigraph.push(...forwardPredicates.map((p) => `(${fromE})-[${p}]->(${toE})`));
-      // minigraph.push(...backwardPredicates.map((p) => `(${toE})-[${p}]->(${fromE})`));
-      // minigraph.push(...(isSimilarEntityPair ? [`(${fromE})-[similar to]->(${toE})`] : []));
+      if (!isSimilarEntityPair) {
+        const bidiEdges = await getBidiPredicateEdge(db, fromE, toE);
+        edges.push(...bidiEdges);
+      }
     }
 
+    // dedupe the edges (due to multiple paths from similarity jumps)
+    const pathId = edges.flatMap((item) => [item.subject, item.predicate, item.object]).join(",");
+    if (knownPath.has(pathId)) continue;
+    knownPath.add(pathId);
+
     console.log("---");
-    console.log(minigraph.join("\n"));
+
+    // render to text
+    const ontologyPath = formatEdgesAsGraph(edges);
+    const claimIds = [...new Set(edges.map((item) => item.claimId))].join(",");
+    const { reason, claim } = await interpretGraph(allKeywords, edges);
+    console.log({
+      insight: claim,
+      reason,
+      graph: ontologyPath,
+      sources: claimIds,
+    });
+    await appendFile(
+      logPath,
+      `---
+${claim}
+${reason}
+${ontologyPath}
+${claimIds}\n\n`
+    );
   }
+}
+
+export function formatEdgesAsGraph(edges: PredicateEdge[]) {
+  return edges.map((item) => `${item.subject}-[${item.predicate}]->${item.object}`).join("\n");
+}
+
+export function formatEdgesAsClaims(edges: PredicateEdge[]) {
+  return edges.map((item) => `${item.claimTitle}\n${item.claimContent}`).join("\n\n");
+}
+
+export async function interpretGraph(terminalConcepts: string[], edges: PredicateEdge[]) {
+  const chatProxy = getLoadBalancedChatProxy(process.env.OPENAI_API_KEY!, ["v4-8k", "v4-32k"], true);
+
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `
+You are an ontological engineer with UX Research and Design domain expertise. Summary a knowledge graph into a new claim. You should rely on the provided claims as reference.
+
+Use this format:
+
+Reason: <describe any deductive and inductive reasonings based on the graph>
+New claim: <describe the new claim based on the reason>
+        `.trim(),
+    },
+    {
+      role: "user",
+      content: `
+Focused concepts: ${terminalConcepts.join(", ")}
+
+Knowledge graph:
+${formatEdgesAsGraph(edges)}
+
+Reference claims:
+${formatEdgesAsClaims(edges)}
+      `.trim(),
+    },
+  ];
+
+  const response = await chatProxy({ messages, temperature: 0, max_tokens: 600 });
+  const textResponse = response.choices[0].message.content ?? "";
+
+  const reason = textResponse.match(/Reason: (.*)/)?.[1]?.trim();
+  const claim = textResponse.match(/New claim: (.*)/)?.[1]?.trim();
+
+  return {
+    reason,
+    claim,
+  };
 }
 
 export interface OntologyGraphEdge {
@@ -141,6 +217,8 @@ async function joinWithPredicateEdge(db: CozoDb, fromE: string, toE: string): Pr
 
 interface PredicateEdge {
   claimId: string;
+  claimTitle: string;
+  claimContent: string;
   subject: string;
   predicate: string;
   object: string;
@@ -151,7 +229,7 @@ async function getBidiPredicateEdge(db: CozoDb, fromE: string, toE: string): Pro
       `
     forwardEdge[claimId, from, p, to] := *claimTriple{claimId, s: $fromE, p, o: $toE}, from = $fromE, to = $toE
     backwardEdge[claimId, to, p, from] := *claimTriple{claimId, s: $toE, p, o: $fromE}, from = $fromE, to = $toE
-    ?[from, p, to, claimId, claimTitle] := forwardEdge[claimId, from, p, to] or backwardEdge[claimId, from, p, to], *claim{claimId, claimTitle}
+    ?[from, p, to, claimId, claimTitle, claimContent] := forwardEdge[claimId, from, p, to] or backwardEdge[claimId, from, p, to], *claim{claimId, claimTitle, claimContent}
 `,
       {
         fromE,
