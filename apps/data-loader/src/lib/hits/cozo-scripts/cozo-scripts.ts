@@ -10,6 +10,15 @@ export const CREATE_ENTITY_SCHEMA = `
 }
 `;
 
+export const CREATE_HNSW_INDEX = `
+::hnsw create entity:semantic{
+  fields: [vec],
+  dim: 1536,
+  ef: 16,
+  m: 32,
+}
+`;
+
 export const CREATE_CLAIM_SCHEMA = `
 :create claim {
   claimId: String
@@ -34,15 +43,6 @@ export const CREATE_CLAIM_TRIPLE_SCHEMA = `
   p: String,
   o: String,
 }`;
-
-export const CREATE_HNSW_INDEX = `
-::hnsw create entity:semantic{
-  fields: [vec],
-  dim: 1536,
-  ef: 16,
-  m: 32,
-}
-`;
 
 export const PUT_CLAIM = `
 ?[claimId, claimType, claimTitle, claimContent, rootDocumentId, rootDocumentTitle, rootDocumentContext, methods, products, topics, researchers] <- [[

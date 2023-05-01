@@ -1,10 +1,15 @@
 import type { CozoDb } from "cozo-node";
+import { bulkEmbed } from "../../hits/bulk-embed";
 
 export async function entityQueryHandler(db: CozoDb, command: string) {
   // if (!command.startsWith("e:")) return;
 
   const query = command.replace("e:", "").trim();
   // TODO implement minimum query interpreter
+  const keywords = query.split(",").map((k) => k.trim());
+
+  console.log(`🤖 Query expansion for [${keywords.join(", ")}]`);
+  console.log(await Promise.all(keywords.map((keyword) => keywordToEntites(db, keyword))));
 
   const rawResult = await db
     .run(
@@ -41,7 +46,7 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
       const toE = entities[i + 1];
       const forwardPredicates = await joinWithPredicateEdge(fromE, toE);
       const backwardPredicates = await joinWithPredicateEdge(toE, fromE);
-      const isSimilarEntityPair = await isSimilar(0.2, fromE, toE);
+      const isSimilarEntityPair = await isSimilar(db, 0.2, fromE, toE);
 
       minigraph.push(...forwardPredicates.map((p) => `(${fromE})-[${p}]->(${toE})`));
       minigraph.push(...backwardPredicates.map((p) => `(${toE})-[${p}]->(${fromE})`));
@@ -66,31 +71,54 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
 
     return raw.rows.map((row: string[]) => row[1]);
   }
+}
 
-  async function isSimilar(threshold: number, fromE: string, toE: string): Promise<Boolean> {
-    const dist = await getL2Distance(fromE, toE);
-    return dist === null ? false : dist < threshold;
-  }
+async function keywordToEntites(db: CozoDb, keyword: string): Promise<string[]> {
+  // keyword to vec
+  const [vec] = await bulkEmbed([keyword]);
 
-  async function getL2Distance(fromText: string, toText: string): Promise<number | null> {
-    const result = await db
-      .run(
-        `
-  ?[dist] := *entity { text: $fromText, vec: from }, *entity { text: $toText, vec: to }, dist = l2_dist(from, to) 
+  // vector search nearest neighbors
 
-  :limit 10
+  await db
+    .run(
+      `
+?[text, dist] := ~entity:semantic{text | query: vec($vec), k: 10, ef: 16, bind_distance: dist, radius: 0.2 }
+
+:sort dist
   `,
-        {
-          fromText,
-          toText,
-        }
-      )
-      .then((res) => (res.rows[0]?.[0] as number) ?? null)
-      .catch((e) => {
-        console.log(e?.display ?? e);
-        return null;
-      });
+      {
+        vec,
+      }
+    )
+    .then(console.log)
+    .catch((e) => console.log(e?.display ?? e));
 
-    return result;
-  }
+  return [];
+}
+
+async function isSimilar(db: CozoDb, threshold: number, fromE: string, toE: string): Promise<Boolean> {
+  const dist = await getL2Distance(db, fromE, toE);
+  return dist === null ? false : dist < threshold;
+}
+
+async function getL2Distance(db: CozoDb, fromText: string, toText: string): Promise<number | null> {
+  const result = await db
+    .run(
+      `
+?[dist] := *entity { text: $fromText, vec: from }, *entity { text: $toText, vec: to }, dist = l2_dist(from, to) 
+
+:limit 10
+`,
+      {
+        fromText,
+        toText,
+      }
+    )
+    .then((res) => (res.rows[0]?.[0] as number) ?? null)
+    .catch((e) => {
+      console.log(e?.display ?? e);
+      return null;
+    });
+
+  return result;
 }

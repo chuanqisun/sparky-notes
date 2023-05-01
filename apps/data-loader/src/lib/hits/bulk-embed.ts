@@ -1,3 +1,4 @@
+import assert from "assert";
 import { createHash } from "crypto";
 import { appendFile, readdir } from "fs/promises";
 import path from "path";
@@ -42,12 +43,19 @@ export async function embedClaims(db: AsyncDatabase, sourceDataDir: string, logP
 export async function bulkEmbed(texts: string[], onSuccess?: (text: string, embedding: number[]) => any, onError?: (text: string, error: string) => any) {
   const embeddingProxy = getEmbeddingProxy(process.env.OPENAI_API_KEY!);
 
-  await Promise.all(
+  return await Promise.all(
     texts.map((uniqueText) =>
       embeddingProxy({ input: uniqueText })
-        .then((res) => onSuccess?.(uniqueText, res.data[0].embedding))
+        .then((res) => {
+          const embeddingArray = res.data[0].embedding;
+          onSuccess?.(uniqueText, embeddingArray);
+          assert(Array.isArray(embeddingArray), `embedding for ${uniqueText} is not an array`);
+
+          return embeddingArray;
+        })
         .catch((error) => {
           onError?.(uniqueText, `${error?.name}: ${error.message}`);
+          throw error;
         })
     )
   );
