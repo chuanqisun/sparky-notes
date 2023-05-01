@@ -97,28 +97,42 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
     console.log("---");
 
     // render to text
-    const ontologyPath = formatEdgesAsGraph(edges);
-    const claimIds = [...new Set(edges.map((item) => item.claimId))].join(",");
+    const graphLines = getUniqueGraphLines(edges);
+    const claimIds = [...new Set(edges.map((item) => item.claimId))];
+    const uniqueClaims = edges
+      .map((edge) => ({
+        claimId: edge.claimId,
+        claimTitle: edge.claimTitle,
+      }))
+      .filter((item, index, self) => self.findIndex((i) => i.claimId === item.claimId) === index);
     const { reason, claim } = await interpretGraph(allKeywords, edges);
     console.log({
       insight: claim,
       reason,
-      graph: ontologyPath,
+      graph: graphLines,
       sources: claimIds,
     });
     await appendFile(
       logPath,
       `---
-${claim}
-${reason}
-${ontologyPath}
-${claimIds}\n\n`
+- 💡Insight
+  - ${claim}
+- 🧠Reason
+  - ${reason}
+- 🔎Graph
+${graphLines.map((line) => `  - ${line}`).join("\n")}
+- 📋Sources
+${uniqueClaims.map((claim) => `  - [${claim.claimTitle}](https://hits.microsoft.com/insight/${claim.claimId})`).join("\n")}\n\n`
     );
   }
 }
 
 export function formatEdgesAsGraph(edges: PredicateEdge[]) {
-  return edges.map((item) => `${item.subject}-[${item.predicate}]->${item.object}`).join("\n");
+  return getUniqueGraphLines(edges).join("\n");
+}
+
+export function getUniqueGraphLines(edges: PredicateEdge[]) {
+  return [...new Set(edges.map((item) => `${item.subject}-[${item.predicate}]->${item.object}`))];
 }
 
 export function formatEdgesAsClaims(edges: PredicateEdge[]) {
