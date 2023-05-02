@@ -103,8 +103,10 @@ export async function handleEntityRelationQuery(db: CozoDb, query: string) {
       *claimTriple{s: hard_to, o: hard_from},
       dist = 0.3
 
-    entitySimilarityEdge[sim_from, sim_to, dist] :=
-      *entity:semantic{layer: 0, fr_text: sim_from, to_text: sim_to, dist}, dist < 0.2
+    entitySimilarityEdge[sim_from, sim_to, dist] := *entity:semantic{layer: 0, fr_text: sim_from, to_text: sim_to, dist}, dist < 0.2
+
+    # Using real distance function is too slow
+    #entitySimilarityEdge[sim_from, sim_to, dist] :=  *entity{text: sim_from, vec}, ~entity:semantic{ text: sim_to | query: vec, k: 10, ef: 16, bind_distance: dist, radius: 0.2 }
 
     allEdges[from, to, dist] := 
       hardEdge[from, to, dist] or
