@@ -6,11 +6,66 @@ import { bulkGetEmbeddings } from "../../hits/bulk-embed";
 import { PUT_ENTITY } from "../../hits/cozo-scripts/cozo-scripts";
 
 export async function entityQueryHandler(db: CozoDb, command: string) {
-  // if (!command.startsWith("e:")) return;
+  if (!command.startsWith("e:")) return;
 
   const query = command.replace("e:", "").trim();
-  // TODO implement minimum query interpreter
 
+  if (query.includes("->")) {
+    return handleEntityRelationQuery(db, query);
+  } else {
+    return handleEntityWalkQuery(db, query);
+  }
+}
+
+export async function handleEntityWalkQuery(db: CozoDb, query: string) {
+  const allKeywords = [
+    ...new Set(
+      query
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  console.log(allKeywords);
+
+  if (!allKeywords?.length) {
+    console.log(`❌ Invalid format. Pattern: "e: <keyword>, <keyword>"`);
+    return;
+  }
+
+  console.log(`🤖 Update embeddings [${allKeywords.join(", ")}]`);
+  await ensureEmbeddings(db, allKeywords);
+
+  console.log(`🤖 Ontology graph analysis`);
+
+  const rawResult = await db
+    .run(
+      `
+    hardEdge[from, p, to] :=
+      *claimTriple{s: from, o: to, p} or
+      *claimTriple{s: to, o: from, p}
+
+
+    oneHop[from, p, to, d] := *entity:semantic{layer: 0, fr_text: $sourceNode, to_text: to, dist: d}, d < 0.15, from = $sourceNode, p = "_sim"
+    twoHopForward[from, p, to, d] := oneHop[from_0, p_0, to_0, d_0], *claimTriple{s: to_0, o: to, p}, d = d_0, from = to_0
+    twoHopBackward[from, p, to, d] := oneHop[from_0, p_0, to_0, d_0], *claimTriple{s: from, o: to_0, p}, d = d_0, to = to_0
+
+    #?[from, p, to, d] := twoHop[from, p, to, d]
+    ?[from, p, to, d] := twoHopForward[from, p, to, d] or twoHopBackward[from, p, to, d]
+
+    :limit 100
+    :sort d
+  `,
+      {
+        sourceNode: allKeywords[0],
+      }
+    )
+    .then(console.log)
+    .catch((e) => console.log(e?.display ?? e));
+}
+
+export async function handleEntityRelationQuery(db: CozoDb, query: string) {
   const [fromKeywords, toKeywords] = query
     .split("->")
     .map((part) => part.trim())
@@ -31,14 +86,7 @@ export async function entityQueryHandler(db: CozoDb, command: string) {
 
   // todo boost perf with cache
   console.log(`🤖 Update embeddings [${allKeywords.join(", ")}]`);
-  const entities = await bulkGetEmbeddings(allKeywords);
-
-  for (const entity of entities) {
-    await db.run(PUT_ENTITY, {
-      text: entity.text,
-      vec: entity.vec,
-    });
-  }
+  await ensureEmbeddings(db, allKeywords);
 
   console.log(`🤖 Ontology graph analysis`);
   const rawResult = await db
@@ -124,6 +172,17 @@ ${graphLines.map((line) => `  - ${line}`).join("\n")}
 - 📋Sources
 ${uniqueClaims.map((claim) => `  - [${claim.claimTitle}](https://hits.microsoft.com/insight/${claim.claimId})`).join("\n")}\n\n`
     );
+  }
+}
+
+async function ensureEmbeddings(db: CozoDb, keywords: string[]) {
+  const entities = await bulkGetEmbeddings(keywords);
+
+  for (const entity of entities) {
+    await db.run(PUT_ENTITY, {
+      text: entity.text,
+      vec: entity.vec,
+    });
   }
 }
 
