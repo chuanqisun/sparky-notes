@@ -48,12 +48,16 @@ export async function handleEntityWalkQuery(db: CozoDb, query: string) {
 
     sourceNodes[] <- $sourceNodes
     
-    oneHop[from, p, to, d] := sourceNodes[sourceNode], *entity:semantic{layer: 0, fr_text: sourceNode, to_text: to, dist: d}, d < 0.15, from = sourceNode, p = "_sim"
+    oneHop[from, p, to, d] := sourceNodes[from], *entity{text: from, vec}, ~entity:semantic{ text | query: vec, k: 10, ef: 16, bind_distance: d, radius: 0.15 }, p = "_sim", to = text
     twoHopForward[from, p, to, d] := oneHop[from_0, p_0, to_0, d_0], *claimTriple{s: to_0, o: to, p}, d = d_0, from = to_0
     twoHopBackward[from, p, to, d] := oneHop[from_0, p_0, to_0, d_0], *claimTriple{s: from, o: to_0, p}, d = d_0, to = to_0
+    
+    # Alternatively, use index, but it would miss some of the neighbors
+    #oneHop[from, p, to, d] := sourceNodes[sourceNode], *entity:semantic{layer: 0, fr_text: sourceNode, to_text: to, dist: d}, d < 0.15, from = sourceNode, p = "_sim"
 
     #?[from, p, to, d] := twoHop[from, p, to, d]
     ?[from, p, to, d] := twoHopForward[from, p, to, d] or twoHopBackward[from, p, to, d]
+    #?[from, p, to, d] := oneHop[from, p, to, d]
 
     :limit 100
     :sort d
