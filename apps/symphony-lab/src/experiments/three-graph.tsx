@@ -5,13 +5,19 @@ import dataset from "./data/graph-viz-export.json";
 
 const { nodes, links } = dataset as any;
 
-const linkSubset = links.slice(0, 100) as { source: string; target: string }[];
+const linkSubset = links.slice(0, 10000) as { source: string; target: string }[];
 const nodeSubset = linkSubset.flatMap((link) => [{ id: link.source }, { id: link.target }]);
 
 export const ThreeGraph: React.FC = () => {
   return (
     <div>
-      <ForceGraph3D graphData={{ nodes: nodeSubset, links: linkSubset }} nodeLabel={"id"} linkLabel={"predicate"} linkThreeObjectExtend={true} />
+      <ForceGraph3D
+        enableNodeDrag={false}
+        graphData={{ nodes: nodeSubset, links: linkSubset }}
+        nodeLabel={"id"}
+        linkLabel={"predicate"}
+        linkThreeObjectExtend={true}
+      />
     </div>
   );
 };
