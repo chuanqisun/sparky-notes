@@ -3,19 +3,32 @@ import { ForceGraph3D } from "react-force-graph";
 import SpriteText from "three-spritetext";
 import dataset from "./data/graph-viz-export.json";
 
-const { nodes, links } = dataset as any;
+const { nodes, predicateEdges, similarityEdges } = dataset as any;
 
-const linkSubset = links.slice(0, 10000) as { source: string; target: string }[];
-const nodeSubset = linkSubset.flatMap((link) => [{ id: link.source }, { id: link.target }]);
+console.log(predicateEdges, similarityEdges);
+
+function randomSampleArray(a: any[], count: number) {
+  const shuffled = a.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+const linkSubset = [...randomSampleArray(predicateEdges, 10000), ...randomSampleArray(similarityEdges, 40000)] as { source: string; target: string }[];
+// const linkSubset = [...predicateEdges, ...similarityEdges] as { source: string; target: string }[];
+const nodeSubset = [...new Set(linkSubset.flatMap((link) => [link.source, link.target]))].map((id) => ({
+  id,
+}));
 
 export const ThreeGraph: React.FC = () => {
   return (
     <div>
       <ForceGraph3D
+        warmupTicks={10}
+        cooldownTime={30000}
         enableNodeDrag={false}
         graphData={{ nodes: nodeSubset, links: linkSubset }}
         nodeLabel={"id"}
         linkLabel={"predicate"}
+        linkColor={(l) => (l.predicate === "_similar_" ? "lightgrey" : "green")}
         linkThreeObjectExtend={true}
       />
     </div>
