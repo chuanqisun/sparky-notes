@@ -47,11 +47,9 @@ function ExperimentList() {
   return (
     <nav>
       {ROUTES.map((route) => (
-        <>
-          <Link key={route.path} to={route.path as string}>
-            {route.displayName}
-          </Link>{" "}
-        </>
+        <span key={route.path}>
+          <Link to={route.path as string}>{route.displayName}</Link>{" "}
+        </span>
       ))}
     </nav>
   );
