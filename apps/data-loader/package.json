@@ -4,6 +4,7 @@
   "description": "",
   "main": "./src/main.ts",
   "scripts": {
+    "dev": "tsx ./src/serve.ts",
     "start": "tsx ./src/main.ts",
     "start:repl": "tsx ./src/main.ts repl",
     "start:embed": "tsx ./src/main.ts embed-claims",
@@ -14,13 +15,13 @@
     "start:fix-v2-underscore": "tsx ./src/main.ts fix-claims-v2-underscore",
     "start:fix-v2-db": "tsx ./src/main.ts fix-claims-v2-db",
     "start:migrate-v2": "tsx ./src/main.ts migrate-claims-v2",
-    "start:parse-v3": "tsx ./src/main.ts parse-claims-v3",
-    "start:db": "tsx ./src/db.ts"
+    "start:parse-v3": "tsx ./src/main.ts parse-claims-v3"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@trpc/server": "^10.23.1",
     "acs-expression-builder": "^0.0.2",
     "axios": "^1.3.6",
     "axios-retry": "^3.4.0",
