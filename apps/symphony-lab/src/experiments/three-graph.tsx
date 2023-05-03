@@ -11,7 +11,7 @@ export const ThreeGraph: React.FC = () => {
 
 export default ThreeGraph;
 
-function genRandomTree(N = 300, reverse = false) {
+function genRandomTree(N = 130, reverse = false) {
   return {
     nodes: [...Array(N).keys()].map((i) => ({ id: i })),
     links: [...Array(N).keys()]

@@ -5,6 +5,7 @@ import path from "path";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims } from "./lib/hits/export-claims";
+import { exportGraph } from "./lib/hits/export-graph";
 import { buildGraph, initGraphDb, queryGraph } from "./lib/hits/graph";
 import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
@@ -34,6 +35,13 @@ async function main() {
       clearClaims(path.resolve(CLAIMS_DIR));
       break;
     }
+
+    case params.includes("export-graph"): {
+      const cozoDb = await initGraphDb(path.resolve("./data/graph-db"));
+      exportGraph(cozoDb);
+      break;
+    }
+
     case params.includes("embed-claims"): {
       const dbPath = "./data/embeddings.db";
       const logPath = "./data/embeddings.log";
