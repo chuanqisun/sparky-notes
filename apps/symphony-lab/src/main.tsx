@@ -1,21 +1,33 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { Link, Outlet, RouterProvider, createBrowserRouter } from "react-router-dom";
+import { Link, Outlet, RouterProvider, createBrowserRouter, type NonIndexRouteObject } from "react-router-dom";
 import { AccountContextProvider } from "./account/account-context";
 import "./index.css";
 import { Main } from "./shell/main";
 import { Nav } from "./shell/nav";
 
+interface NamedRoute extends NonIndexRouteObject {
+  displayName: string;
+}
+
+const ROUTES: NamedRoute[] = [
+  {
+    displayName: "Ontology",
+    path: "/experiments/ontology",
+    lazy: () => import("./experiments/ontology").then(({ Ontology }) => ({ Component: Ontology })),
+  },
+  {
+    displayName: "Three graph",
+    path: "/experiments/three-graph",
+    lazy: () => import("./experiments/three-graph").then(({ ThreeGraph }) => ({ Component: ThreeGraph })),
+  },
+];
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    children: [
-      {
-        path: "/experiments/ontology",
-        lazy: () => import("./experiments/ontology").then(({ Ontology }) => ({ Component: Ontology })),
-      },
-    ],
+    children: ROUTES,
   },
 ]);
 
@@ -33,11 +45,15 @@ function App() {
 
 function ExperimentList() {
   return (
-    <ul>
-      <li>
-        <Link to="/experiments/ontology">Ontology</Link>
-      </li>
-    </ul>
+    <nav>
+      {ROUTES.map((route) => (
+        <>
+          <Link key={route.path} to={route.path as string}>
+            {route.displayName}
+          </Link>{" "}
+        </>
+      ))}
+    </nav>
   );
 }
 
