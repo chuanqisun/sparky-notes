@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "data-loader/src/serve";
 import type React from "react";
-import { useCallback, useState, type ChangeEvent } from "react";
+import { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import { ForceGraph3D } from "react-force-graph";
 import styled from "styled-components";
 
@@ -39,17 +39,26 @@ export const Explorer: React.FC = () => {
   });
 
   const handleSearchChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
-    const claims = await trpc.searchClaims.query({ q: e.target.value });
-    setSearchRestuls(claims);
+    if (!e.target.value) {
+      setSearchRestuls([]);
+    } else {
+      const claims = await trpc.searchClaims.query({ q: e.target.value });
+      setSearchRestuls(claims);
+    }
   }, []);
 
-  const handleAddClaim = useCallback(async (claimId: string) => {
-    setGraph((graph) => ({
-      ...graph,
-      shouldAnimate: true,
-      nodes: [...graph.nodes, { id: claimId, label: "test", isSelected: false }], // TODO source from db
-    }));
-  }, []);
+  const handleAddClaim = useCallback(
+    async (claimId: string) => {
+      if (graph.nodes.some((node) => node.id === claimId)) return;
+
+      setGraph((graph) => ({
+        ...graph,
+        shouldAnimate: true,
+        nodes: [...graph.nodes, { id: claimId, label: "test", isSelected: false }], // TODO source from db
+      }));
+    },
+    [graph]
+  );
 
   const handleNodeClick = useCallback((node: DisplayNode) => {
     setGraph((graph) => ({
@@ -66,16 +75,22 @@ export const Explorer: React.FC = () => {
     }));
   }, []);
 
+  const selectedClaimNodes = useMemo(() => graph.nodes.filter((node) => node.isSelected), [graph.nodes]);
+
   const handleBackgroundClick = useCallback(() => {
     setGraph((graph) => ({
       ...graph,
+      shouldAnimate: false,
       nodes: graph.nodes.map((node) => ({ ...node, isSelected: false })),
     }));
+    setSearchRestuls([]);
   }, []);
 
   const getNodeColor = useCallback((node: DisplayNode) => {
     return node.isSelected ? "green" : "yellow";
   }, []);
+
+  const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [] })), []);
 
   const [searchResults, setSearchRestuls] = useState<{ claimId: string; claimTitle: string }[]>([]);
 
@@ -100,9 +115,9 @@ export const Explorer: React.FC = () => {
             <input type="search" onChange={handleSearchChange} />
             <div>
               {searchResults.map((result) => (
-                <button key={result.claimId} onClick={() => handleAddClaim(result.claimId)}>
-                  {result.claimTitle}
-                </button>
+                <SearchResultItem key={result.claimId} onClick={() => handleAddClaim(result.claimId)}>
+                  <LineClamp title={result.claimTitle}>{result.claimTitle}</LineClamp>
+                </SearchResultItem>
               ))}
             </div>
           </fieldset>
@@ -111,7 +126,11 @@ export const Explorer: React.FC = () => {
             <menu>
               <button>Explore</button>
               <button>Remove</button>
+              <button onClick={handleRemoveAllNodes}>Remove all</button>
             </menu>
+            {selectedClaimNodes.map((node) => (
+              <div key={node.id}>{node.label}</div>
+            ))}
           </fieldset>
         </aside>
       </WorkspaceGrid>
@@ -135,4 +154,24 @@ const WorkspaceGrid = styled.div`
   .side {
     grid-area: side;
   }
+`;
+
+const SearchResultItem = styled.button`
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 4px;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const LineClamp = styled.div`
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 `;
