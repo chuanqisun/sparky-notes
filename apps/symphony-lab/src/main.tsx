@@ -12,14 +12,19 @@ interface NamedRoute extends NonIndexRouteObject {
 
 const ROUTES: NamedRoute[] = [
   {
-    displayName: "Ontology",
+    displayName: "Starter",
     path: "/experiments/ontology",
     lazy: () => import("./experiments/ontology").then(({ Ontology }) => ({ Component: Ontology })),
   },
   {
-    displayName: "Three graph",
-    path: "/experiments/three-graph",
-    lazy: () => import("./experiments/three-graph").then(({ ThreeGraph }) => ({ Component: ThreeGraph })),
+    displayName: "Ontology graph",
+    path: "/experiments/ontology-graph",
+    lazy: () => import("./experiments/ontology-graph").then(({ OntologyGraph }) => ({ Component: OntologyGraph })),
+  },
+  {
+    displayName: "Claim graph",
+    path: "/experiments/claim-graph",
+    lazy: () => import("./experiments/claim-graph").then(({ ClaimGraph }) => ({ Component: ClaimGraph })),
   },
 ];
 

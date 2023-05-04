@@ -2,6 +2,37 @@ import type { CozoDb } from "cozo-node";
 import { writeFile } from "fs/promises";
 
 export async function exportGraph(db: CozoDb) {
+  const claimToClaimEdge = await db
+    .run(
+      `
+shareTriple[claimId1, claimId2, predicate] := *claimTriple[claimId1, s, p, o], *claimTriple[claimId2, s, p, o], claimId1 < claimId2, predicate = 's,p,o'
+shareSubjectPredicate[claimId1, claimId2, predicate] := not shareTriple[claimId1, claimId2, x], *claimTriple[claimId1, s, p, o1], *claimTriple[claimId2, s, p, o2], claimId1 < claimId2, predicate = 's,p'
+sharePredicateObject[claimId1, claimId2, predicate] := not shareTriple[claimId1, claimId2, x], *claimTriple[claimId1, s1, p, o], *claimTriple[claimId2, s2, p, o], claimId1 < claimId2, predicate = 'p,o'
+shareSubjectObject[claimId1, claimId2, predicate] := not shareTriple[claimId1, claimId2, x], *claimTriple[claimId1, s, p1, o], *claimTriple[claimId2, s, p2, o], claimId1 < claimId2, predicate = 's,o'
+
+unnamedEdge[claimId1, claimId2, predicate] := shareTriple[claimId1, claimId2, predicate] or shareSubjectPredicate[claimId1, claimId2, predicate] or sharePredicateObject[claimId1, claimId2, predicate] or shareSubjectObject[claimId1, claimId2, predicate]
+#?[claimId1, claimId2] := shareTriple[claimId1, claimId2]
+#?[claimId1, claimId2] := shareSubjectPredicate[claimId1, claimId2]
+#?[claimId1, claimId2] := sharePredicateObject[claimId1, claimId2]
+#?[claimId1, claimId2] := shareSubjectObject[claimId1, claimId2]
+
+namedEdge[claimId1, claimTitle1, claimId2, claimTitle2,predicate] := unnamedEdge[claimId1, claimId2, predicate], *claim{claimId: claimId1, claimTitle: claimTitle1}, *claim{claimId: claimId2, claimTitle: claimTitle2}
+namedEdgeV2[claimId1, claimTitle1, claimId2, claimTitle2, collect(predicate)] := namedEdge[claimId1, claimTitle1, claimId2, claimTitle2, predicate ]
+?[claimId1, claimTitle1, claimId2, claimTitle2, collectedPredicates] := namedEdgeV2[claimId1, claimTitle1, claimId2, claimTitle2, collectedPredicates]
+
+    `
+    )
+    .catch((e) => console.log(e?.display ?? e))
+    .then((res) => {
+      return res.rows.map((row: string[]) => ({
+        source: row[0],
+        sourceTitle: row[1],
+        target: row[2],
+        targetTitle: row[3],
+        predicate: row[4],
+      }));
+    });
+
   const similarityEdges = await db
     .run(
       `
@@ -49,5 +80,5 @@ entitySimilarityEdge[from, to] := *entity:semantic{layer: 0, fr_text: from, to_t
     })
     .catch((e) => console.log(e?.display ?? e));
 
-  await writeFile(`./data/graph-viz-export.json`, JSON.stringify({ nodes, predicateEdges, similarityEdges }, null, 2));
+  await writeFile(`./data/graph-viz-export.json`, JSON.stringify({ nodes, predicateEdges, similarityEdges, claimToClaimEdge }, null, 2));
 }

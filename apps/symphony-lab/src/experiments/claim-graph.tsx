@@ -4,7 +4,7 @@ import styled from "styled-components";
 import SpriteText from "three-spritetext";
 import dataset from "./data/graph-viz-export.json";
 
-const { nodes, predicateEdges, similarityEdges } = dataset as any;
+const { nodes, predicateEdges, similarityEdges, claimToClaimEdge } = dataset as any;
 
 // console.log(predicateEdges, similarityEdges);
 
@@ -13,11 +13,22 @@ function randomSampleArray(a: any[], count: number) {
   return shuffled.slice(0, count);
 }
 
-const linkSubset = [...randomSampleArray(predicateEdges, 200), ...randomSampleArray(similarityEdges, 400)] as { source: string; target: string }[];
-// const linkSubset = [...predicateEdges, ...similarityEdges] as { source: string; target: string }[];
-const nodeSubset = [...new Set(linkSubset.flatMap((link) => [link.source, link.target]))].map((id) => ({
-  id,
-}));
+// const linkSubset = [...randomSampleArray(predicateEdges, 200), ...randomSampleArray(similarityEdges, 400)] as { source: string; target: string }[];
+const linkSubset = [...randomSampleArray(claimToClaimEdge, 4000)] as {
+  source: string;
+  sourceTitle: string;
+  target: string;
+  targetTitle: string;
+  predicate: string[];
+}[];
+
+const displayLinks = linkSubset.map((link) => ({ ...link, label: link.predicate.join(" | ") }));
+const nodeSubset = linkSubset
+  .flatMap((link) => [
+    { id: link.source, title: link.sourceTitle },
+    { id: link.target, title: link.targetTitle },
+  ])
+  .filter((item, index, arr) => arr.findIndex((t) => t.id === item.id) === index);
 
 const nodeCardinality = new Map<string, number>();
 linkSubset.forEach((link) => {
@@ -31,7 +42,7 @@ linkSubset.forEach((link) => {
   edgeCardinality.set(link.source + link.target, avgNodeCardinality);
 });
 
-export const ThreeGraph: React.FC = () => {
+export const ClaimGraph: React.FC = () => {
   return (
     <div>
       <StyledHeader>Technical demo | Microsoft HITS</StyledHeader>
@@ -40,25 +51,17 @@ export const ThreeGraph: React.FC = () => {
         d3AlphaDecay={0.1}
         cooldownTime={30000}
         enableNodeDrag={false}
-        linkOpacity={0.2}
-        nodeVal={(n) => {
-          return 1.5 * (nodeCardinality.get(n.id) ?? 1);
-        }}
-        linkWidth={(l) => {
-          const cardinality = edgeCardinality.get(l.source + l.target) ?? 1;
-          return (4 * cardinality) / (cardinality + 1) - 1;
-        }}
-        graphData={{ nodes: nodeSubset, links: linkSubset }}
-        nodeLabel={"id"}
-        linkLabel={"predicate"}
-        linkColor={(l) => (l.predicate === "_similar_" ? "lightgrey" : "white")}
+        linkOpacity={0.05}
+        graphData={{ nodes: nodeSubset, links: displayLinks }}
+        nodeLabel={"title"}
+        linkLabel={"label"}
         linkThreeObjectExtend={true}
       />
     </div>
   );
 };
 
-export default ThreeGraph;
+export default ClaimGraph;
 
 function renderLink(link: any) {
   // extend link with text sprite
