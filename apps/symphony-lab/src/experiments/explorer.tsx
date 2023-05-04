@@ -13,6 +13,11 @@ const trpc = createTRPCProxyClient<AppRouter>({
   ],
 });
 
+export interface DisplayGraph {
+  nodes: DisplayNode[];
+  links: DisplayLink[];
+}
+
 export interface DisplayLink {
   source: string;
   target: string;
@@ -22,20 +27,50 @@ export interface DisplayLink {
 export interface DisplayNode {
   id: string;
   label?: string;
+  isSelected?: boolean;
 }
 
-const linkSubset: DisplayLink[] = [{ source: "1", target: "2", label: "test" }];
-const nodeSubset: DisplayNode[] = [
-  { id: "1", label: "node1" },
-  { id: "2", label: "node2" },
-  { id: "3", label: "node3" },
-  { id: "4", label: "node4" },
-];
-
 export const Explorer: React.FC = () => {
+  const [graph, setGraph] = useState<DisplayGraph>({
+    nodes: [],
+    links: [],
+  });
+
   const handleSearchChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const claims = await trpc.searchClaims.query({ q: e.target.value });
     setSearchRestuls(claims);
+  }, []);
+
+  const handleAddClaim = useCallback(async (claimId: string) => {
+    setGraph((graph) => ({
+      ...graph,
+      nodes: [...graph.nodes, { id: claimId, label: "test", isSelected: false }], // TODO source from db
+    }));
+  }, []);
+
+  const handleNodeClick = useCallback((node: DisplayNode) => {
+    setGraph((graph) => ({
+      ...graph,
+      nodes: graph.nodes.map((existingNode) =>
+        existingNode.id === node.id
+          ? {
+              ...existingNode,
+              isSelected: !existingNode.isSelected,
+            }
+          : existingNode
+      ),
+    }));
+  }, []);
+
+  const handleBackgroundClick = useCallback(() => {
+    setGraph((graph) => ({
+      ...graph,
+      nodes: graph.nodes.map((node) => ({ ...node, isSelected: false })),
+    }));
+  }, []);
+
+  const getNodeColor = useCallback((node: DisplayNode) => {
+    return node.isSelected ? "green" : "yellow";
   }, []);
 
   const [searchResults, setSearchRestuls] = useState<{ claimId: string; claimTitle: string }[]>([]);
@@ -46,21 +81,25 @@ export const Explorer: React.FC = () => {
         <main className="viz">
           <ForceGraph3D
             enableNodeDrag={false}
-            linkOpacity={0.2}
-            graphData={{ nodes: [...nodeSubset], links: [...linkSubset] }}
+            graphData={graph}
             nodeLabel={"id"}
             linkLabel={"label"}
+            onBackgroundClick={handleBackgroundClick}
+            onNodeClick={handleNodeClick}
+            nodeColor={getNodeColor}
           />
         </main>
         <aside>
           <fieldset>
             <legend>Search</legend>
             <input type="search" onChange={handleSearchChange} />
-            <ul>
+            <div>
               {searchResults.map((result) => (
-                <li key={result.claimId}>{result.claimTitle}</li>
+                <button key={result.claimId} onClick={() => handleAddClaim(result.claimId)}>
+                  {result.claimTitle}
+                </button>
               ))}
-            </ul>
+            </div>
           </fieldset>
           <fieldset>
             <legend>Selection</legend>
