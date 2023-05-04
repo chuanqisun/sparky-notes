@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "data-loader/src/serve";
 import type React from "react";
-import { useCallback, type ChangeEvent } from "react";
+import { useCallback, useState, type ChangeEvent } from "react";
 import { ForceGraph3D } from "react-force-graph";
 import styled from "styled-components";
 
@@ -35,8 +35,10 @@ const nodeSubset: DisplayNode[] = [
 export const Explorer: React.FC = () => {
   const handleSearchChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const claims = await trpc.searchClaims.query({ q: e.target.value });
-    console.log(claims);
+    setSearchRestuls(claims);
   }, []);
+
+  const [searchResults, setSearchRestuls] = useState<{ claimId: string; claimTitle: string }[]>([]);
 
   return (
     <div>
@@ -54,6 +56,11 @@ export const Explorer: React.FC = () => {
           <fieldset>
             <legend>Search</legend>
             <input type="search" onChange={handleSearchChange} />
+            <ul>
+              {searchResults.map((result) => (
+                <li key={result.claimId}>{result.claimTitle}</li>
+              ))}
+            </ul>
           </fieldset>
           <fieldset>
             <legend>Selection</legend>

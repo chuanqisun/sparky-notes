@@ -36,6 +36,13 @@ export const CREATE_CLAIM_SCHEMA = `
 }
 `;
 
+export const CREATE_CLAIM_FTS_INDEX = `
+::fts create claim:fts {
+  extractor: claimTitle,
+  tokenizer: Simple,
+}
+`;
+
 export const CREATE_CLAIM_TRIPLE_SCHEMA = `
 :create claimTriple {
   claimId: String,
@@ -75,6 +82,18 @@ export const PUT_CLAIM = `
 }
 
 :timeout 0
+`;
+
+export const SEARCH_CLAIMS = `
+
+?[s, claimTitle, claimId] := ~claim:fts {claimTitle |
+  query: $q,
+  k: 10,
+  score_kind: 'tf_idf',
+  bind_score: s
+}, *claim{claimId, claimTitle}
+
+:order -s
 `;
 
 export const PUT_ENTITY = `

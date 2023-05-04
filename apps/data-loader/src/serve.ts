@@ -4,6 +4,7 @@ import path from "path";
 import { initGraphDb } from "./lib/hits/graph";
 
 import cors from "cors";
+import { SEARCH_CLAIMS } from "./lib/hits/cozo-scripts/cozo-scripts";
 
 const t = initTRPC.context<Context>().create();
 export const router = t.router;
@@ -23,8 +24,11 @@ export function dummyValidator<T>(v: any) {
 
 const appRouter = router({
   searchClaims: publicProcedure.input(dummyValidator<{ q: string }>).query(async ({ input, ctx }) => {
-    const relations = await ctx.cozoDb.run(`::relations`);
-    return [{ id: 1, q: input.q, result: relations }];
+    const response = await ctx.cozoDb.run(SEARCH_CLAIMS, { q: input.q });
+    return response.rows.map((row: any) => ({
+      claimId: row[2] as string,
+      claimTitle: row[1] as string,
+    })) as { claimId: string; claimTitle: string }[];
   }),
   getEntities: publicProcedure
     .input((v) => v)

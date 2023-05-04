@@ -1,8 +1,10 @@
 import { CozoDb } from "cozo-node";
 import { readdir } from "fs/promises";
 import type { AsyncDatabase } from "promised-sqlite3";
+import { displayError } from "../cozo/utils";
 import { getEmbedding, initializeEmbeddingsDb } from "./bulk-embed";
 import {
+  CREATE_CLAIM_FTS_INDEX,
   CREATE_CLAIM_SCHEMA,
   CREATE_CLAIM_TRIPLE_SCHEMA,
   CREATE_ENTITY_SCHEMA,
@@ -135,6 +137,10 @@ export async function initGraphDb(graphDbBackupPath: string) {
   if (!existingRelations.has("claim")) {
     console.log(`create claim schema`);
     await db.run(CREATE_CLAIM_SCHEMA);
+  }
+  if (!existingRelations.has("claim:fts")) {
+    console.log(`create claim fts index`);
+    await db.run(CREATE_CLAIM_FTS_INDEX).catch(displayError);
   }
 
   console.log(`DB ready: ${graphDbBackupPath}`);
