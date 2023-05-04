@@ -1,34 +1,57 @@
 import type React from "react";
 import { ForceGraph3D } from "react-force-graph";
+import styled from "styled-components";
 import SpriteText from "three-spritetext";
 import dataset from "./data/graph-viz-export.json";
 
 const { nodes, predicateEdges, similarityEdges } = dataset as any;
 
-console.log(predicateEdges, similarityEdges);
+// console.log(predicateEdges, similarityEdges);
 
 function randomSampleArray(a: any[], count: number) {
   const shuffled = a.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
 
-const linkSubset = [...randomSampleArray(predicateEdges, 10000), ...randomSampleArray(similarityEdges, 40000)] as { source: string; target: string }[];
+const linkSubset = [...randomSampleArray(predicateEdges, 200), ...randomSampleArray(similarityEdges, 400)] as { source: string; target: string }[];
 // const linkSubset = [...predicateEdges, ...similarityEdges] as { source: string; target: string }[];
 const nodeSubset = [...new Set(linkSubset.flatMap((link) => [link.source, link.target]))].map((id) => ({
   id,
 }));
 
+const nodeCardinality = new Map<string, number>();
+linkSubset.forEach((link) => {
+  nodeCardinality.set(link.source, (nodeCardinality.get(link.source) ?? 0) + 1);
+  nodeCardinality.set(link.target, (nodeCardinality.get(link.target) ?? 0) + 1);
+});
+
+const edgeCardinality = new Map<string, number>();
+linkSubset.forEach((link) => {
+  const avgNodeCardinality = (nodeCardinality.get(link.source) ?? 0) + (nodeCardinality.get(link.target) ?? 0) / 2;
+  edgeCardinality.set(link.source + link.target, avgNodeCardinality);
+});
+
 export const ThreeGraph: React.FC = () => {
   return (
     <div>
+      <StyledHeader>Technical demo | Microsoft HITS</StyledHeader>
       <ForceGraph3D
         warmupTicks={10}
+        d3AlphaDecay={0.1}
         cooldownTime={30000}
         enableNodeDrag={false}
+        linkOpacity={0.2}
+        nodeVal={(n) => {
+          return 1.5 * (nodeCardinality.get(n.id) ?? 1);
+        }}
+        linkWidth={(l) => {
+          const cardinality = edgeCardinality.get(l.source + l.target) ?? 1;
+          return (4 * cardinality) / (cardinality + 1) - 1;
+        }}
         graphData={{ nodes: nodeSubset, links: linkSubset }}
         nodeLabel={"id"}
         linkLabel={"predicate"}
-        linkColor={(l) => (l.predicate === "_similar_" ? "lightgrey" : "green")}
+        linkColor={(l) => (l.predicate === "_similar_" ? "lightgrey" : "white")}
         linkThreeObjectExtend={true}
       />
     </div>
@@ -55,3 +78,14 @@ function updateLinkPosition(sprite: any, { start, end }: any) {
   // Position sprite
   Object.assign(sprite.position, middlePos);
 }
+
+const StyledHeader = styled.h1`
+  color: white;
+  background-color: black;
+  padding: 2px;
+  position: absolute;
+  top: 80px;
+  z-index: 100;
+  left: 50%;
+  transform: translateX(-50%);
+`;
