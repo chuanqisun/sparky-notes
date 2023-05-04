@@ -29,6 +29,7 @@ export interface DisplayNode {
   id: string;
   label?: string;
   isSelected?: boolean;
+  isExplored?: boolean;
 }
 
 export const Explorer: React.FC = () => {
@@ -48,13 +49,13 @@ export const Explorer: React.FC = () => {
   }, []);
 
   const handleAddClaim = useCallback(
-    async (claimId: string) => {
+    async (claimId: string, claimTitle: string) => {
       if (graph.nodes.some((node) => node.id === claimId)) return;
 
       setGraph((graph) => ({
         ...graph,
         shouldAnimate: true,
-        nodes: [...graph.nodes, { id: claimId, label: "test", isSelected: false }], // TODO source from db
+        nodes: [...graph.nodes, { id: claimId, label: claimTitle, isSelected: false }], // TODO source from db
       }));
     },
     [graph]
@@ -90,6 +91,11 @@ export const Explorer: React.FC = () => {
     return node.isSelected ? "green" : "yellow";
   }, []);
 
+  const handleExploreAllNodes = useCallback(() => {
+    const newNodes = graph.nodes.filter((node) => !node.isExplored);
+    console.log(newNodes);
+  }, [graph]);
+
   const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [] })), []);
 
   const [searchResults, setSearchRestuls] = useState<{ claimId: string; claimTitle: string }[]>([]);
@@ -115,7 +121,7 @@ export const Explorer: React.FC = () => {
             <input type="search" onChange={handleSearchChange} />
             <div>
               {searchResults.map((result) => (
-                <SearchResultItem key={result.claimId} onClick={() => handleAddClaim(result.claimId)}>
+                <SearchResultItem key={result.claimId} onClick={() => handleAddClaim(result.claimId, result.claimTitle)}>
                   <LineClamp title={result.claimTitle}>{result.claimTitle}</LineClamp>
                 </SearchResultItem>
               ))}
@@ -123,13 +129,15 @@ export const Explorer: React.FC = () => {
           </fieldset>
           <fieldset>
             <legend>Selection</legend>
-            <menu>
-              <button>Explore</button>
+            <StyledMenu>
+              <button onClick={handleExploreAllNodes}>Explore all</button>
               <button>Remove</button>
               <button onClick={handleRemoveAllNodes}>Remove all</button>
-            </menu>
+            </StyledMenu>
             {selectedClaimNodes.map((node) => (
-              <div key={node.id}>{node.label}</div>
+              <ClampListItem key={node.id}>
+                <LineClamp title={node.label}>{node.label}</LineClamp>
+              </ClampListItem>
             ))}
           </fieldset>
         </aside>
@@ -156,6 +164,10 @@ const WorkspaceGrid = styled.div`
   }
 `;
 
+const StyledMenu = styled.menu`
+  padding: 0;
+`;
+
 const SearchResultItem = styled.button`
   border: none;
   background: none;
@@ -167,6 +179,10 @@ const SearchResultItem = styled.button`
   &:hover {
     text-decoration: underline;
   }
+`;
+
+const ClampListItem = styled.div`
+  padding: 4px;
 `;
 
 const LineClamp = styled.div`
