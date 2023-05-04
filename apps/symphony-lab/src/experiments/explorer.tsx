@@ -26,7 +26,7 @@ export const Explorer: React.FC = () => {
     <div>
       <StyledHeader>Technical demo | Microsoft HITS</StyledHeader>
       <WorkspaceGrid>
-        <div className="viz">
+        <main className="viz">
           <ForceGraph3D
             enableNodeDrag={false}
             linkOpacity={0.2}
@@ -34,13 +34,20 @@ export const Explorer: React.FC = () => {
             nodeLabel={"id"}
             linkLabel={"label"}
           />
-        </div>
-        <ul>
-          <li>test</li>
-          <li>test</li>
-          <li>test</li>
-          <li>test</li>
-        </ul>
+        </main>
+        <aside>
+          <fieldset>
+            <legend>Search</legend>
+            <input type="search" />
+          </fieldset>
+          <fieldset>
+            <legend>Selection</legend>
+            <menu>
+              <button>Explore</button>
+              <button>Remove</button>
+            </menu>
+          </fieldset>
+        </aside>
       </WorkspaceGrid>
     </div>
   );
