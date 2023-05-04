@@ -48,8 +48,8 @@ export const ClaimGraph: React.FC = () => {
       <StyledHeader>Technical demo | Microsoft HITS</StyledHeader>
       <ForceGraph3D
         warmupTicks={10}
-        d3AlphaDecay={0.1}
-        cooldownTime={30000}
+        d3AlphaDecay={0.05}
+        cooldownTime={12000}
         enableNodeDrag={false}
         linkOpacity={0.08}
         graphData={{ nodes: nodeSubset, links: displayLinks }}
