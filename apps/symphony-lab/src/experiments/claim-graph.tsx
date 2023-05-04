@@ -14,7 +14,7 @@ function randomSampleArray(a: any[], count: number) {
 }
 
 // const linkSubset = [...randomSampleArray(predicateEdges, 200), ...randomSampleArray(similarityEdges, 400)] as { source: string; target: string }[];
-const linkSubset = [...randomSampleArray(claimToClaimEdge, 4000)] as {
+const linkSubset = [...randomSampleArray(claimToClaimEdge, 80000)] as {
   source: string;
   sourceTitle: string;
   target: string;
@@ -51,7 +51,7 @@ export const ClaimGraph: React.FC = () => {
         d3AlphaDecay={0.1}
         cooldownTime={30000}
         enableNodeDrag={false}
-        linkOpacity={0.05}
+        linkOpacity={0.08}
         graphData={{ nodes: nodeSubset, links: displayLinks }}
         nodeLabel={"title"}
         linkLabel={"label"}
