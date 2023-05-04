@@ -16,6 +16,7 @@ const trpc = createTRPCProxyClient<AppRouter>({
 export interface DisplayGraph {
   nodes: DisplayNode[];
   links: DisplayLink[];
+  shouldAnimate: boolean;
 }
 
 export interface DisplayLink {
@@ -34,6 +35,7 @@ export const Explorer: React.FC = () => {
   const [graph, setGraph] = useState<DisplayGraph>({
     nodes: [],
     links: [],
+    shouldAnimate: false,
   });
 
   const handleSearchChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +46,7 @@ export const Explorer: React.FC = () => {
   const handleAddClaim = useCallback(async (claimId: string) => {
     setGraph((graph) => ({
       ...graph,
+      shouldAnimate: true,
       nodes: [...graph.nodes, { id: claimId, label: "test", isSelected: false }], // TODO source from db
     }));
   }, []);
@@ -51,6 +54,7 @@ export const Explorer: React.FC = () => {
   const handleNodeClick = useCallback((node: DisplayNode) => {
     setGraph((graph) => ({
       ...graph,
+      shouldAnimate: false,
       nodes: graph.nodes.map((existingNode) =>
         existingNode.id === node.id
           ? {
@@ -83,6 +87,7 @@ export const Explorer: React.FC = () => {
             enableNodeDrag={false}
             graphData={graph}
             nodeLabel={"id"}
+            cooldownTicks={graph.shouldAnimate ? 10 : 0}
             linkLabel={"label"}
             onBackgroundClick={handleBackgroundClick}
             onNodeClick={handleNodeClick}
