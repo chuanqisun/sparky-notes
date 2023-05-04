@@ -26,6 +26,11 @@ const ROUTES: NamedRoute[] = [
     path: "/experiments/claim-graph",
     lazy: () => import("./experiments/claim-graph").then(({ ClaimGraph }) => ({ Component: ClaimGraph })),
   },
+  {
+    displayName: "Explorer",
+    path: "/experiments/explorer",
+    lazy: () => import("./experiments/explorer").then(({ Explorer }) => ({ Component: Explorer })),
+  },
 ];
 
 const router = createBrowserRouter([
