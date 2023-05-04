@@ -1,25 +1,30 @@
-import { initTRPC } from "@trpc/server";
+import { initTRPC, type inferAsyncReturnType } from "@trpc/server";
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import path from "path";
 import { initGraphDb } from "./lib/hits/graph";
 
-const t = initTRPC.create();
+import cors from "cors";
 
-/**
- * Export reusable router and procedure helpers
- * that can be used throughout the router
- */
+const t = initTRPC.context<Context>().create();
 export const router = t.router;
 export const publicProcedure = t.procedure;
-
 const cozoDbAsync = initGraphDb(path.resolve("./data/graph-db"));
 
+export type Context = inferAsyncReturnType<typeof createContext>;
+export const createContext = async () => {
+  return {
+    cozoDb: await cozoDbAsync,
+  };
+};
+
+export function dummyValidator<T>(v: any) {
+  return v as T;
+}
+
 const appRouter = router({
-  relations: publicProcedure.query(async () => {
-    // Retrieve users from a datasource, this is an imaginary database
-    const users = (await cozoDbAsync).run(`::relations`);
-    //    ^?
-    return users as any;
+  searchClaims: publicProcedure.input(dummyValidator<{ q: string }>).query(async ({ input, ctx }) => {
+    const relations = await ctx.cozoDb.run(`::relations`);
+    return [{ id: 1, q: input.q, result: relations }];
   }),
   getEntities: publicProcedure
     .input((v) => v)
@@ -38,7 +43,9 @@ const appRouter = router({
 export type AppRouter = typeof appRouter;
 
 const server = createHTTPServer({
+  middleware: cors(),
+  createContext,
   router: appRouter,
 });
 
-server.listen(3000);
+server.listen(5700);

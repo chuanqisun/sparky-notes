@@ -1,6 +1,17 @@
+import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import type { AppRouter } from "data-loader/src/serve";
 import type React from "react";
+import { useCallback, type ChangeEvent } from "react";
 import { ForceGraph3D } from "react-force-graph";
 import styled from "styled-components";
+
+const trpc = createTRPCProxyClient<AppRouter>({
+  links: [
+    httpBatchLink({
+      url: "http://localhost:5700",
+    }),
+  ],
+});
 
 export interface DisplayLink {
   source: string;
@@ -22,9 +33,13 @@ const nodeSubset: DisplayNode[] = [
 ];
 
 export const Explorer: React.FC = () => {
+  const handleSearchChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const claims = await trpc.searchClaims.query({ q: e.target.value });
+    console.log(claims);
+  }, []);
+
   return (
     <div>
-      <StyledHeader>Technical demo | Microsoft HITS</StyledHeader>
       <WorkspaceGrid>
         <main className="viz">
           <ForceGraph3D
@@ -38,7 +53,7 @@ export const Explorer: React.FC = () => {
         <aside>
           <fieldset>
             <legend>Search</legend>
-            <input type="search" />
+            <input type="search" onChange={handleSearchChange} />
           </fieldset>
           <fieldset>
             <legend>Selection</legend>
@@ -69,15 +84,4 @@ const WorkspaceGrid = styled.div`
   .side {
     grid-area: side;
   }
-`;
-
-const StyledHeader = styled.h1`
-  color: white;
-  background-color: black;
-  padding: 2px;
-  position: absolute;
-  top: 80px;
-  z-index: 100;
-  left: 50%;
-  transform: translateX(-50%);
 `;
