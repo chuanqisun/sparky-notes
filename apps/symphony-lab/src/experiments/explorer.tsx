@@ -79,11 +79,17 @@ export const Explorer: React.FC = () => {
   const selectedClaimNodes = useMemo(() => graph.nodes.filter((node) => node.isSelected), [graph.nodes]);
 
   const handleBackgroundClick = useCallback(() => {
-    setGraph((graph) => ({
-      ...graph,
-      shouldAnimate: false,
-      nodes: graph.nodes.map((node) => ({ ...node, isSelected: false })),
-    }));
+    graph.nodes.forEach((existingNode) => {
+      existingNode.isSelected = false;
+    });
+
+    setGraph((graph) => {
+      return {
+        ...graph,
+        shouldAnimate: false,
+        nodes: [...graph.nodes],
+      };
+    });
     setSearchRestuls([]);
   }, []);
 
@@ -165,6 +171,7 @@ export const Explorer: React.FC = () => {
             linkLabel={"label"}
             onBackgroundClick={handleBackgroundClick}
             onNodeClick={handleNodeClick}
+            linkWidth={(l) => parseInt(l.label ?? "1")}
             nodeColor={getNodeColor}
           />
         </main>
