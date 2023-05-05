@@ -88,15 +88,56 @@ export const Explorer: React.FC = () => {
   }, []);
 
   const getNodeColor = useCallback((node: DisplayNode) => {
-    return node.isSelected ? "green" : "yellow";
+    switch (true) {
+      case node.isSelected:
+        return "white";
+      case node.isExplored:
+        return "green";
+      default:
+        return "yellow";
+    }
   }, []);
 
   const handleExploreAllNodes = useCallback(async () => {
-    const newNodes = graph.nodes.filter((node) => !node.isExplored);
-    console.log(newNodes);
+    const exploreNodes = graph.nodes.filter((node) => !node.isExplored);
+    console.log("Exploring...", exploreNodes);
 
-    const result = await trpc.exploreClaims.query({ claimIds: newNodes.map((node) => node.id) });
-    console.log(result);
+    const result = await trpc.exploreClaims.query({ claimIds: exploreNodes.map((node) => node.id) });
+    console.log("Found", result);
+
+    // mark node as explored
+
+    setGraph((graph) => {
+      // add new nodes
+      const allNodes = result.flatMap((edge) => [
+        {
+          id: edge.fromId,
+          label: edge.fromTitle,
+          isSelected: false,
+          isExplored: false,
+        },
+        {
+          id: edge.toId,
+          label: edge.toTitle,
+          isSelected: false,
+          isExplored: false,
+        },
+      ]);
+      const newNodes = allNodes.filter((node) => !graph.nodes.some((existingNode) => existingNode.id === node.id));
+
+      return {
+        ...graph,
+        shouldAnimate: true,
+        nodes: [
+          ...graph.nodes.map((existingNode) =>
+            exploreNodes.some((node) => node.id === existingNode.id) ? { ...existingNode, isExplored: true } : existingNode
+          ),
+          ...newNodes,
+        ],
+      };
+    });
+
+    // add new edges
   }, [graph]);
 
   const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [] })), []);
