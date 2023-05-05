@@ -79,15 +79,15 @@ export const Explorer: React.FC = () => {
   const selectedClaimNodes = useMemo(() => graph.nodes.filter((node) => node.isSelected), [graph.nodes]);
 
   const handleBackgroundClick = useCallback(() => {
-    graph.nodes.forEach((existingNode) => {
-      existingNode.isSelected = false;
-    });
-
     setGraph((graph) => {
+      graph.nodes.forEach((existingNode) => {
+        existingNode.isSelected = false;
+      });
       return {
         ...graph,
         shouldAnimate: false,
         nodes: [...graph.nodes],
+        links: [...graph.links],
       };
     });
     setSearchRestuls([]);
@@ -169,6 +169,7 @@ export const Explorer: React.FC = () => {
             nodeLabel={"label"}
             cooldownTicks={graph.shouldAnimate ? 1000 : 0}
             linkLabel={"label"}
+            linkOpacity={0.25}
             onBackgroundClick={handleBackgroundClick}
             onNodeClick={handleNodeClick}
             linkWidth={(l) => parseInt(l.label ?? "1")}
