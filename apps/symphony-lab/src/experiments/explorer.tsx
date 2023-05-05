@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "data-loader/src/serve";
 import type React from "react";
-import { useCallback, useMemo, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { ForceGraph3D } from "react-force-graph";
 import styled from "styled-components";
 
@@ -15,11 +15,11 @@ const trpc = createTRPCProxyClient<AppRouter>({
 
 export interface DisplayGraph {
   nodes: DisplayNode[];
-  links: DisplayLink[];
+  links: DisplayEdge[];
   shouldAnimate: boolean;
 }
 
-export interface DisplayLink {
+export interface DisplayEdge {
   source: string;
   target: string;
   label?: string;
@@ -55,25 +55,25 @@ export const Explorer: React.FC = () => {
       setGraph((graph) => ({
         ...graph,
         shouldAnimate: true,
-        nodes: [...graph.nodes, { id: claimId, label: claimTitle, isSelected: false }], // TODO source from db
+        nodes: [...graph.nodes, { id: claimId, label: claimTitle, isSelected: false }],
       }));
     },
     [graph]
   );
 
   const handleNodeClick = useCallback((node: DisplayNode) => {
-    setGraph((graph) => ({
-      ...graph,
-      shouldAnimate: false,
-      nodes: graph.nodes.map((existingNode) =>
-        existingNode.id === node.id
-          ? {
-              ...existingNode,
-              isSelected: !existingNode.isSelected,
-            }
-          : existingNode
-      ),
-    }));
+    setGraph((graph) => {
+      graph.nodes.forEach((existingNode) => {
+        existingNode.isSelected = existingNode.id === node.id ? !existingNode.isSelected : false;
+      });
+
+      return {
+        ...graph,
+        nodes: [...graph.nodes],
+        links: [...graph.links],
+        shouldAnimate: false,
+      };
+    });
   }, []);
 
   const selectedClaimNodes = useMemo(() => graph.nodes.filter((node) => node.isSelected), [graph.nodes]);
@@ -105,10 +105,7 @@ export const Explorer: React.FC = () => {
     const result = await trpc.exploreClaims.query({ claimIds: exploreNodes.map((node) => node.id) });
     console.log("Found", result);
 
-    // mark node as explored
-
     setGraph((graph) => {
-      // add new nodes
       const allNodes = result.flatMap((edge) => [
         {
           id: edge.fromId,
@@ -125,22 +122,34 @@ export const Explorer: React.FC = () => {
       ]);
       const newNodes = allNodes.filter((node) => !graph.nodes.some((existingNode) => existingNode.id === node.id));
 
-      return {
+      const allEdges: DisplayEdge[] = result.map((edge) => ({
+        source: edge.fromId,
+        target: edge.toId,
+        label: edge.score.toString(),
+      }));
+
+      const newEdges = allEdges.filter(
+        (edge) => !graph.links.some((existingEdge) => `${existingEdge.source}-${existingEdge.target}` === `${edge.source}+${edge.target}`)
+      );
+
+      graph.nodes.forEach((existingNode) => {
+        existingNode.isExplored = existingNode.isExplored || exploreNodes.some((node) => node.id === existingNode.id);
+      });
+
+      const newGraph = {
         ...graph,
         shouldAnimate: true,
-        nodes: [
-          ...graph.nodes.map((existingNode) =>
-            exploreNodes.some((node) => node.id === existingNode.id) ? { ...existingNode, isExplored: true } : existingNode
-          ),
-          ...newNodes,
-        ],
+        nodes: [...graph.nodes, ...newNodes],
+        links: [...graph.links, ...newEdges],
       };
-    });
 
-    // add new edges
+      return newGraph;
+    });
   }, [graph]);
 
-  const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [] })), []);
+  useEffect(() => console.log(graph), [graph]);
+
+  const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [], links: [] })), []);
 
   const [searchResults, setSearchRestuls] = useState<{ claimId: string; claimTitle: string }[]>([]);
 
@@ -151,8 +160,8 @@ export const Explorer: React.FC = () => {
           <ForceGraph3D
             enableNodeDrag={false}
             graphData={graph}
-            nodeLabel={"id"}
-            cooldownTicks={graph.shouldAnimate ? 10 : 0}
+            nodeLabel={"label"}
+            cooldownTicks={graph.shouldAnimate ? 1000 : 0}
             linkLabel={"label"}
             onBackgroundClick={handleBackgroundClick}
             onNodeClick={handleNodeClick}
@@ -172,10 +181,25 @@ export const Explorer: React.FC = () => {
             </div>
           </fieldset>
           <fieldset>
+            <legend>Ontology graph</legend>
+            <StyledMenu>
+              <button onClick={handleExploreAllNodes}>Induce from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
+            </StyledMenu>
+          </fieldset>
+          <fieldset>
+            <legend>Semantic graph</legend>
+            <StyledMenu>
+              <button onClick={handleExploreAllNodes}>Explore from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
+            </StyledMenu>
+            {selectedClaimNodes.map((node) => (
+              <ClampListItem key={node.id}>
+                <LineClamp title={node.label}>{node.label}</LineClamp>
+              </ClampListItem>
+            ))}
+          </fieldset>
+          <fieldset>
             <legend>Selection</legend>
             <StyledMenu>
-              <button onClick={handleExploreAllNodes}>Explore all</button>
-              <button>Remove</button>
               <button onClick={handleRemoveAllNodes}>Remove all</button>
             </StyledMenu>
             {selectedClaimNodes.map((node) => (

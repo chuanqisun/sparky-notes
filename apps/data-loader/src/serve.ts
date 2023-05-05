@@ -71,7 +71,7 @@ const appRouter = router({
       fromTitle: row[1] as string,
       toId: row[2] as string,
       toTitle: row[3] as string,
-      score: row[2] as number,
+      score: row[4] as number,
     })) as { fromId: string; fromTitle: string; toId: string; toTitle: string; score: number }[];
   }),
 });
