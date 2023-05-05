@@ -36,9 +36,9 @@ const appRouter = router({
       selectedClaim[id] <- $claimIds
       matchTriple[claimId, otherClaimId] := 
         claimId < otherClaimId,
-        selectedClaim[claimId],
+        selectedClaim[claimId], # needle
           *claimTriple[claimId, s, p, o],
-        *claim{claimId: otherClaimId},
+        *claim{claimId: otherClaimId}, # haystack
           *claimTriple[otherClaimId, s, x, o] or
           *claimTriple[otherClaimId, o, x, s] or
           *claimTriple[otherClaimId, x, p, o] or
