@@ -2,6 +2,7 @@ import type { CozoDb } from "cozo-node";
 import { writeFile } from "fs/promises";
 
 export async function exportGraph(db: CozoDb) {
+  performance.mark("start");
   const claimToClaimEdge = await db
     .run(
       `
@@ -10,11 +11,12 @@ shareSubjectPredicate[claimId1, claimId2, predicate] := not shareTriple[claimId1
 sharePredicateObject[claimId1, claimId2, predicate] := not shareTriple[claimId1, claimId2, x], *claimTriple[claimId1, s1, p, o], *claimTriple[claimId2, s2, p, o], claimId1 < claimId2, predicate = 'p,o'
 shareSubjectObject[claimId1, claimId2, predicate] := not shareTriple[claimId1, claimId2, x], *claimTriple[claimId1, s, p1, o], *claimTriple[claimId2, s, p2, o], claimId1 < claimId2, predicate = 's,o'
 
-unnamedEdge[claimId1, claimId2, predicate] := shareTriple[claimId1, claimId2, predicate] or shareSubjectPredicate[claimId1, claimId2, predicate] or sharePredicateObject[claimId1, claimId2, predicate] or shareSubjectObject[claimId1, claimId2, predicate]
-#?[claimId1, claimId2] := shareTriple[claimId1, claimId2]
-#?[claimId1, claimId2] := shareSubjectPredicate[claimId1, claimId2]
-#?[claimId1, claimId2] := sharePredicateObject[claimId1, claimId2]
-#?[claimId1, claimId2] := shareSubjectObject[claimId1, claimId2]
+unnamedEdge[claimId1, claimId2, predicate] :=
+  shareTriple[claimId1, claimId2, predicate] or
+  shareSubjectPredicate[claimId1, claimId2, predicate] or
+  sharePredicateObject[claimId1, claimId2, predicate] or
+  shareSubjectObject[claimId1, claimId2, predicate]
+
 
 namedEdge[claimId1, claimTitle1, claimId2, claimTitle2,predicate] := unnamedEdge[claimId1, claimId2, predicate], *claim{claimId: claimId1, claimTitle: claimTitle1}, *claim{claimId: claimId2, claimTitle: claimTitle2}
 namedEdgeV2[claimId1, claimTitle1, claimId2, claimTitle2, collect(predicate)] := namedEdge[claimId1, claimTitle1, claimId2, claimTitle2, predicate ]
@@ -32,6 +34,9 @@ namedEdgeV2[claimId1, claimTitle1, claimId2, claimTitle2, collect(predicate)] :=
         predicate: row[4],
       }));
     });
+
+  console.log(performance.measure("t", "start").duration.toFixed(2));
+  return;
 
   const similarityEdges = await db
     .run(
