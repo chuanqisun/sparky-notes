@@ -104,7 +104,7 @@ export const Explorer: React.FC = () => {
     }
   }, []);
 
-  const handleExploreAllNodes = useCallback(async () => {
+  const handleInduceAllNodes = useCallback(async () => {
     const exploreNodes = graph.nodes.filter((node) => !node.isExplored);
     console.log("Exploring...", exploreNodes);
 
@@ -191,13 +191,13 @@ export const Explorer: React.FC = () => {
           <fieldset>
             <legend>Ontology graph</legend>
             <StyledMenu>
-              <button onClick={handleExploreAllNodes}>Induce from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
+              <button onClick={handleInduceAllNodes}>Induce from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
             </StyledMenu>
           </fieldset>
           <fieldset>
             <legend>Semantic graph</legend>
             <StyledMenu>
-              <button onClick={handleExploreAllNodes}>Explore from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
+              <button onClick={handleInduceAllNodes}>Explore from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
             </StyledMenu>
             {selectedClaimNodes.map((node) => (
               <ClampListItem key={node.id}>
