@@ -91,9 +91,12 @@ export const Explorer: React.FC = () => {
     return node.isSelected ? "green" : "yellow";
   }, []);
 
-  const handleExploreAllNodes = useCallback(() => {
+  const handleExploreAllNodes = useCallback(async () => {
     const newNodes = graph.nodes.filter((node) => !node.isExplored);
     console.log(newNodes);
+
+    const result = await trpc.exploreClaims.query({ claimIds: newNodes.map((node) => node.id) });
+    console.log(result);
   }, [graph]);
 
   const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [] })), []);

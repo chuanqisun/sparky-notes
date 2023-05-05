@@ -30,16 +30,34 @@ const appRouter = router({
       claimTitle: row[1] as string,
     })) as { claimId: string; claimTitle: string }[];
   }),
-  getEntities: publicProcedure
-    .input((v) => v)
-    .query(async (opts) => {
-      return "";
-    }),
-  userCreate: publicProcedure
-    .input((v) => v)
-    .mutation(async (opts) => {
-      return "";
-    }),
+  exploreClaims: publicProcedure.input(dummyValidator<{ claimIds: string[] }>).query(async ({ input, ctx }) => {
+    const response = await ctx.cozoDb.run(
+      `
+      selectedClaim[id] <- $claimIds
+      matchTriple[claimId, otherClaimId] := 
+        claimId < otherClaimId,
+        selectedClaim[claimId],
+          *claimTriple[claimId, s, p, o],
+        *claim{claimId: otherClaimId},
+          *claimTriple[otherClaimId, s, x, o] or
+          *claimTriple[otherClaimId, o, x, s] or
+          *claimTriple[otherClaimId, x, p, o] or
+          *claimTriple[otherClaimId, o, p, x] or
+          *claimTriple[otherClaimId, x, p, s] or
+          *claimTriple[otherClaimId, s, p, x]
+
+      ?[claimId, otherClaimId] := matchTriple[claimId, otherClaimId]
+    `,
+      { claimIds: input.claimIds.map((id) => [id]) }
+    );
+    return response.rows.map((row: any) => ({
+      claimId: row[0] as string,
+      otherClaimId: row[1] as string,
+      s: row[2] as string,
+      p: row[3] as string,
+      o: row[4] as string,
+    })) as { claimId: string; claimTitle: string; s: string; p: string; o: string }[];
+  }),
 });
 
 // Export type router type signature,
