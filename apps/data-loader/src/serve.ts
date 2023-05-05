@@ -54,22 +54,25 @@ const appRouter = router({
         spx_yps[fromId, toId, x] or
         sxo_syo[fromId, toId, x] or
         sxo_oys[fromId, toId, x] 
+        
+      ?[fromId, fromTitle, toId, toTitle, score] := 
+        edge[fromId, toId, score],
+        *claim{claimId: fromId, claimTitle: fromTitle},
+        *claim{claimId: toId, claimTitle: toTitle}
 
-      ?[fromId, toId, x] := edge[fromId, toId, x]
-
-      :sort -x
-
+      :sort -score
       :limit 10
-
     `,
       { claimIds: input.claimIds.map((id) => [id]) }
     );
     console.log(`${performance.measure("t", "start").duration.toFixed(2)} ms | ${response.rows.length} rows`);
     return response.rows.map((row: any) => ({
-      claimId: row[0] as string,
-      otherClaimId: row[1] as string,
+      fromId: row[0] as string,
+      fromTitle: row[1] as string,
+      toId: row[2] as string,
+      toTitle: row[3] as string,
       score: row[2] as number,
-    })) as { claimId: string; claimTitle: string; s: string; p: string; o: string }[];
+    })) as { fromId: string; fromTitle: string; toId: string; toTitle: string; score: number }[];
   }),
 });
 
