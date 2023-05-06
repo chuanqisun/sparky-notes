@@ -63,10 +63,10 @@ export const Explorer: React.FC = () => {
     [graph]
   );
 
-  const handleNodeClick = useCallback((node: DisplayNode) => {
+  const handleNodeClick = useCallback((node: DisplayNode, multiselect?: boolean) => {
     setGraph((graph) => {
       graph.nodes.forEach((existingNode) => {
-        existingNode.isSelected = existingNode.id === node.id ? !existingNode.isSelected : false;
+        existingNode.isSelected = existingNode.id === node.id ? !existingNode.isSelected : multiselect ? existingNode.isSelected : false;
       });
 
       return {
@@ -182,7 +182,7 @@ export const Explorer: React.FC = () => {
             linkLabel={"label"}
             linkOpacity={0.5}
             onBackgroundClick={handleBackgroundClick}
-            onNodeClick={handleNodeClick}
+            onNodeClick={(n, e) => handleNodeClick(n, e.shiftKey)}
             linkWidth={(l) => l.weight ?? 1}
             linkColor={(l) => (l.type === "onto" ? "teal" : "purple")}
             nodeColor={getNodeColor}
@@ -210,6 +210,8 @@ export const Explorer: React.FC = () => {
             <legend>Selection</legend>
             <StyledMenu>
               <button onClick={handleRemoveAllNodes}>Remove all</button>
+              <button onClick={() => {}}>Interpret</button>
+              <button onClick={() => {}}>Filter</button>
             </StyledMenu>
             {selectedClaimNodes.map((node) => (
               <ClampListItem key={node.id}>
