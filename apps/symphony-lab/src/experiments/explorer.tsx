@@ -106,11 +106,13 @@ export const Explorer: React.FC = () => {
     }
   }, []);
 
-  const handleInduceAllNodes = useCallback(async () => {
-    const exploreNodes = graph.nodes.filter((node) => !node.isExplored);
+  const handleMapAllNodes = useCallback(async () => {
+    const exploreBaseNodes = graph.nodes.filter((node) => !node.isExplored);
+    const selectedNodes = exploreBaseNodes.filter((node) => node.isSelected);
+    const exploreNodes = selectedNodes.length ? selectedNodes : exploreBaseNodes;
     console.log("Exploring...", exploreNodes);
 
-    const result = await trpc.induceClaims.query({ claimIds: exploreNodes.map((node) => node.id) });
+    const result = await trpc.scanClaim.query({ claimIds: exploreNodes.map((node) => node.id) });
     console.log("Found", result);
 
     setGraph((graph) => {
@@ -128,69 +130,28 @@ export const Explorer: React.FC = () => {
           isExplored: false,
         },
       ]);
-      const newNodes = allNodes.filter((node) => !graph.nodes.some((existingNode) => existingNode.id === node.id));
+      const newNodes = allNodes
+        .filter((node) => !graph.nodes.some((existingNode) => existingNode.id === node.id)) // new
+        .filter((node, index, arr) => arr.findIndex((n) => n.id === node.id) === index); // unique
 
       const allEdges: DisplayEdge[] = result.map((edge) => ({
         source: edge.fromId,
         target: edge.toId,
         weight: edge.score,
-        type: "onto",
-        label: "onto=" + edge.score.toString(),
+        type: edge.type.includes("onto") ? "onto" : "sim",
+        label: edge.type.join("+") + " @" + edge.score.toString(),
       }));
 
       const newEdges = allEdges.filter(
-        (edge) => !graph.links.some((existingEdge) => `${existingEdge.source}-${existingEdge.target}` === `${edge.source}+${edge.target}`)
+        (edge) =>
+          !graph.links.some((existingEdge) =>
+            [`${existingEdge.source}-${existingEdge.target}`, `${existingEdge.target}-${existingEdge.source}`].includes(`${edge.source}+${edge.target}`)
+          )
       );
 
       graph.nodes.forEach((existingNode) => {
         existingNode.isExplored = existingNode.isExplored || exploreNodes.some((node) => node.id === existingNode.id);
       });
-
-      const newGraph = {
-        ...graph,
-        shouldAnimate: true,
-        nodes: [...graph.nodes, ...newNodes],
-        links: [...graph.links, ...newEdges],
-      };
-
-      return newGraph;
-    });
-  }, [graph]);
-
-  const handleExploreAllNodes = useCallback(async () => {
-    const exploreNodes = graph.nodes;
-    console.log("Exploring...", exploreNodes);
-    const result = await trpc.exploreSemantics.query({ claimIds: exploreNodes.map((node) => node.id) });
-    console.log("Found", result);
-
-    setGraph((graph) => {
-      const allNodes = result.flatMap((edge) => [
-        {
-          id: edge.fromId,
-          label: edge.fromTitle,
-          isSelected: false,
-          isExplored: false,
-        },
-        {
-          id: edge.toId,
-          label: edge.toTitle,
-          isSelected: false,
-          isExplored: false,
-        },
-      ]);
-      const newNodes = allNodes.filter((node) => !graph.nodes.some((existingNode) => existingNode.id === node.id));
-
-      const allEdges: DisplayEdge[] = result.map((edge) => ({
-        source: edge.fromId,
-        target: edge.toId,
-        weight: edge.score,
-        type: "sim",
-        label: "sim=" + edge.score.toString(),
-      }));
-
-      const newEdges = allEdges.filter(
-        (edge) => !graph.links.some((existingEdge) => `${existingEdge.source}-${existingEdge.target}` === `${edge.source}+${edge.target}`)
-      );
 
       const newGraph = {
         ...graph,
@@ -240,21 +201,10 @@ export const Explorer: React.FC = () => {
             </div>
           </fieldset>
           <fieldset>
-            <legend>Ontology graph</legend>
+            <legend>Knowledge Cartographer</legend>
             <StyledMenu>
-              <button onClick={handleInduceAllNodes}>Induce from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
+              <button onClick={handleMapAllNodes}>Map {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
             </StyledMenu>
-          </fieldset>
-          <fieldset>
-            <legend>Semantic graph</legend>
-            <StyledMenu>
-              <button onClick={handleExploreAllNodes}>Explore from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
-            </StyledMenu>
-            {selectedClaimNodes.map((node) => (
-              <ClampListItem key={node.id}>
-                <LineClamp title={node.label}>{node.label}</LineClamp>
-              </ClampListItem>
-            ))}
           </fieldset>
           <fieldset>
             <legend>Selection</legend>
