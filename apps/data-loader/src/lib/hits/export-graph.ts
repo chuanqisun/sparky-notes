@@ -36,7 +36,6 @@ namedEdgeV2[claimId1, claimTitle1, claimId2, claimTitle2, collect(predicate)] :=
     });
 
   console.log(performance.measure("t", "start").duration.toFixed(2));
-  return;
 
   const similarityEdges = await db
     .run(

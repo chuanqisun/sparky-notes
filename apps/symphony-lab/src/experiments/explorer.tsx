@@ -22,6 +22,8 @@ export interface DisplayGraph {
 export interface DisplayEdge {
   source: string;
   target: string;
+  weight: number;
+  type: string;
   label?: string;
 }
 
@@ -108,7 +110,7 @@ export const Explorer: React.FC = () => {
     const exploreNodes = graph.nodes.filter((node) => !node.isExplored);
     console.log("Exploring...", exploreNodes);
 
-    const result = await trpc.exploreClaims.query({ claimIds: exploreNodes.map((node) => node.id) });
+    const result = await trpc.induceClaims.query({ claimIds: exploreNodes.map((node) => node.id) });
     console.log("Found", result);
 
     setGraph((graph) => {
@@ -131,7 +133,9 @@ export const Explorer: React.FC = () => {
       const allEdges: DisplayEdge[] = result.map((edge) => ({
         source: edge.fromId,
         target: edge.toId,
-        label: edge.score.toString(),
+        weight: edge.score,
+        type: "onto",
+        label: "onto=" + edge.score.toString(),
       }));
 
       const newEdges = allEdges.filter(
@@ -141,6 +145,52 @@ export const Explorer: React.FC = () => {
       graph.nodes.forEach((existingNode) => {
         existingNode.isExplored = existingNode.isExplored || exploreNodes.some((node) => node.id === existingNode.id);
       });
+
+      const newGraph = {
+        ...graph,
+        shouldAnimate: true,
+        nodes: [...graph.nodes, ...newNodes],
+        links: [...graph.links, ...newEdges],
+      };
+
+      return newGraph;
+    });
+  }, [graph]);
+
+  const handleExploreAllNodes = useCallback(async () => {
+    const exploreNodes = graph.nodes;
+    console.log("Exploring...", exploreNodes);
+    const result = await trpc.exploreSemantics.query({ claimIds: exploreNodes.map((node) => node.id) });
+    console.log("Found", result);
+
+    setGraph((graph) => {
+      const allNodes = result.flatMap((edge) => [
+        {
+          id: edge.fromId,
+          label: edge.fromTitle,
+          isSelected: false,
+          isExplored: false,
+        },
+        {
+          id: edge.toId,
+          label: edge.toTitle,
+          isSelected: false,
+          isExplored: false,
+        },
+      ]);
+      const newNodes = allNodes.filter((node) => !graph.nodes.some((existingNode) => existingNode.id === node.id));
+
+      const allEdges: DisplayEdge[] = result.map((edge) => ({
+        source: edge.fromId,
+        target: edge.toId,
+        weight: edge.score,
+        type: "sim",
+        label: "sim=" + edge.score.toString(),
+      }));
+
+      const newEdges = allEdges.filter(
+        (edge) => !graph.links.some((existingEdge) => `${existingEdge.source}-${existingEdge.target}` === `${edge.source}+${edge.target}`)
+      );
 
       const newGraph = {
         ...graph,
@@ -169,10 +219,11 @@ export const Explorer: React.FC = () => {
             nodeLabel={"label"}
             cooldownTicks={graph.shouldAnimate ? 1000 : 0}
             linkLabel={"label"}
-            linkOpacity={0.25}
+            linkOpacity={0.5}
             onBackgroundClick={handleBackgroundClick}
             onNodeClick={handleNodeClick}
-            linkWidth={(l) => parseInt(l.label ?? "1")}
+            linkWidth={(l) => l.weight ?? 1}
+            linkColor={(l) => (l.type === "onto" ? "teal" : "purple")}
             nodeColor={getNodeColor}
           />
         </main>
@@ -197,7 +248,7 @@ export const Explorer: React.FC = () => {
           <fieldset>
             <legend>Semantic graph</legend>
             <StyledMenu>
-              <button onClick={handleInduceAllNodes}>Explore from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
+              <button onClick={handleExploreAllNodes}>Explore from {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
             </StyledMenu>
             {selectedClaimNodes.map((node) => (
               <ClampListItem key={node.id}>

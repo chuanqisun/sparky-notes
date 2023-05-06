@@ -30,12 +30,60 @@ const appRouter = router({
       claimTitle: row[1] as string,
     })) as { claimId: string; claimTitle: string }[];
   }),
-  exploreClaims: publicProcedure.input(dummyValidator<{ claimIds: string[] }>).query(async ({ input, ctx }) => {
+  exploreSemantics: publicProcedure.input(dummyValidator<{ claimIds: string[] }>).query(async ({ input, ctx }) => {
+    performance.mark("start");
+
+    console.log(input.claimIds);
+    const response = await ctx.cozoDb.run(
+      `
+      selectedClaim[fromId] <- $claimIds
+      selectedOntology[from_s, from_p, from_o] := *claimTriple[fromId, from_s, from_p, from_o], selectedClaim[fromId]
+      selectedEntity[fromId, e] := *claimTriple[fromId, e, p1, o1] or *claimTriple[fromId, s2, e, o2] or *claimTriple[fromId, s3, p3, e], selectedClaim[fromId]
+      similarEntity[fromId, sim_e] := selectedEntity[fromId, e], *entity:semantic{layer: 0, fr_text: e, to_text: sim_e, dist}, dist < 0.15 
+
+      fullySimilarClaim[fromId, toId, score] := 
+        fromId != toId,
+        e1 < e3, 
+        similarEntity[fromId, e1], similarEntity[fromId, e2], similarEntity[fromId, e3],
+        *claimTriple[toId, e1, e2, e3],
+        score = 5
+
+      partialSimilarClaim[fromId, toId, score] := 
+        not fullySimilarClaim[fromId, toId, _],
+        fromId != toId,
+        e1 != e2,
+        similarEntity[fromId, e1], similarEntity[fromId, e2],
+        *claimTriple[toId, e1, p, e2] or
+        *claimTriple[toId, e1, e2, o] or
+        *claimTriple[toId, s, e1, e2],
+        score = 3
+
+      edge[fromId, toId, sum(score)] := partialSimilarClaim[fromId, toId, score] or fullySimilarClaim[fromId, toId, score]
+
+      ?[fromId, fromTitle, toId, toTitle, score] := 
+        edge[fromId, toId, score],
+        *claim{claimId: fromId, claimTitle: fromTitle},
+        *claim{claimId: toId, claimTitle: toTitle}
+
+    `,
+      { claimIds: input.claimIds.map((id) => [id]) }
+    );
+
+    console.log(`${performance.measure("t", "start").duration.toFixed(2)} ms | ${response.rows.length} rows`);
+
+    return response.rows.map((row: any) => ({
+      fromId: row[0] as string,
+      fromTitle: row[1] as string,
+      toId: row[2] as string,
+      toTitle: row[3] as string,
+      score: row[4] as number,
+    })) as { fromId: string; fromTitle: string; toId: string; toTitle: string; score: number }[];
+  }),
+  induceClaims: publicProcedure.input(dummyValidator<{ claimIds: string[] }>).query(async ({ input, ctx }) => {
     performance.mark("start");
 
     const response = await ctx.cozoDb.run(
       `
-
       spo_spo[fromId, toId, score] := *claimTriple[fromId, s, p, o], *claimTriple[toId, s, p, o], fromId < toId, score = 5
       spo_ops[fromId, toId, score] := *claimTriple[fromId, s, p, o], *claimTriple[toId, o, p, s], fromId < toId, score = 5
 
