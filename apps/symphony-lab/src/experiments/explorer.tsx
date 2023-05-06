@@ -166,7 +166,25 @@ export const Explorer: React.FC = () => {
 
   useEffect(() => console.log(graph), [graph]);
 
-  const handleRemoveAllNodes = useCallback(() => setGraph((graph) => ({ ...graph, nodes: [], links: [] })), []);
+  const handleRemoveAllNodes = useCallback(() => {
+    const selectedNodes = graph.nodes.filter((node) => node.isSelected);
+
+    setGraph((graph) => {
+      if (!selectedNodes.length) {
+        return { ...graph, nodes: [], links: [] };
+      } else {
+        const keepLinks = graph.links.filter(
+          (link) => !selectedNodes.some((node) => node.id === (link.source as any).id || node.id === (link.target as any).id) // the engine wraps the underlying id
+        );
+        console.log("debug", keepLinks);
+        return {
+          ...graph,
+          nodes: graph.nodes.filter((node) => !selectedNodes.includes(node)),
+          links: keepLinks,
+        };
+      }
+    });
+  }, [graph]);
 
   const [searchResults, setSearchRestuls] = useState<{ claimId: string; claimTitle: string }[]>([]);
 
@@ -205,14 +223,14 @@ export const Explorer: React.FC = () => {
             <StyledMenu>
               <button onClick={handleMapAllNodes}>Map {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
             </StyledMenu>
-          </fieldset>
-          <fieldset>
-            <legend>Selection</legend>
             <StyledMenu>
-              <button onClick={handleRemoveAllNodes}>Remove all</button>
+              <button onClick={handleRemoveAllNodes}>Remove {selectedClaimNodes.length ? `${selectedClaimNodes.length} selected` : "all"}</button>
               <button onClick={() => {}}>Interpret</button>
               <button onClick={() => {}}>Filter</button>
             </StyledMenu>
+          </fieldset>
+          <fieldset>
+            <legend>Selection</legend>
             {selectedClaimNodes.map((node) => (
               <ClampListItem key={node.id}>
                 <LineClamp title={node.label}>{node.label}</LineClamp>
