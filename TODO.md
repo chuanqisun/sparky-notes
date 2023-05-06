@@ -49,6 +49,7 @@
 - Details
   - Use constant connector color
 - Context order control (topological sort leads to serveral equivalent orders)
+- Idea: grow the visualization iteratively via GPT-4
 
 ## Figma runtime pain point
 
