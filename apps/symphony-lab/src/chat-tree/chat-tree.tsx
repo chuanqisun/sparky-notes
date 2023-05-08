@@ -13,18 +13,19 @@ export interface ChatNode {
   isEntry?: boolean;
 }
 
+const defaultUserNodeId = crypto.randomUUID();
 const DEFAULT_NODES: ChatNode[] = [
   {
     id: crypto.randomUUID(),
     role: "system",
     content: "",
     isEntry: true,
+    childIds: [defaultUserNodeId],
   },
   {
-    id: crypto.randomUUID(),
+    id: defaultUserNodeId,
     role: "user",
     content: "",
-    isEntry: true,
   },
 ];
 
@@ -43,12 +44,84 @@ const roleIcon = {
   assistant: "🤖",
 };
 
+function getReachableIds(nodes: ChatNode[], rootId: string): string[] {
+  const rootNode = nodes.find((node) => node.id === rootId);
+  if (!rootNode) return [];
+
+  return [rootId, ...(rootNode.childIds ?? []).flatMap((childId) => getReachableIds(nodes, childId))];
+}
+
 export function ChatTree() {
   const [treeNodes, setTreeNodes] = useState(DEFAULT_NODES);
 
-  const handleEdit = (nodeId: string, content: string) => {
+  const handleEdit = useCallback((nodeId: string, content: string) => {
     setTreeNodes((rootNodes) => rootNodes.map(repaceNodeContent.bind(null, nodeId, content)));
-  };
+  }, []);
+
+  const handleDelete = useCallback((nodeId: string) => {
+    setTreeNodes((rootNodes) => {
+      // resurvively find all ids to be deleted
+      const reachableIds = getReachableIds(rootNodes, nodeId);
+
+      // filter out the node to be deleted
+      const remainingNodes = rootNodes.filter((node) => !reachableIds.includes(node.id));
+      console.log("will remain", remainingNodes);
+
+      let newUserNodeId = "";
+
+      // make sure all system/assistant nodes have at least one child
+      const newNodes = remainingNodes.map((node) => {
+        if (node.childIds?.includes(nodeId)) {
+          const updated: ChatNode = {
+            ...node,
+            childIds: node.childIds?.filter((childId) => childId !== nodeId),
+          };
+
+          if (updated.role !== "user" && updated.childIds?.length === 0) {
+            newUserNodeId = crypto.randomUUID();
+            updated.childIds = [newUserNodeId];
+          }
+
+          return updated;
+        } else {
+          return node;
+        }
+      });
+
+      if (newUserNodeId) {
+        newNodes.push({
+          id: newUserNodeId,
+          role: "user",
+          content: "",
+        });
+      }
+
+      return newNodes;
+    });
+  }, []);
+
+  const handleFork = useCallback((siblingId: string, baseContent: string) => {
+    // insert a new user node before the forked node
+    const newUserNode: ChatNode = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: baseContent,
+    };
+
+    setTreeNodes((rootNodes) => {
+      const newNodes = [...rootNodes, newUserNode];
+      const parentNode = newNodes.find((node) => node.childIds?.includes(siblingId))!; // safe assert: the top most user node is under the system node
+      const allSiblingIds = [...(parentNode?.childIds || [])];
+      const siblingIndex = allSiblingIds.findIndex((id) => id === siblingId);
+      allSiblingIds.splice(siblingIndex, 0, newUserNode.id);
+      newNodes[newNodes.findIndex((node) => node.id === parentNode.id)!] = {
+        ...parentNode,
+        childIds: allSiblingIds,
+      };
+
+      return newNodes;
+    });
+  }, []);
 
   const handleKeydown = useCallback(
     async (nodeId: string, e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -87,29 +160,61 @@ export function ChatTree() {
     [treeNodes]
   );
 
-  function renderNode(node: ChatNode) {
+  function renderNode(node: ChatNode, hasSibling?: boolean): any {
     return (
-      <div key={node.id}>
+      <Thread showrail={hasSibling ? hasSibling : undefined} key={node.id}>
         <MessageLayout>
           <Avatar>{roleIcon[node.role]}</Avatar>
           {node.isArchieved ? (
-            <div>{node.content}</div>
+            <div>
+              {node.content}{" "}
+              <span>
+                {node.role === "user" ? (
+                  <>
+                    <button onClick={() => handleFork(node.id, node.content)}>Fork</button>
+                    <button onClick={() => handleDelete(node.id)}>Delete</button>
+                  </>
+                ) : null}
+              </span>
+            </div>
           ) : (
             <AutoResize data-resize-textarea-content={node.content}>
-              <textarea value={node.content} onKeyDown={(e) => handleKeydown(node.id, e)} onChange={(e) => handleEdit(node.id, e.target.value)} />
+              <textarea
+                value={node.content}
+                onKeyDown={(e) => handleKeydown(node.id, e)}
+                onChange={(e) => handleEdit(node.id, e.target.value)}
+                placeholder="Ctrl + Enter to send"
+              />
             </AutoResize>
           )}
         </MessageLayout>
-        {node.childIds
-          ?.map((id) => treeNodes.find((node) => node.id === id))
-          .filter(Boolean)
-          .map((node) => renderNode(node as ChatNode))}
-      </div>
+        {!!node.childIds?.length ? (
+          <MessageList>
+            {node.childIds
+              ?.map((id) => treeNodes.find((node) => node.id === id))
+              .filter(Boolean)
+              .map((childNode) => renderNode(childNode as ChatNode, (node?.childIds ?? []).length > 1))}
+          </MessageList>
+        ) : null}
+      </Thread>
     );
   }
 
-  return <>{treeNodes.filter((node) => node.isEntry).map(renderNode)}</>;
+  return <MessageList>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>;
 }
+
+const Thread = styled.div<{ showrail?: boolean }>`
+  display: grid;
+  gap: 8px;
+  margin-left: ${(props) => (props.showrail ? "10px" : "0")};
+  padding-left: ${(props) => (props.showrail ? "9px" : "0")};
+  border-left: 1px solid ${(props) => (props.showrail ? "#aaa" : "transparent")};
+`;
+
+const MessageList = styled.div<{ showRail?: boolean }>`
+  display: grid;
+  gap: 16px;
+`;
 
 const MessageLayout = styled.div`
   display: grid;
@@ -119,4 +224,8 @@ const MessageLayout = styled.div`
 
 const Avatar = styled.div`
   font-size: 20px;
+  width: 24px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
 `;
