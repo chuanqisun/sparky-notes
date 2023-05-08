@@ -8,9 +8,10 @@ export interface ChatNode {
   role: "system" | "user" | "assistant";
   content: string;
   childIds?: string[];
-  isArchived?: boolean;
+  isLocked?: boolean;
   isCollapsed?: boolean;
   isEntry?: boolean;
+  isEditing?: boolean;
 }
 
 const defaultUserNodeId = crypto.randomUUID();
@@ -20,11 +21,13 @@ const DEFAULT_NODES: ChatNode[] = [
     role: "system",
     content: "",
     isEntry: true,
+    isEditing: true,
     childIds: [defaultUserNodeId],
   },
   {
     id: defaultUserNodeId,
     role: "user",
+    isEditing: true,
     content: "",
   },
 ];
@@ -54,7 +57,7 @@ function getReachableIds(nodes: ChatNode[], rootId: string): string[] {
 export function ChatTree() {
   const [treeNodes, setTreeNodes] = useState(DEFAULT_NODES);
 
-  const handleEdit = useCallback((nodeId: string, content: string) => {
+  const handleTextChange = useCallback((nodeId: string, content: string) => {
     setTreeNodes((rootNodes) => rootNodes.map(repaceNodeContent.bind(null, nodeId, content)));
   }, []);
 
@@ -65,7 +68,6 @@ export function ChatTree() {
 
       // filter out the node to be deleted
       const remainingNodes = rootNodes.filter((node) => !reachableIds.includes(node.id));
-      console.log("will remain", remainingNodes);
 
       let newUserNodeId = "";
 
@@ -93,6 +95,7 @@ export function ChatTree() {
           id: newUserNodeId,
           role: "user",
           content: "",
+          isEditing: true,
         });
       }
 
@@ -138,25 +141,59 @@ export function ChatTree() {
     });
   }, []);
 
+  const handleStartEdit = useCallback((nodeId: string) => {
+    setTreeNodes((rootNodes) =>
+      rootNodes.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            isEditing: true,
+          };
+        } else {
+          return node;
+        }
+      })
+    );
+  }, []);
+
   const handleKeydown = useCallback(
     async (nodeId: string, e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const targetNode = treeNodes.find((node) => node.id === nodeId);
       if (targetNode?.role !== "user") return;
 
+      if (e.key === "Escape") {
+        setTreeNodes((rootNodes) =>
+          rootNodes.map((node) => {
+            if (node.id === nodeId) {
+              return {
+                ...node,
+                isEditing: false,
+              };
+            } else {
+              return node;
+            }
+          })
+        );
+        return;
+      }
+
       if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === "Enter") {
+        e.preventDefault();
+
         // simulate GPT response
 
         const newUserNode: ChatNode = {
           id: crypto.randomUUID(),
           role: "user",
           content: "",
+          isEditing: true,
         };
 
         const newAssistantNode: ChatNode = {
           id: crypto.randomUUID(),
           role: "assistant",
           content: `Mock response content at ${new Date().toLocaleTimeString()}`,
-          isArchived: true,
+          isLocked: true,
           childIds: [newUserNode.id],
         };
 
@@ -166,7 +203,8 @@ export function ChatTree() {
           newNodes[targetNodeIndex] = {
             ...newNodes[targetNodeIndex],
             childIds: [newAssistantNode.id],
-            isArchived: true,
+            isEditing: false,
+            isLocked: true,
           };
           return newNodes;
         });
@@ -177,32 +215,33 @@ export function ChatTree() {
 
   function renderNode(node: ChatNode, hasSibling?: boolean): any {
     return (
-      <Thread showrail={hasSibling ? hasSibling : undefined} key={node.id}>
+      <Thread showrail={hasSibling ? "true" : undefined} key={node.id}>
         <MessageLayout>
           <Avatar onClick={() => handleToggleAccordion(node.id)}>
             {roleIcon[node.role]} {node.childIds?.length && node.isCollapsed ? "🔽" : null}
           </Avatar>
-          {node.isArchived ? (
+          {node.isEditing ? (
+            <AutoResize data-resize-textarea-content={node.content}>
+              <textarea
+                value={node.content}
+                onKeyDown={(e) => handleKeydown(node.id, e)}
+                onChange={(e) => handleTextChange(node.id, e.target.value)}
+                placeholder={node.role === "user" ? "Ctrl + Enter to send, Esc to cancel" : "System message"}
+              />
+            </AutoResize>
+          ) : (
             <div>
-              {node.content}{" "}
+              <Message draft={!node.isLocked && !node.isEditing && !node.isEditing ? "true" : undefined}>{node.content}</Message>{" "}
               <span>
                 {node.role === "user" ? (
                   <>
+                    {node.isLocked ? null : <button onClick={() => handleStartEdit(node.id)}>Edit</button>}
                     <button onClick={() => handleFork(node.id, node.content)}>Fork</button>
                     <button onClick={() => handleDelete(node.id)}>Delete</button>
                   </>
                 ) : null}
               </span>
             </div>
-          ) : (
-            <AutoResize data-resize-textarea-content={node.content}>
-              <textarea
-                value={node.content}
-                onKeyDown={(e) => handleKeydown(node.id, e)}
-                onChange={(e) => handleEdit(node.id, e.target.value)}
-                placeholder={node.role === "user" ? "Ctrl + Enter to send, Esc to cancel" : "System message"}
-              />
-            </AutoResize>
           )}
         </MessageLayout>
         {!!node.childIds?.length ? (
@@ -222,7 +261,7 @@ export function ChatTree() {
   return <MessageList>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>;
 }
 
-const Thread = styled.div<{ showrail?: boolean }>`
+const Thread = styled.div<{ showrail?: "true" }>`
   display: grid;
   gap: 8px;
   margin-left: ${(props) => (props.showrail ? "10px" : "0")};
@@ -230,9 +269,15 @@ const Thread = styled.div<{ showrail?: boolean }>`
   border-left: 1px solid ${(props) => (props.showrail ? "#aaa" : "transparent")};
 `;
 
-const MessageList = styled.div<{ showRail?: boolean }>`
+const MessageList = styled.div`
   display: grid;
   gap: 16px;
+`;
+
+const Message = styled.span<{ draft?: "true" }>`
+  &::before {
+    content: ${(props) => (props.draft ? '"*"' : "")};
+  }
 `;
 
 const MessageLayout = styled.div`
