@@ -237,14 +237,8 @@ const MessageList = styled.div<{ showRail?: boolean }>`
 
 const MessageLayout = styled.div`
   display: grid;
-  grid-template:
-    "icon content" auto
-    "empty control" auto / auto 1fr;
+  grid-template-columns: auto 1fr;
   gap: 4px;
-`;
-
-const Overflow = styled.div`
-  grid-area: control;
 `;
 
 const Avatar = styled.button`
