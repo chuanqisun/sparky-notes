@@ -244,10 +244,11 @@ const MessageLayout = styled.div`
 const Avatar = styled.button`
   padding: 0;
   background: none;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
   cursor: pointer;
   font-size: 20px;
-  width: 24px;
+  width: 28px;
   display: flex;
   align-items: baseline;
   justify-content: center;
