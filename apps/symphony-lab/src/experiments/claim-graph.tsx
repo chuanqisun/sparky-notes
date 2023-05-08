@@ -1,48 +1,69 @@
 import type React from "react";
+import { useEffect, useState } from "react";
 import { ForceGraph3D } from "react-force-graph";
 import styled from "styled-components";
 import SpriteText from "three-spritetext";
-import dataset from "./data/graph-viz-export.json";
 
-const { nodes, predicateEdges, similarityEdges, claimToClaimEdge } = dataset as any;
+async function loadData() {
+  const dataset = await fetch("/data/graph-viz-export.json").then((res) => res.json());
 
-// console.log(predicateEdges, similarityEdges);
+  const { nodes, predicateEdges, similarityEdges, claimToClaimEdge } = dataset as any;
 
-function randomSampleArray(a: any[], count: number) {
-  const shuffled = a.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  // console.log(predicateEdges, similarityEdges);
+
+  function randomSampleArray(a: any[], count: number) {
+    const shuffled = a.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  const linkSubset = [...randomSampleArray(claimToClaimEdge, 800)] as {
+    source: string;
+    sourceTitle: string;
+    target: string;
+    targetTitle: string;
+    predicate: string[];
+  }[];
+
+  const displayLinks = linkSubset.map((link) => ({ ...link, label: link.predicate.join(" | ") }));
+  const nodeSubset = linkSubset
+    .flatMap((link) => [
+      { id: link.source, title: link.sourceTitle },
+      { id: link.target, title: link.targetTitle },
+    ])
+    .filter((item, index, arr) => arr.findIndex((t) => t.id === item.id) === index);
+
+  const nodeCardinality = new Map<string, number>();
+  linkSubset.forEach((link) => {
+    nodeCardinality.set(link.source, (nodeCardinality.get(link.source) ?? 0) + 1);
+    nodeCardinality.set(link.target, (nodeCardinality.get(link.target) ?? 0) + 1);
+  });
+
+  const edgeCardinality = new Map<string, number>();
+  linkSubset.forEach((link) => {
+    const avgNodeCardinality = (nodeCardinality.get(link.source) ?? 0) + (nodeCardinality.get(link.target) ?? 0) / 2;
+    edgeCardinality.set(link.source + link.target, avgNodeCardinality);
+  });
+
+  return {
+    nodeSubset,
+    displayLinks,
+  };
 }
 
-// const linkSubset = [...randomSampleArray(predicateEdges, 200), ...randomSampleArray(similarityEdges, 400)] as { source: string; target: string }[];
-const linkSubset = [...randomSampleArray(claimToClaimEdge, 80000)] as {
-  source: string;
-  sourceTitle: string;
-  target: string;
-  targetTitle: string;
-  predicate: string[];
-}[];
-
-const displayLinks = linkSubset.map((link) => ({ ...link, label: link.predicate.join(" | ") }));
-const nodeSubset = linkSubset
-  .flatMap((link) => [
-    { id: link.source, title: link.sourceTitle },
-    { id: link.target, title: link.targetTitle },
-  ])
-  .filter((item, index, arr) => arr.findIndex((t) => t.id === item.id) === index);
-
-const nodeCardinality = new Map<string, number>();
-linkSubset.forEach((link) => {
-  nodeCardinality.set(link.source, (nodeCardinality.get(link.source) ?? 0) + 1);
-  nodeCardinality.set(link.target, (nodeCardinality.get(link.target) ?? 0) + 1);
-});
-
-const edgeCardinality = new Map<string, number>();
-linkSubset.forEach((link) => {
-  const avgNodeCardinality = (nodeCardinality.get(link.source) ?? 0) + (nodeCardinality.get(link.target) ?? 0) / 2;
-  edgeCardinality.set(link.source + link.target, avgNodeCardinality);
-});
-
 export const ClaimGraph: React.FC = () => {
+  const [graph, setGraph] = useState<any>({
+    nodes: [],
+    links: [],
+  });
+  useEffect(() => {
+    loadData().then((data) => {
+      setGraph({
+        nodes: data.nodeSubset,
+        links: data.displayLinks,
+      });
+    });
+  }, []);
+
   return (
     <div>
       <StyledHeader>Technical demo | Microsoft HITS</StyledHeader>
@@ -52,7 +73,7 @@ export const ClaimGraph: React.FC = () => {
         cooldownTime={12000}
         enableNodeDrag={false}
         linkOpacity={0.08}
-        graphData={{ nodes: nodeSubset, links: displayLinks }}
+        graphData={graph}
         nodeLabel={"title"}
         linkLabel={"label"}
         linkThreeObjectExtend={true}

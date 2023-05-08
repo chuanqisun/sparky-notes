@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Link, Outlet, RouterProvider, createBrowserRouter, type NonIndexRouteObject } from "react-router-dom";
+import { styled } from "styled-components";
 import { AccountContextProvider } from "./account/account-context";
 import "./index.css";
 import { Main } from "./shell/main";
@@ -12,9 +13,9 @@ interface NamedRoute extends NonIndexRouteObject {
 
 const ROUTES: NamedRoute[] = [
   {
-    displayName: "Starter",
-    path: "/experiments/ontology",
-    lazy: () => import("./experiments/ontology").then(({ Ontology }) => ({ Component: Ontology })),
+    displayName: "Basic",
+    path: "/experiments/basic",
+    lazy: () => import("./experiments/basic").then(({ Basic: Ontology }) => ({ Component: Ontology })),
   },
   {
     displayName: "Ontology graph",
@@ -55,15 +56,22 @@ function App() {
 
 function ExperimentList() {
   return (
-    <nav>
-      {ROUTES.map((route) => (
+    <StyledNav>
+      {ROUTES.map((route, index) => (
         <span key={route.path}>
-          <Link to={route.path as string}>{route.displayName}</Link>{" "}
+          <Link to={route.path as string}>{route.displayName}</Link>
+          {index < ROUTES.length - 1 ? " · " : ""}
         </span>
       ))}
-    </nav>
+    </StyledNav>
   );
 }
+
+const StyledNav = styled.nav`
+  padding: 4px 8px;
+  background-color: ButtonFace;
+  border-bottom: 1px solid ButtonBorder;
+`;
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

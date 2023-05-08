@@ -4,7 +4,7 @@ import { AutoResize, BasicActionGroup, BasicForm, BasicFormField } from "../form
 import { CenterClamp } from "../shell/center-clamp";
 import { preventDefault } from "../utils/event";
 
-export const Ontology: React.FC = () => {
+export const Basic: React.FC = () => {
   const [queryValue, setQueryValue] = useState<string>("");
 
   return (
