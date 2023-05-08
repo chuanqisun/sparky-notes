@@ -183,7 +183,7 @@ export function ChatTree() {
                 value={node.content}
                 onKeyDown={(e) => handleKeydown(node.id, e)}
                 onChange={(e) => handleEdit(node.id, e.target.value)}
-                placeholder="Ctrl + Enter to send"
+                placeholder={node.role === "user" ? "Ctrl + Enter to send" : "System message"}
               />
             </AutoResize>
           )}
