@@ -123,6 +123,21 @@ export function ChatTree() {
     });
   }, []);
 
+  const handleToggleAccordion = useCallback((nodeId: string) => {
+    setTreeNodes((rootNodes) => {
+      const targetNode = rootNodes.find((node) => node.id === nodeId);
+      if (!targetNode?.childIds?.length) return rootNodes;
+
+      const newNodes = [...rootNodes];
+      const targetNodeIndex = newNodes.findIndex((node) => node.id === nodeId);
+      newNodes[targetNodeIndex] = {
+        ...targetNode,
+        isCollapsed: !targetNode.isCollapsed,
+      };
+      return newNodes;
+    });
+  }, []);
+
   const handleKeydown = useCallback(
     async (nodeId: string, e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const targetNode = treeNodes.find((node) => node.id === nodeId);
@@ -164,7 +179,9 @@ export function ChatTree() {
     return (
       <Thread showrail={hasSibling ? hasSibling : undefined} key={node.id}>
         <MessageLayout>
-          <Avatar>{roleIcon[node.role]}</Avatar>
+          <Avatar onClick={() => handleToggleAccordion(node.id)}>
+            {roleIcon[node.role]} {node.childIds?.length && node.isCollapsed ? "🔽" : null}
+          </Avatar>
           {node.isArchieved ? (
             <div>
               {node.content}{" "}
@@ -183,18 +200,20 @@ export function ChatTree() {
                 value={node.content}
                 onKeyDown={(e) => handleKeydown(node.id, e)}
                 onChange={(e) => handleEdit(node.id, e.target.value)}
-                placeholder={node.role === "user" ? "Ctrl + Enter to send" : "System message"}
+                placeholder={node.role === "user" ? "Ctrl + Enter to send, Esc to cancel" : "System message"}
               />
             </AutoResize>
           )}
         </MessageLayout>
         {!!node.childIds?.length ? (
-          <MessageList>
-            {node.childIds
-              ?.map((id) => treeNodes.find((node) => node.id === id))
-              .filter(Boolean)
-              .map((childNode) => renderNode(childNode as ChatNode, (node?.childIds ?? []).length > 1))}
-          </MessageList>
+          node.isCollapsed ? null : (
+            <MessageList>
+              {node.childIds
+                ?.map((id) => treeNodes.find((node) => node.id === id))
+                .filter(Boolean)
+                .map((childNode) => renderNode(childNode as ChatNode, (node?.childIds ?? []).length > 1))}
+            </MessageList>
+          )
         ) : null}
       </Thread>
     );
@@ -218,14 +237,28 @@ const MessageList = styled.div<{ showRail?: boolean }>`
 
 const MessageLayout = styled.div`
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template:
+    "icon content" auto
+    "empty control" auto / auto 1fr;
   gap: 4px;
 `;
 
-const Avatar = styled.div`
+const Overflow = styled.div`
+  grid-area: control;
+`;
+
+const Avatar = styled.button`
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
   font-size: 20px;
   width: 24px;
   display: flex;
   align-items: baseline;
   justify-content: center;
+
+  &:hover {
+    background-color: white;
+  }
 `;
