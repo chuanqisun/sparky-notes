@@ -8,7 +8,7 @@ export interface ChatNode {
   role: "system" | "user" | "assistant";
   content: string;
   childIds?: string[];
-  isArchieved?: boolean;
+  isArchived?: boolean;
   isCollapsed?: boolean;
   isEntry?: boolean;
 }
@@ -156,7 +156,7 @@ export function ChatTree() {
           id: crypto.randomUUID(),
           role: "assistant",
           content: `Mock response content at ${new Date().toLocaleTimeString()}`,
-          isArchieved: true,
+          isArchived: true,
           childIds: [newUserNode.id],
         };
 
@@ -166,7 +166,7 @@ export function ChatTree() {
           newNodes[targetNodeIndex] = {
             ...newNodes[targetNodeIndex],
             childIds: [newAssistantNode.id],
-            isArchieved: true,
+            isArchived: true,
           };
           return newNodes;
         });
@@ -182,7 +182,7 @@ export function ChatTree() {
           <Avatar onClick={() => handleToggleAccordion(node.id)}>
             {roleIcon[node.role]} {node.childIds?.length && node.isCollapsed ? "🔽" : null}
           </Avatar>
-          {node.isArchieved ? (
+          {node.isArchived ? (
             <div>
               {node.content}{" "}
               <span>
