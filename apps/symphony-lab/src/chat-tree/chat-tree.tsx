@@ -54,7 +54,12 @@ function getReachableIds(nodes: ChatNode[], rootId: string): string[] {
   return [rootId, ...(rootNode.childIds ?? []).flatMap((childId) => getReachableIds(nodes, childId))];
 }
 
-export function ChatTree() {
+export interface ChatConnection {
+  endpoint: string;
+  apiKey: string;
+}
+
+export function ChatTree(props: { chatConnection?: ChatConnection | null }) {
   const [treeNodes, setTreeNodes] = useState(INITIAL_NODES);
   const treeRootRef = useRef<HTMLDivElement>(null);
 
@@ -194,60 +199,68 @@ export function ChatTree() {
     [treeNodes]
   );
 
-  function renderNode(node: ChatNode, hasSibling?: boolean): any {
-    return (
-      <Thread showrail={hasSibling ? "true" : undefined} key={node.id}>
-        <MessageLayout>
-          <Avatar onClick={() => handleToggleAccordion(node.id)}>
-            {roleIcon[node.role]} {node.childIds?.length && node.isCollapsed ? "🔽" : null}
-          </Avatar>
-          {node.isEditing ? (
-            <AutoResize data-resize-textarea-content={node.content}>
-              <textarea
-                id={node.id}
-                value={node.content}
-                onKeyDown={(e) => handleKeydown(node.id, e)}
-                onChange={(e) => handleTextChange(node.id, e.target.value)}
-                placeholder={node.role === "user" ? "Enter to send, Esc to cancel" : "System message"}
-              />
-            </AutoResize>
-          ) : (
-            <MessageWithActions>
-              <Message draft={!node.isLocked && !node.isEditing && !node.isEditing ? "true" : undefined}>{node.content}</Message>
-              <MessageActions>
-                {node.role === "user" ? (
-                  <>
-                    {" "}
-                    {node.isLocked ? null : (
-                      <>
-                        <button onClick={() => handleStartEdit(node.id)}>Edit</button>
-                        {" · "}
-                      </>
-                    )}
-                    <button onClick={() => handleFork(node.id, node.content)}>Fork</button>
-                    {" · "}
-                    <button onClick={() => handleDelete(node.id)}>Delete</button>
-                  </>
-                ) : null}
-              </MessageActions>
-            </MessageWithActions>
-          )}
-        </MessageLayout>
-        {!!node.childIds?.length ? (
-          node.isCollapsed ? null : (
-            <MessageList>
-              {node.childIds
-                ?.map((id) => treeNodes.find((node) => node.id === id))
-                .filter(Boolean)
-                .map((childNode) => renderNode(childNode as ChatNode, (node?.childIds ?? []).length > 1))}
-            </MessageList>
-          )
-        ) : null}
-      </Thread>
-    );
-  }
+  const renderNode = useCallback(
+    (node: ChatNode, hasSibling?: boolean) => {
+      return (
+        <Thread showrail={hasSibling ? "true" : undefined} key={node.id}>
+          <MessageLayout>
+            <Avatar onClick={() => handleToggleAccordion(node.id)}>
+              {roleIcon[node.role]} {node.childIds?.length && node.isCollapsed ? "🔽" : null}
+            </Avatar>
+            {node.isEditing ? (
+              <AutoResize data-resize-textarea-content={node.content}>
+                <textarea
+                  id={node.id}
+                  value={node.content}
+                  onKeyDown={(e) => handleKeydown(node.id, e)}
+                  onChange={(e) => handleTextChange(node.id, e.target.value)}
+                  placeholder={node.role === "user" ? "Enter to send, Esc to cancel" : "System message"}
+                />
+              </AutoResize>
+            ) : (
+              <MessageWithActions>
+                <Message draft={!node.isLocked && !node.isEditing && !node.isEditing ? "true" : undefined}>{node.content}</Message>
+                <MessageActions>
+                  {node.role === "user" ? (
+                    <>
+                      {" "}
+                      {node.isLocked ? null : (
+                        <>
+                          <button onClick={() => handleStartEdit(node.id)}>Edit</button>
+                          {" · "}
+                        </>
+                      )}
+                      <button onClick={() => handleFork(node.id, node.content)}>Fork</button>
+                      {" · "}
+                      <button onClick={() => handleDelete(node.id)}>Delete</button>
+                    </>
+                  ) : null}
+                </MessageActions>
+              </MessageWithActions>
+            )}
+          </MessageLayout>
+          {!!node.childIds?.length ? (
+            node.isCollapsed ? null : (
+              <MessageList>
+                {node.childIds
+                  ?.map((id) => treeNodes.find((node) => node.id === id))
+                  .filter(Boolean)
+                  .map((childNode) => renderNode(childNode as ChatNode, (node?.childIds ?? []).length > 1))}
+              </MessageList>
+            )
+          ) : null}
+        </Thread>
+      );
+    },
+    [handleKeydown]
+  );
 
-  return <MessageList ref={treeRootRef}>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>;
+  return (
+    <div>
+      {props.chatConnection?.endpoint}
+      <MessageList ref={treeRootRef}>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>
+    </div>
+  );
 }
 
 const Thread = styled.div<{ showrail?: "true" }>`
