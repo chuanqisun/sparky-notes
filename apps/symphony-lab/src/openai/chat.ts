@@ -50,8 +50,8 @@ export async function getChatResponse(
     const result: OpenAIChatResponse = await fetch(endpoint, {
       method: "post",
       headers: {
-        "api-key": `Bearer ${apiKey}`,
-        "content-type": "application/json",
+        "api-key": apiKey,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     }).then((res) => res.json());

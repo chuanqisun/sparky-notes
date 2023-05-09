@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import { useAccountContext } from "../account/account-context";
 import { AutoResize } from "../form/basic-form";
+import { getChatResponse, type ChatMessage, type OpenAIChatPayload } from "../openai/chat";
+import { isSucceeded, listDeployments, type ModelDeployment } from "../openai/model-management";
 import "./chat-tree.css";
 
 export interface ChatNode {
@@ -59,9 +62,32 @@ export interface ChatConnection {
   apiKey: string;
 }
 
-export function ChatTree(props: { chatConnection?: ChatConnection | null }) {
+export function ChatTree() {
   const [treeNodes, setTreeNodes] = useState(INITIAL_NODES);
   const treeRootRef = useRef<HTMLDivElement>(null);
+
+  const { azureOpenAIConnection } = useAccountContext();
+  const [modelOptions, setModelOptions] = useState<ModelDeployment[]>([]);
+  const [selectedModel, setSelectedModel] = useState<ModelDeployment | null>(null);
+
+  const chat = useCallback(
+    async (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => {
+      if (!azureOpenAIConnection || !selectedModel) throw new Error("Chat endpoint not available");
+      const endpoint = `${azureOpenAIConnection.endpoint}openai/deployments/${selectedModel.id}/chat/completions?api-version=2023-03-15-preview`;
+      return getChatResponse(azureOpenAIConnection.apiKey, endpoint, messages, config).then((response) => response.choices[0].message.content ?? "");
+    },
+    [azureOpenAIConnection, selectedModel]
+  );
+
+  useEffect(() => {
+    if (azureOpenAIConnection) {
+      listDeployments(azureOpenAIConnection.apiKey, azureOpenAIConnection.endpoint).then((deployments) => {
+        const validModels = deployments.filter(isSucceeded).filter((maybeModel) => ["gpt-35-turbo", "gpt-4", "gpt-4-32k"].includes(maybeModel.model));
+        setModelOptions(validModels);
+        setSelectedModel(validModels[0] ?? null);
+      });
+    }
+  }, [azureOpenAIConnection]);
 
   const focusById = useCallback((nodeId: string) => {
     setTimeout(() => {
@@ -172,13 +198,14 @@ export function ChatTree(props: { chatConnection?: ChatConnection | null }) {
         e.preventDefault();
 
         // simulate GPT response
+        const response = await chat([{ role: "user", content: "hello gpt 3.5" }]);
 
         const newUserNode = getUserNode(crypto.randomUUID());
 
         const newAssistantNode: ChatNode = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `Mock response content at ${new Date().toLocaleTimeString()}`,
+          content: response,
           isLocked: true,
           childIds: [newUserNode.id],
         };
@@ -196,7 +223,7 @@ export function ChatTree(props: { chatConnection?: ChatConnection | null }) {
         });
       }
     },
-    [treeNodes]
+    [chat, treeNodes]
   );
 
   const renderNode = useCallback(
@@ -256,12 +283,38 @@ export function ChatTree(props: { chatConnection?: ChatConnection | null }) {
   );
 
   return (
-    <div>
-      {props.chatConnection?.endpoint}
+    <ChatAppLayout>
+      <ModelSelector>
+        {modelOptions.map((option) => (
+          <label key={option.id}>
+            <input type="radio" value={option.model} checked={option.id === selectedModel?.id} onChange={() => setSelectedModel(option)} />
+            <span>{option.model}</span>
+          </label>
+        ))}
+      </ModelSelector>
       <MessageList ref={treeRootRef}>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>
-    </div>
+    </ChatAppLayout>
   );
 }
+
+const ChatAppLayout = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+
+const ModelSelector = styled.menu`
+  padding: 0;
+  display: flex;
+  gap: 12px;
+  padding-left: 32px;
+  flex-wrap: wrap;
+
+  label {
+    font-weight: 600;
+    display: flex;
+    gap: 4px;
+  }
+`;
 
 const Thread = styled.div<{ showrail?: "true" }>`
   display: grid;
