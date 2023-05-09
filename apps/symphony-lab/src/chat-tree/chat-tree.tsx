@@ -320,7 +320,7 @@ export function ChatTree() {
         <ModelSelector>
           <label>
             Model
-            <select value={selectedModelId ?? ""}>
+            <select value={selectedModelId ?? ""} onChange={(e) => setSelectedModelId(e.target.value)}>
               {modelOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.model}
