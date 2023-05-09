@@ -12,6 +12,7 @@ export interface ChatNode {
   isCollapsed?: boolean;
   isEntry?: boolean;
   isEditing?: boolean;
+  isNextFocus?: boolean;
 }
 
 const defaultUserNodeId = crypto.randomUUID();
@@ -29,10 +30,11 @@ const DEFAULT_NODES: ChatNode[] = [
     role: "user",
     isEditing: true,
     content: "",
+    isNextFocus: true,
   },
 ];
 
-function repaceNodeContent(id: string, content: string, candidateNode: ChatNode) {
+function replaceNodeContent(id: string, content: string, candidateNode: ChatNode) {
   return candidateNode.id === id
     ? {
         ...candidateNode,
@@ -65,22 +67,31 @@ export function ChatTree() {
     }, 0);
   }, []);
 
-  const seenIds = useRef<Set<string>>(new Set());
-
   // auto focus
   // TODO: Esc and re-edit doesn't work
   // TODO may need eviction on seen ids
   useEffect(() => {
-    const allIds = treeNodes.map((node) => node.id);
-    const newIds = allIds.filter((id) => !seenIds.current.has(id));
-    if (newIds.at(-1)) {
-      focusById(newIds.at(-1)!);
-    }
-    newIds.forEach((id) => seenIds.current.add(id));
+    const needFocusNodes = treeNodes.filter((node) => node.isNextFocus);
+    if (!needFocusNodes.length) return;
+
+    focusById(needFocusNodes.at(-1)!.id);
+
+    setTreeNodes((rootNodes) =>
+      rootNodes.map((node) => {
+        if (node.isNextFocus) {
+          return {
+            ...node,
+            isNextFocus: false,
+          };
+        } else {
+          return node;
+        }
+      })
+    );
   }, [treeNodes]);
 
   const handleTextChange = useCallback((nodeId: string, content: string) => {
-    setTreeNodes((rootNodes) => rootNodes.map(repaceNodeContent.bind(null, nodeId, content)));
+    setTreeNodes((rootNodes) => rootNodes.map(replaceNodeContent.bind(null, nodeId, content)));
   }, []);
 
   const handleDelete = useCallback((nodeId: string) => {
@@ -118,6 +129,7 @@ export function ChatTree() {
           role: "user",
           content: "",
           isEditing: true,
+          isNextFocus: true,
         });
       }
 
@@ -132,6 +144,7 @@ export function ChatTree() {
       role: "user",
       content: baseContent,
       isEditing: true,
+      isNextFocus: true,
     };
 
     setTreeNodes((rootNodes) => {
@@ -171,6 +184,7 @@ export function ChatTree() {
           return {
             ...node,
             isEditing: true,
+            isNextFocus: true,
           };
         } else {
           return node;
@@ -200,7 +214,7 @@ export function ChatTree() {
         return;
       }
 
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key === "Enter") {
+      if (!e.ctrlKey && !e.shiftKey && !e.altKey && e.key === "Enter") {
         e.preventDefault();
 
         // simulate GPT response
@@ -210,6 +224,7 @@ export function ChatTree() {
           role: "user",
           content: "",
           isEditing: true,
+          isNextFocus: true,
         };
 
         const newAssistantNode: ChatNode = {
@@ -250,7 +265,7 @@ export function ChatTree() {
                 value={node.content}
                 onKeyDown={(e) => handleKeydown(node.id, e)}
                 onChange={(e) => handleTextChange(node.id, e.target.value)}
-                placeholder={node.role === "user" ? "Ctrl + Enter to send, Esc to cancel" : "System message"}
+                placeholder={node.role === "user" ? "Enter to send, Esc to cancel" : "System message"}
               />
             </AutoResize>
           ) : (
@@ -288,8 +303,8 @@ export function ChatTree() {
 const Thread = styled.div<{ showrail?: "true" }>`
   display: grid;
   gap: 8px;
-  margin-left: ${(props) => (props.showrail ? "10px" : "0")};
-  padding-left: ${(props) => (props.showrail ? "9px" : "0")};
+  margin-left: ${(props) => (props.showrail ? "14px" : "0")};
+  padding-left: ${(props) => (props.showrail ? "13px" : "0")};
   border-left: 1px solid ${(props) => (props.showrail ? "#aaa" : "transparent")};
 `;
 
