@@ -69,6 +69,7 @@ export function ChatTree() {
 
   // auto focus
   // TODO: Esc and re-edit doesn't work
+  // TODO may need eviction on seen ids
   useEffect(() => {
     const allIds = treeNodes.map((node) => node.id);
     const newIds = allIds.filter((id) => !seenIds.current.has(id));
