@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { AutoResize } from "../form/basic-form";
 import "./chat-tree.css";
@@ -56,6 +56,27 @@ function getReachableIds(nodes: ChatNode[], rootId: string): string[] {
 
 export function ChatTree() {
   const [treeNodes, setTreeNodes] = useState(DEFAULT_NODES);
+  const treeRootRef = useRef<HTMLDivElement>(null);
+
+  const focusById = useCallback((nodeId: string) => {
+    setTimeout(() => {
+      document.getElementById(nodeId)?.focus();
+      (document.getElementById(nodeId) as HTMLTextAreaElement)?.select();
+    }, 0);
+  }, []);
+
+  const seenIds = useRef<Set<string>>(new Set());
+
+  // auto focus
+  // TODO: Esc and re-edit doesn't work
+  useEffect(() => {
+    const allIds = treeNodes.map((node) => node.id);
+    const newIds = allIds.filter((id) => !seenIds.current.has(id));
+    if (newIds.at(-1)) {
+      focusById(newIds.at(-1)!);
+    }
+    newIds.forEach((id) => seenIds.current.add(id));
+  }, [treeNodes]);
 
   const handleTextChange = useCallback((nodeId: string, content: string) => {
     setTreeNodes((rootNodes) => rootNodes.map(repaceNodeContent.bind(null, nodeId, content)));
@@ -109,6 +130,7 @@ export function ChatTree() {
       id: crypto.randomUUID(),
       role: "user",
       content: baseContent,
+      isEditing: true,
     };
 
     setTreeNodes((rootNodes) => {
@@ -223,6 +245,7 @@ export function ChatTree() {
           {node.isEditing ? (
             <AutoResize data-resize-textarea-content={node.content}>
               <textarea
+                id={node.id}
                 value={node.content}
                 onKeyDown={(e) => handleKeydown(node.id, e)}
                 onChange={(e) => handleTextChange(node.id, e.target.value)}
@@ -258,7 +281,7 @@ export function ChatTree() {
     );
   }
 
-  return <MessageList>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>;
+  return <MessageList ref={treeRootRef}>{treeNodes.filter((node) => node.isEntry).map((node) => renderNode(node))}</MessageList>;
 }
 
 const Thread = styled.div<{ showrail?: "true" }>`
