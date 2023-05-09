@@ -37,13 +37,8 @@ function getUserNode(id: string, configOverrides?: Partial<ChatNode>): ChatNode 
   };
 }
 
-function replaceNodeContent(id: string, content: string, candidateNode: ChatNode) {
-  return candidateNode.id === id
-    ? {
-        ...candidateNode,
-        content,
-      }
-    : candidateNode;
+function patchNode(predicate: (node: ChatNode) => boolean, patch: Partial<ChatNode>) {
+  return (candidateNode: ChatNode) => (predicate(candidateNode) ? { ...candidateNode, ...patch } : candidateNode);
 }
 
 const roleIcon = {
@@ -76,22 +71,11 @@ export function ChatTree() {
 
     focusById(needFocusNodes.at(-1)!.id);
 
-    setTreeNodes((rootNodes) =>
-      rootNodes.map((node) => {
-        if (node.isNextFocus) {
-          return {
-            ...node,
-            isNextFocus: false,
-          };
-        } else {
-          return node;
-        }
-      })
-    );
+    setTreeNodes((rootNodes) => rootNodes.map(patchNode((node) => node.isNextFocus === true, { isNextFocus: false })));
   }, [treeNodes]);
 
   const handleTextChange = useCallback((nodeId: string, content: string) => {
-    setTreeNodes((rootNodes) => rootNodes.map(replaceNodeContent.bind(null, nodeId, content)));
+    setTreeNodes((rootNodes) => rootNodes.map(patchNode((node) => node.id === nodeId, { content })));
   }, []);
 
   const handleDelete = useCallback((nodeId: string) => {
@@ -166,19 +150,7 @@ export function ChatTree() {
   }, []);
 
   const handleStartEdit = useCallback((nodeId: string) => {
-    setTreeNodes((rootNodes) =>
-      rootNodes.map((node) => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            isEditing: true,
-            isNextFocus: true,
-          };
-        } else {
-          return node;
-        }
-      })
-    );
+    setTreeNodes((rootNodes) => rootNodes.map(patchNode((node) => node.id === nodeId, { isEditing: true, isNextFocus: true })));
   }, []);
 
   const handleKeydown = useCallback(
@@ -187,18 +159,7 @@ export function ChatTree() {
       if (targetNode?.role !== "user") return;
 
       if (e.key === "Escape") {
-        setTreeNodes((rootNodes) =>
-          rootNodes.map((node) => {
-            if (node.id === nodeId) {
-              return {
-                ...node,
-                isEditing: false,
-              };
-            } else {
-              return node;
-            }
-          })
-        );
+        setTreeNodes((rootNodes) => rootNodes.map(patchNode((node) => node.id === nodeId, { isEditing: false })));
         return;
       }
 
@@ -251,18 +212,25 @@ export function ChatTree() {
               />
             </AutoResize>
           ) : (
-            <div>
-              <Message draft={!node.isLocked && !node.isEditing && !node.isEditing ? "true" : undefined}>{node.content}</Message>{" "}
-              <span>
+            <MessageWithActions>
+              <Message draft={!node.isLocked && !node.isEditing && !node.isEditing ? "true" : undefined}>{node.content}</Message>
+              <MessageActions>
                 {node.role === "user" ? (
                   <>
-                    {node.isLocked ? null : <button onClick={() => handleStartEdit(node.id)}>Edit</button>}
+                    {" "}
+                    {node.isLocked ? null : (
+                      <>
+                        <button onClick={() => handleStartEdit(node.id)}>Edit</button>
+                        {" · "}
+                      </>
+                    )}
                     <button onClick={() => handleFork(node.id, node.content)}>Fork</button>
+                    {" · "}
                     <button onClick={() => handleDelete(node.id)}>Delete</button>
                   </>
                 ) : null}
-              </span>
-            </div>
+              </MessageActions>
+            </MessageWithActions>
           )}
         </MessageLayout>
         {!!node.childIds?.length ? (
@@ -295,7 +263,28 @@ const MessageList = styled.div`
   gap: 16px;
 `;
 
+const MessageActions = styled.span`
+  > * {
+    opacity: 0.5;
+  }
+  button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    &:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+  }
+`;
+
+const MessageWithActions = styled.div`
+  position: relative;
+`;
+
 const Message = styled.span<{ draft?: "true" }>`
+  white-space: pre-wrap;
   &::before {
     content: ${(props) => (props.draft ? '"*"' : "")};
   }
