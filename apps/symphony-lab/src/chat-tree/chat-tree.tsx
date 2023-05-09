@@ -15,24 +15,27 @@ export interface ChatNode {
   isNextFocus?: boolean;
 }
 
-const defaultUserNodeId = crypto.randomUUID();
-const DEFAULT_NODES: ChatNode[] = [
-  {
-    id: crypto.randomUUID(),
-    role: "system",
-    content: "",
-    isEntry: true,
-    isEditing: true,
-    childIds: [defaultUserNodeId],
-  },
-  {
-    id: defaultUserNodeId,
+const INITIAL_USER_NODE = getUserNode(crypto.randomUUID());
+const INITIAL_SYSTEM_NODE: ChatNode = {
+  id: crypto.randomUUID(),
+  role: "system",
+  content: "",
+  isEntry: true,
+  isEditing: true,
+  childIds: [INITIAL_USER_NODE.id],
+};
+const INITIAL_NODES = [INITIAL_SYSTEM_NODE, INITIAL_USER_NODE];
+
+function getUserNode(id: string, configOverrides?: Partial<ChatNode>): ChatNode {
+  return {
+    id,
     role: "user",
-    isEditing: true,
     content: "",
+    isEditing: true,
     isNextFocus: true,
-  },
-];
+    ...configOverrides,
+  };
+}
 
 function replaceNodeContent(id: string, content: string, candidateNode: ChatNode) {
   return candidateNode.id === id
@@ -57,7 +60,7 @@ function getReachableIds(nodes: ChatNode[], rootId: string): string[] {
 }
 
 export function ChatTree() {
-  const [treeNodes, setTreeNodes] = useState(DEFAULT_NODES);
+  const [treeNodes, setTreeNodes] = useState(INITIAL_NODES);
   const treeRootRef = useRef<HTMLDivElement>(null);
 
   const focusById = useCallback((nodeId: string) => {
@@ -67,9 +70,6 @@ export function ChatTree() {
     }, 0);
   }, []);
 
-  // auto focus
-  // TODO: Esc and re-edit doesn't work
-  // TODO may need eviction on seen ids
   useEffect(() => {
     const needFocusNodes = treeNodes.filter((node) => node.isNextFocus);
     if (!needFocusNodes.length) return;
@@ -124,13 +124,7 @@ export function ChatTree() {
       });
 
       if (newUserNodeId) {
-        newNodes.push({
-          id: newUserNodeId,
-          role: "user",
-          content: "",
-          isEditing: true,
-          isNextFocus: true,
-        });
+        newNodes.push(getUserNode(newUserNodeId));
       }
 
       return newNodes;
@@ -139,13 +133,7 @@ export function ChatTree() {
 
   const handleFork = useCallback((siblingId: string, baseContent: string) => {
     // insert a new user node before the forked node
-    const newUserNode: ChatNode = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: baseContent,
-      isEditing: true,
-      isNextFocus: true,
-    };
+    const newUserNode: ChatNode = getUserNode(crypto.randomUUID(), { content: baseContent });
 
     setTreeNodes((rootNodes) => {
       const newNodes = [...rootNodes, newUserNode];
@@ -219,13 +207,7 @@ export function ChatTree() {
 
         // simulate GPT response
 
-        const newUserNode: ChatNode = {
-          id: crypto.randomUUID(),
-          role: "user",
-          content: "",
-          isEditing: true,
-          isNextFocus: true,
-        };
+        const newUserNode = getUserNode(crypto.randomUUID());
 
         const newAssistantNode: ChatNode = {
           id: crypto.randomUUID(),
