@@ -34,7 +34,7 @@ export interface DisplayNode {
   isExplored?: boolean;
 }
 
-export const Explorer: React.FC = () => {
+export const VisualExplorer: React.FC = () => {
   const [graph, setGraph] = useState<DisplayGraph>({
     nodes: [],
     links: [],
@@ -243,7 +243,7 @@ export const Explorer: React.FC = () => {
   );
 };
 
-export default Explorer;
+export default VisualExplorer;
 
 const WorkspaceGrid = styled.div`
   --panelheight: calc(calc(100vh - 57px));

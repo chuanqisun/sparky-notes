@@ -28,9 +28,14 @@ const ROUTES: NamedRoute[] = [
     lazy: () => import("./experiments/claim-graph").then(({ ClaimGraph }) => ({ Component: ClaimGraph })),
   },
   {
-    displayName: "Explorer",
-    path: "/experiments/explorer",
-    lazy: () => import("./experiments/explorer").then(({ Explorer }) => ({ Component: Explorer })),
+    displayName: "Visual explorer",
+    path: "/experiments/visual-explorer",
+    lazy: () => import("./experiments/visual-explorer").then(({ VisualExplorer }) => ({ Component: VisualExplorer })),
+  },
+  {
+    displayName: "Theory explorer",
+    path: "/experiments/theory-explorer",
+    lazy: () => import("./experiments/theory-explorer").then(({ TheoryExplorer }) => ({ Component: TheoryExplorer })),
   },
 ];
 
