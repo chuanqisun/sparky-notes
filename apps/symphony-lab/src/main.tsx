@@ -13,11 +13,6 @@ interface NamedRoute extends NonIndexRouteObject {
 
 const ROUTES: NamedRoute[] = [
   {
-    displayName: "Basic",
-    path: "/experiments/basic",
-    lazy: () => import("./experiments/basic").then(({ Basic: Ontology }) => ({ Component: Ontology })),
-  },
-  {
     displayName: "Ontology graph",
     path: "/experiments/ontology-graph",
     lazy: () => import("./experiments/ontology-graph").then(({ OntologyGraph }) => ({ Component: OntologyGraph })),
@@ -33,9 +28,9 @@ const ROUTES: NamedRoute[] = [
     lazy: () => import("./experiments/visual-explorer").then(({ VisualExplorer }) => ({ Component: VisualExplorer })),
   },
   {
-    displayName: "Theory explorer",
-    path: "/experiments/theory-explorer",
-    lazy: () => import("./experiments/theory-explorer").then(({ TheoryExplorer }) => ({ Component: TheoryExplorer })),
+    displayName: "Theory builder",
+    path: "/experiments/theory-builder",
+    lazy: () => import("./experiments/theory-builder").then(({ TheoryBuilder }) => ({ Component: TheoryBuilder })),
   },
 ];
 

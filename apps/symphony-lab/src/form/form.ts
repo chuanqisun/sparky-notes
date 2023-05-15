@@ -16,6 +16,11 @@ export const BasicForm = styled.form`
   gap: 8px;
 `;
 
+export const BasicFieldset = styled.fieldset`
+  display: grid;
+  gap: 8px;
+`;
+
 export const BasicFormField = styled.div`
   display: grid;
   gap: 4px;
@@ -33,24 +38,15 @@ export const BasicFormTextarea = styled.textarea`
   padding: var(--input-padding-block) var(--input-padding-inline);
 `;
 
-export const AutoResize = styled.div`
+export const BasicSelect = styled.select`
+  padding: var(--input-padding-block) var(--input-padding-inline);
+`;
+
+export const ContentWithAction = styled.div`
   display: grid;
+  gap: 8px;
 
-  textarea {
-    grid-area: 1 / 1 / 2 / 2;
-    white-space: pre-wrap;
-    overflow: hidden;
-    padding: var(--input-padding-block) var(--input-padding-inline);
-    border-width: var(--input-border-width);
-    resize: none;
-  }
-
-  &::after {
-    white-space: pre-wrap;
-    grid-area: 1 / 1 / 2 / 2;
-    content: attr(data-resize-textarea-content) " ";
-    visibility: hidden;
-    padding: var(--input-padding-block) var(--input-padding-inline);
-    border-width: var(--input-border-width);
+  > :last-child {
+    margin-top: 8px;
   }
 `;

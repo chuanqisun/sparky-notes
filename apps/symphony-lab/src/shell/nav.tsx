@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { ConnectionSetupDialog } from "../account/connection-setup-form";
 import { useAuth } from "../account/use-auth";
-import { BasicFormButton } from "../form/basic-form";
+import { BasicFormButton } from "../form/form";
 import { useDialog } from "../utils/use-dialog";
 
 export function Nav() {
