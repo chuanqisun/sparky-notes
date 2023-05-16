@@ -56,13 +56,13 @@ export async function getChatResponse(
       body: JSON.stringify(payload),
     }).then((res) => res.json());
 
-    console.log({
-      title: `Chat ${result.usage.total_tokens} tokens`,
-      messages: payload.messages,
-      response: result,
-      topChoice: result.choices[0].message?.content ?? "",
-      tokenUsage: result.usage.total_tokens,
-    });
+    // console.log({
+    //   title: `Chat ${result.usage.total_tokens} tokens`,
+    //   messages: payload.messages,
+    //   response: result,
+    //   topChoice: result.choices[0].message?.content ?? "",
+    //   tokenUsage: result.usage.total_tokens,
+    // });
 
     return result;
   } catch (e) {
