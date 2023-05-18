@@ -43,12 +43,12 @@ app.post("/openai/chat/v3.5-turbo", [
   chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! }),
 ]);
 app.post("/openai/chat/v4-8k", [
-  rateLimit(12),
+  rateLimit(1),
   validateHitsToken,
   chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!, key: process.env.OPENAI_API_DEV_KEY! }),
 ]);
 app.post("/openai/chat/v4-32k", [
-  rateLimit(12),
+  rateLimit(1),
   validateHitsToken,
   chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_DEV_KEY! }),
 ]);
