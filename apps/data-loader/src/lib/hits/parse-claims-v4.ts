@@ -35,8 +35,7 @@ export async function parseClaimsV4(claimsDir: string, filename: string) {
           });
 
           const responseText = response.choices[0].message.content ?? "";
-          console.log(responseText);
-
+          console.log(`---[step 1]---\n${responseText}`);
           const response2 = await chatProxy({
             messages: composeFollowUpMessages({ role: "assistant", content: responseText }, item),
             temperature: 0,
@@ -50,7 +49,7 @@ export async function parseClaimsV4(claimsDir: string, filename: string) {
             .filter((triple) => triple.length === 3)
             .map((triple) => triple.join(" -> "));
 
-          console.log(triples);
+          console.log(`---[step 2]---\n${triples.join("\n")}`);
           results.push({ item, triples });
           progress.success++;
         } catch (e) {
