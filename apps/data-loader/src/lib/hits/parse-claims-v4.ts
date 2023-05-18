@@ -2,12 +2,13 @@ import { readFile, writeFile } from "fs/promises";
 import path from "path";
 import { getSimpleChatProxy, type ChatMessage } from "../azure/chat";
 import type { ExportedClaim } from "./export-claims";
+import { responseToList } from "./format";
 
 export async function parseClaimsV4(claimsDir: string, filename: string) {
   const inputFilePath = path.join(claimsDir, filename);
   console.log("Loading file", inputFilePath);
   const inputFile = await readFile(inputFilePath, "utf-8");
-  const inputJson = JSON.parse(inputFile);
+  const inputJson = JSON.parse(inputFile) as ExportedClaim[];
   console.log("File loaded, item count", inputJson.length);
 
   const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v3.5-turbo");
@@ -21,56 +22,66 @@ export async function parseClaimsV4(claimsDir: string, filename: string) {
     total: inputJson.length,
   };
 
-  for (const item of inputJson) {
-    try {
-      const { claimId, claimTitle } = item;
+  const chunkSize = 100;
 
-      const response = await chatProxy({
-        messages: [], // TODO
-        temperature: 0,
-        max_tokens: 500,
-      });
+  for (let chunkStart = 0; chunkStart < inputJson.length; chunkStart += chunkSize) {
+    await Promise.all(
+      inputJson.slice(chunkStart, chunkSize).map(async (item) => {
+        try {
+          const response = await chatProxy({
+            messages: composeInitialMessages(item),
+            temperature: 0,
+            max_tokens: 800,
+          });
 
-      const responseText = response.choices[0].message.content ?? "";
+          const responseText = response.choices[0].message.content ?? "";
+          console.log(responseText);
 
-      const triples = responseText
-        .split("\n")
-        .map(
-          (line) =>
-            line
-              .trim()
-              .match(/triple\s*\d+\:\s*(.+)/i)?.[1]
-              .trim() ?? ""
-        )
-        .filter(Boolean)
-        .map((line) => line.split("->").map((item) => item.trim().replaceAll("_", " ")))
-        .filter((triple) => triple.length === 3)
-        .map((triple) => triple.join(" -> "));
+          const response2 = await chatProxy({
+            messages: composeFollowUpMessages({ role: "assistant", content: responseText }, item),
+            temperature: 0,
+            max_tokens: 800,
+          });
 
-      results.push({ claimId, claimTitle });
-      progress.success++;
-    } catch (e) {
-      console.error(e);
-      progress.error++;
-    } finally {
-      progress.current++;
-    }
+          const triplesRaw = responseToList(response2.choices[0].message.content ?? "").listItems;
+          const triples = triplesRaw
+            .filter(Boolean)
+            .map((line) => line.split("->").map((item) => item.trim().replaceAll("_", " ")))
+            .filter((triple) => triple.length === 3)
+            .map((triple) => triple.join(" -> "));
 
-    if ((progress.success + progress.error) % 100 === 0) {
-      console.log("Progress: ", JSON.stringify(progress));
-      await writeFile(path.join(claimsDir, filename.split(".")[0] + "-parsed.json"), JSON.stringify(results, null, 2));
-    }
+          console.log(triples);
+          results.push({ item, triples });
+          progress.success++;
+        } catch (e) {
+          console.error(e);
+          progress.error++;
+        } finally {
+          progress.current++;
+        }
+
+        console.log("Progress: ", JSON.stringify(progress));
+        if ((progress.success + progress.error) % chunkSize === 0) {
+          await writeFile(path.join(claimsDir, filename.split(".")[0] + "-parsed.json"), JSON.stringify(results, null, 2));
+        }
+      })
+    );
   }
 }
 
 const SYSTEM_MESSAGE = `
 You are a UX research domain experts. Analyze the claim from a usability study. Aggressively reduce the claim into a list. Each item is generalized in news headline style.
+...
 `.trim();
 
 const USER_MESSAGE_2 = `
-Rephrase the list as logical triples, use format <subject> -> <predicate> -> <object>
+Rephrase the list as logical triples
 Generalize all users and participants as "Participant"
 Split compound subject and object phrases into multiple indivisible triples.
+Use format
+- Subject -> Predicate -> Object
+- Subject -> Predicate -> Object
+...
 `.trim();
 
 function composeInitialMessages(claim: ExportedClaim): ChatMessage[] {
