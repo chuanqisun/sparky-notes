@@ -27,7 +27,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]);
+app.post("/openai/completions", [
+  rateLimit(120),
+  validateHitsToken,
+  completions({
+    endpoint: process.env.OPENAI_COMPLETION_ENDPOINT!,
+    key: process.env.OPENAI_API_DEV_KEY!,
+  }),
+]);
 // chat is actuall limited to 300 rpm. but response time seems unstable at that rate
 app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! })]);
 app.post("/openai/chat/v3.5-turbo", [

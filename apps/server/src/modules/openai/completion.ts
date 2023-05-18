@@ -25,18 +25,22 @@ axiosRetry(axiosInstance, {
   retryCondition: (error) => error.response?.status === 429,
 });
 
-export const completions: RequestHandler = async (req, res, next) => {
+export interface CompletionsConfig {
+  endpoint: string;
+  key: string;
+}
+export const completions: (config: CompletionsConfig) => RequestHandler = (config) => async (req, res, next) => {
   try {
     let input: CompletionInput = req.body;
     assert(typeof input.prompt === "string");
 
     const response = await axiosInstance({
       // TODO replace with env
-      url: process.env.OPENAI_COMPLETION_ENDPOINT,
+      url: config.endpoint,
       method: "post",
       data: input,
       headers: {
-        "api-key": process.env.OPENAI_API_KEY,
+        "api-key": config.key,
         "Content-Type": "application/json",
       },
     });
