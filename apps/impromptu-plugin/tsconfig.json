@@ -7,8 +7,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "target": "es6",
-    "lib": ["es6"],
+    "lib": ["es2019"],
     "strict": true,
-    "typeRoots": ["../../node_modules/@types", "../../node_modules/@figma"]
+    "typeRoots": ["../../node_modules/@figma"]
   }
 }
