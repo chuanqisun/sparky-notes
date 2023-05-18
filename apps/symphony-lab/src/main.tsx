@@ -28,9 +28,9 @@ const ROUTES: NamedRoute[] = [
     lazy: () => import("./experiments/visual-explorer").then(({ VisualExplorer }) => ({ Component: VisualExplorer })),
   },
   {
-    displayName: "Theory builder",
-    path: "/experiments/theory-builder",
-    lazy: () => import("./experiments/theory-builder").then(({ TheoryBuilder }) => ({ Component: TheoryBuilder })),
+    displayName: "Ontology builder",
+    path: "/experiments/ontology-builder",
+    lazy: () => import("./experiments/ontology-builder").then(({ OntologyBuilder }) => ({ Component: OntologyBuilder })),
   },
 ];
 

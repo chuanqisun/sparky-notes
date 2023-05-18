@@ -4,7 +4,7 @@ import { useModelSelector } from "../account/model-selector";
 import { AutoResize } from "../form/auto-resize";
 import { CenterClamp } from "../shell/center-clamp";
 
-export const TheoryBuilder: React.FC = () => {
+export const OntologyBuilder: React.FC = () => {
   const { chat, ModelSelectorElement } = useModelSelector();
 
   const extrapolate = async (domainDescription: string, axioms: string) => {
