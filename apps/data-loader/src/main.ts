@@ -4,20 +4,23 @@ import { CozoDb } from "cozo-node";
 import path from "path";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
-import { exportClaims } from "./lib/hits/export-claims";
+import { exportClaims, exportClaimsV2 } from "./lib/hits/export-claims";
 import { exportGraph } from "./lib/hits/export-graph";
 import { buildGraph, initGraphDb, queryGraph } from "./lib/hits/graph";
 import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
+import { parseClaimsV4 } from "./lib/hits/parse-claims-v4";
 import { entityQueryHandler } from "./lib/repl/handlers/entity-query";
 import { semantcQueryHandler } from "./lib/repl/handlers/interactive-claim-query";
 import { startRepl } from "./lib/repl/start";
 
 dotenv.config();
 
+// const timestamp = Date.now();
+const timestamp = 1684367019212;
 const params = process.argv.slice(2);
-const CLAIMS_DIR = path.resolve("./data/claims");
+const CLAIMS_DIR = path.resolve(`./data/claims-${timestamp}`);
 
 console.log("Data loader started with params", params);
 
@@ -77,12 +80,20 @@ async function main() {
       parseClaimsV3(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
     }
+    case params.includes("parse-claims-v4"): {
+      parseClaimsV4(path.resolve(CLAIMS_DIR), `insight.json`);
+      break;
+    }
     case params.includes("query-graph"): {
       queryGraph(path.resolve("./data/graph-db"));
       break;
     }
     case params.includes("export-claims"): {
       exportClaims(path.resolve(CLAIMS_DIR));
+      break;
+    }
+    case params.includes("export-claims-v2"): {
+      exportClaimsV2(path.resolve(CLAIMS_DIR));
       break;
     }
     case params.includes("repl"): {
