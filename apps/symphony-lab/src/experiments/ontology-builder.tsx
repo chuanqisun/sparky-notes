@@ -5,9 +5,10 @@ import { AutoResize } from "../form/auto-resize";
 import { CenterClamp } from "../shell/center-clamp";
 
 export const OntologyBuilder: React.FC = () => {
-  const { chat, ModelSelectorElement } = useModelSelector();
+  const { chat, ModelSelectorElement, embed } = useModelSelector();
 
   const extrapolate = async (domainDescription: string, axioms: string) => {
+    embed("test");
     return chat(
       [
         {

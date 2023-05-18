@@ -1,14 +1,4 @@
-import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
-import type { AppRouter } from "data-loader/src/serve";
 import type React from "react";
-
-const trpc = createTRPCProxyClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: "http://localhost:5700",
-    }),
-  ],
-});
 
 export const Shelf: React.FC = () => {
   // idea

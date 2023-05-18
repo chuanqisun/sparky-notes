@@ -108,7 +108,7 @@ export interface EmbeddedTerm {
   vec: number[];
 }
 
-async function* iterateClaims(claimsDir: string, batchSize?: string): AsyncGenerator<ClaimWithTriples> {
+async function* iterateClaims(claimsDir: string, _batchSize?: string): AsyncGenerator<ClaimWithTriples> {
   const claimChunkFiles = await readdir(claimsDir);
   for (const claimChunkFile of claimChunkFiles) {
     const claims = (await import(`${claimsDir}/${claimChunkFile}`)).default;

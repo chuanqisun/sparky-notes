@@ -2,12 +2,11 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { ForceGraph3D } from "react-force-graph";
 import styled from "styled-components";
-import SpriteText from "three-spritetext";
 
 async function loadData() {
   const dataset = await fetch("/data/graph-viz-export.json").then((res) => res.json());
 
-  const { nodes, predicateEdges, similarityEdges, claimToClaimEdge } = dataset as any;
+  const { claimToClaimEdge } = dataset as any;
 
   // console.log(predicateEdges, similarityEdges);
 
@@ -83,25 +82,6 @@ export const ClaimGraph: React.FC = () => {
 };
 
 export default ClaimGraph;
-
-function renderLink(link: any) {
-  // extend link with text sprite
-  const sprite = new SpriteText(`${link.predicate}`);
-  sprite.color = "lightgrey";
-  sprite.textHeight = 16;
-  return sprite;
-}
-
-function updateLinkPosition(sprite: any, { start, end }: any) {
-  const middlePos = {
-    x: start["x"] + (end["x"] - start["x"]) / 2,
-    y: start["y"] + (end["y"] - start["y"]) / 2,
-    z: start["z"] + (end["z"] - start["z"]) / 2,
-  };
-
-  // Position sprite
-  Object.assign(sprite.position, middlePos);
-}
 
 const StyledHeader = styled.h1`
   color: white;

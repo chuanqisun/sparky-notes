@@ -35,7 +35,8 @@ axiosRetry(axiosInstance, {
 });
 
 export interface EmbeddingConfig {
-  openaiEmbeddingEndpoint: string;
+  endpoint: string;
+  key: string;
 }
 export const embedding: (config: EmbeddingConfig) => RequestHandler = (config) => async (req, res, next) => {
   try {
@@ -44,11 +45,11 @@ export const embedding: (config: EmbeddingConfig) => RequestHandler = (config) =
 
     const response = await axiosInstance({
       // TODO replace with env
-      url: config.openaiEmbeddingEndpoint,
+      url: config.endpoint,
       method: "post",
       data: input,
       headers: {
-        "api-key": process.env.OPENAI_API_KEY,
+        "api-key": config.key,
         "Content-Type": "application/json",
       },
     });

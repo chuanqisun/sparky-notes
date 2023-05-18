@@ -29,11 +29,27 @@ app.use(cors());
 
 app.post("/openai/completions", [rateLimit(120), validateHitsToken, completions]);
 // chat is actuall limited to 300 rpm. but response time seems unstable at that rate
-app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
-app.post("/openai/chat/v3.5-turbo", [rateLimit(300), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT! })]);
-app.post("/openai/chat/v4-8k", [rateLimit(12), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K! })]);
-app.post("/openai/chat/v4-32k", [rateLimit(12), validateHitsToken, chat({ openaiChatEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K! })]);
-app.post("/openai/embeddings", [rateLimit(300), validateHitsToken, embedding({ openaiEmbeddingEndpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K! })]);
+app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! })]);
+app.post("/openai/chat/v3.5-turbo", [
+  rateLimit(300),
+  validateHitsToken,
+  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! }),
+]);
+app.post("/openai/chat/v4-8k", [
+  rateLimit(12),
+  validateHitsToken,
+  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!, key: process.env.OPENAI_API_DEV_KEY! }),
+]);
+app.post("/openai/chat/v4-32k", [
+  rateLimit(12),
+  validateHitsToken,
+  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_DEV_KEY! }),
+]);
+app.post("/openai/embeddings", [
+  rateLimit(300),
+  validateHitsToken,
+  embedding({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_PROD_KEY! }),
+]);
 
 app.post("/web/search", [validateHitsToken, webSearch]);
 app.post("/web/crawl", [validateHitsToken, webCrawl]);

@@ -30,7 +30,8 @@ axiosRetry(axiosInstance, {
 });
 
 export interface ChatConfig {
-  openaiChatEndpoint: string;
+  endpoint: string;
+  key: string;
 }
 export const chat: (config: ChatConfig) => RequestHandler = (config) => async (req, res, next) => {
   try {
@@ -39,11 +40,11 @@ export const chat: (config: ChatConfig) => RequestHandler = (config) => async (r
 
     const response = await axiosInstance({
       // TODO replace with env
-      url: config.openaiChatEndpoint,
+      url: config.endpoint,
       method: "post",
       data: input,
       headers: {
-        "api-key": process.env.OPENAI_API_KEY,
+        "api-key": config.key,
         "Content-Type": "application/json",
       },
     });
