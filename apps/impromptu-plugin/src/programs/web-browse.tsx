@@ -1,7 +1,7 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion, OpenAICompletionResponse } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { createOrUseSourceNodes, createTargetNodes, printStickyNoWrap } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -97,43 +97,34 @@ export class WebBrowseProgram implements Program {
 
       if (context.isAborted() || context.isChanged()) return;
 
-      // 1. See if the text answer the question, if so, extract answer, generate deep link, and output stick
+      const initialAnswerMessages: ChatMessage[] = [
+        {
+          role: "system",
+          content: `Read the following web page and answer the question from the user:
 
-      const extractionPrompt = `
-Read the following web page carefully and answer the question.
+          ${shortenToWordCount(1200, text)}
+      `,
+        },
+        {
+          role: "user",
+          content: question,
+        },
+      ];
 
-web page """ 
-${shortenToWordCount(1200, text)}
-"""
-
-Question: ${question}
-Answer: `;
-
-      let extractionResponse: OpenAICompletionResponse;
-      try {
-        extractionResponse = await getCompletion(context.completion, extractionPrompt, { max_tokens: 255 });
-      } catch (e) {
-        continue;
-      }
-      if (context.isAborted() || context.isChanged()) return;
-      const responseText = extractionResponse.choices[0].text.trim();
-      const binaryPrompt = `
-Read the following text carefully and answer the question. 
-
-text """ 
-${responseText}
-"""
-Now answer the following question with just "Yes" or "No".
-
-
-Question: Does the question answer the question "${question}"?
-Answer (Yes/No): `.trimStart();
-
-      const binaryAnswer = await getCompletion(context.completion, binaryPrompt, { max_tokens: 3 });
+      const answerResponseMessage = (await context.chat(initialAnswerMessages, { max_tokens: 255 })).choices[0].message.content?.trim() ?? "";
       if (context.isAborted() || context.isChanged()) return;
 
-      if (binaryAnswer.choices[0].text.toLocaleLowerCase().includes("yes")) {
-        printStickyNoWrap(node, `${responseText}\n\nSource: ${link.url}`, { href: link.url });
+      const validationMessages: ChatMessage[] = [
+        ...initialAnswerMessages,
+        { role: "assistant", content: answerResponseMessage },
+        { role: "user", content: `Reflect on your response, did it answer the question "${question}"? Answer Yes/No` },
+      ];
+
+      const binaryResponse = (await context.chat(validationMessages, { max_tokens: 10 })).choices[0].message.content?.trim() ?? "";
+      if (context.isAborted() || context.isChanged()) return;
+
+      if (binaryResponse.toLocaleLowerCase().includes("yes")) {
+        printStickyNoWrap(node, `${answerResponseMessage}\n\nSource: ${link.url}`, { href: link.url });
         currentResultCount++;
       }
 
@@ -156,29 +147,27 @@ Answer (Yes/No): `.trimStart();
     const zeroDepthItem = queue.find((item) => item.depth === 0);
     if (zeroDepthItem) return zeroDepthItem;
 
-    // pick with GTP
-    const prompt = `Pick the best article from the following list to answer the question.
-Your answer must be a valid URL string, e.g. https://example.com
-
-List of articles
-${queue
-  .slice(-40)
-  .filter((item) => item.url.startsWith("http"))
-  .map((item) => `Title: ${item.title}\nURL: ${item.url}`)
-  .join("\n\n")}
-
-Question
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: `You are browsing the web to answer the following question:
 ${question}
 
-The picked URL is: http`;
+Pick the best article from the provided list to answer the question. Respond with just the URL, e.g. https://example.com`,
+      },
+      {
+        role: "user",
+        content: queue
+          .slice(-40)
+          .filter((item) => item.url.startsWith("http"))
+          .map((item) => `Title: ${item.title}\nURL: ${item.url}`)
+          .join("\n\n"),
+      },
+    ];
 
-    const urlResponse = (
-      await getCompletion(context.completion, prompt, {
-        max_tokens: 60,
-      })
-    ).choices[0].text;
+    const urlResult = (await context.chat(messages, { max_tokens: 60 })).choices[0].message.content?.trim() ?? "";
 
-    const foundItem = queue.find((item) => item.url.includes(urlResponse.trim()));
+    const foundItem = queue.find((item) => item.url.includes(urlResult.slice(urlResult.indexOf("http")).trim()));
     if (foundItem) return foundItem;
 
     // pick the top of the list
