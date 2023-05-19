@@ -1,9 +1,9 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
-import { responseToArray } from "../openai/format";
+import { ChatMessage } from "../openai/chat";
+import { responseToList } from "../openai/format";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { combineWhitespace, shortenToWordCount } from "../utils/text";
@@ -62,22 +62,25 @@ export class SummarizeProgram implements Program {
         )
         .join("\n");
       const safeTitles = shortenToWordCount(2000, allTitles);
-      const initPrompt = `
-Summarize the full list into a concise list with up to ${maxItemCount} items, 10 words per item.
 
-Full list (bullet list): 
-${safeTitles}
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content: `Summarize the information into a list with up to ${maxItemCount} items. Respond with an unordered markdown bullet list. Each item in short news headline style.`,
+        },
+        {
+          role: "user",
+          content: safeTitles,
+        },
+      ];
 
-Concise list (bullet list, up to ${maxItemCount} items):
-- `;
+      const rawList = await context
+        .chat(messages, {
+          max_tokens: Math.max(500, Math.min(maxItemCount * 50, 200)),
+        })
+        .then((response) => response.choices[0].message.content ?? "");
 
-      return responseToArray(
-        (
-          await getCompletion(context.completion, initPrompt, {
-            max_tokens: Math.max(500, Math.min(maxItemCount * 50, 200)),
-          })
-        ).choices[0].text
-      );
+      return responseToList(rawList).listItems;
     };
 
     const summarizedItems = await getInitSummary();
