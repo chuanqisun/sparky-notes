@@ -1,8 +1,8 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSectionNewLine, moveStickiesToSectionNoWrap, setFillColor } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -61,35 +61,37 @@ export class ThemeProgram implements Program {
 
     const inputNodes = getInnerStickies(sources);
 
-    const prompt = `
-Using the following format, identify ${themeCount} or more themes across the following ${itemType} list
-Provide the relevant ${itemType} id numbers after each theme.
-
-${itemType} list:
-${inputNodes
-  .map(
-    (node, index) =>
-      `${itemType} #${index + 1}: ${combineWhitespace(node.text.characters)} ${shortenToWordCount(
-        2000 / inputNodes.length,
-        node.getPluginData("shortContext")
-      )}`
-  )
-  .join("\n")}
-
-FORMAT START
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content:
+          `User will provide a ${itemType} list. You must identify ${themeCount} or more themes across the ${itemType} list. Associate the relevant ${itemType} id numbers after each theme. Respond use this format:
+        
 Theme: <description of the first theme>
 ${itemType} #s: <the #s of the ${itemType}, e.g. 2,7,11>
 Theme: <description of the second theme>
 ${itemType} #s: <the #s of the ${itemType}, e.g. 9,1,8>
-FORMAT END
+        `.trim(),
+      },
+      {
+        role: "user",
+        content: inputNodes
+          .map(
+            (node, index) =>
+              `${itemType} #${index + 1}: ${combineWhitespace(node.text.characters)} ${shortenToWordCount(
+                2000 / inputNodes.length,
+                node.getPluginData("shortContext")
+              )}`
+          )
+          .join("\n"),
+      },
+    ];
 
-Begin!
-Theme:`;
+    const response = (await context.chat(messages, { max_tokens: 250 })).choices[0].message.content?.trim() ?? "";
 
-    const fullAnswer = (await getCompletion(context.completion, prompt, { max_tokens: 200 })).choices[0].text.trim();
     if (context.isAborted() || context.isChanged()) return;
 
-    const themes = fullAnswer
+    const themes = response
       .split("Theme:")
       .map((themeBlock) => themeBlock.trim())
       .filter(Boolean)
@@ -113,24 +115,24 @@ Theme:`;
     if (!targetSection) return;
 
     for (const theme of themes) {
-      // inject additional context to the theme
-      const prompt = `
-Summarize the following ${itemType} items, focus on the theme "${theme.name}".
+      const reflectionMessages: ChatMessage[] = [
+        { role: "system", content: `Summarize the ${itemType} items, focus on their common theme "${theme.name}". Respond with a single paragraph.` },
+        {
+          role: "user",
+          content: theme.items
+            .map(
+              (item, index) =>
+                `${itemType} item ${index + 1}: ${combineWhitespace(item.text.characters)} ${shortenToWordCount(
+                  2000 / inputNodes.length,
+                  item.getPluginData("shortContext")
+                )}`
+            )
+            .join("\n"),
+        },
+      ];
 
-${theme.items
-  .map(
-    (item, index) =>
-      `${itemType} item ${index + 1}: ${combineWhitespace(item.text.characters)} ${shortenToWordCount(
-        2000 / inputNodes.length,
-        item.getPluginData("shortContext")
-      )}`
-  )
-  .join("\n")}
-
-Summary in one paragraph:`;
-
-      replaceNotification(`Reflecting on theme "${theme.name}"...`);
-      const themeIntroResponse = (await getCompletion(context.completion, prompt, { max_tokens: 250 })).choices[0].text.trim();
+      replaceNotification(`Reflecting on theme "${theme.name}"...`, { timeout: 20000 });
+      const themeIntroResponse = (await context.chat(reflectionMessages, { max_tokens: 300 })).choices[0].message.content?.trim() ?? "";
       if (context.isAborted() || context.isChanged()) return;
 
       const themeSticky = figma.createSticky();
