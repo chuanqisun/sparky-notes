@@ -1,5 +1,5 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
 import { Description, FormTitle, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
@@ -67,19 +67,24 @@ export class CategorizeProgram implements Program {
 
       const maxCategoryWordCount = Math.max(...targetNodes.map((targetNode) => targetNode.name.split(" ").length));
 
-      const prompt =
-        `${trainingSamples.map((sample) => `Example: ${sample.text}\nCategory: ${sample.category}`).join("\n\n")}` +
-        `\n\nClassify the following text into 1 of the following categories: [${targetNodes.map((targetNode) => targetNode.name).join(", ")}]
+      const messages: ChatMessage[] = [
+        { role: "system", content: `Classify the text into one of the categories: [${targetNodes.map((targetNode) => targetNode.name).join(", ")}]` },
+        ...trainingSamples.flatMap((sample) => [
+          { role: "user" as const, content: sample.text },
+          { role: "assistant" as const, content: sample.category },
+        ]),
+        {
+          role: "user",
+          content: `${currentSticky.text.characters} ${currentSticky.getPluginData("shortContext")}`,
+        },
+      ];
 
-Text: ${currentSticky.text.characters} ${currentSticky.getPluginData("shortContext")}
-        
-Classified category: `;
-
-      const topChoiceResult = (
-        await getCompletion(context.completion, prompt, {
-          max_tokens: Math.min(5, 4 * maxCategoryWordCount),
-        })
-      ).choices[0].text.trim();
+      const topChoiceResult =
+        (
+          await context.chat(messages, {
+            max_tokens: Math.min(5, 4 * maxCategoryWordCount),
+          })
+        ).choices[0].message.content?.trim() ?? "";
 
       if (!figma.getNodeById(currentSticky.id)) continue;
       if (context.isAborted() || context.isChanged()) return;
