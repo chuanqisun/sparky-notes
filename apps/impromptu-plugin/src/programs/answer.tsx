@@ -1,7 +1,7 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType, getInnerStickies } from "../utils/query";
 import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
@@ -50,24 +50,24 @@ export class AnswerProgram implements Program {
     const question = getFieldByLabel("Question", node)!.value.characters;
 
     for (let currentSticky of inputStickies) {
-      const pretext = currentSticky.getPluginData("longContext");
-      const prompt = `${
-        pretext.length
-          ? `Read the following article and answer the question.
-Article """
-${pretext}
-"""`
-          : ""
-      }
+      const longContext = currentSticky.getPluginData("longContext").trim();
+      const shortContext = currentSticky.getPluginData("shortContext").trim();
 
-Answer the question about the following text.
+      const hasContext = longContext.length || shortContext.length;
 
-Text: """
-${currentSticky.text.characters}
-${currentSticky.getPluginData("shortContext") ?? ""}
-"""
-Question: ${question}
-Answer: `;
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content: [
+            `Read the following text carefully and answer user's question`,
+            currentSticky.text.characters,
+            ...(hasContext ? [`Additional context:`] : []),
+            ...(longContext.length ? [longContext] : []),
+            ...(!longContext.length && shortContext.length ? [shortContext] : []),
+          ].join("\n\n"),
+        },
+        { role: "user", content: question },
+      ];
 
       const config = this.getConfig(node);
       const apiConfig = {
@@ -75,7 +75,7 @@ Answer: `;
         max_tokens: config.maxTokens,
       };
 
-      const result = (await getCompletion(context.completion, prompt, apiConfig)).choices[0].text.trim();
+      const result = (await context.chat(messages, apiConfig)).choices[0].message.content?.trim() ?? "";
 
       if (!figma.getNodeById(currentSticky.id)) continue;
       if (context.isAborted() || context.isChanged()) return;
