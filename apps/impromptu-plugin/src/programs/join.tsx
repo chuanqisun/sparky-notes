@@ -70,36 +70,46 @@ export class JoinProgram implements Program {
       const messages: ChatMessage[] = [
         {
           role: "system",
-          content: `You help the user test if a given relation holds true from a concept to the provided options. Respond with a json array of matched indices. When there is no match, response with []. For example
-
-User:
-Concept: Food
-Relation: can be consumed by
-Options:
+          content: `Help the user test if a predicate holds true from a subject to the provided objects. Respond with matched objects in a valid json array. When there is no match, response with [].`,
+        },
+        {
+          role: "user",
+          content: `
+Subject: Food
+Predicate: can be consumed by
+Objects:
 1. Human
 3. Car
 4. Computer
 5. Cat
 6. Plants
-
-You: [1,5]
-
-User:
-Concept: Pen
-Relation: is bigger than
-Options:
-1. Paper
-2. Tree
-3. PC
-
-You: []`,
+`.trim(),
+        },
+        {
+          role: "assistant",
+          content: `[1,5]`,
         },
         {
           role: "user",
           content: `
-Concept: ${combineWhitespace(keyNode.text.characters)}
-Relation: ${getFieldByLabel("Relation", node)!.value.characters}
-Options:
+Subject: Sun
+Predicate: is bigger than
+Objects:
+1. Moon
+2. Earth
+3. Mars
+`.trim(),
+        },
+        {
+          role: "assistant",
+          content: `[]`,
+        },
+        {
+          role: "user",
+          content: `
+Subject: ${combineWhitespace(keyNode.text.characters)}
+Predicate: ${getFieldByLabel("Relation", node)!.value.characters}
+Object:
 ${valueNodes.map((valueNode, index) => `${index + 1}. ${combineWhitespace(`${valueNode.text.characters}`)}`).join("\n")}`.trim(),
         },
       ];
@@ -107,7 +117,9 @@ ${valueNodes.map((valueNode, index) => `${index + 1}. ${combineWhitespace(`${val
       replaceNotification(`Evaluting "${shortenToWordCount(5, keyNode.text.characters)} ${getFieldByLabel("Relation", node)!.value.characters}?"`, {
         timeout: Infinity,
       });
-      const fullResponse = ((await context.chat(messages, { max_tokens: 500, temperature: 0.25, model: "v4-32k" })).choices[0].message.content ?? "").trim();
+      const fullResponse = (
+        (await context.chat(messages, { max_tokens: 500, temperature: 0.25, model: "v3.5-turbo" })).choices[0].message.content ?? ""
+      ).trim();
 
       if (context.isAborted() || context.isChanged()) return;
 
