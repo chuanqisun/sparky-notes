@@ -1,6 +1,7 @@
-import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
+import { OpenAICompletionPayload } from "../openai/completion";
 import { createOrUseSourceNodes, createTargetNodes, printSticky } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getInnerStickies } from "../utils/query";
 import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
 
@@ -22,9 +23,9 @@ export class TemplateProgram implements Program {
       <AutoLayout direction="vertical" spacing={16} padding={24} cornerRadius={16} fill="#333" width={400}>
         <FormTitle>Template</FormTitle>
         <Description>
-          Prompt for completion with a template. Each template variable surrounded by double curly braces will be substituted with the text from the input
-          section where the section name matches the variable name. Input section with a single sticky will be inserted in the template as inline text. Input
-          section with two or more stickies will be inserted into the template as an unordered list in markdown format.
+          Get chat response with a template. Each template variable surrounded by double curly braces will be substituted with the text from the input section
+          where the section name matches the variable name. Input section with a single sticky will be inserted in the template as inline text. Input section
+          with two or more stickies will be inserted into the template as an unordered list in markdown format.
         </Description>
         <TextField label="Template string" value="What does {{Variable A}} and {{Variable B}} have in common?" />
         <TextField label="Temperature" value="0.7" />
@@ -71,7 +72,9 @@ export class TemplateProgram implements Program {
       temperature: config.temperature,
       max_tokens: config.maxTokens,
     };
-    const result = (await getCompletion(context.completion, compiledTemplate, apiConfig)).choices[0].text.trim();
+    const messages: ChatMessage[] = [{ role: "user", content: compiledTemplate }];
+
+    const result = (await context.chat(messages, apiConfig)).choices[0].message.content ?? "";
 
     if (context.isAborted() || context.isChanged()) return;
 
