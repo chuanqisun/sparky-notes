@@ -74,6 +74,11 @@ export function getChildrenMinX(section: SectionNode, fallback = 0) {
   return leftEdge === Infinity ? fallback : leftEdge;
 }
 
+export function getFirstOutput(node: FrameNode): SectionNode | null {
+  const outputContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
+  return outputContainer ?? null;
+}
+
 export interface Layout {
   padding?: number;
   wrap?: number;
@@ -156,6 +161,17 @@ export function sourceNodesToText(nodes: SectionNode[]): string {
 
 export function getInnerStickies(nodes: SectionNode[]): StickyNode[] {
   return nodes.flatMap((node) => [...node.children].sort(sortFPattern).filter(filterToType("STICKY")) as StickyNode[]);
+}
+
+export function getTextChunks(longText: string, chunkSize: number) {
+  const chunks: string[] = [];
+  let remainingWords = longText.split(" ");
+  while (remainingWords.length) {
+    chunks.push(remainingWords.slice(0, chunkSize).join(" "));
+    remainingWords = remainingWords.slice(chunkSize);
+  }
+
+  return chunks;
 }
 
 export function sourceNodeToText(node: SectionNode): string {

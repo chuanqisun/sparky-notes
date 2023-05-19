@@ -1,7 +1,18 @@
 import assert from "assert";
 import axios from "axios";
+import axiosRetry from "axios-retry";
 import * as cheerio from "cheerio";
 import type { RequestHandler } from "express";
+
+const axiosInstance = axios.create();
+axiosRetry(axiosInstance, {
+  retries: 3,
+  retryDelay: (count) => {
+    console.log(`search retry: ${count}`);
+    return count * 2000 + 5000;
+  },
+  retryCondition: () => true,
+});
 
 export const webSearch: RequestHandler = async (req, res, next) => {
   try {
@@ -11,7 +22,7 @@ export const webSearch: RequestHandler = async (req, res, next) => {
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
 
     // crawl duckduckgo html results
-    const response = await axios.request({ url });
+    const response = await axiosInstance.request({ url, timeout: 30000 });
 
     const $ = cheerio.load(response.data);
     const results: any[] = [];

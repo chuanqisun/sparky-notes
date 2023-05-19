@@ -6,6 +6,7 @@ import { importTextFile } from "./import/import";
 import { ChatProxy, getChatResponse, modelToEndpoint } from "./openai/chat";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
+import { AgentV2Program } from "./programs/agent-v2";
 import { AnswerProgram } from "./programs/answer";
 import { ArxivSearchProgram } from "./programs/arxiv-search";
 import { CategorizeProgram } from "./programs/categorize";
@@ -58,6 +59,7 @@ let webCrawl: WebCrawlProxy;
 
 const programs: Program[] = [
   new AgentProgram(),
+  new AgentV2Program(),
   new AnswerProgram(),
   new ArxivSearchProgram(),
   new CategorizeProgram(),

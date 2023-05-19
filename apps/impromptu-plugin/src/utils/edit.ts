@@ -1,6 +1,5 @@
-import { getFirstOutput, getTextChunks } from "../programs/agent";
 import { getSolidFill, sectionColors, stickyColors } from "./colors";
-import { getNextTilePosition, getNextTilePositionNewLine, getNextTilePositionNoWrap } from "./query";
+import { getFirstOutput, getNextTilePosition, getNextTilePositionNewLine, getNextTilePositionNoWrap, getTextChunks } from "./query";
 
 export function cloneSticky(sticky: StickyNode) {
   // TODO check if plugin data is cloned

@@ -3,9 +3,8 @@ import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap, setFillColor } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
-import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
-import { filterToType, getInnerStickies } from "../utils/query";
+import { getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
 import { ArxivSearchTool } from "./agent-tools/arxiv-search";
 import { AssumptionTool } from "./agent-tools/assume";
@@ -176,11 +175,6 @@ export class AgentProgram implements Program {
   }
 }
 
-export function getFirstOutput(node: FrameNode): SectionNode | null {
-  const outputContainer = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"))[0];
-  return outputContainer ?? null;
-}
-
 export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string; tools: BaseTool[] }) {
   const actionName = input.action.toLocaleLowerCase();
   const tool = input.tools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName))!;
@@ -241,15 +235,4 @@ Question: ${input.question}${rollingMemory.join("").replace(/\n+/g, "\n")}\n`.tr
   };
 
   return [prompt, config] as const;
-}
-
-export function getTextChunks(longText: string, chunkSize: number) {
-  const chunks: string[] = [];
-  let remainingWords = longText.split(" ");
-  while (remainingWords.length) {
-    chunks.push(remainingWords.slice(0, chunkSize).join(" "));
-    remainingWords = remainingWords.slice(chunkSize);
-  }
-
-  return chunks;
 }

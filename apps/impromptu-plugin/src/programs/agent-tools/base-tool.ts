@@ -1,5 +1,4 @@
-import { getCompletion } from "../../openai/completion";
-import { INTERMEDIATE_ANSWER_LENGTH } from "../agent";
+import { ChatMessage } from "../../openai/chat";
 import { ProgramContext } from "../program";
 
 export interface ToolRunOutput {
@@ -17,12 +16,26 @@ export abstract class BaseTool {
   public abstract name: string;
   public abstract description: string;
   public async run(input: ToolRunInput): Promise<ToolRunOutput> {
-    const observation = (
-      await getCompletion(input.programContext.completion, input.pretext + "Observation: ", {
-        max_tokens: INTERMEDIATE_ANSWER_LENGTH,
-        stop: ["Thought", "Action", "Final Answer"],
-      })
-    ).choices[0].text.trim();
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: `
+User will provide an action, an input, and context. You will simulate an assistant that performs the action. Respond with an observation. Use this format:
+
+Simulated action: <Describe what you did>
+Observation: <Describe what you observed from the action>
+`.trim(),
+      },
+      {
+        role: "user",
+        content: `
+Action: ${input.action}
+Action input: ${input.actionInput}
+        `.trim(),
+      },
+    ];
+
+    const observation = (await input.programContext.chat(messages, { max_tokens: 400 })).choices[0].message.content?.trim() ?? "No observation available";
     return { observation };
   }
 }
