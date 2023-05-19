@@ -1,5 +1,5 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { asyncQuicksort, Settlement } from "../utils/async-quicksort";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, insertStickyToSection, setFillColor } from "../utils/edit";
@@ -108,22 +108,56 @@ export class SortProgram implements Program {
       // const contextA = a.getPluginData("shortContext");
       // const contextB = b.getPluginData("shortContext");
 
-      const prompt = `
-
+      const messages: ChatMessage[] = [
+        { role: "system", content: `Compare item A and item B. Pick the one based on the requirement. Briefly explain your reason then provde the answer` },
+        {
+          role: "user",
+          content: `
+Requirment: pick the one that is bigger
+A: 5
+B: three`.trim(),
+        },
+        {
+          role: "assistant",
+          content: `
+Brief reason: 5 > 3
+Answer: A
+          `,
+        },
+        {
+          role: "user",
+          content: `
+Requirment: pick the one that is faster
+A: Walk
+B: Bike`.trim(),
+        },
+        {
+          role: "assistant",
+          content: `
+Brief reason: Bike is faster than walk
+Answer: B
+          `,
+        },
+        {
+          role: "user",
+          content: `
+Requirement: pick the one that is ${sortGoal}
 A: ${a.text.trim()}
-
 B: ${b.text.trim()}
+        `.trim(),
+        },
+      ];
 
-Question: between A and B, which one is ${sortGoal}
-Ansower (A/B): `;
+      const topChoiceResult =
+        (
+          await context.chat(messages, {
+            max_tokens: 200,
+          })
+        ).choices[0].message.content?.trim() ?? "Answer: A";
 
-      const topChoiceResult = (
-        await getCompletion(context.completion, prompt, {
-          max_tokens: 3,
-        })
-      ).choices[0].text.trim();
+      const matchedSelection = topChoiceResult.match(/Answer: ([A-Z])/im)?.[1] ?? "A";
 
-      return topChoiceResult === "A" ? -1 : 1;
+      return matchedSelection === "A" ? -1 : 1;
     };
 
     await asyncQuicksort(inMemoryStickies, onCompare, onElement, onPivot, onSettle, () => context.isAborted() || context.isChanged());
