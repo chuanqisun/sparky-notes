@@ -1,8 +1,8 @@
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { responseToArray } from "../openai/format";
 import { stickyColors } from "../utils/colors";
 import { createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType } from "../utils/query";
@@ -62,41 +62,50 @@ export class WebSearchProgram implements Program {
       const crawledText = (await context.webCrawl({ url: item.url })).text;
       if (context.isChanged() || context.isAborted()) return;
 
-      const binaryCheck = `
-Context: ###
-${shortenToWordCount(1000, crawledText)}
-###
+      const binaryCheckMessages: ChatMessage[] = [
+        {
+          role: "system",
+          content: `Read the following web page carefully and answer the question
+        ${shortenToWordCount(1000, crawledText)}
+        `.trim(),
+        },
+        {
+          role: "user",
+          content: `Query: ${query}
+Does the context contain a list of items for the query (Yes/No)?`,
+        },
+      ];
 
-Check if the context contains a list of items for the following query.
+      const binaryCheckResponse = (await context.chat(binaryCheckMessages, { max_tokens: 10 })).choices[0].message.content?.trim() ?? "";
 
-Query: ${query}
-Does the context contain a list of items for the query (Yes/No)? `;
-
-      const binaryResponse = await getCompletion(context.completion, binaryCheck, {
-        max_tokens: 3,
-      });
       if (context.isChanged() || context.isAborted()) return;
 
-      if (!binaryResponse.choices[0].text?.toLocaleLowerCase().includes("yes")) {
+      if (!binaryCheckResponse.toLocaleLowerCase().includes("yes")) {
         continue;
       }
 
-      const prompt = `
-Context: ###
+      const listExtractionMessages: ChatMessage[] = [
+        {
+          role: "system",
+          content: `Read the following web page carefully and respond to the query with a bullet list of 3 - 5 items, each item news headline style. Use format
+- Item 1
+- Item 2
+...
+
+Web page:
 ${shortenToWordCount(1000, crawledText)}
-###
+        `.trim(),
+        },
+        {
+          role: "user",
+          content: query.trim(),
+        },
+      ];
 
-Use the context above, respond to the query with a bullet list of 3 - 5 items.
-
-Query: ${query}
-Response (bullet list of 3 - 5 items): -  `;
-
-      const response = await getCompletion(context.completion, prompt, {
-        max_tokens: 100,
-      }).then((response) => response.choices[0].text);
+      const listExtractionResults = (await context.chat(listExtractionMessages, { max_tokens: 100 })).choices[0].message.content?.trim() ?? "";
       if (context.isChanged() || context.isAborted()) return;
 
-      const listItems = responseToArray(response);
+      const listItems = responseToArray(listExtractionResults);
 
       for (let listItem of listItems) {
         const sticky = figma.createSticky();
