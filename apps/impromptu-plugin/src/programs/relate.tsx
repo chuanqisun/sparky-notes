@@ -70,25 +70,25 @@ export class RelateProgram implements Program {
           {
             role: "system",
             content:
-              'You help user identify relationship between concepts. The user will provide you Concept A and concept B. You will check if there exists a relation from Concept A to Concept B. You will respond with the relation or "N/A" when there is no significant relation',
+              'Identify logical relationship from a Subject to an Object. The user will provide Subject and Object. You will check if there exists a predicate relationship from Subject to Object. You will respond with the predicate relationship or "N/A" when there is no significant relationship',
           },
           {
             role: "user",
             content: `
-Concept A: Homeless problem in Seattle
-Concept A details: ...
-Concept B: Racial justice for low income population
-Concept B details: ...
+Subject: Homeless problem in Seattle
+Subject details: ...
+Object: Racial justice for low income population
+Object details: ...
     `,
           },
           { role: "assistant", content: "Homeless problem can be the result of the lack of Racial justice" },
           {
             role: "user",
             content: `
-Concept A: Homeless problem in Seattle
-Concept A details: ...
-Concept B: Surfing is fun
-Concept B details: ...
+Subject: Homeless problem in Seattle
+Subject details: ...
+Object: Surfing is fun
+Object details: ...
     `,
           },
           {
@@ -98,10 +98,10 @@ Concept B details: ...
           {
             role: "user",
             content: `
-Concept A: Global warming
-Concept A details: ...
-Concept B: Space travel
-Concept B details: ...
+Subject: Global warming
+Subject details: ...
+Object: Space travel
+Object details: ...
     `,
           },
           {
@@ -113,10 +113,10 @@ However, Global Warming and Space travel might be indirectly connected. The rock
           {
             role: "user",
             content: `
-Concept A: ${combineWhitespace(`${keyNode.text.characters}`)}
-Concept A details: ${combineWhitespace(`${keyNode.getPluginData("shortContext")}`)}
-Concept B: ${combineWhitespace(`${valueNode.text.characters}`)}
-Concept B details: ${combineWhitespace(`${valueNode.getPluginData("shortContext")}`)}
+Subject: ${combineWhitespace(`${keyNode.text.characters}`)}
+Subject details: ${combineWhitespace(`${keyNode.getPluginData("shortContext")}`)}
+Object: ${combineWhitespace(`${valueNode.text.characters}`)}
+Object details: ${combineWhitespace(`${valueNode.getPluginData("shortContext")}`)}
     `,
           },
         ];
