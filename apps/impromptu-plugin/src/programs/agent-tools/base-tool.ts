@@ -20,10 +20,10 @@ export abstract class BaseTool {
       {
         role: "system",
         content: `
-User will provide an action, an input, and context. You will simulate an assistant that performs the action. Respond with an observation. Use this format:
+I simulate an assistant who can perform an action using the provided input. I will with an observation. Use this format:
 
-Simulated action: <Describe what you did>
-Observation: <Describe what you observed from the action>
+Simulated action: <Describe what I did>
+Observation: <Describe what I observed from the action>
 `.trim(),
       },
       {
@@ -35,7 +35,18 @@ Action input: ${input.actionInput}
       },
     ];
 
-    const observation = (await input.programContext.chat(messages, { max_tokens: 400 })).choices[0].message.content?.trim() ?? "No observation available";
-    return { observation };
+    const rawResponse = (await input.programContext.chat(messages, { max_tokens: 400 })).choices[0].message.content?.trim() ?? "No observation available";
+    const { observation } = parseAction(rawResponse);
+
+    return {
+      observation: observation ? observation : "No observation available, try something else.",
+    };
   }
+}
+
+function parseAction(rawResponse: string) {
+  const observation = rawResponse.match(/Observation: (.*)/im)?.[1].trim();
+  return {
+    observation,
+  };
 }

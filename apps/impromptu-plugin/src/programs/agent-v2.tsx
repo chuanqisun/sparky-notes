@@ -1,6 +1,6 @@
 import { ChatMessage } from "../openai/chat";
 import { stickyColors } from "../utils/colors";
-import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap, setFillColor } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
 import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { replaceNotification } from "../utils/notify";
@@ -87,7 +87,6 @@ export class AgentV2Program implements Program {
     const runtimeTools: BaseTool[] = [...allTools, new CatchAllTool(stickyTools.map((tool) => tool.name))];
 
     let iteration = 0;
-    let isCompleted = false;
 
     if (sources.length < 1) {
       replaceNotification("Agent requires the Tools section to perform tasks.");
@@ -98,28 +97,43 @@ export class AgentV2Program implements Program {
 
     let memoryMessages: ChatMessage[] = [];
 
-    while (iteration < 10 && !isCompleted) {
+    while (iteration < 25) {
       const messages = getAgentMessages({ question, memory: memoryMessages, tools: stickyTools });
 
       const result = (await context.chat(messages, { max_tokens: 200, stop: ["Observation"] })).choices[0].message.content ?? "";
       if (context.isAborted() || context.isChanged()) return;
-      const { answer, action, input } = parseAction(result);
+      const { answer, action, input, thought } = parseAction(result);
 
-      if (answer) {
-        console.log("Final answer", answer);
-        isCompleted = true;
-        break;
+      if (!thought) {
+        console.log("No thought found, skip iteration");
+        iteration++;
+        continue;
       }
 
       if (!action) {
-        console.log("Action failed", answer);
-        // TODO
+        console.log("No action found", answer);
+        iteration++;
+        continue;
+      }
+
+      if (answer) {
+        console.log("Final answer", answer);
+        printStickyNewLine(node, "Thought: I now know the final answer", { color: stickyColors.Yellow, wordPerSticky: 50 });
+        printStickyNoWrap(node, "Final Answer: " + answer.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
         break;
       }
 
-      console.log("Action", [action, input]);
+      console.log(`Iteration ${iteration}`, { thought, action, input });
+      printStickyNewLine(node, thought, { color: stickyColors.Yellow, wordPerSticky: 50 });
+      printStickyNoWrap(node, action, { color: stickyColors.LightGray, wordPerSticky: 50 });
+      if (input) {
+        printStickyNoWrap(node, input, { color: stickyColors.LightGray, wordPerSticky: 50 });
+      }
+
       const observation = await act({ action: action, actionInput: input ?? "", programContext: context, pretext: "", tools: runtimeTools });
+      if (context.isAborted() || context.isChanged()) return;
       console.log("Observation", observation);
+      printStickyNoWrap(node, observation, { color: stickyColors.LightGray, wordPerSticky: 50 });
 
       memoryMessages.push({ role: "assistant", content: result });
       memoryMessages.push({ role: "user", content: `Observation:\n${observation}\n\nNext thought?` });
@@ -130,13 +144,15 @@ export class AgentV2Program implements Program {
 }
 
 function parseAction(rawResponse: string) {
-  const answer = rawResponse.match(/Final Answer: (.*)/im)?.[1].trim();
+  const answer = rawResponse.match(/Final Answer: ((.|\s)*)/im)?.[1].trim();
   const action = rawResponse.match(/Action: (.*)/im)?.[1].trim();
   const input = rawResponse.match(/Action Input: (.*)/im)?.[1].trim();
+  const thought = rawResponse.match(/Thought: (.*)/im)?.[1].trim();
   return {
     answer,
     action,
     input,
+    thought,
   };
 }
 
@@ -169,17 +185,17 @@ function getAgentMessages(input: { question: string; memory: ChatMessage[]; tool
       role: "system",
       content: `
     
-Answer the following question step by step. You have access to the following tools:
+I will answer the following question step by step. I have access to the following tools:
 
 ${input.tools.map((tool) => `${tool.name}: ${tool.description}`).join("\n\n")}
 
-In each step, think and plan an action. Respond in this format:
+In each step, I will think and plan an action. I respond in this format:
 
 Thought: <think about what to do in this step>
 Action: <the action to take, should be one of [${input.tools.map((tool) => tool.name).join(", ")}]>
 Action Input: <the input to the action>
 
-The user will provide the observation after each Action. When you have enough observation to answer the question, respond in this format:
+I will make observation after each Action. When I have enough observation to answer the question, I will respond in this format:
 
 Thought: I now know the final answer
 Final Answer: <the final answer to the original input question>
