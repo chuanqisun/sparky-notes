@@ -15,7 +15,7 @@ export interface Synthesis {
 }
 
 export async function getSynthesis(context: ReflectionContext, matchProgram: (baseNode: BaseNode) => Program | null, dataNodeId: string): Promise<Synthesis> {
-  replaceNotification("Generating methodology...");
+  replaceNotification("Generating methodology...", { timeout: 20000 });
   const { completion } = context;
 
   const dataNode = figma.getNodeById(dataNodeId);
@@ -66,7 +66,7 @@ ${methodologyList.map((step, index) => `${index + 1}. ${step}`).join("\n")}
   const higherOrderStickies = primaryDataNode?.orderedStickies.filter((sticky) => sticky.color === "Green" && sticky.childText?.trim()) ?? [];
 
   for (const sticky of higherOrderStickies) {
-    replaceNotification(`Synthesizing insight: "${sticky.text.trim()}"...`);
+    replaceNotification(`Synthesizing insight: "${sticky.text.trim()}"...`, { timeout: 20000 });
     const messages: ChatMessage[] = [
       {
         role: "system",
