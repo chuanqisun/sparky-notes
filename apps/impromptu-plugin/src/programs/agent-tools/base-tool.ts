@@ -10,6 +10,7 @@ export interface ToolRunInput {
   actionInput: string;
   programContext: ProgramContext;
   pretext: string;
+  rootQuestion: string;
 }
 
 export abstract class BaseTool {
@@ -19,12 +20,24 @@ export abstract class BaseTool {
     const messages: ChatMessage[] = [
       {
         role: "system",
-        content: `
-I simulate an assistant who can perform an action using the provided input. I will with an observation. Use this format:
-
+        content: [
+          `Simulate an assistant to answer the question: ${input.rootQuestion}. The assistant think, act, and observe.`,
+          input.pretext
+            ? `
+Thoughts and observations so far:
+${input.pretext}
+          `
+            : "",
+          `
+Now simulate the provided action and respond with an observation. Use this format:
 Simulated action: <Describe what I did>
 Observation: <Describe what I observed from the action>
-`.trim(),
+`,
+        ]
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .join("\n\n")
+          .trim(),
       },
       {
         role: "user",

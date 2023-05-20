@@ -19,11 +19,8 @@ import { CreationContext, Program, ProgramContext, ReflectionContext } from "./p
 
 const { Text, AutoLayout, Input } = figma.widget;
 
-const MIN_ITER = 3;
-const MAX_ITER = 25;
-const FINAL_ANSWER_LENGTH = 1000;
-export const INTERMEDIATE_ANSWER_LENGTH = 400;
-const MEM_WINDOW = 2000;
+const MAX_ITER = 20;
+const MEMORY_LIMIT = 1200;
 
 const allTools: BaseTool[] = [
   new ArxivSearchTool(),
@@ -87,6 +84,7 @@ export class AgentV2Program implements Program {
     const runtimeTools: BaseTool[] = [...allTools, new CatchAllTool(stickyTools.map((tool) => tool.name))];
 
     let iteration = 0;
+    let shouldNudgeToFinish = false;
 
     if (sources.length < 1) {
       replaceNotification("Agent requires the Tools section to perform tasks.");
@@ -95,12 +93,13 @@ export class AgentV2Program implements Program {
 
     const question = getFieldByLabel("Question", node)!.value.characters;
 
-    let memoryMessages: ChatMessage[] = [];
+    const memoryMessages: ChatMessage[] = [];
+    const memoryObservations: string[] = [];
 
-    while (iteration < 25) {
+    while (iteration < MAX_ITER) {
       const messages = getAgentMessages({ question, memory: memoryMessages, tools: stickyTools });
 
-      const result = (await context.chat(messages, { max_tokens: 200, stop: ["Observation"] })).choices[0].message.content ?? "";
+      const result = (await context.chat(messages, { max_tokens: shouldNudgeToFinish ? 400 : 200, stop: ["Observation"] })).choices[0].message.content ?? "";
       if (context.isAborted() || context.isChanged()) return;
       const { answer, action, input, thought } = parseAction(result);
 
@@ -109,6 +108,14 @@ export class AgentV2Program implements Program {
         iteration++;
         continue;
       }
+      memoryObservations.push(`Thought: ${thought}`);
+      printStickyNewLine(node, `Thought: ${thought}`, { color: stickyColors.Yellow, wordPerSticky: 50 });
+
+      if (answer) {
+        console.log("Final answer", answer);
+        printStickyNoWrap(node, "Final Answer: " + answer.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
+        break;
+      }
 
       if (!action) {
         console.log("No action found", answer);
@@ -116,27 +123,42 @@ export class AgentV2Program implements Program {
         continue;
       }
 
-      if (answer) {
-        console.log("Final answer", answer);
-        printStickyNewLine(node, "Thought: I now know the final answer", { color: stickyColors.Yellow, wordPerSticky: 50 });
-        printStickyNoWrap(node, "Final Answer: " + answer.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
-        break;
-      }
-
       console.log(`Iteration ${iteration}`, { thought, action, input });
-      printStickyNewLine(node, thought, { color: stickyColors.Yellow, wordPerSticky: 50 });
-      printStickyNoWrap(node, action, { color: stickyColors.LightGray, wordPerSticky: 50 });
+      printStickyNoWrap(node, `Action: ${action}`, { color: stickyColors.LightGray, wordPerSticky: 50 });
       if (input) {
-        printStickyNoWrap(node, input, { color: stickyColors.LightGray, wordPerSticky: 50 });
+        printStickyNoWrap(node, `Input: ${input}`, { color: stickyColors.LightGray, wordPerSticky: 50 });
       }
 
-      const observation = await act({ action: action, actionInput: input ?? "", programContext: context, pretext: "", tools: runtimeTools });
+      const observation = await act({
+        action: action,
+        actionInput: input ?? "",
+        programContext: context,
+        pretext: memoryObservations.join("\n"),
+        tools: runtimeTools,
+        rootQuestion: question,
+      });
       if (context.isAborted() || context.isChanged()) return;
       console.log("Observation", observation);
+      memoryObservations.push(`Observation: ${observation}`);
       printStickyNoWrap(node, observation, { color: stickyColors.LightGray, wordPerSticky: 50 });
 
       memoryMessages.push({ role: "assistant", content: result });
-      memoryMessages.push({ role: "user", content: `Observation:\n${observation}\n\nNext thought?` });
+
+      shouldNudgeToFinish =
+        iteration + 3 > MAX_ITER ||
+        messages
+          .map((m) => m.content)
+          .join("\n")
+          .split(" ").length > MEMORY_LIMIT;
+
+      if (shouldNudgeToFinish) {
+        memoryMessages.push({
+          role: "user",
+          content: `Final thought and answer? Previous observation: ${observation}\n\n`,
+        });
+      } else {
+        memoryMessages.push({ role: "user", content: `What's the next thought and action? Previous observation: ${observation}` });
+      }
 
       iteration++;
     }
@@ -147,7 +169,7 @@ function parseAction(rawResponse: string) {
   const answer = rawResponse.match(/Final Answer: ((.|\s)*)/im)?.[1].trim();
   const action = rawResponse.match(/Action: (.*)/im)?.[1].trim();
   const input = rawResponse.match(/Action Input: (.*)/im)?.[1].trim();
-  const thought = rawResponse.match(/Thought: (.*)/im)?.[1].trim();
+  const thought = rawResponse.match(/Thought: (.*)/im)?.[1].trim() ?? rawResponse.match(/Final Thought: ((.|\s)*)/im)?.[1].trim();
   return {
     answer,
     action,
@@ -156,7 +178,7 @@ function parseAction(rawResponse: string) {
   };
 }
 
-async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string; tools: BaseTool[] }) {
+async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string; rootQuestion: string; tools: BaseTool[] }) {
   const actionName = input.action.toLocaleLowerCase();
   const tool = input.tools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName))!;
   return (await tool.run(input)).observation;
@@ -189,23 +211,25 @@ I will answer the following question step by step. I have access to the followin
 
 ${input.tools.map((tool) => `${tool.name}: ${tool.description}`).join("\n\n")}
 
-In each step, I will think and plan an action. I respond in this format:
+In each step, I will think and plan an action based on the previous Observations and Question. I respond in this format:
 
 Thought: <think about what to do in this step>
 Action: <the action to take, should be one of [${input.tools.map((tool) => tool.name).join(", ")}]>
 Action Input: <the input to the action>
 
-I will make observation after each Action. When I have enough observation to answer the question, I will respond in this format:
+When I have enough observation to answer the question, I will respond in this format:
 
-Thought: I now know the final answer
-Final Answer: <the final answer to the original input question>
-    `,
+Final Thought: I now know the final answer
+Final Answer: <elaborate on the final answer to the original input question>
+
+I must respond exactly one thought per message.
+    `.trim(),
     },
     {
       role: "user",
       content: `
-${input.question}
-      `,
+Question: ${input.question}
+      `.trim(),
     },
     ...input.memory,
   ];
