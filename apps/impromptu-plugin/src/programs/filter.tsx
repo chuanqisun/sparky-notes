@@ -1,7 +1,7 @@
 import { getMethodInputName } from "../hits/method-input";
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { cloneSticky, createOrUseSourceNodes, createTargetNodes, moveStickiesToSection } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
 import { filterToType, getInnerStickies } from "../utils/query";
@@ -75,19 +75,32 @@ export class FilterProgram implements Program {
         .slice(0, 7)
         .map((sticky) => combineWhitespace(sticky.text.characters));
 
-      const prompt =
-        `${positiveSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): Yes`).join("\n\n")}\n\n` +
-        `${negativeSamples.map((sample) => `Text: ${sample}\nQuestion: ${question}\nAnswer (Yes/No): No`).join("\n\n")}` +
-        `\n\nUse the following text to answer the following question with Yes/No: ${question}
+      const shuffledExamples = [...positiveSamples.map((sample) => [sample, "Yes"]), ...negativeSamples.map((sample) => [sample, "No"])].sort(
+        () => Math.random() - 0.5
+      );
 
-Text: ${combineWhitespace(currentSticky.text.characters)} ${currentSticky.getPluginData("shortContext")}
-Answer (Yes/No): `;
+      const messages: ChatMessage[] = [
+        {
+          role: "system",
+          content: `Read the text carefully and answer the question based on the text. Respond with "Yes" or "No".`.trim(),
+        },
+        ...shuffledExamples.flatMap((example) => [
+          {
+            role: "user" as const,
+            content: `Text: ${example[0]}\n\nQuestion: ${question}`,
+          },
+          {
+            role: "assistant" as const,
+            content: example[1],
+          },
+        ]),
+        {
+          role: "user",
+          content: `Text: ${combineWhitespace(currentSticky.text.characters)} ${currentSticky.getPluginData("shortContext")}\n\nQuestion: ${question}`,
+        },
+      ];
 
-      const topChoiceResult = (
-        await getCompletion(context.completion, prompt, {
-          max_tokens: 3,
-        })
-      ).choices[0].text.trim();
+      const binaryAnswer = (await context.chat(messages, { max_tokens: 10 })).choices[0].message.content?.trim() ?? "No";
 
       if (!figma.getNodeById(currentSticky.id)) continue;
       if (context.isAborted() || context.isChanged()) return;
@@ -96,8 +109,8 @@ Answer (Yes/No): `;
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       const [positiveContainerAfter, negativeContainerAfter] =
         targetNodesAfterCompletion[0].name === "Yes" ? targetNodesAfterCompletion : targetNodesAfterCompletion.reverse();
-      const isPositive = topChoiceResult.toLocaleLowerCase().includes("yes");
-      const isNegative = topChoiceResult.toLocaleLowerCase().includes("no");
+      const isPositive = binaryAnswer.toLocaleLowerCase().includes("yes");
+      const isNegative = binaryAnswer.toLocaleLowerCase().includes("no");
       if (!isPositive && !isNegative) {
         break;
       }

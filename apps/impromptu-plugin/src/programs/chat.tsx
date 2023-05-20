@@ -1,6 +1,6 @@
 import { getMethodInputName } from "../hits/method-input";
 import { ChatMessage } from "../openai/chat";
-import { cloneSticky, createOrUseSourceNodes, createTargetNodes, printSticky } from "../utils/edit";
+import { createOrUseSourceNodes, createTargetNodes, printSticky } from "../utils/edit";
 import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { nonEmptyString } from "../utils/non-empty-string";
@@ -81,7 +81,6 @@ export class ChatProgram implements Program {
 
       if (!figma.getNodeById(currentSticky.id)) continue;
       if (context.isAborted() || context.isChanged()) return;
-      const newSticky = cloneSticky(currentSticky);
 
       const targetNodesAfterCompletion = getNextNodes(node).filter(filterToType<SectionNode>("SECTION"));
       if (!targetNodesAfterCompletion[0]) return;
