@@ -132,7 +132,6 @@ function App() {
             <legend>Build</legend>
             <menu>
               <button data-program="agent">Agent</button>
-              <button data-program="agent-v2">Agent v2</button>
               <button data-program="answer">Answer</button>
               <button data-program="arxiv-search">arXiv search</button>
               <button data-program="categorize">Categorize</button>

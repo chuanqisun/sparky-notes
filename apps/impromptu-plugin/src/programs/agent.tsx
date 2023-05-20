@@ -1,8 +1,8 @@
-import { getCompletion, OpenAICompletionPayload } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { stickyColors } from "../utils/colors";
 import { createOrUseSourceNodes, createTargetNodes, moveStickiesToSection, printStickyNewLine, printStickyNoWrap, setFillColor } from "../utils/edit";
 import { ensureStickyFont } from "../utils/font";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { replaceNotification } from "../utils/notify";
 import { getInnerStickies } from "../utils/query";
 import { sortLeftToRight } from "../utils/sort";
@@ -19,11 +19,8 @@ import { CreationContext, Program, ProgramContext, ReflectionContext } from "./p
 
 const { Text, AutoLayout, Input } = figma.widget;
 
-const MIN_ITER = 3;
-const MAX_ITER = 25;
-const FINAL_ANSWER_LENGTH = 1000;
-export const INTERMEDIATE_ANSWER_LENGTH = 400;
-const MEM_WINDOW = 2000;
+const MAX_ITER = 20;
+const MEMORY_LIMIT = 1200;
 
 const allTools: BaseTool[] = [
   new ArxivSearchTool(),
@@ -87,7 +84,7 @@ export class AgentProgram implements Program {
     const runtimeTools: BaseTool[] = [...allTools, new CatchAllTool(stickyTools.map((tool) => tool.name))];
 
     let iteration = 0;
-    let isCompleted = false;
+    let shouldNudgeToFinish = false;
 
     if (sources.length < 1) {
       replaceNotification("Agent requires the Tools section to perform tasks.");
@@ -96,86 +93,92 @@ export class AgentProgram implements Program {
 
     const question = getFieldByLabel("Question", node)!.value.characters;
 
-    let memory: string[] = [];
+    const memoryMessages: ChatMessage[] = [];
+    const memoryObservations: string[] = [];
 
-    while (iteration < MAX_ITER && !isCompleted) {
-      const prompt = getAgentPrompt({ question, memory, tools: stickyTools });
-      let response = (await getCompletion(context.completion, ...prompt)).choices[0].text;
+    while (iteration < MAX_ITER) {
+      const messages = getAgentMessages({ question, memory: memoryMessages, tools: stickyTools });
 
+      const result = (await context.chat(messages, { max_tokens: shouldNudgeToFinish ? 400 : 200, stop: ["Observation"] })).choices[0].message.content ?? "";
       if (context.isAborted() || context.isChanged()) return;
+      const { answer, action, input, thought } = parseAction(result);
 
-      const finalAnswer = response.split("\n").find((line) => line.startsWith("Final Answer:"));
-      if (finalAnswer && iteration < MIN_ITER) {
-        // premature conclusion. Nudge to more research
-        const nudgePrompt = prompt[0] + "\nThought: I need more information";
-        response =
-          "\nThought: I need more information" +
-          (
-            await getCompletion(context.completion, nudgePrompt, {
-              max_tokens: INTERMEDIATE_ANSWER_LENGTH,
-              stop: ["Observation", "Thought", "Final Answer"],
-            })
-          ).choices[0].text;
+      if (!thought) {
+        console.log("No thought found, skip iteration");
+        iteration++;
+        continue;
+      }
+      memoryObservations.push(`Thought: ${thought}`);
+      printStickyNewLine(node, `Thought: ${thought}`, { color: stickyColors.Yellow, wordPerSticky: 50 });
 
-        if (context.isAborted() || context.isChanged()) return;
-      } else if (finalAnswer) {
-        printStickyNewLine(node, "Thought: I now know the final answer", { color: stickyColors.Yellow, wordPerSticky: 50 });
-        // continue for a bit longer
-        let token = FINAL_ANSWER_LENGTH;
-        while (!isCompleted && token > INTERMEDIATE_ANSWER_LENGTH) {
-          try {
-            const extendedPrompt = prompt[0] + "\nThought: I now know the final answer\nFinal Answer: ";
-            const extendedResponse = (
-              await getCompletion(context.completion, extendedPrompt, {
-                max_tokens: token,
-              })
-            ).choices[0].text;
-
-            if (context.isAborted() || context.isChanged()) return;
-            isCompleted = true;
-            printStickyNoWrap(node, "Final Answer: " + extendedResponse.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
-          } catch (e) {
-            token -= 100;
-          }
-        }
-        if (!isCompleted) {
-          // print the original answer
-          printStickyNoWrap(node, finalAnswer.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
-        }
+      if (answer) {
+        console.log("Final answer", answer);
+        printStickyNoWrap(node, "Final Answer: " + answer.trim(), { color: stickyColors.Green, wordPerSticky: 50 });
         break;
       }
 
-      response
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .forEach((line) => {
-          if (line.startsWith("Thought:")) {
-            printStickyNewLine(node, line, { color: stickyColors.Yellow, wordPerSticky: 50 });
-          } else {
-            printStickyNoWrap(node, line, { color: stickyColors.LightGray, wordPerSticky: 50 });
-          }
-        });
-
-      const action = response.split("\n").find((line) => line.startsWith("Action:"));
-      const actionInput = response.split("\n").find((line) => line.startsWith("Action Input:"));
-      if (!action || !actionInput) {
-        memory.push(response + `Observation: I need to try some other tool.`);
+      if (!action) {
+        console.log("No action found", answer);
         iteration++;
         continue;
       }
 
-      const observation = await act({ action, actionInput, programContext: context, pretext: prompt[0] + response, tools: runtimeTools });
+      console.log(`Iteration ${iteration}`, { thought, action, input });
+      printStickyNoWrap(node, `Action: ${action}`, { color: stickyColors.LightGray, wordPerSticky: 50 });
+      if (input) {
+        printStickyNoWrap(node, `Input: ${input}`, { color: stickyColors.LightGray, wordPerSticky: 50 });
+      }
+
+      const observation = await act({
+        action: action,
+        actionInput: input ?? "",
+        programContext: context,
+        pretext: memoryObservations.join("\n"),
+        tools: runtimeTools,
+        rootQuestion: question,
+      });
       if (context.isAborted() || context.isChanged()) return;
-      const observationText = `Observation: ${observation}`;
-      memory.push(response + observationText);
-      printStickyNoWrap(node, observationText.trim(), { color: stickyColors.LightGray, wordPerSticky: 50 });
+      console.log("Observation", observation);
+      memoryObservations.push(`Observation: ${observation}`);
+      printStickyNoWrap(node, `Observation: ${observation}`, { color: stickyColors.LightGray, wordPerSticky: 50 });
+
+      memoryMessages.push({ role: "assistant", content: result });
+
+      shouldNudgeToFinish =
+        iteration + 3 > MAX_ITER ||
+        messages
+          .map((m) => m.content)
+          .join("\n")
+          .split(" ").length > MEMORY_LIMIT;
+
+      if (shouldNudgeToFinish) {
+        memoryMessages.push({
+          role: "user",
+          content: `Final thought and answer? Previous observations: ${observation}\n\n`,
+        });
+      } else {
+        memoryMessages.push({ role: "user", content: `Next thought? Previous observations: ${observation}` });
+      }
+
       iteration++;
     }
   }
 }
 
-export async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string; tools: BaseTool[] }) {
+function parseAction(rawResponse: string) {
+  const answer = rawResponse.match(/Final Answer: ((.|\s)*)/im)?.[1].trim();
+  const action = rawResponse.match(/Action: (.*)/im)?.[1].trim();
+  const input = rawResponse.match(/Action Input: (.*)/im)?.[1].trim();
+  const thought = rawResponse.match(/Thought: (.*)/im)?.[1].trim() ?? rawResponse.match(/Final Thought: ((.|\s)*)/im)?.[1].trim();
+  return {
+    answer,
+    action,
+    input,
+    thought,
+  };
+}
+
+async function act(input: { action: string; actionInput: string; programContext: ProgramContext; pretext: string; rootQuestion: string; tools: BaseTool[] }) {
   const actionName = input.action.toLocaleLowerCase();
   const tool = input.tools.find((tool) => actionName.includes(tool.name.toLocaleLowerCase()) || tool.name.toLocaleLowerCase().includes(actionName))!;
   return (await tool.run(input)).observation;
@@ -186,7 +189,7 @@ export interface AgentTool {
   description: string;
 }
 
-export async function getDefaultTools(tools: BaseTool[]) {
+async function getDefaultTools(tools: BaseTool[]) {
   await ensureStickyFont();
 
   return tools.map((tool) => {
@@ -197,42 +200,39 @@ export async function getDefaultTools(tools: BaseTool[]) {
   });
 }
 
-export function getAgentPrompt(input: { question: string; memory: string[]; tools: AgentTool[] }) {
-  const rollingMemory: string[] = [];
-  let wc = 0;
-  const usableMemory = [...input.memory];
-  // add memory until limit reached
-  while (usableMemory.length) {
-    const nextItem = usableMemory.pop()!;
-    const nextItemWc = nextItem.split(" ").length;
-    if ((wc += nextItemWc) > MEM_WINDOW) break;
-    rollingMemory.unshift(nextItem);
-  }
-
-  const prompt = `
-Use research insights, research recommendations, and critical thinking to answer the following questions as best you can. You have access to the following tools:
+function getAgentMessages(input: { question: string; memory: ChatMessage[]; tools: AgentTool[] }) {
+  // TODO add memory until limit reached iteratively with token limiter
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `
+    
+I will answer the following question step by step. I have access to the following tools:
 
 ${input.tools.map((tool) => `${tool.name}: ${tool.description}`).join("\n\n")}
 
-Ask a specific question.
-Use the following format:
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [${input.tools.map((tool) => tool.name).join(", ")}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
-Explanation: a detailed explanation on the Final Answer
-Begin!
+In each step, I will think and plan an action based on the previous Observations and Question. I respond in this format:
 
-Question: ${input.question}${rollingMemory.join("").replace(/\n+/g, "\n")}\n`.trimStart();
+Thought: <think about what to do in this step>
+Action: <the action to take, must choose one from [${input.tools.map((tool) => tool.name).join(", ")}]>
+Action Input: <the input to the action>
 
-  const config: Partial<OpenAICompletionPayload> = {
-    max_tokens: INTERMEDIATE_ANSWER_LENGTH,
-    stop: ["Observation"],
-  };
+When I have enough observation to answer the question, I will respond in this format:
 
-  return [prompt, config] as const;
+Final Thought: I now know the final answer
+Final Answer: <elaborate on the final answer to the original input question>
+
+I must respond exactly one thought per message.
+    `.trim(),
+    },
+    {
+      role: "user",
+      content: `
+Question: ${input.question}
+      `.trim(),
+    },
+    ...input.memory,
+  ];
+
+  return messages;
 }
