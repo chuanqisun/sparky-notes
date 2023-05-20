@@ -310,7 +310,7 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.requestDataNodeSynthesis) {
-    const reflectionContext: ReflectionContext = { completion };
+    const reflectionContext: ReflectionContext = { completion, chat };
     const synthesis = await getSynthesis(reflectionContext, matchProgram, message.requestDataNodeSynthesis.dataNodeId).catch((e) => {
       replaceNotification(`Synthesis failed: ${e.name} ${e.message}`, { error: true });
       respondUI(message, { respondDataNodeSynthesis: { error: `${e.name} ${e.message}` } });

@@ -18,6 +18,7 @@ export interface ProgramContext {
 }
 
 export interface ReflectionContext {
+  chat: ChatProxy;
   completion: CompletionProxy;
 }
 

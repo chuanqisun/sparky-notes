@@ -17,7 +17,7 @@ export class ChatProgram implements Program {
   }
 
   public getMethodology(_context: ReflectionContext, node: FrameNode) {
-    return `For each item in the ${getMethodInputName(node)}, get chatgpt response with system preset "${
+    return `For each item in the ${getMethodInputName(node)}, get chatgpt response with the system message "${
       getFieldByLabel("System message", node)!.value.characters
     }"`;
   }

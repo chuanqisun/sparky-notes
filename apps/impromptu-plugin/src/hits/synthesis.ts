@@ -1,4 +1,4 @@
-import { getCompletion } from "../openai/completion";
+import { ChatMessage } from "../openai/chat";
 import { Program, PROGRAME_NAME_KEY, ReflectionContext } from "../programs/program";
 import { getSourceGraph } from "../utils/graph";
 import { replaceNotification } from "../utils/notify";
@@ -40,15 +40,24 @@ export async function getSynthesis(context: ReflectionContext, matchProgram: (ba
   ).filter(Boolean) as string[];
 
   if (methodologyList.length) {
-    const methodologyPrompt = `
-A research report is generated using the following steps. Each step is performed by a human assisted by a human-in-the-loop AI reasoning environment called Impromptu. Summarize the entire process into a "Methodology" paragraph.
-
+    const methodologyMessages: ChatMessage[] = [
+      {
+        role: "system",
+        content: `
+You are a research assistant. The user describes the steps in a reseach process. Each step was performed by a human assisted by a human-in-the-loop AI reasoning tool called Impromptu.
+You must summarize the entire research process into a methodology paragraph. Be very accurate and objective. Write in past tense. Respond with a single paragraph.
+`.trim(),
+      },
+      {
+        role: "user",
+        content: `
 Steps:
 ${methodologyList.map((step, index) => `${index + 1}. ${step}`).join("\n")}
+        `.trim(),
+      },
+    ];
 
-Methodology paragraph: `.trimStart();
-    const methodologyCompletion = await getCompletion(completion, methodologyPrompt, { max_tokens: 300 });
-    methodology = methodologyCompletion.choices[0].text.trim();
+    methodology = (await context.chat(methodologyMessages, { max_tokens: 300, temperature: 0.2 })).choices[0].message?.content ?? "";
   }
 
   const primaryDataNode = getPrimaryDataNode(dataNode as SectionNode);
@@ -58,14 +67,26 @@ Methodology paragraph: `.trimStart();
 
   for (const sticky of higherOrderStickies) {
     replaceNotification(`Synthesizing insight: "${sticky.text.trim()}"...`);
-    const prompt = `
-Summarize the following title and body into a short one-sentence claim that sounds insightful.
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: `
+You are a research assistant with extraordinary communication skills.
+The user will provide the title and body of claim. You will summarize it into a one-sentence claim in news headline style. Make sure it is insightful.
+Respond with a single sentence.
+      `.trim(),
+      },
+      {
+        role: "user",
+        content: `
 Title: ${sticky.text.trim()}
 Body: ${combineWhitespace(sticky.childText!.trim())}
-One sentence claim: `.trimStart();
+      `.trim(),
+      },
+    ];
 
     try {
-      const claim = await getCompletion(completion, prompt, { max_tokens: 300 }).then((res) => res.choices[0].text.trim());
+      const claim = (await context.chat(messages, { max_tokens: 300 })).choices[0].message?.content ?? "Untitled";
       insightMap.set(sticky.id, claim);
     } catch (e) {
       // ignore non-fatal errors
@@ -90,11 +111,17 @@ One sentence claim: `.trimStart();
       })
       .join("\n\n")}`.trim();
 
-  const titlePrompt = `
-Write a short title for the following Report.
-
-Report """
-${`${shortenToWordCount(1700, bodyText)}
+  const titleMessages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `
+Write a short title for the following report. Respond with just the title
+    `.trim(),
+    },
+    {
+      role: "user",
+      content: `
+${`${shortenToWordCount(2000, bodyText)}
 ${
   methodology
     ? `
@@ -104,20 +131,23 @@ ${
 ${methodology}
 `
     : ""
-}`.trim()}
-"""
-
-Title: `;
+}`.trim()}`.trim(),
+    },
+  ];
 
   replaceNotification("Generating title...");
-  const title = (await getCompletion(completion, titlePrompt, { max_tokens: 100 })).choices[0].text.trim();
+  const title = (await context.chat(titleMessages, { max_tokens: 100 })).choices[0].message.content?.trim() ?? "";
 
-  const introPrompt = `
-Based on information from the following Report title and body, write an introduction paragraph.
-
-Report title: ${title}
-
-Report body """
+  const introMessages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `
+Write an introduction paragraph for the following Report title and body. Make it interesting and engaging. Respond with just the introudction paragraph.
+      `.trim(),
+    },
+    {
+      role: "user",
+      content: `
 ${`${shortenToWordCount(1700, bodyText)}
 ${
   methodology
@@ -129,12 +159,12 @@ ${methodology}
 `
     : ""
 }`.trim()}
-"""
-
-Introduction paragraph: `;
+      `.trim(),
+    },
+  ];
 
   replaceNotification("Generating introduction...");
-  const introduction = (await getCompletion(completion, introPrompt, { max_tokens: 300 })).choices[0].text.trim();
+  const introduction = (await context.chat(introMessages, { max_tokens: 300 })).choices[0].message.content?.trim() ?? "";
 
   const synthesisResult = { title, introduction, methodology, insightTitleMap: Object.fromEntries(insightMap) };
   return synthesisResult;
