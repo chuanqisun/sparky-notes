@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 
 import { CozoDb } from "cozo-node";
 import path from "path";
+import { analyzeDocument } from "./lib/hits/analyze-document";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims, exportClaimsV2 } from "./lib/hits/export-claims";
@@ -11,6 +12,7 @@ import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
 import { parseClaimsV4 } from "./lib/hits/parse-claims-v4";
+import { parseCoherence } from "./lib/hits/parse-coherence";
 import { entityQueryHandler } from "./lib/repl/handlers/entity-query";
 import { semantcQueryHandler } from "./lib/repl/handlers/interactive-claim-query";
 import { startRepl } from "./lib/repl/start";
@@ -21,11 +23,17 @@ dotenv.config();
 const timestamp = 1684367019212;
 const params = process.argv.slice(2);
 const CLAIMS_DIR = path.resolve(`./data/claims-${timestamp}`);
+const COHERENCE_CONTROLS_DIR = path.resolve(`./data/coherence/Controls`);
 
 console.log("Data loader started with params", params);
 
 async function main() {
   switch (true) {
+    case params.includes("analyze-document"): {
+      analyzeDocument(path.resolve("./data/coherence/parsed"));
+      break;
+    }
+
     case params.includes("build-graph"): {
       const embeddingDbPath = path.resolve("./data/embeddings.db");
       const graphDbBackupPath = path.resolve("./data/graph-db");
@@ -52,14 +60,6 @@ async function main() {
       embedClaims(db, "./data/claims-ux-domain-ontology-1682697637390", logPath);
       break;
     }
-    case params.includes("parse-claims"): {
-      parseClaims(path.resolve(CLAIMS_DIR), `ux-domain-concepts`);
-      break;
-    }
-    case params.includes("parse-claims-v2"): {
-      parseClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
-      break;
-    }
     case params.includes("fix-claims-v2"): {
       fixClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
@@ -74,6 +74,18 @@ async function main() {
     }
     case params.includes("migrate-claims-v2"): {
       claimV2ToV3(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
+      break;
+    }
+    case params.includes("parse-coherence"): {
+      parseCoherence(path.resolve(COHERENCE_CONTROLS_DIR));
+      break;
+    }
+    case params.includes("parse-claims"): {
+      parseClaims(path.resolve(CLAIMS_DIR), `ux-domain-concepts`);
+      break;
+    }
+    case params.includes("parse-claims-v2"): {
+      parseClaimsV2(path.resolve(CLAIMS_DIR), `ux-domain-ontology`);
       break;
     }
     case params.includes("parse-claims-v3"): {

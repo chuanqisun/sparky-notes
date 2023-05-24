@@ -31,6 +31,8 @@ export function getSimpleChatProxy(apiKey: string, model?: ChatModel, silent?: b
   if (!silent) console.log("Model selection", selectedModel);
   const maxRequestsPerMiniute = modelToRequestsPerMinute(selectedModel);
   if (!silent) console.log("Model max rpm", maxRequestsPerMiniute);
+  const endpoint = modelToEndpoint(selectedModel);
+  if (!silent) console.log("Model endpoint", endpoint);
 
   const simpleProxy: SimpleChatProxy = async (input) => {
     const fullInput: ChatInput = {
