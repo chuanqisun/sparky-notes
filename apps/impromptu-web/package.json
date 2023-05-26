@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "csv-parse": "^5.3.10",
-    "gpt3-tokenizer": "^1.1.5",
     "markdown-it": "^13.0.1",
     "preact": "^10.13.0",
     "xlsx": "^0.18.5",
