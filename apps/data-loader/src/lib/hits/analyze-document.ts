@@ -48,6 +48,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
         .sort((a, b) => b.score - a.score);
 
       // TODO add a filter step to ensure mentioning of the component name
+      // TODO add token limit and chunking to long document
 
       await writeFile(`${outDir}/${filename}.json`, JSON.stringify(rankedResults, null, 2));
       await writeFile(`${outDir}/${filename}-aggregated.json`, JSON.stringify(aggregated, null, 2));
