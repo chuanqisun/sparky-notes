@@ -22,6 +22,18 @@ export function getClaimsPageInput(filter: string, top: number, skip: number): C
   };
 }
 
+export function getSemanticSearchInput(query: string, top: number): CognitiveSearchInput {
+  // ref: https://learn.microsoft.com/en-us/azure/search/semantic-how-to-query-request?tabs=rest%2Crest-query
+  return {
+    captions: "extractive|highlight-false",
+    search: query,
+    queryType: "semantic",
+    queryLanguage: "en-us",
+    semanticConfiguration: "similar-claims",
+    top,
+  };
+}
+
 export function getClaimIndexProxy<InputType extends CognitiveSearchInput, OutputType extends CognitiveSearchOutput<ClaimDocument>>(apiKey: string) {
   return getCognitiveSearchJsonProxy<CognitiveSearchInput, CognitiveSearchOutput<ClaimDocument>>(
     apiKey,

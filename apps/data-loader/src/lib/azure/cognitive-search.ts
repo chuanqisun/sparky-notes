@@ -20,12 +20,17 @@ export function getCognitiveSearchJsonProxy<RequestType, ResponseType>(apiKey: s
         return count * 2000;
       },
       shouldResetTimeout: true,
-      retryCondition: () => true,
+      retryCondition: (error) => {
+        console.log(`Retry due to: ${[error.response?.status, error.response?.statusText, error?.response?.data].filter(Boolean).join("::")}`);
+        return true;
+      },
     },
   });
 }
 
 export interface CognitiveSearchInput {
+  answers?: `extractive|count-${number}`;
+  captions?: "extractive" | `extractive|highlight-${"true" | "false"}`;
   count?: boolean;
   filter?: string;
   highlightFields?: string;
@@ -50,5 +55,12 @@ export interface CognitiveSearchOutput<DocumentType> {
 }
 
 export type SearchResultItem<DocumentType> = DocumentType & {
+  "@search.captions": SearchResultSemanticCaption[];
   "@search.score": number;
+  "@search.rerankerScore": number;
 };
+
+export interface SearchResultSemanticCaption {
+  text: string;
+  highlights: string;
+}
