@@ -2,7 +2,6 @@ import { MessageToFigma } from "@impromptu/types";
 import { ArxivSearchProxy, getArxivSearchProxy } from "./arxiv/search";
 import { SearchProxy, getSearchProxy } from "./hits/proxy";
 import { getSynthesis } from "./hits/synthesis";
-import { importTextFile } from "./import/import";
 import { ChatProxy, getChatResponse, modelToEndpoint } from "./openai/chat";
 import { CompletionProxy, getCompletionProxy } from "./openai/completion";
 import { AgentProgram } from "./programs/agent";
@@ -283,21 +282,15 @@ const handleUIMessage = async (message: MessageToFigma) => {
   }
 
   if (message.importTextFile) {
-    const lineCount = message.importTextFile.text.split("\n").length;
-    replaceNotification(`Converting... (about ${Math.ceil(lineCount / 1.4)} seconds)`, { timeout: Infinity });
     console.log("Importing", message.importTextFile);
-    importTextFile(chat, message.importTextFile)
-      .then((results) => {
-        const container = createTargetNodes(["Imported"])[0];
-        for (const result of results) {
-          const sticky = figma.createSticky();
-          sticky.text.characters = result;
-          moveStickiesToSection([sticky], container);
-        }
+    const container = createTargetNodes(["Imported"])[0];
+    for (const result of message.importTextFile.rows) {
+      const sticky = figma.createSticky();
+      sticky.text.characters = result;
+      moveStickiesToSection([sticky], container);
+    }
 
-        replaceNotification("✅ Successfully imported");
-      })
-      .catch((e) => replaceNotification(`Import failed: ${(e as any).name} ${(e as any).message}`));
+    replaceNotification("✅ Successfully imported");
   }
 
   if (message.hitsConfig) {

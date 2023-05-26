@@ -69,7 +69,7 @@ export interface HitsConfig {
 
 export interface ImportTextFileConfig {
   type: string;
-  text: string;
+  rows: string[];
 }
 
 export interface OpenAIConnection {

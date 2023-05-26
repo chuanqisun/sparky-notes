@@ -1,7 +1,7 @@
 import type { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu/types";
-import GPT3Tokenizer from "gpt3-tokenizer";
 import { render } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { read, utils } from "xlsx";
 import "./main.css";
 import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
@@ -76,32 +76,33 @@ function App() {
   const [importingStatus, setImportingStatus] = useState("");
   // Import UX
   const handleImportFileSelection = useCallback(async (e: Event) => {
-    const textFile = [((e.target as HTMLInputElement).files ?? [])[0]].filter(
-      (file) => file.type.startsWith("text") || file.type.startsWith("application/json")
-    )[0];
+    const textFile = ((e.target as HTMLInputElement).files ?? [])[0];
 
     if (!textFile) return;
 
     (e.target as HTMLInputElement).value = "";
+    setImportingStatus("Parsing...");
 
-    setImportingStatus("Tokenizing...");
-    const importedFile = {
-      type: textFile.type,
-      content: await textFile.text(),
-    };
+    const sheet = read(await textFile.arrayBuffer());
+    console.log(sheet);
+
+    const activeSheet = sheet.Sheets[sheet.SheetNames[0]];
+    if (!activeSheet) return;
+
+    const rows = utils.sheet_to_json(activeSheet);
+    const formattedRows = rows.map((row: any) =>
+      Object.entries(row)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join("\n")
+    );
+    console.log("imported", formattedRows);
 
     setImportingStatus("");
 
-    const tokenizer = new GPT3Tokenizer({ type: "gpt3" });
-    const tokenCount = tokenizer.encode(importedFile.content).bpe.length;
-    // chunk the file and exit early when token exceeds limit
-    if (tokenCount > 3000) {
-      setImportingStatus(`Error: Too many tokens (${tokenCount} found, 3000 max)`);
-      return; // TO many tokens
-    }
-
-    notifyFigma({ importTextFile: { text: importedFile.content, type: importedFile.type } });
+    notifyFigma({ importTextFile: { rows: formattedRows, type: textFile.type } });
   }, []);
+
+  const csvImportButton = useRef<HTMLInputElement>(null);
 
   return (
     <main>
@@ -152,7 +153,17 @@ function App() {
           </fieldset>
           <fieldset>
             <legend>Import</legend>
-            <input id="import-file" type="file" accept="text/plain, text/csv" onInput={handleImportFileSelection} />
+            <menu>
+              <button onClick={() => csvImportButton.current?.click()}>Excel</button>
+            </menu>
+            <input
+              style={{ display: "none" }}
+              id="import-file"
+              type="file"
+              accept="text/plain, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onInput={handleImportFileSelection}
+              ref={csvImportButton}
+            />
             {importingStatus}
           </fieldset>
           <fieldset>
