@@ -12,6 +12,7 @@
 
 - Logic history
 - edit history
+- Itemized history
 
 ## Logic expressivity
 
