@@ -16,6 +16,7 @@
 ## Logic expressivity
 
 - DAG
+- Reusable procedure
 
 ## Data expressivity
 
