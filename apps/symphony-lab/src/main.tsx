@@ -32,6 +32,11 @@ const ROUTES: NamedRoute[] = [
     path: "/experiments/ontology-builder",
     lazy: () => import("./experiments/ontology-builder").then(({ OntologyBuilder }) => ({ Component: OntologyBuilder })),
   },
+  {
+    displayName: "Shelf flow",
+    path: "/experiments/shelf-flow",
+    lazy: () => import("./experiments/shelf-flow").then(({ ShelfFlow }) => ({ Component: ShelfFlow })),
+  },
 ];
 
 const router = createBrowserRouter([
