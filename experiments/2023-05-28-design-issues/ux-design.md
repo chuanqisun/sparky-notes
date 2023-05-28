@@ -20,7 +20,8 @@
 
 ## Data expressivity
 
-- Hierarchical data (tree-like)
+- Hierarchical/nested data (tree-like)
+- Referential data (e.g. pointer to another item)
 - Long form data (e.g. an article)
 - Large quantities of data (e.g. 10k chat messages)
 - External data (e.g. entire wikipedia)
