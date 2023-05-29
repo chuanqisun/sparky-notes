@@ -14,4 +14,6 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
 
 const StyledMain = styled.main`
   color-scheme: light;
+  display: grid;
+  grid-template-rows: auto 1fr;
 `;

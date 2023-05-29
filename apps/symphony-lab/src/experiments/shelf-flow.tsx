@@ -1,14 +1,15 @@
 import type React from "react";
 import { useCallback } from "react";
-import ReactFlow, { Background, Controls, addEdge, useEdgesState, useNodesState, type OnConnect } from "reactflow";
+import ReactFlow, { Background, Controls, Panel, addEdge, useEdgesState, useNodesState, type Edge, type Node, type OnConnect } from "reactflow";
 
 import "reactflow/dist/style.css";
+import { ChatNode } from "../flow/custom-node/chat-node";
+import { MarkdownListNode } from "../flow/custom-node/markdown-list-node";
 
-const initialNodes = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "1" } },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "2" } },
-];
-const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
+const nodeTypes = { markdownList: MarkdownListNode, chat: ChatNode };
+
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
 export const ShelfFlow: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -16,13 +17,33 @@ export const ShelfFlow: React.FC = () => {
 
   const onConnect = useCallback<OnConnect>((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
+  const onAddMarkdownListNode = () => {
+    const id = `${nodes.length + 1}`;
+    setNodes((ns) => [...ns, { id, type: "markdownList", position: { x: 0, y: 0 }, data: "- Item 1\n- Item 2" }]);
+  };
+
+  const onAddChatNode = () => {
+    const id = `${nodes.length + 1}`;
+    setNodes((ns) => [...ns, { id, type: "chat", position: { x: 0, y: 0 }, data: "What do you think of {{input}}?" }]);
+  };
+
   return (
-    <div style={{ width: "100%", height: "40vh" }}>
-      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect}>
-        <Controls />
-        <Background />
-      </ReactFlow>
-    </div>
+    <ReactFlow
+      nodeTypes={nodeTypes}
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      proOptions={{ hideAttribution: true }}
+    >
+      <Panel position="top-left">
+        <button onClick={onAddMarkdownListNode}>Add markdown list</button>
+        <button onClick={onAddChatNode}>Add chat</button>
+      </Panel>
+      <Controls />
+      <Background />
+    </ReactFlow>
   );
 };
 

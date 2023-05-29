@@ -49,13 +49,13 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <>
+    <AppLayout>
       <Nav />
       <Main>
         <ExperimentList />
         <Outlet />
       </Main>
-    </>
+    </AppLayout>
   );
 }
 
@@ -71,6 +71,12 @@ function ExperimentList() {
     </StyledNav>
   );
 }
+
+const AppLayout = styled.div`
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+`;
 
 const StyledNav = styled.nav`
   padding: 4px 8px;
