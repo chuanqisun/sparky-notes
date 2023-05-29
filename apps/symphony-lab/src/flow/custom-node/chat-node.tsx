@@ -1,27 +1,39 @@
-import { memo, useState } from "react";
-import { Handle, NodeToolbar, Position, type NodeProps } from "reactflow";
-import { SelectableNode } from "./utils";
+import { memo } from "react";
+import { Handle, Position, type NodeProps } from "reactflow";
+import { SelectableNode, VerticalToolbar } from "./utils";
 
 export interface ChatProps {
   text: string;
   onTextChange: (text: string) => void;
+  list: string[];
+  onListChange: (list: string[]) => void;
 }
 export const ChatNode = memo((props: NodeProps<ChatProps>) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const handleRun = () => {
+    props.data.onListChange(["item 1", "item 2", "item 3"]);
+  };
+
+  const handleClear = () => {
+    props.data.onListChange([]);
+  };
 
   return (
-    <SelectableNode className={isEditing ? "nodrag" : undefined} selected={props.selected}>
-      <NodeToolbar position={Position.Bottom} align="start">
-        <button>Run</button>
-      </NodeToolbar>
+    <SelectableNode selected={props.selected}>
+      <VerticalToolbar position={Position.Left} align="start">
+        <button onClick={handleRun}>Run</button>
+        <button onClick={handleClear}>Clear</button>
+      </VerticalToolbar>
       <Handle type="target" position={Position.Top} />
       <h1>Chat</h1>
-      <textarea
-        onFocus={() => setIsEditing(true)}
-        onBlur={() => setIsEditing(false)}
-        onChange={(e) => props.data.onTextChange(e.target.value)}
-        value={props.data.text}
-      ></textarea>
+      <textarea className="nodrag" onChange={(e) => props.data.onTextChange(e.target.value)} value={props.data.text}></textarea>
+      <details className="nodrag">
+        <summary>Output ({props.data.list.length})</summary>
+        <div>
+          {props.data.list.map((item, index) => (
+            <div key={index}>{item}</div>
+          ))}
+        </div>
+      </details>
       <Handle type="source" position={Position.Bottom} />
     </SelectableNode>
   );

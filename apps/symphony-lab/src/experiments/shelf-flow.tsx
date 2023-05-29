@@ -4,9 +4,10 @@ import ReactFlow, { Background, Controls, Panel, addEdge, useEdgesState, useNode
 
 import "reactflow/dist/style.css";
 import { ChatNode } from "../flow/custom-node/chat-node";
+import { FileNode } from "../flow/custom-node/file-node";
 import { MarkdownListNode } from "../flow/custom-node/markdown-list-node";
 
-const nodeTypes = { markdownList: MarkdownListNode, chat: ChatNode };
+const nodeTypes = { markdownList: MarkdownListNode, chat: ChatNode, file: FileNode };
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -21,7 +22,17 @@ export const ShelfFlow: React.FC = () => {
     const id = `${nodes.length + 1}`;
     setNodes((ns) => [
       ...ns,
-      { id, type: "markdownList", position: { x: 0, y: 0 }, data: { text: "- Item 1\n- Item 2", onTextChange: (text: string) => handleTextChange(id, text) } },
+      {
+        id,
+        type: "markdownList",
+        position: { x: 0, y: 0 },
+        data: {
+          text: "- Item 1\n- Item 2",
+          onTextChange: (text: string) => handleTextChange(id, text),
+          list: [],
+          onListChange: (list: string[]) => handleListChange(id, list),
+        },
+      },
     ]);
   };
 
@@ -33,14 +44,38 @@ export const ShelfFlow: React.FC = () => {
         id,
         type: "chat",
         position: { x: 0, y: 0 },
-        data: { text: "What do you think of {{input}}?", onTextChange: (text: string) => handleTextChange(id, text) },
+        data: {
+          text: "What do you think of {{input}}?",
+          onTextChange: (text: string) => handleTextChange(id, text),
+          list: [],
+          onListChange: (list: string[]) => handleListChange(id, list),
+        },
       },
     ]);
   };
 
-  const handleTextChange = (id: string, text: string) => {
-    setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, text } } : n)));
+  const onAddFileNode = () => {
+    const id = `${nodes.length + 1}`;
+    setNodes((ns) => [
+      ...ns,
+      {
+        id,
+        type: "file",
+        position: { x: 0, y: 0 },
+        data: { text: "(empty)", onTextChange: (text: string) => handleTextChange(id, text) },
+      },
+    ]);
   };
+
+  const handleTextChange = useCallback(
+    (id: string, text: string) => setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, text } } : n))),
+    []
+  );
+
+  const handleListChange = useCallback(
+    (id: string, list: string[]) => setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, list } } : n))),
+    []
+  );
 
   return (
     <ReactFlow
@@ -55,6 +90,7 @@ export const ShelfFlow: React.FC = () => {
       <Panel position="top-left">
         <button onClick={onAddMarkdownListNode}>Add markdown list</button>
         <button onClick={onAddChatNode}>Add chat</button>
+        <button onClick={onAddFileNode}>Add file</button>
       </Panel>
       <Controls />
       <Background />
