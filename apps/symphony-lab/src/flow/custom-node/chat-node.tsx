@@ -7,10 +7,12 @@ export interface ChatProps {
   onTextChange: (text: string) => void;
   list: string[];
   onListChange: (list: string[]) => void;
+  getInputList: () => string[]; // POC
 }
 export const ChatNode = memo((props: NodeProps<ChatProps>) => {
-  const handleRun = () => {
-    props.data.onListChange(["item 1", "item 2", "item 3"]);
+  const handleRun = async () => {
+    console.log("exp", props.data.getInputList());
+    props.data.onListChange([...props.data.getInputList()]);
   };
 
   const handleClear = () => {
