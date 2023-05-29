@@ -24,7 +24,19 @@ export const ShelfFlow: React.FC = () => {
 
   const onAddChatNode = () => {
     const id = `${nodes.length + 1}`;
-    setNodes((ns) => [...ns, { id, type: "chat", position: { x: 0, y: 0 }, data: { text: "What do you think of {{input}}?" } }]);
+    setNodes((ns) => [
+      ...ns,
+      {
+        id,
+        type: "chat",
+        position: { x: 0, y: 0 },
+        data: { text: "What do you think of {{input}}?", onTextChange: (text: string) => handleTextChange(id, text) },
+      },
+    ]);
+  };
+
+  const handleTextChange = (id: string, text: string) => {
+    setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, text } } : n)));
   };
 
   return (
