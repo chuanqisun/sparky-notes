@@ -19,7 +19,10 @@ export const ShelfFlow: React.FC = () => {
 
   const onAddMarkdownListNode = () => {
     const id = `${nodes.length + 1}`;
-    setNodes((ns) => [...ns, { id, type: "markdownList", position: { x: 0, y: 0 }, data: "- Item 1\n- Item 2" }]);
+    setNodes((ns) => [
+      ...ns,
+      { id, type: "markdownList", position: { x: 0, y: 0 }, data: { text: "- Item 1\n- Item 2", onTextChange: (text: string) => handleTextChange(id, text) } },
+    ]);
   };
 
   const onAddChatNode = () => {

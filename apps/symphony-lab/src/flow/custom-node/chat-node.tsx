@@ -1,16 +1,16 @@
 import { memo, useState } from "react";
 import { Handle, NodeToolbar, Position, type NodeProps } from "reactflow";
-import styled from "styled-components";
+import { SelectableNode } from "./utils";
 
-export interface ListNodeProps {
+export interface ChatProps {
   text: string;
   onTextChange: (text: string) => void;
 }
-export const ChatNode = memo((props: NodeProps<ListNodeProps>) => {
+export const ChatNode = memo((props: NodeProps<ChatProps>) => {
   const [isEditing, setIsEditing] = useState(false);
 
   return (
-    <StyledNode className={isEditing ? "nodrag" : undefined} selected={props.selected}>
+    <SelectableNode className={isEditing ? "nodrag" : undefined} selected={props.selected}>
       <NodeToolbar position={Position.Bottom} align="start">
         <button>Run</button>
       </NodeToolbar>
@@ -23,12 +23,6 @@ export const ChatNode = memo((props: NodeProps<ListNodeProps>) => {
         value={props.data.text}
       ></textarea>
       <Handle type="source" position={Position.Bottom} />
-    </StyledNode>
+    </SelectableNode>
   );
 });
-
-const StyledNode = styled.div<{ selected: boolean }>`
-  background-color: #fff;
-  padding: 8px;
-  border: 1px solid ${(props) => (props.selected ? "#00aaff" : "#ddd")};
-`;

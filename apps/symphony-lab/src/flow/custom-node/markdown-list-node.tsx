@@ -1,25 +1,24 @@
 import { memo, useState } from "react";
-import { Handle, Position } from "reactflow";
-import styled from "styled-components";
+import { Handle, Position, type NodeProps } from "reactflow";
+import { SelectableNode } from "./utils";
 
-export interface ListNodeProps {
-  data: string;
+export interface MarkdownListProps {
+  text: string;
+  onTextChange: (text: string) => void;
 }
-export const MarkdownListNode = memo(({ data }: ListNodeProps) => {
+export const MarkdownListNode = memo((props: NodeProps<MarkdownListProps>) => {
   const [isEditing, setIsEditing] = useState(false);
 
   return (
-    <StyledNode className={isEditing ? "nodrag" : undefined}>
+    <SelectableNode className={isEditing ? "nodrag" : undefined} selected={props.selected}>
       <h1>Markdown list</h1>
-      <textarea onFocus={() => setIsEditing(true)} onBlur={() => setIsEditing(false)}>
-        {data}
-      </textarea>
+      <textarea
+        onFocus={() => setIsEditing(true)}
+        onBlur={() => setIsEditing(false)}
+        value={props.data.text}
+        onChange={(e) => props.data.onTextChange(e.target.value)}
+      />
       <Handle type="source" position={Position.Bottom} />
-    </StyledNode>
+    </SelectableNode>
   );
 });
-
-const StyledNode = styled.div`
-  background-color: #fff;
-  padding: 8px;
-`;
