@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { NodeToolbar } from "reactflow";
 import styled from "styled-components";
 
@@ -10,3 +11,17 @@ export const SelectableNode = styled.div<{ selected: boolean }>`
 export const VerticalToolbar = styled(NodeToolbar)`
   display: grid;
 `;
+
+export interface ListViewProps {
+  list: string[];
+}
+export const ListView = memo((props: ListViewProps) => (
+  <details className="nodrag">
+    <summary>Output ({props.list.length})</summary>
+    <div>
+      {props.list.map((item, index) => (
+        <div key={index}>{item}</div>
+      ))}
+    </div>
+  </details>
+));

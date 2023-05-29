@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "reactflow";
-import { SelectableNode, VerticalToolbar } from "./utils";
+import { ListView, SelectableNode, VerticalToolbar } from "./utils";
 
 export interface ChatProps {
   text: string;
@@ -26,14 +26,7 @@ export const ChatNode = memo((props: NodeProps<ChatProps>) => {
       <Handle type="target" position={Position.Top} />
       <h1>Chat</h1>
       <textarea className="nodrag" onChange={(e) => props.data.onTextChange(e.target.value)} value={props.data.text}></textarea>
-      <details className="nodrag">
-        <summary>Output ({props.data.list.length})</summary>
-        <div>
-          {props.data.list.map((item, index) => (
-            <div key={index}>{item}</div>
-          ))}
-        </div>
-      </details>
+      <ListView list={props.data.list} />
       <Handle type="source" position={Position.Bottom} />
     </SelectableNode>
   );

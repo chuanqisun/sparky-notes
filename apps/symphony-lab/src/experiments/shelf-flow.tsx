@@ -62,7 +62,7 @@ export const ShelfFlow: React.FC = () => {
         id,
         type: "file",
         position: { x: 0, y: 0 },
-        data: { text: "(empty)", onTextChange: (text: string) => handleTextChange(id, text) },
+        data: { text: "(empty)", onTextChange: (text: string) => handleTextChange(id, text), list: [] },
       },
     ]);
   };
