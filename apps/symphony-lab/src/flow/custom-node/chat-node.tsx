@@ -31,7 +31,14 @@ export const ChatNode = memo((props: NodeProps<ChatProps>) => {
       </VerticalToolbar>
       <Handle type="target" position={Position.Top} />
       <h1>Chat</h1>
-      <textarea className="nodrag" onChange={(e) => setText(e.target.value)} value={text}></textarea>
+      <label>System message</label>
+      <br />
+      <textarea
+        className="nodrag"
+        placeholder="Be a helpful assistant. Answer user's question."
+        onChange={(e) => setText(e.target.value)}
+        value={text}
+      ></textarea>
       <ListView list={props.data.list} />
       <Handle type="source" position={Position.Bottom} />
     </SelectableNode>
