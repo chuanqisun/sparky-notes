@@ -1,23 +1,23 @@
-import { memo, useEffect } from "react";
+import { memo, useEffect, useState } from "react";
 import { Handle, Position, type NodeProps } from "reactflow";
 import { responseToList } from "../../openai/format";
 import { ListView, SelectableNode } from "./utils";
 
 export interface MarkdownListProps {
-  text: string;
-  onTextChange: (text: string) => void;
   list: string[];
   onListChange: (list: string[]) => void;
 }
 export const MarkdownListNode = memo((props: NodeProps<MarkdownListProps>) => {
+  const [text, setText] = useState("");
+
   useEffect(() => {
-    props.data.onListChange(responseToList(props.data.text).listItems);
-  }, [props.data.text]);
+    props.data.onListChange(responseToList(text).listItems);
+  }, [text]);
 
   return (
     <SelectableNode selected={props.selected}>
       <h1>Markdown list</h1>
-      <textarea className="nodrag" value={props.data.text} onChange={(e) => props.data.onTextChange(e.target.value)} />
+      <textarea className="nodrag" value={text} onChange={(e) => setText(e.target.value)} />
       <ListView list={props.data.list} />
       <Handle type="source" position={Position.Bottom} />
     </SelectableNode>

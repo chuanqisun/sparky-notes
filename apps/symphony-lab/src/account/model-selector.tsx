@@ -56,7 +56,7 @@ export function useModelSelector() {
         <>
           <label>
             Chat model
-            <BasicSelect value={selectedChatModelDisplayId ?? ""} onChange={(e) => setSelectedChatModelDisplayId(e.target.value)}>
+            <BasicSelect value={selectedChatModelDisplayId ?? ""} onChange={(e: any) => setSelectedChatModelDisplayId(e.target.value)}>
               {connections.map((connection) => (
                 <optgroup key={connection.id} label={connection.displayName}>
                   {connection.models
@@ -77,7 +77,7 @@ export function useModelSelector() {
           </label>
           <label>
             Embedding model
-            <BasicSelect value={selectedEmbeddineModelDisplayId ?? ""} onChange={(e) => setSelectedEmbeddingModelDisplayId(e.target.value)}>
+            <BasicSelect value={selectedEmbeddineModelDisplayId ?? ""} onChange={(e: any) => setSelectedEmbeddingModelDisplayId(e.target.value)}>
               {connections.map((connection) => (
                 <optgroup key={connection.id} label={connection.displayName}>
                   {connection.models
