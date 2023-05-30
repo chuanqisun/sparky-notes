@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 
 import { CozoDb } from "cozo-node";
 import path from "path";
-import { analyzeDocument } from "./lib/hits/analyze-document";
+import { analyzeDocument } from "./lib/coherence/analyze-document";
+import { parseCoherence } from "./lib/coherence/parse-coherence";
 import { embedClaims, initializeEmbeddingsDb } from "./lib/hits/bulk-embed";
 import { clearClaims } from "./lib/hits/clear-claims";
 import { exportClaims, exportClaimsV2 } from "./lib/hits/export-claims";
@@ -12,7 +13,6 @@ import { parseClaims } from "./lib/hits/parse-claims";
 import { claimV2ToV3, fixClaimsV2, fixClaimsV2Db, fixClaimsV2Underscore, parseClaimsV2 } from "./lib/hits/parse-claims-v2";
 import { parseClaimsV3 } from "./lib/hits/parse-claims-v3";
 import { parseClaimsV4 } from "./lib/hits/parse-claims-v4";
-import { parseCoherence } from "./lib/hits/parse-coherence";
 import { entityQueryHandler } from "./lib/repl/handlers/entity-query";
 import { semantcQueryHandler } from "./lib/repl/handlers/interactive-claim-query";
 import { startRepl } from "./lib/repl/start";

@@ -8,7 +8,7 @@ import type {
   IFigmaFrameImageDefinition,
   IFigmaPivotDefinition,
   IFigmaSectionDefinition,
-} from "../coherence/portal.types";
+} from "./portal.types";
 
 export async function parseCoherence(controlsDir: string) {
   const controlDirs = await readdir(controlsDir);
