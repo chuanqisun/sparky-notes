@@ -49,16 +49,14 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
-    // TODO Length sensitivity should account for max token limit
-    // TODO Add synonym to pattern definition
     // TODO add all models to load balancer
+    // TODO Add synonym to pattern definition
     // TODO generate more queries to improve coverage
-    // TODO handle empty ref list
     // TODO combine semantic search with keyword search for better coverage
     // TODO use agent to generate queries
     // TODO ensure unused claims are still categorized under "other"
-    // TODO infer industry wide common names e.g. from Main-Details to Master-Details
-    // TODO programmatic output for site building
+    // TODO infer industry wide common names e.g. from Main-Details = Master-Details, Choice group = Radio button
+    // TODO chunking long input document for GPT3.5 only deployments
 
     // start logging
 
