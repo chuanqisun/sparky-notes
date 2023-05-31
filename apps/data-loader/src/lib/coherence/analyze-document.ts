@@ -50,6 +50,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
     // TODO Length sensitivity should account for max token limit
+    // TODO Add synonym to pattern definition
     // TODO add all models to load balancer
     // TODO generate more queries to improve coverage
     // TODO handle empty ref list
@@ -243,6 +244,8 @@ Definition: <One sentence definition>
 
   const textResponse = response.choices[0].message.content ?? "";
 
+  console.log("Pattern definition raw response", textResponse);
+
   const definition = textResponse.match(/Definition: (.*)/)?.[1] ?? "";
   return { patternName, definition };
 }
@@ -284,7 +287,7 @@ async function filterClaims(chatProxy: SimpleChatProxy, pattern: string, definit
     {
       role: "system",
       content: `
-Determine which of the provided claims mentioned the concept "${pattern}":
+Determine which of the provided claims is related to the concept "${pattern}" with the following definition:
 
 ${definition}
 
@@ -292,7 +295,7 @@ Response with a list of ${claims.length} items. Each item must use this format:
 
 Claim 1
 Id: <Claim id>
-Reason: <Identify any mentions of the concept "App frame">
+Reason: <Identify specific relations to the concept>
 Answer: <Yes/No>
 
 Claim 2
