@@ -95,7 +95,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const negativeQ = rankedResults.filter((item) => item.responses.length === 0);
     logger("search", `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries`);
 
-    await writeFile(`${outDir}/${filename}.json`, JSON.stringify(rankedResults, null, 2));
+    await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ rankedResults }, null, 2));
 
     const aggregated = rankedResults
       .flatMap((item) => item.responses.map((res) => ({ ...res, queries: [item.query] })))
@@ -103,7 +103,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       .sort((a, b) => b.score - a.score)
       .slice(0, 20); // prevent overflow
 
-    await writeFile(`${outDir}/${filename}-aggregated.json`, JSON.stringify(aggregated, null, 2));
+    await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ aggregated, rankedResults }, null, 2));
     logger("search", `aggregation ${aggregated.length} items`);
 
     console.log(`[${filename}] Searched`);
@@ -112,7 +112,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
-    await writeFile(`${outDir}/${filename}-filtered-ref-list.txt`, filteredClaimList);
+    await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
     logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
 
     console.log(`[${filename}] Filtered`);
@@ -120,7 +120,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const { summary, footnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
     logger("curation", `Topics: ${summary.length}, Claims: ${summary.flatMap((topic) => topic.claims).length}, Footnotes: ${footnotes.length}}`);
 
-    await writeFile(`${outDir}/${filename}-curated-research.json`, JSON.stringify({ summary, footnotes }, null, 2));
+    await writeFile(`${outDir}/${filename}-result.json`, JSON.stringify({ summary, footnotes }, null, 2));
 
     const formattedPage = `
 # ${patternName}
@@ -321,6 +321,9 @@ Claim: ${claim.caption}
   });
 
   const responseText = filterResponse.choices[0].message.content ?? "";
+
+  console.log("Filter raw response", responseText);
+
   const idReasonAnswerTuples = responseText.matchAll(/Id: (.*)\nReason: (.*)\nAnswer: (.*)/gm) ?? [];
   const filteredClaimIds = [...idReasonAnswerTuples]
     .map(([, id, reason, answer]) => ({ id, reason, answer }))
