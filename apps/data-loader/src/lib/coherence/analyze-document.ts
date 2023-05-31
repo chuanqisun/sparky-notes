@@ -32,21 +32,26 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const shortChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-8k");
   const longChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-32k");
   const balancerChatProxy = getLoadBalancedChatProxyV2(shortChatProxy, longChatProxy);
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7500);
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
+  // PROD
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7500);
+
   // DEBUG only
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7500);
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7500);
 
   const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
   const documentToPattern = getPatternDefinition.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
+    // TODO add all models to load balancer
     // TODO generate more queries to improve coverage
     // TODO combine semantic search with keyword search for better coverage
     // TODO use agent to generate queries
     // TODO ensure unused claims are still categorized under "other"
+    // TODO infer industry wide common names e.g. from Main-Details to Master-Details
+    // TODO programmatic output for site building
 
     console.log(`[${filename}] Started`);
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
