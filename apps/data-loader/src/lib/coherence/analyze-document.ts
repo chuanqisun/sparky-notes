@@ -35,20 +35,21 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const allInOneProxy = getLoadBalancedChatProxyV2(chatProxy, shortChatProxy, longChatProxy);
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
-  // PROD
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7500);
+  // PROD - GPT4 only
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7000);
 
-  // PERF mode
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7500);
+  // PERF mode - Multi-thread
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7000);
 
-  // DEBUG only
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7500);
+  // DEBUG only - GPT3.5 only
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7000);
 
   const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
   const documentToPattern = getPatternDefinition.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
+    // TODO Length sensitivity should account for max token limit
     // TODO add all models to load balancer
     // TODO generate more queries to improve coverage
     // TODO handle empty ref list
@@ -132,9 +133,9 @@ ${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n"
 
   // remove quotation marks in semantic queries
   // serial execution for debugging
-  // await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+  await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
   // parallel execution
-  await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
+  // await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
 }
 
 async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggregatedItems: AggregatedItem[]) {
