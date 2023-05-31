@@ -1,28 +1,13 @@
 import { assert } from "console";
 import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
-import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
-import { EntityName } from "../hits/entity";
+import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy } from "../azure/chat";
 import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claims";
+import { curateClaims } from "./pipeline/curate-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
+import { filterClaims } from "./pipeline/filter-claims";
 import { getPatternDefinition } from "./pipeline/infer-concept";
 import { getSemanticQueries } from "./pipeline/infer-queries";
-
-interface RankedQA {
-  query: string;
-  responses: ClaimItem[];
-}
-
-interface ClaimItem {
-  id: string;
-  entityType: number;
-  title: string;
-  score: number;
-  caption: string;
-}
-
-interface AggregatedItem extends ClaimItem {
-  queries: string[];
-}
+import { groupById, type RankedQA } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
   assert(process.env.OPENAI_API_KEY, "OPENAI_API_KEY is required");
@@ -162,176 +147,6 @@ ${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n"
   // await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
 }
 
-async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggregatedItems: AggregatedItem[]) {
-  const allFootNotes = aggregatedItems.map((item, index) => ({
-    pos: index + 1,
-    title: item.title,
-    url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
-  }));
-  const textSources = aggregatedItems.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
-  const messages: ChatMessage[] = [
-    {
-      role: "system",
-      content: `Summarize all the findings about the "${pattern}" concept into a 3-5 categories. Rephrase each finding as guidance. End each line with citations. Uncategorizable findings must be grouped under "Other". Use format:
-
-- <Category name 1>
-   - <Guidance 1> [Citation #s]
-   - <Guidance 2> [Citation #s]
-  ...
-- <Category name 2>
-...
-- Other
-  - <Uncategorized finding> [Citation #s]
-  ...`,
-    },
-    {
-      role: "user",
-      content: textSources,
-    },
-  ];
-
-  const response = await chatProxy({ messages, max_tokens: 800, temperature: 0 });
-  const textResponse = response.choices[0].message.content ?? "";
-
-  console.log("curation raw response", textResponse);
-
-  const categories: {
-    name: string;
-    claims: {
-      guidance: string;
-      sources: { pos: number; url: string; title: string }[];
-    }[];
-  }[] = [];
-
-  const lines = textResponse.split("\n");
-  const categoryLineIndices = lines.map((line, index) => (line.startsWith("- ") ? index : -1)).filter((i) => i !== -1);
-  for (let i = 0; i < categoryLineIndices.length; i++) {
-    const categoryLineIndex = categoryLineIndices[i];
-    const categoryName = lines[categoryLineIndex].replace("- ", "").trim();
-    const citedClaims = lines
-      .slice(categoryLineIndex + 1, categoryLineIndices[i + 1] ?? lines.length)
-      .map((line) => {
-        // regex, replace anything that is not a digit with space
-        const { citations, text } = parseCitations(line);
-        const sources = citations.map((pos) => allFootNotes.find((item) => item.pos === pos)!).filter(Boolean);
-        const guidance = text.replace("- ", "").trim();
-        return { guidance, sources };
-      })
-      .filter(Boolean) as { guidance: string; sources: { pos: number; url: string; title: string }[] }[];
-
-    if (citedClaims.length) {
-      categories.push({ name: categoryName, claims: citedClaims });
-    }
-  }
-
-  const unusedFootnotes = allFootNotes.filter(
-    (item) => !categories.some((category) => category.claims.some((claim) => claim.sources.some((source) => source.pos === item.pos)))
-  );
-  if (unusedFootnotes.length) {
-    console.error("UNUSED FOOTNOTE FOUND", unusedFootnotes);
-  }
-  return { summary: categories, footnotes: allFootNotes, unusedFootnotes };
-}
-
-interface FilterableClaim {
-  id: string;
-  caption: string;
-}
-async function filterClaims(chatProxy: SimpleChatProxy, pattern: string, definition: string, claims: FilterableClaim[]) {
-  const messages: ChatMessage[] = [
-    {
-      role: "system",
-      content: `
-Determine which of the provided claims is related to the concept "${pattern}" with the following definition:
-
-${definition}
-
-Response with a list of ${claims.length} items. Each item must use this format:
-
-Claim 1
-Id: <Claim id>
-Reason: <Identify specific relations to the concept>
-Answer: <Yes/No>
-
-Claim 2
-...
-`.trim(),
-    },
-    {
-      role: "user",
-      content: `
-${claims
-  .map((claim) =>
-    `
-Id: ${claim.id}
-Claim: ${claim.caption} 
-`.trim()
-  )
-  .join("\n\n")}      
-`.trim(),
-    },
-  ];
-
-  const filterResponse = await chatProxy({
-    messages,
-    max_tokens: 2000,
-    temperature: 0,
-  });
-
-  const responseText = filterResponse.choices[0].message.content ?? "";
-
-  console.log("Filter raw response", responseText);
-
-  const idReasonAnswerTuples = responseText.matchAll(/Id: (.*)\nReason: (.*)\nAnswer: (.*)/gm) ?? [];
-  const filteredClaimIds = [...idReasonAnswerTuples]
-    .map(([, id, reason, answer]) => ({ id, reason, answer }))
-    .filter((item) => item.answer.toLocaleLowerCase() === "yes")
-    .map((item) => item.id);
-
-  return filteredClaimIds;
-}
-
-function groupById(acc: AggregatedItem[], item: AggregatedItem) {
-  const existing = acc.find((i) => i.id === item.id);
-  if (existing) {
-    if (existing.score < item.score) {
-      existing.score = item.score;
-      existing.queries.push(...item.queries);
-    }
-  } else {
-    acc.push(item);
-  }
-  return acc;
-}
-
 function reducePromisesSerial(acc: Promise<any>, item: () => Promise<any>) {
   return acc.then(item);
-}
-
-function parseCitations(line: string): { text: string; citations: number[] } {
-  // account for different citation styles
-  // text [1,2,3]
-  // text [1, 2, 3]
-  // text [1][2][3]
-  // text [1] [2] [3]
-  // text [1],[2],[3]
-  // text [1], [2], [3]
-  const match = line.trim().match(/^(.*?)((\[((\d|,|\s)+)\],?\s*)+)$/);
-  if (!match) {
-    return { text: line.trim(), citations: [] };
-  }
-
-  // regex, replace anything that is not a digit with space
-  const citations = (match[2] ?? "")
-    .replaceAll(/[^\d]/g, " ")
-    .split(" ")
-    .map((item) => parseInt(item))
-    .filter(Boolean);
-
-  const text = match[1].trim();
-
-  return {
-    text,
-    citations,
-  };
 }
