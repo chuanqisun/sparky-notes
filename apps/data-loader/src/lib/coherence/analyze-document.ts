@@ -112,7 +112,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const relatedIds = await filterClaims(lengthSensitiveProxy, patternName, definition, aggregated);
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
 
-    const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
+    const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`);
     await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
     logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
 
