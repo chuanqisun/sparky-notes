@@ -113,9 +113,17 @@ export function getChatProxy(apiKey: string, endpoint: string) {
     },
     retryConfig: {
       retries: 3,
-      retryDelay: (count) => {
-        console.log(`Retry: ${count}`);
-        return count * 2000;
+      retryDelay: (count, error) => {
+        const serverInternal = (((error.response?.data as any)?.error?.message as string) ?? "").match(/ (\d+) second/)?.[1];
+        if (serverInternal) {
+          const interval = parseInt(serverInternal) * 1000;
+          console.log(`Retry: ${count} (server internal: ${interval})`);
+          return interval;
+        } else {
+          const interval = count * 2000;
+          console.log(`Retry: ${count}, (default internal: ${interval})}`);
+          return interval;
+        }
       },
       shouldResetTimeout: true,
       retryCondition: () => true,
