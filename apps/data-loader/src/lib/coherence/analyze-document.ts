@@ -32,10 +32,14 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const shortChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-8k");
   const longChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-32k");
   const balancerChatProxy = getLoadBalancedChatProxyV2(shortChatProxy, longChatProxy);
+  const allInOneProxy = getLoadBalancedChatProxyV2(chatProxy, shortChatProxy, longChatProxy);
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
   // PROD
   // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7500);
+
+  // PERF mode
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7500);
 
   // DEBUG only
   const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7500);
@@ -47,6 +51,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
     // TODO add all models to load balancer
     // TODO generate more queries to improve coverage
+    // TODO handle empty ref list
     // TODO combine semantic search with keyword search for better coverage
     // TODO use agent to generate queries
     // TODO ensure unused claims are still categorized under "other"
@@ -101,6 +106,8 @@ export async function analyzeDocument(dir: string, outDir: string) {
     console.log(`[${filename}] Filtered`);
 
     const { summary, footnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
+
+    await writeFile(`${outDir}/${filename}-curated-research.json`, JSON.stringify({ summary, footnotes }, null, 2));
 
     const formattedPage = `
 # ${patternName}
@@ -181,7 +188,7 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
           return null;
         }
         const sourcePos = match[2].match(/\[(\d+)\]/g)?.map((item) => parseInt(item.replace("[", "").replace("]", ""))) ?? [];
-        const sources = sourcePos.map((pos) => allFootNotes.find((item) => item.pos === pos)!);
+        const sources = sourcePos.map((pos) => allFootNotes.find((item) => item.pos === pos)!).filter(Boolean);
         const guidance = match[1].trim();
         return { guidance, sources };
       })
