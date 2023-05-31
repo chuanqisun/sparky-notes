@@ -118,8 +118,16 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     console.log(`[${filename}] Filtered`);
 
-    const { summary, footnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
-    logger("curation", `Topics: ${summary.length}, Claims: ${summary.flatMap((topic) => topic.claims).length}, Footnotes: ${footnotes.length}}`);
+    const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
+    const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;
+    const groupCount = summary.length;
+    const claimCount = summary.flatMap((topic) => topic.claims).length;
+    const groupSize = claimCount / groupCount;
+
+    logger(
+      "curation",
+      `Topics: ${groupCount}, Claims: ${claimCount}, Footnotes: ${footnotes.length}, Utilization: ${footnoteUtilization}, Density: ${groupSize}`
+    );
 
     await writeFile(`${outDir}/${filename}-result.json`, JSON.stringify({ summary, footnotes }, null, 2));
 
@@ -219,7 +227,7 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
   if (unusedFootnotes.length) {
     console.error("UNUSED FOOTNOTE FOUND", unusedFootnotes);
   }
-  return { summary: categories, footnotes: allFootNotes };
+  return { summary: categories, footnotes: allFootNotes, unusedFootnotes };
 }
 
 async function getPatternDefinition(chatProxy: SimpleChatProxy, markdownFile: string) {
