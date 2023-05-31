@@ -92,12 +92,12 @@ export function modelToEndpoint(model?: ChatModel): string {
 export function modelToRequestsPerMinute(model?: ChatModel): number {
   switch (model) {
     case "v4-32k":
-      return 1;
+      return 1000;
     case "v4-8k":
-      return 1;
+      return 1000;
     case "v3.5-turbo":
     default:
-      return 300;
+      return 3000;
   }
 }
 
@@ -117,11 +117,11 @@ export function getChatProxy(apiKey: string, endpoint: string) {
         const serverInternal = (((error.response?.data as any)?.error?.message as string) ?? "").match(/ (\d+) second/)?.[1];
         if (serverInternal) {
           const interval = parseInt(serverInternal) * 1000;
-          console.log(`Retry: ${count} (server internal: ${interval})`);
+          console.log(`Retry: ${count} (server internal: ${interval / 1000})`);
           return interval;
         } else {
           const interval = count * 2000;
-          console.log(`Retry: ${count}, (default internal: ${interval})}`);
+          console.log(`Retry: ${count}, (default internal: ${interval / 1000})}`);
           return interval;
         }
       },
