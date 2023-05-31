@@ -37,11 +37,11 @@ function renderDocument(title: string, article: IFigmaArticleDefinition) {
 }
 
 function renderPivot(pivot: IFigmaPivotDefinition) {
-  return [`## ${pivot.title ?? "untitle"}`, ...(pivot.sections ?? []).map(renderPivotSection)].filter(isTruty).join("\n\n");
+  return [`## ${pivot.title ?? "Untitled"}`, ...(pivot.sections ?? []).map(renderPivotSection)].filter(isTruty).join("\n\n");
 }
 
 function renderPivotSection(section: IFigmaSectionDefinition) {
-  return [`### ${section.title ?? "untitle"}`, ...(section.frames ?? []).map(renderPivotSectionFrame)].filter(isTruty).join("\n\n");
+  return [`### ${section.title ?? "Untitled"}`, ...(section.frames ?? []).map(renderPivotSectionFrame)].filter(isTruty).join("\n\n");
 }
 
 function renderPivotSectionFrame(frame: IFigmaFrameDefinition) {
@@ -53,7 +53,7 @@ function renderPivotSectionFrame(frame: IFigmaFrameDefinition) {
     .join("\n\n");
 }
 function renderPivotSectionFrameHeader(header: IFigmaFrameHeaderDefinition) {
-  return [`#### ${header.text ?? "untitle"}`, normalizeText(header.body)].filter(isTruty).join("\n\n");
+  return [`#### ${header.text ?? "Untitled"}`, normalizeText(header.body)].filter(isTruty).join("\n\n");
 }
 
 function renderPivotSectionFrameImage(image: IFigmaFrameImageDefinition) {
