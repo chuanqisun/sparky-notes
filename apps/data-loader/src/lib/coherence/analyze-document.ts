@@ -1,6 +1,6 @@
 import { assert } from "console";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
-import { getLengthSensitiveChatProxy, getLoadBalancedChatProxy, getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
+import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { EntityName } from "../hits/entity";
 import { responseToList } from "../hits/format";
 import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claims";
@@ -29,9 +29,10 @@ export async function analyzeDocument(dir: string, outDir: string) {
   mkdir(outDir, { recursive: true });
 
   const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v3.5-turbo");
+  const shortChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-8k");
   const longChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-32k");
-  const blancerChatProxy = getLoadBalancedChatProxy(process.env.OPENAI_DEV_API_KEY!, ["v4-8k", "v4-32k"]);
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(blancerChatProxy, longChatProxy, 7500);
+  const balancerChatProxy = getLoadBalancedChatProxyV2(shortChatProxy, longChatProxy);
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7500);
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
   // DEBUG only

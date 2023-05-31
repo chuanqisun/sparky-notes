@@ -24,6 +24,18 @@ export function getLengthSensitiveChatProxy(shortProxy: SimpleChatProxy, longPro
   return lengthSensitiveProxy;
 }
 
+export function getLoadBalancedChatProxyV2(...proxies: SimpleChatProxy[]): SimpleChatProxy {
+  let currentProxy = 0;
+
+  const balancedProxy: SimpleChatProxy = async (input) => {
+    const proxy = proxies[currentProxy];
+    currentProxy = (currentProxy + 1) % proxies.length;
+    return proxy(input);
+  };
+
+  return balancedProxy;
+}
+
 export function getLoadBalancedChatProxy(apiKey: string, models: ChatModel[], slient?: boolean): SimpleChatProxy {
   const internalProxies = models.map((model) => getSimpleChatProxy(apiKey, model, slient));
 
