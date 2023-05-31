@@ -124,11 +124,12 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;
     const groupCount = summary.length;
     const claimCount = summary.flatMap((topic) => topic.claims).length;
-    const groupSize = claimCount / groupCount;
+    const guidanceDensity = claimCount / groupCount;
+    const refDensity = (footnotes.length - unusedFootnotes.length) / groupCount;
 
     logger(
       "curation",
-      `Topics: ${groupCount}, Claims: ${claimCount}, Footnotes: ${footnotes.length}, Utilization: ${footnoteUtilization}, Density: ${groupSize}`
+      `Topics: ${groupCount}, Claims: ${claimCount}, Footnotes: ${footnotes.length}, Utilization: ${footnoteUtilization}, Guidance density: ${guidanceDensity}, Ref density: ${refDensity}`
     );
 
     await writeFile(`${outDir}/${filename}-result.json`, JSON.stringify({ summary, footnotes }, null, 2));
