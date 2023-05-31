@@ -61,8 +61,8 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     // start logging
 
-    const logger = (topic: string, message: string) => {
-      appendFile(`${outDir}/${filename}.log`, `${new Date().toISOString()} | ${topic} | ${message}\n`);
+    const logger = (...segments: string[]) => {
+      appendFile(`${outDir}/${filename}.log`, `${[new Date().toISOString(), ...segments].join(" | ")}\n`);
     };
 
     logger("main", "started");
@@ -118,7 +118,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     console.log(`[${filename}] Filtered`);
 
     const { summary, footnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
-    logger("curation", `Topics: ${summary.length}, Footnotes: ${footnotes.length}}`);
+    logger("curation", `Topics: ${summary.length}, Claims: ${summary.flatMap((topic) => topic.claims).length}, Footnotes: ${footnotes.length}}`);
 
     await writeFile(`${outDir}/${filename}-curated-research.json`, JSON.stringify({ summary, footnotes }, null, 2));
 
@@ -160,15 +160,16 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
   const messages: ChatMessage[] = [
     {
       role: "system",
-      content: `Summarize all the findings about the "${pattern}" concept into a 3-5 categories of guidances. Uncategorizable claims must be grouped under "Other". Rephrase each finding as a guidance. Cite the source for each finding. Use format:
+      content: `Summarize all the findings about the "${pattern}" concept into a 3-5 categories. Rephrase each finding as guidance. End each line with citations. Uncategorizable findings must be grouped under "Other". Use format:
 
 - <Category name 1>
-   - <Guidance 1> [Citation #]
-   - <Guidance 2> [Citation #]
+   - <Guidance 1> [Citation #s]
+   - <Guidance 2> [Citation #s]
+  ...
 - <Category name 2>
 ...
 - Other
-  - <Other Guidance>
+  - <Uncategorized finding> [Citation #s]
   ...`,
     },
     {
@@ -179,6 +180,8 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
 
   const response = await chatProxy({ messages, max_tokens: 800, temperature: 0 });
   const textResponse = response.choices[0].message.content ?? "";
+
+  console.log("curation raw response", textResponse);
 
   const categories: {
     name: string;
@@ -196,13 +199,10 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
     const citedClaims = lines
       .slice(categoryLineIndex + 1, categoryLineIndices[i + 1] ?? lines.length)
       .map((line) => {
-        const match = line.trim().match(/^- (.*) ((\[(\d+)\])+)$/);
-        if (!match) {
-          return null;
-        }
-        const sourcePos = match[2].match(/\[(\d+)\]/g)?.map((item) => parseInt(item.replace("[", "").replace("]", ""))) ?? [];
-        const sources = sourcePos.map((pos) => allFootNotes.find((item) => item.pos === pos)!).filter(Boolean);
-        const guidance = match[1].trim();
+        // regex, replace anything that is not a digit with space
+        const { citations, text } = parseCitations(line);
+        const sources = citations.map((pos) => allFootNotes.find((item) => item.pos === pos)!).filter(Boolean);
+        const guidance = text.replace("- ", "").trim();
         return { guidance, sources };
       })
       .filter(Boolean) as { guidance: string; sources: { pos: number; url: string; title: string }[] }[];
@@ -345,4 +345,32 @@ function groupById(acc: AggregatedItem[], item: AggregatedItem) {
 
 function reducePromisesSerial(acc: Promise<any>, item: () => Promise<any>) {
   return acc.then(item);
+}
+
+function parseCitations(line: string): { text: string; citations: number[] } {
+  // account for different citation styles
+  // text [1,2,3]
+  // text [1, 2, 3]
+  // text [1][2][3]
+  // text [1] [2] [3]
+  // text [1],[2],[3]
+  // text [1], [2], [3]
+  const match = line.trim().match(/^(.*?)((\[((\d|,|\s)+)\],?\s*)+)$/);
+  if (!match) {
+    return { text: line.trim(), citations: [] };
+  }
+
+  // regex, replace anything that is not a digit with space
+  const citations = (match[2] ?? "")
+    .replaceAll(/[^\d]/g, " ")
+    .split(" ")
+    .map((item) => parseInt(item))
+    .filter(Boolean);
+
+  const text = match[1].trim();
+
+  return {
+    text,
+    citations,
+  };
 }
