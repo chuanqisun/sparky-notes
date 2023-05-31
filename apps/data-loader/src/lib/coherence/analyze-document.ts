@@ -39,10 +39,10 @@ export async function analyzeDocument(dir: string, outDir: string) {
   // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7000);
 
   // PERF mode - Multi-thread
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7000);
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7000);
 
   // DEBUG only - GPT3.5 only
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7000);
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7000);
 
   const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
   const documentToPattern = getPatternDefinition.bind(null, lengthSensitiveProxy);
@@ -62,13 +62,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     // start logging
 
     const logger = (topic: string, message: string) => {
-      appendFile(
-        `${outDir}/${filename}.log`,
-        `
-${new Date().toLocaleString} | ${topic}
-${message}
-`
-      );
+      appendFile(`${outDir}/${filename}.log`, `${new Date().toISOString()} | ${topic} | ${message}\n`);
     };
 
     logger("main", "started");
@@ -99,7 +93,7 @@ ${message}
     }
     const positiveQ = rankedResults.filter((item) => item.responses.length > 0);
     const negativeQ = rankedResults.filter((item) => item.responses.length === 0);
-    logger("search", `semantic search ${positiveQ} positive queries, ${negativeQ} negative queries`);
+    logger("search", `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries`);
 
     await writeFile(`${outDir}/${filename}.json`, JSON.stringify(rankedResults, null, 2));
 
@@ -151,9 +145,9 @@ ${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n"
 
   // remove quotation marks in semantic queries
   // serial execution for debugging
-  // await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+  await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
   // parallel execution
-  await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
+  // await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
 }
 
 async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggregatedItems: AggregatedItem[]) {
