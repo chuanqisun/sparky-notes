@@ -10,13 +10,17 @@ export interface SimpleChatProxy {
 
 export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
 
+const DEFAULT_MAX_TOKENS = 60;
+
 export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
 
 export function getLengthSensitiveChatProxy(shortProxy: SimpleChatProxy, longProxy: SimpleChatProxy, threshold: number): SimpleChatProxy {
   const lengthSensitiveProxy: SimpleChatProxy = async (input) => {
     const { messages } = input;
-    const isShort = isWithinTokenLimit(messages.map((m) => m.content).join("\n"), threshold);
-    console.log("Proxy selected: ", isShort ? "short" : "long");
+    const maxTokens = input.max_tokens ?? DEFAULT_MAX_TOKENS;
+    const usableInputTokenWindow = threshold - maxTokens;
+    const isShort = isWithinTokenLimit(messages.map((m) => m.content).join("\n"), usableInputTokenWindow);
+    console.log(`Proxy selected: , ${isShort ? "short" : "long"} input ${usableInputTokenWindow} tokens, output ${maxTokens} tokens}`);
     const proxy = isShort ? shortProxy : longProxy;
     return proxy(input);
   };
