@@ -1,9 +1,26 @@
 import { assert } from "console";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
-import type { ChatMessage } from "../azure/chat";
-import { getSimpleChatProxy, type SimpleChatProxy } from "../azure/chat";
+import { getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
+import { EntityName } from "../hits/entity";
 import { responseToList } from "../hits/format";
 import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claims";
+
+interface RankedQA {
+  query: string;
+  responses: ClaimItem[];
+}
+
+interface ClaimItem {
+  id: string;
+  entityType: number;
+  title: string;
+  score: number;
+  caption: string;
+}
+
+interface AggregatedItem extends ClaimItem {
+  queries: string[];
+}
 
 export async function analyzeDocument(dir: string, outDir: string) {
   assert(process.env.OPENAI_API_KEY, "OPENAI_API_KEY is required");
@@ -23,15 +40,16 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const { patternName, definition } = await getPatternDefinition(chatProxy, markdownFile);
     console.log(`${patternName}: ${definition}`);
 
+    // TODO generate more queries to improve coverage
+    // TODO use agent to generate queries
+
     const claims = await documentToClaims(markdownFile);
     console.log(claims);
     const queries = responseToList(claims).listItems;
 
-    const rankedResults: { query: string; responses: { id: string; entityType: number; title: string; score: number; caption: string }[] }[] = [];
+    const rankedResults: RankedQA[] = [];
 
     for (const query of queries) {
-      console.log(`Query: ${query}`);
-
       const result = await claimSearchProxy(getSemanticSearchInput(query, 10));
       const responses = result.value
         ?.filter((doc) => doc["@search.rerankerScore"] > 1)
@@ -43,6 +61,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
           caption: doc["@search.captions"].map((item) => item.text).join("..."),
         }));
 
+      console.log(`Query: ${query} | ${responses?.length ?? 0} results`);
       rankedResults.push({ query, responses: responses ?? [] });
     }
 
@@ -55,17 +74,109 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     await writeFile(`${outDir}/${filename}-aggregated.json`, JSON.stringify(aggregated, null, 2));
 
-    // TODO add a filter step to ensure mentioning of the component name
     const relatedIds = await filterClaims(chatProxy, patternName, definition, aggregated);
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
-    console.log(filteredAggregated.map((item) => `${item.id} ${item.caption}`).join("\n"));
+    console.log(filteredAggregated.map((item) => `- ${item.id} ${item.caption}`).join("\n"));
+
+    const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
+    await writeFile(`${outDir}/${filename}-filtered-ref-list.txt`, filteredClaimList);
+
+    const { summary, footnotes } = await curateClaims(chatProxy, patternName, filteredAggregated);
+
+    const formattedPage = `
+# ${patternName}
+   
+## Research insights
+${summary
+  .map((category) =>
+    `
+- ${category.name}
+${category.claims.map((claim) => `  - ${claim.guidance} ${claim.sources.map((source) => `[${source.pos}]`).join("")}`).join("\n")}
+    `.trim()
+  )
+  .join("\n")}
+
+## References
+${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n")}
+      `.trim();
+
+    await writeFile(`${outDir}/${filename}-curated-research.md`, formattedPage);
 
     // TODO add token limit and chunking to long document
-
-    await writeFile(`${outDir}/${filename}-aggregated-filtered.json`, JSON.stringify(filteredAggregated, null, 2));
   });
 
   await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+}
+
+async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggregatedItems: AggregatedItem[]) {
+  const allFootNotes = aggregatedItems.map((item, index) => ({
+    pos: index + 1,
+    title: item.title,
+    url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
+  }));
+  const textSources = aggregatedItems.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `Summarize findings about the "${pattern}" concept into a 3-5 categories of guidances. Uncategorizable claims must be grouped under "Other". Rephrase each finding as a guidance. Cite the source for each finding. Use format:
+
+      - <Category name 1>
+         - <Guidance 1> [Citation #]
+         - <Guidance 2> [Citation #]
+      - <Category name 2>
+      ...
+      - Other
+        - <Other Guidance>
+        ...`,
+    },
+    {
+      role: "user",
+      content: textSources,
+    },
+  ];
+
+  const response = await chatProxy({ messages, max_tokens: 800, temperature: 0 });
+  const textResponse = response.choices[0].message.content ?? "";
+
+  const categories: {
+    name: string;
+    claims: {
+      guidance: string;
+      sources: { pos: number; url: string; title: string }[];
+    }[];
+  }[] = [];
+
+  const lines = textResponse.split("\n");
+  const categoryLineIndices = lines.map((line, index) => (line.startsWith("- ") ? index : -1)).filter((i) => i !== -1);
+  for (let i = 0; i < categoryLineIndices.length; i++) {
+    const categoryLineIndex = categoryLineIndices[i];
+    const categoryName = lines[categoryLineIndex].replace("- ", "").trim();
+    const citedClaims = lines
+      .slice(categoryLineIndex + 1, categoryLineIndices[i + 1] ?? lines.length)
+      .map((line) => {
+        const match = line.trim().match(/^- (.*) ((\[(\d+)\])+)$/);
+        if (!match) {
+          return null;
+        }
+        const sourcePos = match[2].match(/\[(\d+)\]/g)?.map((item) => parseInt(item.replace("[", "").replace("]", ""))) ?? [];
+        const sources = sourcePos.map((pos) => allFootNotes.find((item) => item.pos === pos)!);
+        const guidance = match[1].trim();
+        return { guidance, sources };
+      })
+      .filter(Boolean) as { guidance: string; sources: { pos: number; url: string; title: string }[] }[];
+
+    if (citedClaims.length) {
+      categories.push({ name: categoryName, claims: citedClaims });
+    }
+  }
+
+  const unusedFootnotes = allFootNotes.filter(
+    (item) => !categories.some((category) => category.claims.some((claim) => claim.sources.some((source) => source.pos === item.pos)))
+  );
+  if (unusedFootnotes.length) {
+    console.error("UNUSED FOOTNOTE FOUND", unusedFootnotes);
+  }
+  return { summary: categories, footnotes: allFootNotes };
 }
 
 async function getPatternDefinition(chatProxy: SimpleChatProxy, markdownFile: string) {
@@ -168,15 +279,6 @@ Claim: ${claim.caption}
     .map((item) => item.id);
 
   return filteredClaimIds;
-}
-
-interface AggregatedItem {
-  id: string;
-  entityType: number;
-  title: string;
-  score: number;
-  caption: string;
-  queries: string[];
 }
 
 function groupById(acc: AggregatedItem[], item: AggregatedItem) {
