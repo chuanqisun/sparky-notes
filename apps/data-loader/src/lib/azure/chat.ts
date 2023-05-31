@@ -1,7 +1,7 @@
-import { jsonProxy } from "../http/json-proxy";
-
+import { isWithinTokenLimit } from "gpt-tokenizer";
 import http from "http";
 import https from "https";
+import { jsonProxy } from "../http/json-proxy";
 import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 
 export interface SimpleChatProxy {
@@ -11,6 +11,18 @@ export interface SimpleChatProxy {
 export type ChatModel = "v3.5-turbo" | "v4-8k" | "v4-32k";
 
 export type SimpleChatInput = Partial<ChatInput> & Pick<ChatInput, "messages">;
+
+export function getLengthSensitiveChatProxy(shortProxy: SimpleChatProxy, longProxy: SimpleChatProxy, threshold: number): SimpleChatProxy {
+  const lengthSensitiveProxy: SimpleChatProxy = async (input) => {
+    const { messages } = input;
+    const isShort = isWithinTokenLimit(messages.map((m) => m.content).join("\n"), threshold);
+    console.log("Proxy selected: ", isShort ? "short" : "long");
+    const proxy = isShort ? shortProxy : longProxy;
+    return proxy(input);
+  };
+
+  return lengthSensitiveProxy;
+}
 
 export function getLoadBalancedChatProxy(apiKey: string, models: ChatModel[], slient?: boolean): SimpleChatProxy {
   const internalProxies = models.map((model) => getSimpleChatProxy(apiKey, model, slient));
@@ -85,7 +97,7 @@ export function getChatProxy(apiKey: string, endpoint: string) {
       },
       httpAgent: new http.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
       httpsAgent: new https.Agent({ keepAlive: true, keepAliveMsecs: 10000, maxTotalSockets: 3, maxSockets: 3 }),
-      timeout: 60000,
+      timeout: 120000, // 2 minutes
     },
     retryConfig: {
       retries: 3,

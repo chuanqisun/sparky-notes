@@ -1,6 +1,6 @@
 import { assert } from "console";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
-import { getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
+import { getLengthSensitiveChatProxy, getLoadBalancedChatProxy, getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { EntityName } from "../hits/entity";
 import { responseToList } from "../hits/format";
 import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claims";
@@ -29,23 +29,31 @@ export async function analyzeDocument(dir: string, outDir: string) {
   mkdir(outDir, { recursive: true });
 
   const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v3.5-turbo");
+  const longChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-32k");
+  const blancerChatProxy = getLoadBalancedChatProxy(process.env.OPENAI_DEV_API_KEY!, ["v4-8k", "v4-32k"]);
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(blancerChatProxy, longChatProxy, 7500);
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
-  const documentToClaims = getSemanticQueries.bind(null, chatProxy);
+
+  // DEBUG only
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7500);
+
+  const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
+  const documentToPattern = getPatternDefinition.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
-    console.log(`=== ${filename} ===`);
+    // TODO generate more queries to improve coverage
+    // TODO combine semantic search with keyword search for better coverage
+    // TODO use agent to generate queries
+    // TODO ensure unused claims are still categorized under "other"
+
+    console.log(`[${filename}] Started`);
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
-    const { patternName, definition } = await getPatternDefinition(chatProxy, markdownFile);
-    console.log(`${patternName}: ${definition}`);
-
-    // TODO generate more queries to improve coverage
-    // TODO use agent to generate queries
-
-    const claims = await documentToClaims(markdownFile);
-    console.log(claims);
-    const queries = responseToList(claims).listItems;
+    const [pattern, queries] = await Promise.all([documentToPattern(markdownFile), documentToClaims(markdownFile)]);
+    const { patternName, definition } = pattern;
+    console.log(`[${filename}] Parsed`);
+    console.log({ ...pattern, queries });
 
     const rankedResults: RankedQA[] = [];
 
@@ -70,18 +78,23 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const aggregated = rankedResults
       .flatMap((item) => item.responses.map((res) => ({ ...res, queries: [item.query] })))
       .reduce(groupById, [])
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 20); // prevent overflow
 
     await writeFile(`${outDir}/${filename}-aggregated.json`, JSON.stringify(aggregated, null, 2));
 
-    const relatedIds = await filterClaims(chatProxy, patternName, definition, aggregated);
+    console.log(`[${filename}] Searched`);
+
+    const relatedIds = await filterClaims(lengthSensitiveProxy, patternName, definition, aggregated);
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
     console.log(filteredAggregated.map((item) => `- ${item.id} ${item.caption}`).join("\n"));
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
     await writeFile(`${outDir}/${filename}-filtered-ref-list.txt`, filteredClaimList);
 
-    const { summary, footnotes } = await curateClaims(chatProxy, patternName, filteredAggregated);
+    console.log(`[${filename}] Filtered`);
+
+    const { summary, footnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
 
     const formattedPage = `
 # ${patternName}
@@ -101,11 +114,14 @@ ${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n"
       `.trim();
 
     await writeFile(`${outDir}/${filename}-curated-research.md`, formattedPage);
-
-    // TODO add token limit and chunking to long document
+    console.log(`[${filename}] Done`);
   });
 
-  await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+  // remove quotation marks in semantic queries
+  // serial execution for debugging
+  // await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+  // parallel execution
+  await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
 }
 
 async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggregatedItems: AggregatedItem[]) {
@@ -118,16 +134,16 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
   const messages: ChatMessage[] = [
     {
       role: "system",
-      content: `Summarize findings about the "${pattern}" concept into a 3-5 categories of guidances. Uncategorizable claims must be grouped under "Other". Rephrase each finding as a guidance. Cite the source for each finding. Use format:
+      content: `Summarize all the findings about the "${pattern}" concept into a 3-5 categories of guidances. Uncategorizable claims must be grouped under "Other". Rephrase each finding as a guidance. Cite the source for each finding. Use format:
 
-      - <Category name 1>
-         - <Guidance 1> [Citation #]
-         - <Guidance 2> [Citation #]
-      - <Category name 2>
-      ...
-      - Other
-        - <Other Guidance>
-        ...`,
+- <Category name 1>
+   - <Guidance 1> [Citation #]
+   - <Guidance 2> [Citation #]
+- <Category name 2>
+...
+- Other
+  - <Other Guidance>
+  ...`,
     },
     {
       role: "user",
@@ -214,16 +230,23 @@ async function getSemanticQueries(chatProxy: SimpleChatProxy, markdownFile: stri
     messages: [
       {
         role: "system",
-        content:
-          "You are a researcher assistant. The user will provide a document. You must generate a list of 10 semantic search queries for any evidence that supports or contradicts the document. Respond in bullet list",
+        content: `You are a researcher assistant. The user will provide a document. You must generate a list of 20 semantic search queries for any evidence that supports or contradicts the document. Cover as many different angles as possible. Respond in bullet list. Use format:
+- "<query 1>"
+- "<query 2>"
+...
+          `,
       },
       { role: "user", content: markdownFile },
     ],
-    max_tokens: 300,
+    max_tokens: 500,
     temperature: 0,
   });
 
-  return claims.choices[0].message.content ?? "";
+  const listItems = responseToList(claims.choices[0].message.content ?? "").listItems;
+
+  // remove surrounding quotation marks
+  const queries = listItems.map((item) => item.replace(/^"(.*)"$/, "$1"));
+  return queries;
 }
 
 interface FilterableClaim {
