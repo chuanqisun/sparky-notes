@@ -1,5 +1,5 @@
 import { assert } from "console";
-import { mkdir, readFile, readdir, writeFile } from "fs/promises";
+import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
 import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { EntityName } from "../hits/entity";
 import { responseToList } from "../hits/format";
@@ -36,10 +36,10 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
   // PROD - GPT4 only
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7000);
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 7000);
 
   // PERF mode - Multi-thread
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7000);
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 7000);
 
   // DEBUG only - GPT3.5 only
   // const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 7000);
@@ -59,6 +59,19 @@ export async function analyzeDocument(dir: string, outDir: string) {
     // TODO infer industry wide common names e.g. from Main-Details to Master-Details
     // TODO programmatic output for site building
 
+    // start logging
+
+    const logger = (topic: string, message: string) => {
+      appendFile(
+        `${outDir}/${filename}.log`,
+        `
+${new Date().toLocaleString} | ${topic}
+${message}
+`
+      );
+    };
+
+    logger("main", "started");
     console.log(`[${filename}] Started`);
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
@@ -84,6 +97,9 @@ export async function analyzeDocument(dir: string, outDir: string) {
       console.log(`Query: ${query} | ${responses?.length ?? 0} results`);
       rankedResults.push({ query, responses: responses ?? [] });
     }
+    const positiveQ = rankedResults.filter((item) => item.responses.length > 0);
+    const negativeQ = rankedResults.filter((item) => item.responses.length === 0);
+    logger("search", `semantic search ${positiveQ} positive queries, ${negativeQ} negative queries`);
 
     await writeFile(`${outDir}/${filename}.json`, JSON.stringify(rankedResults, null, 2));
 
@@ -94,19 +110,21 @@ export async function analyzeDocument(dir: string, outDir: string) {
       .slice(0, 20); // prevent overflow
 
     await writeFile(`${outDir}/${filename}-aggregated.json`, JSON.stringify(aggregated, null, 2));
+    logger("search", `aggregation ${aggregated.length} items`);
 
     console.log(`[${filename}] Searched`);
 
     const relatedIds = await filterClaims(lengthSensitiveProxy, patternName, definition, aggregated);
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
-    console.log(filteredAggregated.map((item) => `- ${item.id} ${item.caption}`).join("\n"));
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`).join("\n");
     await writeFile(`${outDir}/${filename}-filtered-ref-list.txt`, filteredClaimList);
+    logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
 
     console.log(`[${filename}] Filtered`);
 
     const { summary, footnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
+    logger("curation", `Topics: ${summary.length}, Footnotes: ${footnotes.length}}`);
 
     await writeFile(`${outDir}/${filename}-curated-research.json`, JSON.stringify({ summary, footnotes }, null, 2));
 
@@ -133,9 +151,9 @@ ${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n"
 
   // remove quotation marks in semantic queries
   // serial execution for debugging
-  await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+  // await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
   // parallel execution
-  // await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
+  await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
 }
 
 async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggregatedItems: AggregatedItem[]) {
