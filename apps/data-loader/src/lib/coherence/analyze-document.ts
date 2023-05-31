@@ -2,8 +2,10 @@ import { assert } from "console";
 import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
 import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy, type ChatMessage, type SimpleChatProxy } from "../azure/chat";
 import { EntityName } from "../hits/entity";
-import { responseToList } from "../hits/format";
 import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claims";
+import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
+import { getPatternDefinition } from "./pipeline/infer-concept";
+import { getSemanticQueries } from "./pipeline/infer-queries";
 
 interface RankedQA {
   query: string;
@@ -49,6 +51,8 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
+    // TODO modular refactor
+    // TODO explore multi-concept query expansion
     // TODO add all models to load balancer
     // TODO Add synonym to pattern definition
     // TODO generate more queries to improve coverage
@@ -68,10 +72,10 @@ export async function analyzeDocument(dir: string, outDir: string) {
     console.log(`[${filename}] Started`);
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
-    const [pattern, queries] = await Promise.all([documentToPattern(markdownFile), documentToClaims(markdownFile)]);
-    const { patternName, definition } = pattern;
+    const pattern = extractMarkdownTitle(markdownFile);
+    const [definition, queries] = await Promise.all([documentToPattern(pattern, markdownFile), documentToClaims(markdownFile)]);
     console.log(`[${filename}] Parsed`);
-    console.log({ ...pattern, queries });
+    console.log({ pattern, definition, queries });
 
     const rankedResults: RankedQA[] = [];
 
@@ -107,7 +111,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     console.log(`[${filename}] Searched`);
 
-    const relatedIds = await filterClaims(lengthSensitiveProxy, patternName, definition, aggregated);
+    const relatedIds = await filterClaims(lengthSensitiveProxy, pattern, definition, aggregated);
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`);
@@ -116,7 +120,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     console.log(`[${filename}] Filtered`);
 
-    const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxy, patternName, filteredAggregated);
+    const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxy, pattern, filteredAggregated);
     const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;
     const groupCount = summary.length;
     const claimCount = summary.flatMap((topic) => topic.claims).length;
@@ -130,7 +134,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     await writeFile(`${outDir}/${filename}-result.json`, JSON.stringify({ summary, footnotes }, null, 2));
 
     const formattedPage = `
-# ${patternName}
+# ${pattern}
    
 ## Research insights
 ${summary
@@ -226,62 +230,6 @@ async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, aggrega
     console.error("UNUSED FOOTNOTE FOUND", unusedFootnotes);
   }
   return { summary: categories, footnotes: allFootNotes, unusedFootnotes };
-}
-
-async function getPatternDefinition(chatProxy: SimpleChatProxy, markdownFile: string) {
-  const patternName = getPatternName(markdownFile);
-
-  const response = await chatProxy({
-    messages: [
-      {
-        role: "system",
-        content: `
-Define the concept called "${patternName}" based on the document. Respond with one sentence. Use format
-
-Concept: ${patternName}
-Definition: <One sentence definition>
-`.trim(),
-      },
-      { role: "user", content: markdownFile },
-    ],
-    max_tokens: 300,
-    temperature: 0,
-  });
-
-  const textResponse = response.choices[0].message.content ?? "";
-
-  console.log("Pattern definition raw response", textResponse);
-
-  const definition = textResponse.match(/Definition: (.*)/)?.[1] ?? "";
-  return { patternName, definition };
-}
-
-function getPatternName(markdownFile: string) {
-  return markdownFile.match(/# (.*)/)?.[1] ?? "";
-}
-
-async function getSemanticQueries(chatProxy: SimpleChatProxy, markdownFile: string) {
-  const claims = await chatProxy({
-    messages: [
-      {
-        role: "system",
-        content: `You are a researcher assistant. The user will provide a document. You must generate a list of 20 semantic search queries for any evidence that supports or contradicts the document. Cover as many different angles as possible. Respond in bullet list. Use format:
-- "<query 1>"
-- "<query 2>"
-...
-          `,
-      },
-      { role: "user", content: markdownFile },
-    ],
-    max_tokens: 500,
-    temperature: 0,
-  });
-
-  const listItems = responseToList(claims.choices[0].message.content ?? "").listItems;
-
-  // remove surrounding quotation marks
-  const queries = listItems.map((item) => item.replace(/^"(.*)"$/, "$1"));
-  return queries;
 }
 
 interface FilterableClaim {
