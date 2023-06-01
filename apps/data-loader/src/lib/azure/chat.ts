@@ -20,7 +20,7 @@ export function getLengthSensitiveChatProxy(shortProxy: SimpleChatProxy, longPro
     const maxTokens = input.max_tokens ?? DEFAULT_MAX_TOKENS;
     const usableInputTokenWindow = threshold - maxTokens;
     const isShort = isWithinTokenLimit(messages.map((m) => m.content).join("\n"), usableInputTokenWindow);
-    console.log(`Proxy selected: ${isShort ? "short" : "long"} input ${usableInputTokenWindow} tokens, output ${maxTokens} tokens}`);
+    console.log(`Proxy selected: ${isShort ? "short" : "long"} input ${usableInputTokenWindow} tokens, output ${maxTokens} tokens`);
     const proxy = isShort ? shortProxy : longProxy;
     return proxy(input);
   };
