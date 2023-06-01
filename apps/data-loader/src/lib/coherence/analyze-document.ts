@@ -23,7 +23,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
   // PROD - GPT4 only
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 8000);
+  const lengthSensitiveProxyGpt4 = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 8000);
 
   // PERF mode - Multi-thread
   // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 8000);
@@ -108,7 +108,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     console.log(`[${filename}] Filtered`);
 
-    const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxy, pattern, filteredAggregated);
+    const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxyGpt4, pattern, filteredAggregated);
     const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;
     const groupCount = summary.length;
     const claimCount = summary.flatMap((topic) => topic.claims).length;
