@@ -57,7 +57,7 @@ export async function curateClaims(chatProxy: SimpleChatProxy, pattern: string, 
         const guidance = text.replace("- ", "").trim();
         return { guidance, sources };
       })
-      .filter(Boolean) as { guidance: string; sources: { pos: number; url: string; title: string }[] }[];
+      .filter((item) => item.guidance && item.sources.length) as { guidance: string; sources: { pos: number; url: string; title: string }[] }[];
 
     if (citedClaims.length) {
       categories.push({ name: categoryName, claims: citedClaims });
