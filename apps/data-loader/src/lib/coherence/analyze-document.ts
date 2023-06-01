@@ -5,7 +5,7 @@ import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claim
 import { curateClaims } from "./pipeline/curate-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
 import { filterClaims } from "./pipeline/filter-claims";
-import { getPatternDefinition } from "./pipeline/infer-concept";
+import { getConcept } from "./pipeline/infer-concept";
 import { getSemanticQueries } from "./pipeline/infer-queries";
 import { groupById, type RankedQA } from "./pipeline/semantic-search";
 
@@ -32,10 +32,13 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
 
   const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
-  const documentToPattern = getPatternDefinition.bind(null, lengthSensitiveProxy);
+  const documentToPattern = getConcept.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
+    // TODO output study title and some metadata ala wikipedia footnote style
+    // TODO reinforcement semantic search query expansion
+    // TODO persona based semantic search query expansion
     // TODO cache semantic search results to reduce cost
     // TODO "text [#]." citation is not supported (GPT-4 specific)
     // TODO handle untitled section in source document
@@ -60,12 +63,19 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     logger("main", "started");
     console.log(`[${filename}] Started`);
+
+    let progressObject: any = {};
+
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
     const pattern = extractMarkdownTitle(markdownFile);
-    const [definition, queries] = await Promise.all([documentToPattern(pattern, markdownFile), documentToClaims(markdownFile)]);
-    console.log(`[${filename}] Parsed`);
-    console.log({ pattern, definition, queries });
+    const [concept, queries] = await Promise.all([documentToPattern(markdownFile), documentToClaims(markdownFile)]);
+    console.log(`[${filename}] Parsed`, { concept, queries });
+    const { definition } = concept;
+    progressObject = { ...progressObject, concept, queries };
+    await writeFile(`${outDir}/${filename}.json`, JSON.stringify(progressObject, null, 2));
+
+    return;
 
     const rankedResults: RankedQA[] = [];
 

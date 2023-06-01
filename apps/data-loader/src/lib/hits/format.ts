@@ -2,6 +2,7 @@ export function arrayToBulletList(arr: string[]) {
   return arr.map((item) => `- ${item}`).join("\n");
 }
 
+/** @deprecated, use `responseToList` instead */
 export function responseToArray(rawText: string) {
   return rawText
     .split("\n")
