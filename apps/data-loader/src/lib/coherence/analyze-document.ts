@@ -23,19 +23,20 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
 
   // PROD - GPT4 only
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 8000);
+  const lengthSensitiveProxy = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 8000);
 
   // PERF mode - Multi-thread
   // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 8000);
 
   // DEBUG only - GPT3.5 only
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
+  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
 
   const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
   const documentToPattern = getPatternDefinition.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
+    // TODO handle untitled section in source document
     // TODO modular refactor
     // TODO align filenaming convention with coherence package
     // TODO explore multi-concept query expansion

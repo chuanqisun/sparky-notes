@@ -9,7 +9,7 @@ export async function filterClaims(chatProxy: SimpleChatProxy, pattern: string, 
     {
       role: "system",
       content: `
-Determine which of the provided claims is related to the concept "${pattern}" with the following definition:
+Determine which of the provided claims mentioned the concept "${pattern}" with the following definition:
 
 ${definition}
 
@@ -17,7 +17,7 @@ Response with a list of ${claims.length} items. Each item must use this format:
 
 Claim 1
 Id: <Claim id>
-Reason: <Identify specific relations to the concept>
+Reason: <Describe how the claim mentions the concept>
 Answer: <Yes/No>
 
 Claim 2
