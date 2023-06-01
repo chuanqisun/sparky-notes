@@ -37,6 +37,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
     // TODO cache semantic search results to reduce cost
+    // TODO "text [#]." citation is not supported (GPT-4 specific)
     // TODO handle untitled section in source document
     // TODO modular refactor
     // TODO align filenaming convention with coherence package
