@@ -17,7 +17,7 @@ Response with a list of ${claims.length} items. Each item must use this format:
 
 Claim 1
 Id: <Claim id>
-Reason: <Describe how the claim mentions the concept>
+Reason: <Describe how the claim specifically mentions the concept or its equivalent concepts>
 Answer: <Yes/No>
 
 Claim 2

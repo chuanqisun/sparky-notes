@@ -91,7 +91,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       .flatMap((item) => item.responses.map((res) => ({ ...res, queries: [item.query] })))
       .reduce(groupById, [])
       .sort((a, b) => b.score - a.score)
-      .slice(0, 20); // prevent overflow
+      .slice(0, 25); // prevent overflow
 
     await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ aggregated, rankedResults }, null, 2));
     logger("search", `aggregation ${aggregated.length} items`);
