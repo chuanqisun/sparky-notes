@@ -37,6 +37,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
     // TODO modular refactor
+    // TODO align filenaming convention with coherence package
     // TODO explore multi-concept query expansion
     // TODO add all models to load balancer
     // TODO Add synonym to pattern definition
