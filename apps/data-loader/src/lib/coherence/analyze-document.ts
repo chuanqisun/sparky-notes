@@ -42,6 +42,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     // TODO align filenaming convention with coherence package
     // TODO explore multi-concept query expansion
     // TODO add all models to load balancer
+    // TODO itemized filter to prevent momentum
     // TODO Add synonym to pattern definition
     // TODO generate more queries to improve coverage
     // TODO combine semantic search with keyword search for better coverage
