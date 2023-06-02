@@ -170,3 +170,16 @@ Alternative names: ${alternativeNames.join(", ")}
 // search for design recommendations
 // search for heuristics
 // search for "have you considered" situations
+
+// extract suuport/contradict theories
+/*
+Cite research evidence backed theories that can support or contradict claims in the document. List all applicable claims and theories. Use format
+
+Claim 1: <verbatim>
+Related Theory: <specific name of the theory>
+Related principle: <briefly state the principle>
+Explain: <how the theory/principle support/contradict the claim>
+
+Claim 2: ...
+*/
+// back each theory with a HITS search to show examples
