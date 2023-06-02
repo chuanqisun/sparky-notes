@@ -167,7 +167,6 @@ Alternative names: ${alternativeNames.join(", ")}
 }
 
 // TODO
-// search for pain points
-// search for user goals/task
 // search for design recommendations
 // search for heuristics
+// search for "have you considered" situations
