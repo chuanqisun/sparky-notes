@@ -54,8 +54,8 @@ export async function inferUserGoals(chatProxy: SimpleChatProxy, conceptName: st
         content: `
 List underlying goals that the concept allows the user to achieve. Respond with a bullet list in this format:
 
-- <Task 1>
-- <Task 2>
+- <Goal 1>
+- <Goal 2>
 ...
 `.trim(),
       },
