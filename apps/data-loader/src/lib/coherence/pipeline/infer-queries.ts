@@ -1,5 +1,7 @@
 import type { SimpleChatProxy } from "../../azure/chat";
 import { responseToList } from "../../hits/format";
+import { type SemanticSearchProxy } from "../../hits/search-claims";
+import { semanticSearch } from "./semantic-search";
 
 export async function getSemanticQueries(chatProxy: SimpleChatProxy, markdownFile: string) {
   const claims = await chatProxy({
@@ -23,4 +25,14 @@ export async function getSemanticQueries(chatProxy: SimpleChatProxy, markdownFil
   // remove surrounding quotation marks
   const queries = listItems.map((item) => item.replace(/^"(.*)"$/, "$1"));
   return queries;
+}
+
+// This is a WIP
+// Facepile, Main detail, Rich Text Editor, Shimmer, and Spin button can be used to test the effectiveness of this technique
+export async function queryByNames(searchProxy: SemanticSearchProxy, names: string[]) {
+  // generate concept name-only based queries
+  const results = (await Promise.all(names.map(async (name) => await semanticSearch(searchProxy, `"${name}" pattern`, 10, 1.3)))).sort(
+    (a, b) => b.maxScore - a.maxScore
+  );
+  return results;
 }

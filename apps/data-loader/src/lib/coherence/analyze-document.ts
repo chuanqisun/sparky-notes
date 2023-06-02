@@ -5,8 +5,8 @@ import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claim
 import { curateClaims } from "./pipeline/curate-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
 import { filterClaims } from "./pipeline/filter-claims";
-import { getConcept } from "./pipeline/infer-concept";
-import { getSemanticQueries } from "./pipeline/infer-queries";
+import { getConcept, inferProtesters, inferSupporters, inferUserGoals, inferUserProblems } from "./pipeline/infer-concept";
+import { getSemanticQueries, queryByNames } from "./pipeline/infer-queries";
 import { groupById, type RankedQA } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
@@ -32,10 +32,11 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
 
   const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
-  const documentToPattern = getConcept.bind(null, lengthSensitiveProxy);
+  const documentToConcept = getConcept.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
+    // TODO in-memory memoize semantic search
     // TODO output study title and some metadata ala wikipedia footnote style
     // TODO reinforcement semantic search query expansion
     // TODO persona based semantic search query expansion
@@ -64,18 +65,39 @@ export async function analyzeDocument(dir: string, outDir: string) {
     logger("main", "started");
     console.log(`[${filename}] Started`);
 
-    let progressObject: any = {};
+    const progressObject: any = {};
+    const incrementalLogObject = async (additionalField: any) => {
+      Object.assign(progressObject, additionalField);
+      await writeFile(`${outDir}/${filename}.json`, JSON.stringify(progressObject, null, 2));
+    };
 
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
     const pattern = extractMarkdownTitle(markdownFile);
-    const [concept, queries] = await Promise.all([documentToPattern(markdownFile), documentToClaims(markdownFile)]);
-    console.log(`[${filename}] Parsed`, { concept, queries });
+    const concept = await documentToConcept(markdownFile);
     const { definition } = concept;
-    progressObject = { ...progressObject, concept, queries };
-    await writeFile(`${outDir}/${filename}.json`, JSON.stringify(progressObject, null, 2));
+    await incrementalLogObject({ pattern, concept });
 
+    const getGoals = () => inferUserGoals(chatProxy, concept.name, concept.definition, concept.alternativeNames);
+    const getProblems = () => inferUserProblems(chatProxy, concept.name, concept.definition, concept.alternativeNames);
+    const getSupporters = () => inferSupporters(chatProxy, concept.name, concept.definition, concept.alternativeNames);
+    const getProtesters = () => inferProtesters(chatProxy, concept.name, concept.definition, concept.alternativeNames);
+
+    const [goals, problems, supporters, protesters] = await Promise.all([getGoals(), getProblems(), getSupporters(), getProtesters()]);
+
+    await incrementalLogObject({ goals });
+    await incrementalLogObject({ problems });
+    await incrementalLogObject({ supporters });
+    await incrementalLogObject({ protesters });
+
+    // debug only
     return;
+
+    const expandedQueries = await queryByNames(claimSearchProxy, [concept.name, ...concept.alternativeNames]);
+    await incrementalLogObject({ expandedQueries });
+
+    const queries = await documentToClaims(markdownFile);
+    await incrementalLogObject({ queries });
 
     const rankedResults: RankedQA[] = [];
 
@@ -87,12 +109,13 @@ export async function analyzeDocument(dir: string, outDir: string) {
           id: doc.ClaimId,
           entityType: doc.ClaimType,
           title: doc.ClaimTitle,
+          rootTitle: doc.RootDocumentTitle,
           score: doc["@search.rerankerScore"],
           caption: doc["@search.captions"].map((item) => item.text).join("..."),
         }));
 
       console.log(`Query: ${query} | ${responses?.length ?? 0} results`);
-      rankedResults.push({ query, responses: responses ?? [] });
+      rankedResults.push({ query, responses: responses ?? [], maxScore: responses?.[0]?.score ?? 0 });
     }
     const positiveQ = rankedResults.filter((item) => item.responses.length > 0);
     const negativeQ = rankedResults.filter((item) => item.responses.length === 0);

@@ -34,7 +34,10 @@ export function getSemanticSearchInput(query: string, top: number): CognitiveSea
   };
 }
 
-export function getClaimIndexProxy<InputType extends CognitiveSearchInput, OutputType extends CognitiveSearchOutput<ClaimDocument>>(apiKey: string) {
+export type SemanticSearchProxy = (input: CognitiveSearchInput) => Promise<CognitiveSearchOutput<ClaimDocument>>;
+export function getClaimIndexProxy<InputType extends CognitiveSearchInput, OutputType extends CognitiveSearchOutput<ClaimDocument>>(
+  apiKey: string
+): SemanticSearchProxy {
   return getCognitiveSearchJsonProxy<CognitiveSearchInput, CognitiveSearchOutput<ClaimDocument>>(
     apiKey,
     `https://hits-stage.search.windows.net/indexes/hits-claims/docs/search?api-version=2021-04-30-Preview`!
