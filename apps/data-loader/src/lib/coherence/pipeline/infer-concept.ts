@@ -183,3 +183,7 @@ Explain: <how the theory/principle support/contradict the claim>
 Claim 2: ...
 */
 // back each theory with a HITS search to show examples
+
+// TODO reverse evidence search
+// start from document, identify claims, search for evidence
+// claim must be defined carefully to induce a search that is not too broad
