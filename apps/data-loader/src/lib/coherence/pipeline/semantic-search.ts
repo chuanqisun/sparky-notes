@@ -51,3 +51,11 @@ export async function semanticSearch(searchProxy: SemanticSearchProxy, query: st
     responses,
   };
 }
+
+export async function bulkSemanticQuery(searchProxy: SemanticSearchProxy, queries: string[], limitPerQuery: number, minScore: number) {
+  // generate concept name-only based queries
+  const results = (await Promise.all(queries.map(async (query) => await semanticSearch(searchProxy, query, limitPerQuery, minScore)))).sort(
+    (a, b) => b.maxScore - a.maxScore
+  );
+  return results;
+}

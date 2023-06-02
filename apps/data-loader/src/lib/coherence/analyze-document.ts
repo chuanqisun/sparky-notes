@@ -1,13 +1,21 @@
 import { assert } from "console";
 import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
 import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy } from "../azure/chat";
-import { getClaimIndexProxy, getSemanticSearchInput } from "../hits/search-claims";
+import { getClaimIndexProxy } from "../hits/search-claims";
 import { curateClaims } from "./pipeline/curate-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
 import { filterClaims } from "./pipeline/filter-claims";
-import { getConcept, inferProtesters, inferSupporters, inferUserGoals, inferUserProblems } from "./pipeline/infer-concept";
-import { getSemanticQueries, queryByNames } from "./pipeline/infer-queries";
-import { groupById, type RankedQA } from "./pipeline/semantic-search";
+import {
+  getConcept,
+  getGuidance,
+  getQuestions,
+  inferProtesters,
+  inferSupporters,
+  inferUserGoals,
+  inferUserProblems,
+  questionToConcepts,
+} from "./pipeline/inference";
+import { bulkSemanticQuery, groupById } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
   assert(process.env.OPENAI_API_KEY, "OPENAI_API_KEY is required");
@@ -30,9 +38,6 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
   // DEBUG only - GPT3.5 only
   const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
-
-  const documentToClaims = getSemanticQueries.bind(null, lengthSensitiveProxy);
-  const documentToConcept = getConcept.bind(null, lengthSensitiveProxy);
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
@@ -59,13 +64,55 @@ export async function analyzeDocument(dir: string, outDir: string) {
     // start logging
 
     const logger = (...segments: string[]) => {
-      appendFile(`${outDir}/${filename}.log`, `${[new Date().toISOString(), ...segments].join(" | ")}\n`);
+      const message = `${[new Date().toISOString(), ...segments].join(" | ")}`;
+      console.log(`${filename} | ${message}`);
+      appendFile(`${outDir}/${filename}.log`, `${message}\n`);
     };
 
     logger("main", "started");
-    console.log(`[${filename}] Started`);
 
-    const progressObject: any = {};
+    const progressObject: {
+      pattern: any;
+      concept: any;
+      guidance: any;
+      goals: any;
+      problems: any;
+      supporters: any;
+      protesters: any;
+      questions: any;
+      questionedConcepts: any;
+      rankedResults: any;
+    } = {} as any;
+
+    // resume progress from disk
+    try {
+      await readFile(`${outDir}/${filename}.json`, "utf-8").then((content) => {
+        Object.assign(progressObject, JSON.parse(content));
+      });
+
+      logger("main", `resumed: ${Object.keys(progressObject).join(",")}`);
+    } catch (e) {
+      console.log(`Cannot resume progress for ${filename}`);
+    }
+
+    const resumeOrRun = async <T>(flag: boolean, value: any, fn: () => Promise<T> | T) => {
+      const shouldResume = flag && !!value;
+
+      return (shouldResume ? value : await fn()) as T;
+    };
+
+    // control which steps should be resumed from last run
+    // set to false will force a fresh run the step
+    const resumeGetConcept = true;
+    const resumeGetGuidance = true;
+    const resumeGetQuestions = true;
+    const resumeInferGoals = true;
+    const resumeInferProblems = true;
+    const resumeInferSupporters = true;
+    const resumeInferProtesters = true;
+    const resumeQuestionToConcepts = true;
+    const resumeSemanticSearch = true;
+
     const incrementalLogObject = async (additionalField: any) => {
       Object.assign(progressObject, additionalField);
       await writeFile(`${outDir}/${filename}.json`, JSON.stringify(progressObject, null, 2));
@@ -74,74 +121,55 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
     const pattern = extractMarkdownTitle(markdownFile);
-    const concept = await documentToConcept(markdownFile);
-    const { definition } = concept;
-    await incrementalLogObject({ pattern, concept });
+    const [concept, guidance, questions] = await Promise.all([
+      resumeOrRun(resumeGetConcept, progressObject.concept, () => getConcept(lengthSensitiveProxy, markdownFile)),
+      resumeOrRun(resumeGetGuidance, progressObject.guidance, () => getGuidance(lengthSensitiveProxy, markdownFile)),
+      resumeOrRun(resumeGetQuestions, progressObject.questions, () => getQuestions(lengthSensitiveProxy, markdownFile, 20)),
+    ]);
 
-    const getGoals = () => inferUserGoals(chatProxy, concept.name, concept.definition, concept.alternativeNames);
-    const getProblems = () => inferUserProblems(chatProxy, concept.name, concept.definition, concept.alternativeNames);
-    const getSupporters = () => inferSupporters(chatProxy, concept.name, concept.definition, concept.alternativeNames);
-    const getProtesters = () => inferProtesters(chatProxy, concept.name, concept.definition, concept.alternativeNames);
+    await incrementalLogObject({ pattern, concept, guidance, questions });
 
-    const [goals, problems, supporters, protesters] = await Promise.all([getGoals(), getProblems(), getSupporters(), getProtesters()]);
+    const [questionedConcepts, goals, problems, supporters, protesters] = await Promise.all([
+      resumeOrRun(resumeInferGoals, progressObject.goals, () => inferUserGoals(chatProxy, concept.name, concept.definition, concept.alternativeNames)),
+      resumeOrRun(resumeInferProblems, progressObject.problems, () => inferUserProblems(chatProxy, concept.name, concept.definition, concept.alternativeNames)),
+      resumeOrRun(resumeInferSupporters, progressObject.supporters, () =>
+        inferSupporters(chatProxy, concept.name, concept.definition, concept.alternativeNames)
+      ),
+      resumeOrRun(resumeInferProtesters, progressObject.protesters, () =>
+        inferProtesters(chatProxy, concept.name, concept.definition, concept.alternativeNames)
+      ),
+      resumeOrRun(resumeQuestionToConcepts, progressObject.questionedConcepts, () => questionToConcepts(chatProxy, questions)),
+    ]);
 
-    await incrementalLogObject({ goals });
-    await incrementalLogObject({ problems });
-    await incrementalLogObject({ supporters });
-    await incrementalLogObject({ protesters });
+    await incrementalLogObject({ questionedConcepts, goals, problems, supporters, protesters });
 
-    // debug only
-    return;
+    const allQueries = [concept.name, ...concept.alternativeNames, ...questionedConcepts, ...goals, ...problems, ...supporters, ...protesters];
+    logger("search", `semantic search ${allQueries.length} total queries`);
+    const rankedResults = await resumeOrRun(resumeSemanticSearch, progressObject.rankedResults, () => bulkSemanticQuery(claimSearchProxy, allQueries, 10, 1));
 
-    const expandedQueries = await queryByNames(claimSearchProxy, [concept.name, ...concept.alternativeNames]);
-    await incrementalLogObject({ expandedQueries });
-
-    const queries = await documentToClaims(markdownFile);
-    await incrementalLogObject({ queries });
-
-    const rankedResults: RankedQA[] = [];
-
-    for (const query of queries) {
-      const result = await claimSearchProxy(getSemanticSearchInput(query, 10));
-      const responses = result.value
-        ?.filter((doc) => doc["@search.rerankerScore"] > 1)
-        ?.map((doc) => ({
-          id: doc.ClaimId,
-          entityType: doc.ClaimType,
-          title: doc.ClaimTitle,
-          rootTitle: doc.RootDocumentTitle,
-          score: doc["@search.rerankerScore"],
-          caption: doc["@search.captions"].map((item) => item.text).join("..."),
-        }));
-
-      console.log(`Query: ${query} | ${responses?.length ?? 0} results`);
-      rankedResults.push({ query, responses: responses ?? [], maxScore: responses?.[0]?.score ?? 0 });
-    }
     const positiveQ = rankedResults.filter((item) => item.responses.length > 0);
     const negativeQ = rankedResults.filter((item) => item.responses.length === 0);
     logger("search", `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries`);
-
-    await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ rankedResults }, null, 2));
+    incrementalLogObject({ rankedResults });
 
     const aggregated = rankedResults
       .flatMap((item) => item.responses.map((res) => ({ ...res, queries: [item.query] })))
       .reduce(groupById, [])
       .sort((a, b) => b.score - a.score)
-      .slice(0, 25); // prevent overflow
+      .slice(0, 30); // prevent overflow
 
-    await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ aggregated, rankedResults }, null, 2));
     logger("search", `aggregation ${aggregated.length} items`);
+    incrementalLogObject({ aggregated });
 
-    console.log(`[${filename}] Searched`);
+    // debug
+    return;
 
-    const relatedIds = await filterClaims(lengthSensitiveProxy, pattern, definition, aggregated);
+    const relatedIds = await filterClaims(lengthSensitiveProxy, pattern, concept.definition, aggregated);
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`);
     await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
     logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
-
-    console.log(`[${filename}] Filtered`);
 
     const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxyGpt4, pattern, filteredAggregated);
     const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;

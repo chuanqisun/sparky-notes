@@ -30,7 +30,7 @@ console.log("Data loader started with params", params);
 async function main() {
   switch (true) {
     case params.includes("analyze-document"): {
-      analyzeDocument(path.resolve("./data/coherence/parsed"), path.resolve(`./data/coherence/analyzed-${Date.now()}`));
+      analyzeDocument(path.resolve("./data/coherence/parsed"), path.resolve(`./data/coherence/analyzed`));
       break;
     }
 
