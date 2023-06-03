@@ -390,7 +390,7 @@ export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concep
     .map((item, index) =>
       `
 Question ${index + 1}: ${item.queries.map((q) => q.decorated).join(", and ")}
-Evidence ${index + 1}: ${item.caption}
+Finding ${index + 1}: ${item.caption}
 `.trim()
     )
     .join("\n");
@@ -399,25 +399,28 @@ Evidence ${index + 1}: ${item.caption}
     {
       role: "system",
       content: `
-Group the findings about "${concept.name}", defined as:
+Group the findings about "${concept.name}", with definition:
 
 ${concept.definition} It is also known as ${concept.alternativeNames.join(", ")}.
 
-For each group of findings, write a one paragraph intro in objective and natural tone. Provide plenty of context. Make sure to connect findings with "${
-        concept.name
-      }" by identifying relations with "${concept.name}".
+Provide one-paragraph intro for each group. The intro should explain how the findings are useful for "${concept.name}".
+At the end of each finding, you must cite one or more evidence numbers that support the finding. Use square brackets, e.g. [1] for single citation, [1][2] for multiple.
 
-Under each group, list the findings. At the end of each finding, you must cite one or more evidence items that support the finding. Use square brackets, e.g. [1] for single citation, [1][2] for multiple.
+Respond in this format:
 
-Group 1: <humble and engaging title>
+Group 1: <Humble and engaging title>
 Intro: <One paragraph introduction>
 Findings: <bullet list of findings>
-- <Finding 1> [Evidence number]
-- <Finding 2> [Evidence number]
+- <Finding 1> <citation>
+- <Finding 2> <citation>
+- <Finding 3> <citation>
 
 Group 2: ...
 Intro: ...
-Findings: ...
+Findings:
+- ...
+- ...
+- ...
 
 ...(repeat until *all* the findings are categorized)
 `.trim(),
