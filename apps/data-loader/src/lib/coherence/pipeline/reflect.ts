@@ -5,7 +5,7 @@ const decorators = {
   protesters: (concept: string, query: string) => `Will ${query} dislike ${concept}?`,
   guidanceDo: (concept: string, query: string) => `Is "${query}" a rational recommendation for ${concept}?`,
   guidanceDont: (concept: string, query: string) => `Is "${query}" a rational prohibition for ${concept}?`,
-  conceptAlternativeNames: (concept: string, query: string) => `What do we from a similar concept to ${concept} called "${query}"?`,
+  conceptAlternativeNames: (concept: string, query: string) => `What do we know about the concept similar to ${concept}, called "${query}"?`,
   questionedConcepts: (concept: string, query: string) => `${concept} raises a question about "${query}", what is the answer?`,
   "": (_concept: string, query: string) => query,
 };
