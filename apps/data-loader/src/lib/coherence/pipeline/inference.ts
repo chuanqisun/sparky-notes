@@ -387,31 +387,34 @@ export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concep
     url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
   }));
   const textSources = aggregatedItems
-    .map(
-      (item, index) => `
+    .map((item, index) =>
+      `
 Question ${index + 1}: ${item.queries.map((q) => q.decorated).join(", and ")}
 Finding ${index + 1}: ${item.caption}
-`
+`.trim()
     )
     .join("\n");
+
   const messages: ChatMessage[] = [
     {
       role: "system",
-      content: `Group the findings about "${concept.name}", defined as:
+      content: `
+Group the findings about "${concept.name}", defined as:
 
 ${concept.definition}
 
 Respond in this format:
 
 Group 1: <Title of group 1>
-Relation to "${concept.name}": <Help the audience draw the connection between this group to "${concept.name}">
-Findings: <Unordered bullet list of findings, cite each Finding number in sqaure brackets at the end of the line>
+Intro: <Objectively and naturally connect this group of findings to "${concept.name}". Provide plenty of context to the audience. The length should be exactly one paragraph>
+Findings: <Unordered bullet list of findings, cite each Finding number in square brackets at the end of the line>
 - <Finding 1> [1]...
 - <Finding 2> [2]...
 Group 2: ...
-Relation to "${concept.name}": ...
+Intro: ...
 Findings: ...
-...(repeat until *all* the findings are categorized)`,
+...(repeat until *all* the findings are categorized)
+`.trim(),
     },
     {
       role: "user",
