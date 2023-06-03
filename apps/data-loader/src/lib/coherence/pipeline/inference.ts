@@ -1,8 +1,9 @@
-import type { SimpleChatProxy } from "../../azure/chat";
+import type { ChatMessage, SimpleChatProxy } from "../../azure/chat";
+import { EntityName } from "../../hits/entity";
 import { responseToList } from "../../hits/format";
-import type { AggregatedItem } from "./semantic-search";
 
 import { arrayToBulletList } from "../../hits/format";
+import type { AggregatedItem } from "./semantic-search";
 
 export async function getSemanticQueries(chatProxy: SimpleChatProxy, markdownFile: string, limitHint: number) {
   const claims = await chatProxy({
@@ -379,4 +380,48 @@ Alternative names: ${alternativeNames.join(", ")}
   return listItems;
 }
 
-export async function annotateSearchResult(chatProxy: SimpleChatProxy, searchResult: AggregatedItem) {}
+export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concept, aggregatedItems: AggregatedItem[]) {
+  const allFootNotes = aggregatedItems.map((item, index) => ({
+    pos: index + 1,
+    title: item.title,
+    url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
+  }));
+  const textSources = aggregatedItems
+    .map(
+      (item, index) => `
+Question ${index + 1}: ${item.queries.map((q) => q.decorated).join(", and ")}
+Finding ${index + 1}: ${item.caption}
+`
+    )
+    .join("\n");
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `Group the findings about "${concept.name}", defined as:
+
+${concept.definition}
+
+Respond in this format:
+
+Group 1: <Title of group 1>
+Relation to "${concept.name}": <Help the audience draw the connection between this group to "${concept.name}">
+Findings: <Unordered bullet list of findings, cite each Finding number in sqaure brackets at the end of the line>
+- <Finding 1> [1]...
+- <Finding 2> [2]...
+Group 2: ...
+Relation to "${concept.name}": ...
+Findings: ...
+...(repeat until *all* the findings are categorized)`,
+    },
+    {
+      role: "user",
+      content: textSources,
+    },
+  ];
+
+  const response = await chatProxy({ messages, max_tokens: 2000, temperature: 0 });
+  const textResponse = response.choices[0].message.content ?? "";
+
+  // TODO parse citation graph
+  console.log("curation raw response", textResponse);
+}

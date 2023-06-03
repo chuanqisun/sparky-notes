@@ -6,6 +6,7 @@ import { curateClaims } from "./pipeline/curate-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
 import { filterClaims } from "./pipeline/filter-claims";
 import {
+  curateClaimsV2,
   getConcept,
   getGuidance,
   getQuestions,
@@ -15,6 +16,7 @@ import {
   inferUserProblems,
   questionToConcepts,
 } from "./pipeline/inference";
+import { decorateQuery } from "./pipeline/reflect";
 import { bulkSemanticQuery, groupById } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
@@ -112,6 +114,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferProtesters = true;
     const resumeQuestionToConcepts = true;
     const resumeSemanticSearch = true;
+    const resumeCuration = true;
 
     const incrementalLogObject = async (additionalField: any) => {
       Object.assign(progressObject, additionalField);
@@ -130,6 +133,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     await incrementalLogObject({ pattern, concept, guidance, questions });
 
     const [questionedConcepts, goals, problems, supporters, protesters] = await Promise.all([
+      resumeOrRun(resumeQuestionToConcepts, progressObject.questionedConcepts, () => questionToConcepts(chatProxy, questions)),
       resumeOrRun(resumeInferGoals, progressObject.goals, () => inferUserGoals(chatProxy, concept.name, concept.definition, concept.alternativeNames)),
       resumeOrRun(resumeInferProblems, progressObject.problems, () => inferUserProblems(chatProxy, concept.name, concept.definition, concept.alternativeNames)),
       resumeOrRun(resumeInferSupporters, progressObject.supporters, () =>
@@ -138,12 +142,21 @@ export async function analyzeDocument(dir: string, outDir: string) {
       resumeOrRun(resumeInferProtesters, progressObject.protesters, () =>
         inferProtesters(chatProxy, concept.name, concept.definition, concept.alternativeNames)
       ),
-      resumeOrRun(resumeQuestionToConcepts, progressObject.questionedConcepts, () => questionToConcepts(chatProxy, questions)),
     ]);
 
     await incrementalLogObject({ questionedConcepts, goals, problems, supporters, protesters });
 
-    const allQueries = [concept.name, ...concept.alternativeNames, ...questionedConcepts, ...goals, ...problems, ...supporters, ...protesters];
+    const allQueries = [
+      concept.name,
+      ...concept.alternativeNames,
+      ...questionedConcepts,
+      ...goals,
+      ...problems,
+      ...supporters,
+      ...protesters,
+      ...guidance.dos,
+      ...guidance.donts,
+    ];
     logger("search", `semantic search ${allQueries.length} total queries`);
     const rankedResults = await resumeOrRun(resumeSemanticSearch, progressObject.rankedResults, () => bulkSemanticQuery(claimSearchProxy, allQueries, 10, 1));
 
@@ -153,13 +166,17 @@ export async function analyzeDocument(dir: string, outDir: string) {
     incrementalLogObject({ rankedResults });
 
     const aggregated = rankedResults
-      .flatMap((item) => item.responses.map((res) => ({ ...res, queries: [item.query] })))
+      .flatMap((item) =>
+        item.responses.map((res) => ({ ...res, queries: [{ raw: item.query, decorated: decorateQuery(progressObject, concept.name, item.query) }] }))
+      )
       .reduce(groupById, [])
       .sort((a, b) => b.score - a.score)
       .slice(0, 30); // prevent overflow
 
     logger("search", `aggregation ${aggregated.length} items`);
     incrementalLogObject({ aggregated });
+
+    await curateClaimsV2(lengthSensitiveProxy, concept, aggregated);
 
     // debug
     return;
@@ -168,7 +185,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`);
-    await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
+    // await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
     logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
 
     const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxyGpt4, pattern, filteredAggregated);

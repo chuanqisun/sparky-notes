@@ -16,7 +16,7 @@ export interface SemanticResult {
 }
 
 export interface AggregatedItem extends SemanticResult {
-  queries: string[];
+  queries: { raw: string; decorated: string }[];
 }
 export function groupById(acc: AggregatedItem[], item: AggregatedItem) {
   const existing = acc.find((i) => i.id === item.id);
