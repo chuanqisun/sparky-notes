@@ -389,10 +389,12 @@ export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concep
   const textSources = aggregatedItems
     .map((item, index) =>
       `
-[${index + 1}] Question: ${item.queries.map((q) => q.decorated).join(", and ")} Finding: ${item.caption}
+[${index + 1}]
+Question: ${item.queries.map((q) => q.decorated).join(", and ")}
+Finding: ${item.caption}
 `.trim()
     )
-    .join("\n");
+    .join("\n\n");
 
   const messages: ChatMessage[] = [
     {
@@ -405,11 +407,11 @@ At the end of each finding, you must cite one or more Finding numbers. Use squar
 Respond in this format:
 
 Group 1: <Humble and engaging title>
-Intro: <One paragraph introduction, explain how the findings connect to "${concept.name}">
+Intro: <One paragraph introduction, explain how the findings connect to "${concept.name}" in details>
 Findings: <bullet list of findings>
-- <Finding 1> <citation>
-- <Finding 2> <citation>
-- <Finding 3> <citation>
+- <Finding> <citation>
+- <Finding> <citation>
+- <Finding> <citation>
 
 Group 2: ...
 Intro: ...
