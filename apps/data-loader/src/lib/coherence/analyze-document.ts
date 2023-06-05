@@ -45,24 +45,9 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
     // TODO rename dos and donts into "best practice"
-    // TODO output study title and some metadata ala wikipedia footnote style
-    // TODO reinforcement semantic search query expansion
     // TODO persona based semantic search query expansion
-    // TODO cache semantic search results to reduce cost
-    // TODO "text [#]." citation is not supported (GPT-4 specific)
+    // TODO list unused footnotes under the "other" group
     // TODO handle untitled section in source document
-    // TODO modular refactor
-    // TODO align filenaming convention with coherence package
-    // TODO explore multi-concept query expansion
-    // TODO add all models to load balancer
-    // TODO itemized filter to prevent momentum
-    // TODO Add synonym to pattern definition
-    // TODO generate more queries to improve coverage
-    // TODO combine semantic search with keyword search for better coverage
-    // TODO use agent to generate queries
-    // TODO ensure unused claims are still categorized under "other"
-    // TODO infer industry wide common names e.g. from Main-Details = Master-Details, Choice group = Radio button
-    // TODO chunking long input document for GPT3.5 only deployments
 
     // start logging
 
