@@ -1,5 +1,4 @@
 import type { ChatMessage, SimpleChatProxy } from "../../azure/chat";
-import { EntityName } from "../../hits/entity";
 import { responseToList } from "../../hits/format";
 
 import { arrayToBulletList } from "../../hits/format";
@@ -381,13 +380,6 @@ Alternative names: ${alternativeNames.join(", ")}
 }
 
 export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concept, aggregatedItems: AggregatedItem[]) {
-  const allFootNotes = aggregatedItems.map((item, index) => ({
-    pos: index + 1,
-    title: item.title,
-    rootTitle: item.rootTitle,
-    url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
-  }));
-
   const textSources = aggregatedItems
     .map((item, index) =>
       `
