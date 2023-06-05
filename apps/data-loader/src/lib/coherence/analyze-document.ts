@@ -102,13 +102,25 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeGetConcept = true;
     const resumeGetGuidance = true;
     const resumeGetQuestions = true;
+    const resumeQuestionToConcept = true;
     const resumeInferGoals = true;
     const resumeInferProblems = true;
     const resumeInferSupporters = true;
     const resumeInferProtesters = true;
-    const resumeQuestionToConcepts = true;
     const resumeSemanticSearch = true;
-    const resumeCurationReponse = true;
+    const resumeCurationReponse = false; // (!)
+
+    const proxies = {
+      concept: lengthSensitiveProxy,
+      guidance: lengthSensitiveProxy,
+      questions: lengthSensitiveProxy,
+      questionToConcept: chatProxy, // short
+      goals: chatProxy, // short
+      problems: chatProxy, // short
+      supporters: chatProxy, // short
+      protesters: chatProxy, // short
+      curation: lengthSensitiveProxyGpt4,
+    };
 
     await logger("main", "started");
     // resume progress from disk
@@ -126,22 +138,24 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     const pattern = extractMarkdownTitle(markdownFile);
     const [concept, guidance, questions] = await Promise.all([
-      resumeOrRun(resumeGetConcept, progressObject.concept, () => getConcept(lengthSensitiveProxy, markdownFile)),
-      resumeOrRun(resumeGetGuidance, progressObject.guidance, () => getGuidance(lengthSensitiveProxy, markdownFile)),
-      resumeOrRun(resumeGetQuestions, progressObject.questions, () => getQuestions(lengthSensitiveProxy, markdownFile, 20)),
+      resumeOrRun(resumeGetConcept, progressObject.concept, () => getConcept(proxies.concept, markdownFile)),
+      resumeOrRun(resumeGetGuidance, progressObject.guidance, () => getGuidance(proxies.guidance, markdownFile)),
+      resumeOrRun(resumeGetQuestions, progressObject.questions, () => getQuestions(proxies.questions, markdownFile, 20)),
     ]);
 
     await incrementalLogObject({ pattern, concept, guidance, questions });
 
     const [questionedConcepts, goals, problems, supporters, protesters] = await Promise.all([
-      resumeOrRun(resumeQuestionToConcepts, progressObject.questionedConcepts, () => questionToConcepts(chatProxy, questions)),
-      resumeOrRun(resumeInferGoals, progressObject.goals, () => inferUserGoals(chatProxy, concept.name, concept.definition, concept.alternativeNames)),
-      resumeOrRun(resumeInferProblems, progressObject.problems, () => inferUserProblems(chatProxy, concept.name, concept.definition, concept.alternativeNames)),
+      resumeOrRun(resumeQuestionToConcept, progressObject.questionedConcepts, () => questionToConcepts(proxies.questionToConcept, questions)),
+      resumeOrRun(resumeInferGoals, progressObject.goals, () => inferUserGoals(proxies.goals, concept.name, concept.definition, concept.alternativeNames)),
+      resumeOrRun(resumeInferProblems, progressObject.problems, () =>
+        inferUserProblems(proxies.problems, concept.name, concept.definition, concept.alternativeNames)
+      ),
       resumeOrRun(resumeInferSupporters, progressObject.supporters, () =>
-        inferSupporters(chatProxy, concept.name, concept.definition, concept.alternativeNames)
+        inferSupporters(proxies.supporters, concept.name, concept.definition, concept.alternativeNames)
       ),
       resumeOrRun(resumeInferProtesters, progressObject.protesters, () =>
-        inferProtesters(chatProxy, concept.name, concept.definition, concept.alternativeNames)
+        inferProtesters(proxies.protesters, concept.name, concept.definition, concept.alternativeNames)
       ),
     ]);
 
@@ -183,7 +197,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     incrementalLogObject({ aggregated });
 
     const curationResponse = await resumeOrRun(resumeCurationReponse, progressObject.curationResponse, () =>
-      curateClaimsV2(lengthSensitiveProxy, concept, aggregated)
+      curateClaimsV2(proxies.curation, concept, aggregated)
     );
     await logger("curate", `curation ${curationResponse.length} chars`);
     incrementalLogObject({ curationResponse });
