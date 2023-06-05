@@ -162,7 +162,10 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     const positiveQ = rankedResults.filter((item) => item.responses.length > 0);
     const negativeQ = rankedResults.filter((item) => item.responses.length === 0);
-    await logger("search", `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries`);
+    await logger(
+      "search",
+      `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries, precision ${positiveQ.length / rankedResults.length}`
+    );
     incrementalLogObject({ rankedResults });
 
     const aggregated = rankedResults
