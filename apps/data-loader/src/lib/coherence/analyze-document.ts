@@ -16,6 +16,7 @@ import {
   inferUserProblems,
   questionToConcepts,
 } from "./pipeline/inference";
+import { parseCuration } from "./pipeline/parse-curation";
 import { decorateQuery } from "./pipeline/reflect";
 import { bulkSemanticQuery, groupById } from "./pipeline/semantic-search";
 
@@ -41,6 +42,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
   // DEBUG only - GPT3.5 only
   const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
 
+  const startTime = Date.now();
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
     // TODO rename dos and donts into "best practice"
@@ -65,11 +67,10 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     // start logging
 
-    const resetLog = async () => writeFile(`${outDir}/${filename}.log`, "");
     const logger = async (...segments: string[]) => {
-      const message = `${[new Date().toISOString(), ...segments].join(" | ")}`;
+      const message = `${[new Date().toISOString(), filename, ...segments].join(" | ")}`;
       console.log(`${filename} | ${message}`);
-      await appendFile(`${outDir}/${filename}.log`, `${message}\n`);
+      await appendFile(`${outDir}/${startTime}.log`, `${message}\n`);
     };
 
     const progressObject: {
@@ -84,6 +85,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       questionedConcepts: any;
       rankedResults: any;
       curationResponse: any;
+      curationParsed: any;
     } = {} as any;
 
     const incrementalLogObject = async (additionalField: any) => {
@@ -97,8 +99,6 @@ export async function analyzeDocument(dir: string, outDir: string) {
       return (shouldResume ? value : await fn()) as T;
     };
 
-    const clearLog = true;
-
     // control which steps should be resumed from last run
     // set to false will force a fresh run the step
     const resumeGetConcept = true;
@@ -110,11 +110,8 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferProtesters = true;
     const resumeQuestionToConcepts = true;
     const resumeSemanticSearch = true;
-    const resumeCuration = true;
-
-    if (clearLog) {
-      await resetLog();
-    }
+    const resumeCurationReponse = true;
+    const resumeCurationParsed = true;
 
     await logger("main", "started");
     // resume progress from disk
@@ -188,11 +185,22 @@ export async function analyzeDocument(dir: string, outDir: string) {
     await logger("search", `aggregation ${aggregated.length} items. Score top ${topScore}, avg ${avgScore}, bottom ${bottomScore}`);
     incrementalLogObject({ aggregated });
 
-    const curationResponse = await resumeOrRun(resumeCuration, progressObject.curationResponse, () =>
+    const curationResponse = await resumeOrRun(resumeCurationReponse, progressObject.curationResponse, () =>
       curateClaimsV2(lengthSensitiveProxy, concept, aggregated)
     );
     await logger("curate", `curation ${curationResponse.length} chars`);
     incrementalLogObject({ curationResponse });
+
+    const parsedCuration = await resumeOrRun(resumeCurationParsed, progressObject.curationParsed, () => parseCuration(aggregated, curationResponse));
+    const footnoteUtilizationRate = parsedCuration.usedFootNotePositions.length / parsedCuration.footNotes.length;
+    const citationsPerItem =
+      parsedCuration.groups.reduce((a, b) => a + b.items.reduce((x, y) => x + y.sources.length, 0), 0) /
+      parsedCuration.groups.reduce((a, b) => a + b.items.length, 0);
+    await logger(
+      "curate",
+      `groups: ${parsedCuration.groups.length}, footnotes: ${parsedCuration.footNotes.length}, source utilization: ${footnoteUtilizationRate}, citation per item: ${citationsPerItem}, invalid: ${parsedCuration.unknownFootNotePositions.length}}`
+    );
+    incrementalLogObject({ parsedCuration });
 
     // debug
     return;
