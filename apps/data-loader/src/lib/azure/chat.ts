@@ -120,13 +120,17 @@ export function getChatProxy(apiKey: string, endpoint: string) {
       retryDelay: (count, error) => {
         const serverInternal = (((error.response?.data as any)?.error?.message as string) ?? "").match(/ (\d+) second/)?.[1];
         if (serverInternal) {
-          const interval = parseInt(serverInternal) * 1000;
-          console.log(`Retry: ${count} (server internal: ${interval / 1000})`);
+          const interval = parseInt(serverInternal) * 1000 * 1.1; // 10% buffer
+          console.log(`Retry: ${count} (server cooldown: ${interval / 1000}s)`);
           return interval;
+        } else if (error.status === 429 || error.code === "429" || (error.response?.data as any)?.error?.code === "429") {
+          console.log(error?.response?.data);
+          console.log(`Retry: ${count} (unknown 429 cooldown: 60s)`);
+          return 60 * 1000;
         } else {
-          const interval = count * 2000;
-          console.log(`Retry: ${count}, (default internal: ${interval / 1000})}`);
-          return interval;
+          console.log(error?.response?.data);
+          console.log(`Retry: ${count}, (default cooldown: 10s)`);
+          return 10 * 1000;
         }
       },
       shouldResetTimeout: true,

@@ -93,7 +93,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferSupporters = true;
     const resumeInferProtesters = true;
     const resumeSemanticSearch = true;
-    const resumeCurationReponse = false; // (!)
+    const resumeCurationReponse = true; // (!)
 
     const proxies = {
       concept: lengthSensitiveProxy,
