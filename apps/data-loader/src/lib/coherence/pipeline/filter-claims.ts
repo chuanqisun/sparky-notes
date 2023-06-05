@@ -4,6 +4,7 @@ export interface FilterableClaim {
   id: string;
   caption: string;
 }
+/** @deprecated */
 export async function filterClaims(chatProxy: SimpleChatProxy, pattern: string, definition: string, claims: FilterableClaim[]) {
   const messages: ChatMessage[] = [
     {

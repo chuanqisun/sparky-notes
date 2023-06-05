@@ -2,9 +2,7 @@ import { assert } from "console";
 import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
 import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy } from "../azure/chat";
 import { getClaimIndexProxy } from "../hits/search-claims";
-import { curateClaims } from "./pipeline/curate-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
-import { filterClaims } from "./pipeline/filter-claims";
 import {
   curateClaimsV2,
   getConcept,
@@ -207,50 +205,6 @@ export async function analyzeDocument(dir: string, outDir: string) {
     await mkdir(`${outDir}/result`, { recursive: true });
     await writeFile(`${outDir}/result/${filename}.json`, JSON.stringify(parsedCuration, null, 2));
     await writeFile(`${outDir}/result/${filename}.md`, markdown);
-
-    // debug
-    return;
-
-    const relatedIds = await filterClaims(lengthSensitiveProxy, pattern, concept.definition, aggregated);
-    const filteredAggregated = aggregated.filter((item) => relatedIds.includes(item.id));
-
-    const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`);
-    // await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
-    await logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
-
-    const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxyGpt4, pattern, filteredAggregated);
-    const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;
-    const groupCount = summary.length;
-    const claimCount = summary.flatMap((topic) => topic.claims).length;
-    const guidanceDensity = claimCount / groupCount;
-    const refDensity = (footnotes.length - unusedFootnotes.length) / groupCount;
-
-    await logger(
-      "curation",
-      `Topics: ${groupCount}, Claims: ${claimCount}, Footnotes: ${footnotes.length}, Utilization: ${footnoteUtilization}, Guidance density: ${guidanceDensity}, Ref density: ${refDensity}`
-    );
-
-    await writeFile(`${outDir}/${filename}-result.json`, JSON.stringify({ summary, footnotes }, null, 2));
-
-    const formattedPage = `
-# ${pattern}
-   
-## Research insights
-${summary
-  .map((category) =>
-    `
-- ${category.name}
-${category.claims.map((claim) => `  - ${claim.guidance} ${claim.sources.map((source) => `[${source.pos}]`).join("")}`).join("\n")}
-    `.trim()
-  )
-  .join("\n")}
-
-## References
-${footnotes.map((item) => `${item.pos}. [${item.title}](${item.url})`).join("\n")}
-      `.trim();
-
-    await writeFile(`${outDir}/${filename}-curated-research.md`, formattedPage);
-    console.log(`[${filename}] Done`);
   });
 
   // remove quotation marks in semantic queries
