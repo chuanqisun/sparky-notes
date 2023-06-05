@@ -10,6 +10,8 @@ import type {
   IFigmaSectionDefinition,
 } from "./portal.types";
 
+export const EXCLUDE_SECTION_PREFIX = ["Code"];
+
 export async function parseCoherence(controlsDir: string) {
   const controlDirs = await readdir(controlsDir);
   await Promise.all(
@@ -33,15 +35,15 @@ export async function parseCoherence(controlsDir: string) {
 }
 
 function renderDocument(title: string, article: IFigmaArticleDefinition) {
-  return [`# ${title}`, ...(article.pivots ?? []).map(renderPivot)].filter(isTruty).join("\n\n");
+  return [`# ${title}`, ...(article.pivots ?? []).filter(excludePivots.bind(null, EXCLUDE_SECTION_PREFIX)).map(renderPivot)].filter(isTruty).join("\n\n");
 }
 
 function renderPivot(pivot: IFigmaPivotDefinition) {
-  return [`## ${pivot.title ?? "Untitled"}`, ...(pivot.sections ?? []).map(renderPivotSection)].filter(isTruty).join("\n\n");
+  return [pivot.title ? `## ${pivot.title}` : null, ...(pivot.sections ?? []).map(renderPivotSection)].filter(isTruty).join("\n\n");
 }
 
 function renderPivotSection(section: IFigmaSectionDefinition) {
-  return [`### ${section.title ?? "Untitled"}`, ...(section.frames ?? []).map(renderPivotSectionFrame)].filter(isTruty).join("\n\n");
+  return [section.title ? `### ${section.title}` : null, ...(section.frames ?? []).map(renderPivotSectionFrame)].filter(isTruty).join("\n\n");
 }
 
 function renderPivotSectionFrame(frame: IFigmaFrameDefinition) {
@@ -53,7 +55,7 @@ function renderPivotSectionFrame(frame: IFigmaFrameDefinition) {
     .join("\n\n");
 }
 function renderPivotSectionFrameHeader(header: IFigmaFrameHeaderDefinition) {
-  return [`#### ${header.text ?? "Untitled"}`, normalizeText(header.body)].filter(isTruty).join("\n\n");
+  return [header.text ? `#### ${header.text}` : null, normalizeText(header.body)].filter(isTruty).join("\n\n");
 }
 
 function renderPivotSectionFrameImage(image: IFigmaFrameImageDefinition) {
@@ -64,6 +66,16 @@ function isTruty<T>(value: T | undefined | null): value is T {
   return value !== undefined && value !== null && value !== "";
 }
 
+function excludePivots(blockList: string[], pivot: IFigmaPivotDefinition): boolean {
+  return blockList.every((prefix) => !pivot.title?.toLocaleLowerCase()?.startsWith(prefix.toLocaleLowerCase()));
+}
+
 function normalizeText(text?: string) {
-  return text?.trim().replaceAll("º", "- ").replaceAll("•", "- ") ?? "";
+  return (
+    text
+      ?.trim()
+      .replaceAll(/º(\s*)/gu, "- ")
+      .replaceAll(/•(\s*)/gu, "- ")
+      .replaceAll(/▢(\s*)/gu, "- ") ?? ""
+  );
 }
