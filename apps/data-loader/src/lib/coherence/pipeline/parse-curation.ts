@@ -24,11 +24,11 @@ export interface ParsedCuration {
   usedFootNotePositions: number[];
   unusedFootNotePositions: number[];
   unknownFootNotePositions: number[];
-  footNotes: CuratedSource[];
+  footnotes: CuratedSource[];
 }
 
 export async function parseCuration(aggregatedItems: AggregatedItem[], curationResponse: string): Promise<ParsedCuration> {
-  const allFootNotes = aggregatedItems.map((item, index) => ({
+  const footnotes = aggregatedItems.map((item, index) => ({
     pos: index + 1,
     title: item.title,
     rootTitle: item.rootTitle,
@@ -60,8 +60,8 @@ export async function parseCuration(aggregatedItems: AggregatedItem[], curationR
     ...group,
     items: group.items.map((item) => ({
       ...item,
-      sources: item.citations.map((citation) => allFootNotes.find((note) => note.pos === citation)).filter(Boolean) as CuratedSource[],
-      unknownSources: item.citations.filter((citation) => !allFootNotes.find((note) => note.pos === citation)).sort(),
+      sources: item.citations.map((citation) => footnotes.find((note) => note.pos === citation)).filter(Boolean) as CuratedSource[],
+      unknownSources: item.citations.filter((citation) => !footnotes.find((note) => note.pos === citation)).sort(),
     })),
   }));
 
@@ -75,14 +75,14 @@ export async function parseCuration(aggregatedItems: AggregatedItem[], curationR
       }
     }
   }
-  const unusedFootNotePositions = allFootNotes.map((note) => note.pos).filter((pos) => !usedFootNotePositions.has(pos));
+  const unusedFootNotePositions = footnotes.map((note) => note.pos).filter((pos) => !usedFootNotePositions.has(pos));
 
   return {
     groups: correlatedGroups,
     usedFootNotePositions: [...usedFootNotePositions],
     unusedFootNotePositions: [...unusedFootNotePositions],
     unknownFootNotePositions: [...unknownSources],
-    footNotes: allFootNotes,
+    footnotes,
   };
 }
 
@@ -109,7 +109,7 @@ function parseCitations(line: string): { text: string; citations: number[] } {
     .map((item) => parseInt(item))
     .filter(Boolean);
 
-  const text = match[1].trim() + match[3].trim();
+  const text = match[1].trim() + (match.at(-1) ?? "").trim();
 
   return {
     text,

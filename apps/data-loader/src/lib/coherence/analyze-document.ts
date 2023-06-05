@@ -18,6 +18,7 @@ import {
 } from "./pipeline/inference";
 import { parseCuration } from "./pipeline/parse-curation";
 import { decorateQuery } from "./pipeline/reflect";
+import { renderMarkdown } from "./pipeline/render-markdown";
 import { bulkSemanticQuery, groupById } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
@@ -111,7 +112,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeQuestionToConcepts = true;
     const resumeSemanticSearch = true;
     const resumeCurationReponse = true;
-    const resumeCurationParsed = true;
+    const resumeCurationParsed = false;
 
     await logger("main", "started");
     // resume progress from disk
@@ -192,15 +193,20 @@ export async function analyzeDocument(dir: string, outDir: string) {
     incrementalLogObject({ curationResponse });
 
     const parsedCuration = await resumeOrRun(resumeCurationParsed, progressObject.curationParsed, () => parseCuration(aggregated, curationResponse));
-    const footnoteUtilizationRate = parsedCuration.usedFootNotePositions.length / parsedCuration.footNotes.length;
+    const footnoteUtilizationRate = parsedCuration.usedFootNotePositions.length / parsedCuration.footnotes.length;
     const citationsPerItem =
       parsedCuration.groups.reduce((a, b) => a + b.items.reduce((x, y) => x + y.sources.length, 0), 0) /
       parsedCuration.groups.reduce((a, b) => a + b.items.length, 0);
     await logger(
       "curate",
-      `groups: ${parsedCuration.groups.length}, footnotes: ${parsedCuration.footNotes.length}, source utilization: ${footnoteUtilizationRate}, citation per item: ${citationsPerItem}, invalid: ${parsedCuration.unknownFootNotePositions.length}}`
+      `groups: ${parsedCuration.groups.length}, footnotes: ${parsedCuration.footnotes.length}, source utilization: ${footnoteUtilizationRate}, citation per item: ${citationsPerItem}, invalid: ${parsedCuration.unknownFootNotePositions.length}}`
     );
     incrementalLogObject({ parsedCuration });
+
+    const markdown = renderMarkdown(pattern, parsedCuration);
+    await mkdir(`${outDir}/result`, { recursive: true });
+    await writeFile(`${outDir}/result/${filename}.json`, JSON.stringify(parsedCuration, null, 2));
+    await writeFile(`${outDir}/result/${filename}.md`, markdown);
 
     // debug
     return;
