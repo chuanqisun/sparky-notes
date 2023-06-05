@@ -197,7 +197,7 @@ export async function getGuidance(chatProxy: SimpleChatProxy, markdown: string):
       {
         role: "system",
         content: `
-Identify the "Do" and "Don't" recommendation lists. Make sure the document explicitly used "Do" or "Don'ts" sentences. Respond in this format:
+Identify the "Do" and "Don't" best practice lists. Make sure the document explicitly used "Do" or "Don'ts" sentences. Respond in this format:
 
 Have Dos or Don'ts?: <Yes/No>
 Dos: <If exist, unordered bullet list of do items>
