@@ -384,8 +384,10 @@ export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concep
   const allFootNotes = aggregatedItems.map((item, index) => ({
     pos: index + 1,
     title: item.title,
+    rootTitle: item.rootTitle,
     url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
   }));
+
   const textSources = aggregatedItems
     .map((item, index) =>
       `
@@ -396,26 +398,34 @@ Finding: ${item.caption}
     )
     .join("\n\n");
 
+  console.log(textSources);
+
   const messages: ChatMessage[] = [
     {
       role: "system",
       content: `
-Group the findings about "${concept.name}" (also known as ${concept.alternativeNames.join(", ")}), use definition: ${concept.definition}
+Carefully read all the findings are about "${concept.name}" (defined as: ${concept.definition} It is also known as ${concept.alternativeNames.join(", ")}) 
 
-At the end of each finding, you must cite one or more Finding numbers. Use square brackets, e.g. [1] for single citation, [1][2] for multiple.
+Shorten the findings into key points and sort the key points into groups.
+Each key point must end with citation of one or more Finding numbers. Use square brackets, e.g. [1][2][3] for Finding 1, 2, and 3.
 
 Respond in this format:
 
 Group 1: <Humble and engaging title>
 Intro: <One paragraph introduction, explain how the findings connect to "${concept.name}" in details>
-Findings: <bullet list of findings>
-- <Finding> <citation>
-- <Finding> <citation>
-- <Finding> <citation>
+Findings: <List of key points>
+- <Key point 1> <citation>
+- <Key point 2> <citation>
+- <Key point 3> <citation>
+...
 
 Group 2: ...
 Intro: ...
-Findings: ...
+Findings:
+- ...
+- ...
+- ...
+...
 
 ...(repeat until *all* the findings are categorized. Identify as many groups as you can)
 `.trim(),
@@ -431,4 +441,121 @@ Findings: ...
 
   // TODO parse citation graph
   console.log("curation raw response", textResponse);
+
+  return textResponse;
+}
+
+export interface CuratedGroup {
+  name: string;
+  intro: string;
+  items: {
+    text: string;
+    sources: CuratedSource[];
+    unknownSources: number[];
+  }[];
+}
+
+export interface CuratedSource {
+  pos: number;
+  url: string;
+  title: string;
+  rootTitle: string;
+}
+
+export interface ParsedCuration {
+  groups: CuratedGroup[];
+  usedFootNotePositions: number[];
+  unusedFootNotePositions: number[];
+  unknownFootNotePositions: number[];
+  footNotes: CuratedSource[];
+}
+
+export async function parseCuration(aggregatedItems: AggregatedItem[], curationResponse: string): Promise<ParsedCuration> {
+  const allFootNotes = aggregatedItems.map((item, index) => ({
+    pos: index + 1,
+    title: item.title,
+    rootTitle: item.rootTitle,
+    url: `https://hits.microsoft.com/${EntityName[item.entityType]}/${item.id}`,
+  }));
+
+  /**
+   * Input format
+   *
+   * Group K: <Title>
+   * Intro: <Intro>
+   * Findings:
+   * - <Text> <Citation>
+   * ...
+   *
+   * Group K+1: ...
+   */
+
+  const rawGroups = [...curationResponse.matchAll(/Group \d:.+\nIntro:.+\nFindings:\n(- .*\n)+/gm)].map((match) => match[0]);
+  const parsedGroups = rawGroups
+    .map((rawGroup) => rawGroup.match(/Group \d:(.+)\nIntro:(.+)\nFindings:\n((- .*\n)+)/m))
+    .map((match) => ({
+      name: match![1].trim(),
+      intro: match![2].trim(),
+      items: responseToList(match![3].trim()).listItems.map((item) => parseCitations(item)),
+    }));
+
+  const correlatedGroups: CuratedGroup[] = parsedGroups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      sources: item.citations.map((citation) => allFootNotes.find((note) => note.pos === citation)).filter(Boolean) as CuratedSource[],
+      unknownSources: item.citations.filter((citation) => !allFootNotes.find((note) => note.pos === citation)).sort(),
+    })),
+  }));
+
+  const unknownSources = new Set(correlatedGroups.flatMap((group) => group.items.flatMap((item) => item.unknownSources)));
+
+  const usedFootNotePositions = new Set<number>();
+  for (const group of correlatedGroups) {
+    for (const item of group.items) {
+      for (const source of item.sources) {
+        usedFootNotePositions.add(source.pos);
+      }
+    }
+  }
+  const unusedFootNotePositions = allFootNotes.map((note) => note.pos).filter((pos) => !usedFootNotePositions.has(pos));
+
+  return {
+    groups: correlatedGroups,
+    usedFootNotePositions: [...usedFootNotePositions],
+    unusedFootNotePositions: [...unusedFootNotePositions],
+    unknownFootNotePositions: [...unknownSources],
+    footNotes: allFootNotes,
+  };
+}
+
+function parseCitations(line: string): { text: string; citations: number[] } {
+  // account for different citation styles
+  // text [1,2,3]
+  // text [1, 2, 3]
+  // text [1][2][3]
+  // text [1] [2] [3]
+  // text [1],[2],[3]
+  // text [1], [2], [3]
+  // text [1].
+  // text [1]?
+  // text [1]!
+  const match = line.trim().match(/^(.+?)((\[((\d|,|\s)+)\],?\s*)+)(\.|\?|!)?$/);
+  if (!match) {
+    return { text: line.trim(), citations: [] };
+  }
+
+  // regex, replace anything that is not a digit with space
+  const citations = (match[2] ?? "")
+    .replaceAll(/[^\d]/g, " ")
+    .split(" ")
+    .map((item) => parseInt(item))
+    .filter(Boolean);
+
+  const text = match[1].trim() + match[3].trim();
+
+  return {
+    text,
+    citations,
+  };
 }

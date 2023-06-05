@@ -43,7 +43,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
-    // TODO in-memory memoize semantic search
+    // TODO rename dos and donts into "best practice"
     // TODO output study title and some metadata ala wikipedia footnote style
     // TODO reinforcement semantic search query expansion
     // TODO persona based semantic search query expansion
@@ -65,13 +65,12 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     // start logging
 
-    const logger = (...segments: string[]) => {
+    const resetLog = async () => writeFile(`${outDir}/${filename}.log`, "");
+    const logger = async (...segments: string[]) => {
       const message = `${[new Date().toISOString(), ...segments].join(" | ")}`;
       console.log(`${filename} | ${message}`);
-      appendFile(`${outDir}/${filename}.log`, `${message}\n`);
+      await appendFile(`${outDir}/${filename}.log`, `${message}\n`);
     };
-
-    logger("main", "started");
 
     const progressObject: {
       pattern: any;
@@ -84,24 +83,21 @@ export async function analyzeDocument(dir: string, outDir: string) {
       questions: any;
       questionedConcepts: any;
       rankedResults: any;
+      curationResponse: any;
     } = {} as any;
 
-    // resume progress from disk
-    try {
-      await readFile(`${outDir}/${filename}.json`, "utf-8").then((content) => {
-        Object.assign(progressObject, JSON.parse(content));
-      });
-
-      logger("main", `resumed: ${Object.keys(progressObject).join(",")}`);
-    } catch (e) {
-      console.log(`Cannot resume progress for ${filename}`);
-    }
+    const incrementalLogObject = async (additionalField: any) => {
+      Object.assign(progressObject, additionalField);
+      await writeFile(`${outDir}/${filename}.json`, JSON.stringify(progressObject, null, 2));
+    };
 
     const resumeOrRun = async <T>(flag: boolean, value: any, fn: () => Promise<T> | T) => {
       const shouldResume = flag && !!value;
 
       return (shouldResume ? value : await fn()) as T;
     };
+
+    const clearLog = true;
 
     // control which steps should be resumed from last run
     // set to false will force a fresh run the step
@@ -116,10 +112,21 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeSemanticSearch = true;
     const resumeCuration = true;
 
-    const incrementalLogObject = async (additionalField: any) => {
-      Object.assign(progressObject, additionalField);
-      await writeFile(`${outDir}/${filename}.json`, JSON.stringify(progressObject, null, 2));
-    };
+    if (clearLog) {
+      await resetLog();
+    }
+
+    await logger("main", "started");
+    // resume progress from disk
+    try {
+      await readFile(`${outDir}/${filename}.json`, "utf-8").then((content) => {
+        Object.assign(progressObject, JSON.parse(content));
+      });
+
+      await logger("main", `resumed: ${Object.keys(progressObject).join(",")}`);
+    } catch (e) {
+      console.log(`Cannot resume progress for ${filename}`);
+    }
 
     const markdownFile = await readFile(`${dir}/${filename}`, "utf-8");
 
@@ -157,12 +164,12 @@ export async function analyzeDocument(dir: string, outDir: string) {
       ...guidance.dos,
       ...guidance.donts,
     ];
-    logger("search", `semantic search ${allQueries.length} total queries`);
+    await logger("search", `semantic search ${allQueries.length} total queries`);
     const rankedResults = await resumeOrRun(resumeSemanticSearch, progressObject.rankedResults, () => bulkSemanticQuery(claimSearchProxy, allQueries, 10, 1));
 
     const positiveQ = rankedResults.filter((item) => item.responses.length > 0);
     const negativeQ = rankedResults.filter((item) => item.responses.length === 0);
-    logger("search", `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries`);
+    await logger("search", `semantic search ${positiveQ.length} positive queries, ${negativeQ.length} negative queries`);
     incrementalLogObject({ rankedResults });
 
     const aggregated = rankedResults
@@ -173,10 +180,19 @@ export async function analyzeDocument(dir: string, outDir: string) {
       .sort((a, b) => b.score - a.score)
       .slice(0, 30); // prevent overflow
 
-    logger("search", `aggregation ${aggregated.length} items`);
+    // analyze aggregation quality with top, avg, bottom scores
+    const allScores = aggregated.map((item) => item.score);
+    const topScore = Math.max(...allScores);
+    const avgScore = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+    const bottomScore = Math.min(...allScores);
+    await logger("search", `aggregation ${aggregated.length} items. Score top ${topScore}, avg ${avgScore}, bottom ${bottomScore}`);
     incrementalLogObject({ aggregated });
 
-    await curateClaimsV2(lengthSensitiveProxy, concept, aggregated);
+    const curationResponse = await resumeOrRun(resumeCuration, progressObject.curationResponse, () =>
+      curateClaimsV2(lengthSensitiveProxy, concept, aggregated)
+    );
+    await logger("curate", `curation ${curationResponse.length} chars`);
+    incrementalLogObject({ curationResponse });
 
     // debug
     return;
@@ -186,7 +202,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     const filteredClaimList = filteredAggregated.map((item, index) => `[${index + 1}] ${item.caption}`);
     // await writeFile(`${outDir}/${filename}.json`, JSON.stringify({ filteredClaimList, aggregated, rankedResults }, null, 2));
-    logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
+    await logger("filter", `Source: ${aggregated.length}, Ids: ${relatedIds.length} -> Result: ${filteredAggregated.length}`);
 
     const { summary, footnotes, unusedFootnotes } = await curateClaims(lengthSensitiveProxyGpt4, pattern, filteredAggregated);
     const footnoteUtilization = (footnotes.length - unusedFootnotes.length) / footnotes.length;
@@ -195,7 +211,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const guidanceDensity = claimCount / groupCount;
     const refDensity = (footnotes.length - unusedFootnotes.length) / groupCount;
 
-    logger(
+    await logger(
       "curation",
       `Topics: ${groupCount}, Claims: ${claimCount}, Footnotes: ${footnotes.length}, Utilization: ${footnoteUtilization}, Guidance density: ${guidanceDensity}, Ref density: ${refDensity}`
     );
