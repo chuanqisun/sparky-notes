@@ -84,7 +84,6 @@ export async function analyzeDocument(dir: string, outDir: string) {
       questionedConcepts: any;
       rankedResults: any;
       curationResponse: any;
-      curationParsed: any;
     } = {} as any;
 
     const incrementalLogObject = async (additionalField: any) => {
@@ -110,7 +109,6 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeQuestionToConcepts = true;
     const resumeSemanticSearch = true;
     const resumeCurationReponse = true;
-    const resumeCurationParsed = false;
 
     await logger("main", "started");
     // resume progress from disk
@@ -190,7 +188,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     await logger("curate", `curation ${curationResponse.length} chars`);
     incrementalLogObject({ curationResponse });
 
-    const parsedCuration = await resumeOrRun(resumeCurationParsed, progressObject.curationParsed, () => parseCuration(aggregated, curationResponse));
+    const parsedCuration = parseCuration(aggregated, curationResponse);
     const footnoteUtilizationRate = parsedCuration.usedFootNotePositions.length / parsedCuration.footnotes.length;
     const citationsPerItem =
       parsedCuration.groups.reduce((a, b) => a + b.items.reduce((x, y) => x + y.sources.length, 0), 0) /

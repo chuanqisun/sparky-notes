@@ -27,7 +27,7 @@ export interface ParsedCuration {
   footnotes: CuratedSource[];
 }
 
-export async function parseCuration(aggregatedItems: AggregatedItem[], curationResponse: string): Promise<ParsedCuration> {
+export function parseCuration(aggregatedItems: AggregatedItem[], curationResponse: string): ParsedCuration {
   const footnotes = aggregatedItems.map((item, index) => ({
     pos: index + 1,
     title: item.title,
