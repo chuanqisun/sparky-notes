@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {
+      "route": "/*",
+      "allowedRoles": [
+        "admin"
+      ]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "index.html"
+  }
+}
