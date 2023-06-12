@@ -33,6 +33,11 @@ const ROUTES: NamedRoute[] = [
     lazy: () => import("./experiments/ontology-builder").then(({ OntologyBuilder }) => ({ Component: OntologyBuilder })),
   },
   {
+    displayName: "Basic shelf",
+    path: "/experiments/basic-shelf",
+    lazy: () => import("./experiments/basic-shelf").then(({ BasicShelf }) => ({ Component: BasicShelf })),
+  },
+  {
     displayName: "Shelf flow",
     path: "/experiments/shelf-flow",
     lazy: () => import("./experiments/shelf-flow").then(({ ShelfFlow }) => ({ Component: ShelfFlow })),
