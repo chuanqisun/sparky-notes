@@ -22,21 +22,21 @@ interface Cell {
 export const BasicShelf: React.FC = () => {
   const { chat, ModelSelectorElement, embed } = useModelSelector();
 
-  const [cells, setCells] = useState<Cell[]>([
+  const [shelves, setShelves] = useState<Cell[]>([
     {
       id: crypto.randomUUID(),
-      stepName: "A new step",
+      stepName: `New shelf`,
       instruction: "",
       program: "",
     },
   ]);
 
   const setCellField = (field: keyof Cell, id: string, value: string) => {
-    setCells((cells) => cells.map((cell) => (cell.id === id ? { ...cell, [field]: value } : cell)));
+    setShelves((cells) => cells.map((cell) => (cell.id === id ? { ...cell, [field]: value } : cell)));
   };
 
   const handleRun = async (id: string) => {
-    const programText = cells.find((cell) => cell.id === id)?.program;
+    const programText = shelves.find((cell) => cell.id === id)?.program;
 
     // program format:
     // ```yaml
@@ -59,9 +59,9 @@ export const BasicShelf: React.FC = () => {
   return (
     <AppLayout>
       <header>{ModelSelectorElement}</header>
-      <CellList>
-        {cells.map((cell) => (
-          <CellItem key={cell.id}>
+      <ShelfSet>
+        {shelves.map((cell) => (
+          <Shelf key={cell.id}>
             <Field>
               <label>Title</label>
               <input value={cell.stepName} onChange={(e) => setCellField("stepName", cell.id, e.target.value)} />
@@ -82,14 +82,14 @@ export const BasicShelf: React.FC = () => {
                 <button onClick={() => handleRun(cell.id)}>Run</button>
               </Field>
             </TwoColumns>
-          </CellItem>
+          </Shelf>
         ))}
         <Field>
           <label>Shelves</label>
           <button onClick={handleRefresh}>Refresh</button>
           <div>WIP</div>
         </Field>
-      </CellList>
+      </ShelfSet>
     </AppLayout>
   );
 };
@@ -112,13 +112,13 @@ const Field = styled.div`
   gap: 2px;
 `;
 
-const CellList = styled.div`
+const ShelfSet = styled.div`
   display: grid;
   gap: 2rem;
   align-content: start;
 `;
 
-const CellItem = styled.div`
+const Shelf = styled.div`
   display: grid;
   gap: 0.5rem;
 `;
