@@ -1,13 +1,17 @@
 import type React from "react";
 import { useState } from "react";
 import styled from "styled-components";
+import { parse } from "yaml";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
+import { createListProgram } from "../programs/create-list";
 import { CenterClamp } from "../shell/center-clamp";
+
 const db = new Cozo();
 db.query("?[] <- [[1]]").then((res) => console.log(res.rows));
 
+const programs = [createListProgram];
 interface Cell {
   id: string;
   stepName: string;
@@ -27,11 +31,29 @@ export const BasicShelf: React.FC = () => {
     },
   ]);
 
-  const setStepName = (id: string, stepName: string) => {
-    setCells((cells) => cells.map((cell) => (cell.id === id ? { ...cell, stepName } : cell)));
+  const setCellField = (field: keyof Cell, id: string, value: string) => {
+    setCells((cells) => cells.map((cell) => (cell.id === id ? { ...cell, [field]: value } : cell)));
   };
-  const setInput = (id: string, input: string) => {
-    setCells((cells) => cells.map((cell) => (cell.id === id ? { ...cell, instruction: input } : cell)));
+
+  const handleRun = async (id: string) => {
+    const programText = cells.find((cell) => cell.id === id)?.program;
+
+    // program format:
+    // ```yaml
+    // run: <program>
+    // inputName1: ...
+    // inputName2: ...
+    //
+
+    const data = parse(programText ?? "");
+    if (!data.run) return;
+
+    await programs.find((program) => program.name === (data.run as string))?.main({ db, data });
+  };
+
+  const handleRefresh = async () => {
+    const relations = await db.listRelations();
+    console.log(relations);
   };
 
   return (
@@ -39,33 +61,42 @@ export const BasicShelf: React.FC = () => {
       <header>{ModelSelectorElement}</header>
       <CellList>
         {cells.map((cell) => (
-          <CellItem>
+          <CellItem key={cell.id}>
             <Field>
               <label>Title</label>
-              <input value={cell.stepName} onChange={(e) => setStepName(cell.id, e.target.value)} />
+              <input value={cell.stepName} onChange={(e) => setCellField("stepName", cell.id, e.target.value)} />
             </Field>
             <TwoColumns>
               <Field>
                 <label>Task</label>
                 <AutoResize data-resize-textarea-content={cell.instruction}>
-                  <textarea value={cell.instruction} onChange={(e) => setInput(cell.id, e.target.value)} />
+                  <textarea value={cell.instruction} onChange={(e) => setCellField("instruction", cell.id, e.target.value)} />
                 </AutoResize>
                 <button>Interpret</button>
               </Field>
               <Field>
                 <label>Program</label>
-                <AutoResize data-resize-textarea-content={cell.program}>
-                  <textarea value={cell.program} onChange={(e) => setInput(cell.id, e.target.value)} />
-                </AutoResize>
-                <button>Run</button>
+                <MonospaceAutoResize data-resize-textarea-content={cell.program}>
+                  <textarea spellCheck={false} value={cell.program} onChange={(e) => setCellField("program", cell.id, e.target.value)} />
+                </MonospaceAutoResize>
+                <button onClick={() => handleRun(cell.id)}>Run</button>
               </Field>
             </TwoColumns>
           </CellItem>
         ))}
+        <Field>
+          <label>Shelves</label>
+          <button onClick={handleRefresh}>Refresh</button>
+          <div>WIP</div>
+        </Field>
       </CellList>
     </AppLayout>
   );
 };
+
+const MonospaceAutoResize = styled(AutoResize)`
+  font-family: monospace;
+`;
 
 const AppLayout = styled(CenterClamp)`
   display: grid;
@@ -76,6 +107,8 @@ const AppLayout = styled(CenterClamp)`
 
 const Field = styled.div`
   display: grid;
+  grid-template-rows: auto 1fr;
+  grid-auto-flow: row;
   gap: 2px;
 `;
 
