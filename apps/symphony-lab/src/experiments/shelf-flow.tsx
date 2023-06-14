@@ -1,13 +1,13 @@
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactFlow, {
+  Background,
+  Controls,
+  Panel,
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
-  Background,
-  Controls,
   getIncomers,
-  Panel,
   type Edge,
   type Node,
   type OnConnect,
@@ -18,18 +18,28 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { useModelSelector } from "../account/model-selector";
 import { useAuth } from "../account/use-auth";
-import { ChatNode, chatNodeViewModel, ClaimSearchNode, claimSearchNodeViewModel, type NodeData } from "../flow/custom-node/custom-node";
+import {
+  ChatNode,
+  ClaimSearchNode,
+  TransformNode,
+  chatViewModel,
+  claimSearchViewModel,
+  transformViewModel,
+  type NodeData,
+} from "../flow/custom-node/custom-node";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
 const nodeTypes = {
   ClaimSearch: ClaimSearchNode,
   Chat: ChatNode,
+  Transform: TransformNode,
 };
 
 const initialViewModel: Record<string, any> = {
-  ClaimSearch: claimSearchNodeViewModel,
-  Chat: chatNodeViewModel,
+  ClaimSearch: claimSearchViewModel,
+  Chat: chatViewModel,
+  Transform: transformViewModel,
 } satisfies Record<keyof typeof nodeTypes, any>;
 
 export interface GraphModel {
@@ -120,6 +130,7 @@ export const ShelfFlow: React.FC = () => {
       <Panel position="top-left">
         <button onClick={() => addNodeByType("ClaimSearch")}>Claim search</button>
         <button onClick={() => addNodeByType("Chat")}>Chat</button>
+        <button onClick={() => addNodeByType("Transform")}>Transform</button>
       </Panel>
       <Panel position="top-right">{ModelSelectorElement}</Panel>
       <Panel position="bottom-left">test tes test</Panel>

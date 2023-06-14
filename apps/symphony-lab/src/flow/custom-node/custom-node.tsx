@@ -42,15 +42,15 @@ export interface NodeData<T = any> {
   appendOutput: (output: any) => void;
 }
 
-export interface ClaimSearchNodeViewModel {
+export interface ClaimSearchViewModel {
   query: string;
 }
 
-export const claimSearchNodeViewModel: ClaimSearchNodeViewModel = {
+export const claimSearchViewModel: ClaimSearchViewModel = {
   query: "",
 };
 
-export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchNodeViewModel>>) => {
+export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
   const handleRun = async () => {
     console.log(props.data.viewModel.query);
     const searchResults = await props.data.context.searchClaims(getSemanticSearchInput(props.data.viewModel.query, 10));
@@ -85,7 +85,7 @@ export interface ChatNodeViewModel {
   template: string;
 }
 
-export const chatNodeViewModel: ChatNodeViewModel = {
+export const chatViewModel: ChatNodeViewModel = {
   template: "",
 };
 
@@ -117,6 +117,73 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
             onChange={(e: any) => props.data.setViewModel({ template: e.target.value })}
           />
         </TextAreaWrapper>
+      </div>
+      <StyledOutput className="nowheel">
+        {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
+      </StyledOutput>
+      <Handle type="source" position={Position.Right} />
+    </SelectableNode>
+  );
+});
+
+export interface TransformViewModel {
+  plan: string;
+  jq: string;
+  isJqLocked: boolean;
+}
+
+export const transformViewModel: TransformViewModel = {
+  plan: "",
+  jq: "",
+  isJqLocked: false,
+};
+
+export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
+  const handleRun = async () => {
+    console.log(props.data.context.getInputs());
+    const response = await props.data.context.chat([{ role: "user", content: "" }]);
+    props.data.setOutput([response]);
+  };
+
+  const handleClear = () => props.data.setOutput([]);
+
+  return (
+    <SelectableNode selected={props.selected}>
+      <Handle type="target" position={Position.Left} />
+      <DragBar>
+        {props.type}
+        <div>
+          <button onClick={handleRun}>Run</button>
+          <button onClick={handleClear}>Clear</button>
+        </div>
+      </DragBar>
+      <div className="nodrag">
+        <TextAreaWrapper data-resize-textarea-content={props.data.viewModel.plan} maxheight={200}>
+          <TextArea
+            className="nowheel"
+            placeholder="Plan"
+            rows={1}
+            value={props.data.viewModel.plan}
+            onChange={(e: any) => props.data.setViewModel({ ...props.data.viewModel, plan: e.target.value })}
+          />
+        </TextAreaWrapper>
+        <TextAreaWrapper data-resize-textarea-content={props.data.viewModel.jq} maxheight={200}>
+          <TextArea
+            className="nowheel"
+            placeholder="JQ"
+            rows={1}
+            value={props.data.viewModel.jq}
+            onChange={(e: any) => props.data.setViewModel({ ...props.data.viewModel, jq: e.target.value })}
+          />
+        </TextAreaWrapper>
+        <label>
+          <input
+            type="checkbox"
+            checked={props.data.viewModel.isJqLocked}
+            onChange={(e: any) => props.data.setViewModel({ ...props.data.viewModel, isJqLocked: e.target.checked })}
+          />
+          Lock JQ
+        </label>
       </div>
       <StyledOutput className="nowheel">
         {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
