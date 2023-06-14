@@ -2,8 +2,9 @@ import { memo } from "react";
 import { JSONTree } from "react-json-tree";
 import { Handle, Position, type NodeProps } from "reactflow";
 import styled from "styled-components";
+import type { ChatProxy } from "../../account/model-selector";
+import { AutoResize } from "../../form/auto-resize";
 import { getSemanticSearchInput, type SemanticSearchProxy } from "../../hits/search-claims";
-import { VerticalToolbar } from "./utils";
 
 const theme = {
   scheme: "monokai",
@@ -27,8 +28,9 @@ const theme = {
 };
 
 export interface NodeContext {
-  chat: any;
+  chat: ChatProxy;
   searchClaims: SemanticSearchProxy;
+  getInputs: () => any[][];
 }
 
 export interface NodeData<T = any> {
@@ -60,30 +62,101 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchNodeVi
 
   return (
     <SelectableNode selected={props.selected}>
-      <VerticalToolbar position={Position.Right} isVisible={true} align="start">
-        <button onClick={handleRun}>Run</button>
-        <button onClick={handleClear}>Clear</button>
-      </VerticalToolbar>
-      <Handle type="target" position={Position.Top} />
-      <DragBar />
+      <Handle type="target" position={Position.Left} />
+      <DragBar>
+        {props.type}
+        <div>
+          <button onClick={handleRun}>Run</button>
+          <button onClick={handleClear}>Clear</button>
+        </div>
+      </DragBar>
       <div className="nodrag">
-        <input type="search" value={props.data.viewModel.query} onChange={(e) => props.data.setViewModel({ query: e.target.value })} />
+        <InputField type="search" value={props.data.viewModel.query} onChange={(e: any) => props.data.setViewModel({ query: e.target.value })} />
       </div>
       <StyledOutput className="nowheel">
-        <JSONTree theme={theme} hideRoot={true} data={props.data.output} />
+        {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
       </StyledOutput>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
 });
 
-const DragBar = styled.div`
+export interface ChatNodeViewModel {
+  template: string;
+}
+
+export const chatNodeViewModel: ChatNodeViewModel = {
+  template: "",
+};
+
+export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => {
+  const handleRun = async () => {
+    console.log(props.data.context.getInputs());
+    const response = await props.data.context.chat([{ role: "user", content: props.data.viewModel.template }]);
+    props.data.setOutput([response]);
+  };
+
+  const handleClear = () => props.data.setOutput([]);
+
+  return (
+    <SelectableNode selected={props.selected}>
+      <Handle type="target" position={Position.Left} />
+      <DragBar>
+        {props.type}
+        <div>
+          <button onClick={handleRun}>Run</button>
+          <button onClick={handleClear}>Clear</button>
+        </div>
+      </DragBar>
+      <div className="nodrag">
+        <TextAreaWrapper data-resize-textarea-content={props.data.viewModel.template} maxheight={200}>
+          <TextArea
+            className="nowheel"
+            rows={1}
+            value={props.data.viewModel.template}
+            onChange={(e: any) => props.data.setViewModel({ template: e.target.value })}
+          />
+        </TextAreaWrapper>
+      </div>
+      <StyledOutput className="nowheel">
+        {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
+      </StyledOutput>
+      <Handle type="source" position={Position.Right} />
+    </SelectableNode>
+  );
+});
+
+// NDK
+export const DragBar = styled.div`
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px;
   background-color: #ccc;
-  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const InputField = styled.input`
+  width: 100%;
+  padding: 4px;
+`;
+
+const TextAreaWrapper = styled(AutoResize)`
+  --input-padding-block: 4px;
+  --input-padding-inline: 4px;
+`;
+
+export const TextArea = styled.textarea`
+  width: 100%;
+  padding: 4px;
+  resize: vertical;
+  max-height: 400px;
+  overflow-y: auto;
 `;
 
 const StyledOutput = styled.div`
-  width: 320px;
+  width: 100%;
   background-color: ${theme.base00};
   max-height: 400px;
   overflow-y: auto;
@@ -97,4 +170,5 @@ const StyledOutput = styled.div`
 const SelectableNode = styled.div<{ selected: boolean }>`
   background-color: #fff;
   border: 1px solid ${(props) => (props.selected ? "#00aaff" : "#ddd")};
+  width: 320px;
 `;

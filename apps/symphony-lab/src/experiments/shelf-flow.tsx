@@ -6,6 +6,7 @@ import ReactFlow, {
   applyNodeChanges,
   Background,
   Controls,
+  getIncomers,
   Panel,
   type Edge,
   type Node,
@@ -17,16 +18,18 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { useModelSelector } from "../account/model-selector";
 import { useAuth } from "../account/use-auth";
-import { ClaimSearchNode, claimSearchNodeViewModel, type NodeContext, type NodeData } from "../flow/custom-node/custom-node";
+import { ChatNode, chatNodeViewModel, ClaimSearchNode, claimSearchNodeViewModel, type NodeData } from "../flow/custom-node/custom-node";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
 const nodeTypes = {
-  claimSearch: ClaimSearchNode,
+  ClaimSearch: ClaimSearchNode,
+  Chat: ChatNode,
 };
 
 const initialViewModel: Record<string, any> = {
-  claimSearch: claimSearchNodeViewModel,
+  ClaimSearch: claimSearchNodeViewModel,
+  Chat: chatNodeViewModel,
 } satisfies Record<keyof typeof nodeTypes, any>;
 
 export interface GraphModel {
@@ -56,6 +59,20 @@ export const ShelfFlow: React.FC = () => {
     [setNodes]
   );
 
+  const getInputs = useCallback(
+    (id: string) => {
+      const node = model.nodes.find((node) => node.id === id);
+      if (!node) return [];
+
+      const inputNodes = getIncomers(node, model.nodes, model.edges).sort((a, b) => {
+        if (a.position.y !== b.position.y) return a.position.y - b.position.y;
+        else return a.position.x - b.position.x;
+      });
+      return inputNodes.map((node) => node.data.output as any[]);
+    },
+    [model.nodes, model.edges]
+  );
+
   const addNodeByType = useCallback(
     (type: string) => {
       const id = crypto.randomUUID();
@@ -83,8 +100,10 @@ export const ShelfFlow: React.FC = () => {
   const nodes = model.nodes;
   const edges = model.edges;
 
-  const nodeContext: NodeContext = useMemo(() => ({ chat, searchClaims }), [chat, searchClaims]);
-  const nodesWithContext = useMemo(() => nodes.map((node) => ({ ...node, data: { ...node.data, context: nodeContext } })), [nodes, nodeContext]);
+  const nodesWithContext = useMemo(
+    () => nodes.map((node) => ({ ...node, data: { ...node.data, context: { chat, searchClaims, getInputs: getInputs.bind(null, node.id) } } })),
+    [nodes, chat, searchClaims, getInputs]
+  );
 
   useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);
 
@@ -99,7 +118,8 @@ export const ShelfFlow: React.FC = () => {
       proOptions={{ hideAttribution: true }}
     >
       <Panel position="top-left">
-        <button onClick={() => addNodeByType("claimSearch")}>Add claim search</button>
+        <button onClick={() => addNodeByType("ClaimSearch")}>Claim search</button>
+        <button onClick={() => addNodeByType("Chat")}>Chat</button>
       </Panel>
       <Panel position="top-right">{ModelSelectorElement}</Panel>
       <Panel position="bottom-left">test tes test</Panel>

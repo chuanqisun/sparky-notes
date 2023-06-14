@@ -4,6 +4,8 @@ import { getChatResponse, type ChatMessage, type OpenAIChatPayload } from "../op
 import { getEmbedding } from "../openai/embedding";
 import { useAccountContext } from "./account-context";
 
+export type ChatProxy = (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => Promise<string>;
+
 export function useModelSelector() {
   const [selectedChatModelDisplayId, setSelectedChatModelDisplayId] = useState<string | null>(null);
   const [selectedEmbeddineModelDisplayId, setSelectedEmbeddingModelDisplayId] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function useModelSelector() {
     }
   }, [selectedEmbeddineModelDisplayId, selectedChatModelDisplayId, connections]);
 
-  const chat = useCallback(
+  const chat = useCallback<ChatProxy>(
     (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => {
       const chatEndpoint = getChatEndpoint?.(selectedChatModelDisplayId ?? "");
       if (!chatEndpoint) throw new Error(`API connection is not set up`);

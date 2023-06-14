@@ -12,6 +12,11 @@ export const VerticalToolbar = styled(NodeToolbar)`
   display: grid;
 `;
 
+export const HorizontalToolbar = styled(NodeToolbar)`
+  display: grid;
+  grid-auto-flow: column;
+`;
+
 export interface ListViewProps {
   list: string[];
 }
