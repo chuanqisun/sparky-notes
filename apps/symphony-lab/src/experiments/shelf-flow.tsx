@@ -16,18 +16,12 @@ import ReactFlow, {
 
 import "reactflow/dist/style.css";
 import { useModelSelector } from "../account/model-selector";
-import { ChatNode } from "../flow/custom-node/chat-node";
-import { CustomPipeNode, CustomSinkNode, CustomSourceNode } from "../flow/custom-node/custom-node";
-import { FileNode } from "../flow/custom-node/file-node";
-import { MarkdownListNode } from "../flow/custom-node/markdown-list-node";
+import { CustomPipeNode, CustomSinkNode, CustomSourceNode, type CustomNodeData } from "../flow/custom-node/custom-node";
 
 const nodeTypes = {
-  basicList: CustomSourceNode,
-  basicPipe: CustomPipeNode,
-  basicSink: CustomSinkNode,
-  markdownList: MarkdownListNode,
-  chat: ChatNode,
-  file: FileNode,
+  source: CustomSourceNode,
+  pipe: CustomPipeNode,
+  sink: CustomSinkNode,
 };
 
 export interface GraphModel {
@@ -36,6 +30,8 @@ export interface GraphModel {
 }
 
 export const ShelfFlow: React.FC = () => {
+  const { chat, ModelSelectorElement } = useModelSelector();
+
   const [model, setModel] = useState<GraphModel>({ nodes: [], edges: [] });
 
   // reducers
@@ -44,20 +40,22 @@ export const ShelfFlow: React.FC = () => {
   const onNodesChange = useCallback<OnNodesChange>((changes) => setNodes((nodes) => applyNodeChanges(changes, nodes)), [setNodes]);
   const onEdgesChange = useCallback<OnEdgesChange>((changes) => setEdges((edges) => applyEdgeChanges(changes, edges)), [setEdges]);
   const onConnect = useCallback<OnConnect>((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
-
   const addNode = useCallback((node: Node) => setNodes((ns) => [...ns, node]), [setNodes]);
 
-  const addNodeByType = useCallback(
-    (type: keyof typeof nodeTypes) => {
+  const createNodeByTemplate = useCallback(
+    (type: keyof typeof nodeTypes, template: string) => {
       const id = crypto.randomUUID();
+      const data: CustomNodeData = {
+        template,
+        viewModel: {},
+        setViewModel: (viewModel: any) => setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, viewModel } } : node))),
+      };
+
       addNode({
         id,
         type,
         position: { x: 100, y: 100 },
-        data: {
-          model: {},
-          setModel: (nodeModel: any) => setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, model: nodeModel } } : n))),
-        },
+        data,
       });
     },
     [addNode]
@@ -68,84 +66,6 @@ export const ShelfFlow: React.FC = () => {
   const edges = model.edges;
 
   useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);
-
-  const { chat, ModelSelectorElement } = useModelSelector();
-
-  const handleListChange = useCallback(
-    (id: string, list: string[]) => setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, data: { ...n.data, list } } : n))),
-    [setNodes]
-  );
-
-  const handleGetInputList = useCallback(
-    (id: string) => {
-      const source = edges.find((e) => e.target === id)?.source;
-      return nodes.find((n) => n.id === source)?.data.list ?? [];
-    },
-    [nodes, edges]
-  );
-
-  // useEffect(
-  //   () =>
-  //     setNodes((ns) =>
-  //       ns.map((node) => ({
-  //         ...node,
-  //         data: {
-  //           ...node.data,
-  //           getInputList: () => handleGetInputList(node.id),
-  //           chat,
-  //           onListChange: (list: string[]) => handleListChange(node.id, list),
-  //         },
-  //       }))
-  //     ),
-  //   [handleGetInputList, chat, handleListChange, setNodes]
-  // );
-
-  // const onAddMarkdownListNode = () => {
-  //   const id = `${nodes.length + 1}`;
-  //   setNodes((ns) => [
-  //     ...ns,
-  //     {
-  //       id,
-  //       type: "markdownList",
-  //       position: { x: 100, y: 100 },
-  //       data: {
-  //         list: [],
-  //         onListChange: (list: string[]) => handleListChange(id, list),
-  //       },
-  //     },
-  //   ]);
-  // };
-
-  // const onAddChatNode = () => {
-  //   const id = `${nodes.length + 1}`;
-  //   setNodes((ns) => [
-  //     ...ns,
-  //     {
-  //       id,
-  //       type: "chat",
-  //       position: { x: 100, y: 100 },
-  //       data: {
-  //         chat,
-  //         list: [],
-  //         onListChange: (list: string[]) => handleListChange(id, list),
-  //         getInputList: () => handleGetInputList(id),
-  //       },
-  //     },
-  //   ]);
-  // };
-
-  // const onAddFileNode = () => {
-  //   const id = `${nodes.length + 1}`;
-  //   setNodes((ns) => [
-  //     ...ns,
-  //     {
-  //       id,
-  //       type: "file",
-  //       position: { x: 100, y: 100 },
-  //       data: { text: "(empty)", list: [] },
-  //     },
-  //   ]);
-  // };
 
   return (
     <ReactFlow
@@ -158,14 +78,13 @@ export const ShelfFlow: React.FC = () => {
       proOptions={{ hideAttribution: true }}
     >
       <Panel position="top-left">
-        <button onClick={() => addNodeByType("basicList")}>Add basic list</button>
-        <button onClick={() => addNodeByType("basicPipe")}>Add pipe</button>
-        <button onClick={() => addNodeByType("basicSink")}>Add sink</button>
-        {/* <button onClick={onAddMarkdownListNode}>Add markdown list</button>
-        <button onClick={onAddChatNode}>Add chat</button>
-        <button onClick={onAddFileNode}>Add file</button> */}
+        <button onClick={() => createNodeByTemplate("source", "claimSearch")}>Add claim search</button>
+        <button onClick={() => createNodeByTemplate("source", "")}>Add basic list</button>
+        <button onClick={() => createNodeByTemplate("pipe", "")}>Add pipe</button>
+        <button onClick={() => createNodeByTemplate("sink", "")}>Add sink</button>
       </Panel>
       <Panel position="top-right">{ModelSelectorElement}</Panel>
+      <Panel position="bottom-left">test tes test</Panel>
       <Controls />
       <Background />
     </ReactFlow>
