@@ -11,6 +11,7 @@
   "dependencies": {
     "@trpc/client": "^10.25.0",
     "cozo-lib-wasm": "^0.7.2",
+    "jq-web-wasm": "^0.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-force-graph": "^1.43.0",

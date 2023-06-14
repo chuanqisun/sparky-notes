@@ -5,6 +5,9 @@ import styled from "styled-components";
 import type { ChatProxy } from "../../account/model-selector";
 import { AutoResize } from "../../form/auto-resize";
 import { getSemanticSearchInput, type SemanticSearchProxy } from "../../hits/search-claims";
+import { jqAutoPrompt } from "../../jq/jq-auto-prompt";
+import { jsonToTyping, sampleJsonContent } from "../../jq/json-reflection";
+import type { ChatMessage } from "../../openai/chat";
 
 const theme = {
   scheme: "monokai",
@@ -141,8 +144,35 @@ export const transformViewModel: TransformViewModel = {
 export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
   const handleRun = async () => {
     console.log(props.data.context.getInputs());
-    const response = await props.data.context.chat([{ role: "user", content: "" }]);
-    props.data.setOutput([response]);
+    const output = await jqAutoPrompt({
+      input: props.data.context.getInputs()[0] ?? [],
+      onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 800 }),
+      onGetUserMessage: ({ lastError }) =>
+        lastError ? `The previous query failed with error: ${lastError}. Try a different query` : props.data.viewModel.plan,
+      onJqString: (jqString: string) => props.data.setViewModel({ ...props.data.viewModel, jq: jqString }),
+      onRetry: (errorMessage: string) => console.log(`Revising query based on error ${errorMessage}`),
+      onShouldAbort: () => false, // TODO implement flow control
+      getSystemMessage: ({ input, responseTemplate }) => `
+  You are an expert in querying json with jq. The input is defined by the following type
+\`\`\`typescript
+${jsonToTyping(input)}
+\`\`\`
+
+Sample input:
+\`\`\`json
+${(JSON.stringify(sampleJsonContent(input)), null, 2)}
+\`\`\`
+
+The user will provide a query goal, and you will respond with the jq query.
+
+Response format:
+
+${responseTemplate}`,
+    });
+
+    console.log(`jq output: ${output}`);
+
+    props.data.setOutput(output);
   };
 
   const handleClear = () => props.data.setOutput([]);
