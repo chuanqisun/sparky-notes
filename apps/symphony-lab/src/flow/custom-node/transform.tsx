@@ -44,6 +44,11 @@ export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>
       onJqString: (jqString: string) => props.data.setViewModel({ ...props.data.viewModel, jq: jqString }),
       onRetry: (errorMessage: string) => console.log(`Revising query based on error ${errorMessage}`),
       onShouldAbort: () => false, // TODO implement flow control
+      onValidateResult: (result: any) => {
+        if (!Array.isArray(result)) throw new Error("Result is not an array");
+        // TODO support varying array length requires complex provenance
+        if (result.length !== inputArray.length) throw new Error("Result array length does not match input array length");
+      },
       getSystemMessage: ({ input, responseTemplate }) => `
 Design with a jq filter that transforms a JSON array into the desired output. The json array is defined by the following type
 
@@ -62,11 +67,12 @@ ${responseTemplate}
 """`,
     });
 
+    // TODO inject based on actually consumed source
+
     const taskId = crypto.randomUUID();
-    // TODO inject sourceIds
     props.data.setTaskOutputs(
       taskId,
-      ((output as any[]) ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []
+      ((output as any[]) ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [inputArray[position].id] })) ?? []
     );
   };
 
