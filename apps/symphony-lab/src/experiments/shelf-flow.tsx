@@ -63,6 +63,7 @@ export const ShelfFlow: React.FC = () => {
   const onEdgesChange = useCallback<OnEdgesChange>((changes) => setEdges((edges) => applyEdgeChanges(changes, edges)), [setEdges]);
   const onConnect = useCallback<OnConnect>((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
   const addNode = useCallback((node: Node) => setNodes((ns) => [...ns, node]), [setNodes]);
+  const selectNode = useCallback((id: string) => setNodes((nodes) => nodes.map((node) => ({ ...node, selected: node.id === id }))), [setNodes]);
 
   const patchNodeData = useCallback(
     (id: string, data: any) => setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, ...data } } : node))),
@@ -116,8 +117,12 @@ export const ShelfFlow: React.FC = () => {
   const edges = model.edges;
 
   const nodesWithContext = useMemo(
-    () => nodes.map((node) => ({ ...node, data: { ...node.data, context: { chat, searchClaims, getInputs: getInputs.bind(null, node.id) } } })),
-    [nodes, chat, searchClaims, getInputs]
+    () =>
+      nodes.map((node) => ({
+        ...node,
+        data: { ...node.data, context: { chat, searchClaims, getInputs: getInputs.bind(null, node.id), selectNode: selectNode.bind(null, node.id) } },
+      })),
+    [nodes, chat, searchClaims, getInputs, selectNode]
   );
 
   useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);

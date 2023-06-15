@@ -33,6 +33,7 @@ const theme = {
 export interface NodeContext {
   chat: ChatProxy;
   searchClaims: SemanticSearchProxy;
+  selectNode: () => void;
   getInputs: () => any[][];
 }
 
@@ -64,7 +65,7 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
   const handleClear = () => props.data.setOutput([]);
 
   return (
-    <SelectableNode selected={props.selected}>
+    <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
       <DragBar>
         {props.type}
@@ -121,7 +122,7 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
   const handleClear = () => props.data.setOutput([]);
 
   return (
-    <SelectableNode selected={props.selected}>
+    <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
       <DragBar>
         {props.type}
@@ -197,7 +198,7 @@ ${responseTemplate}`,
   const handleClear = () => props.data.setOutput([]);
 
   return (
-    <SelectableNode selected={props.selected}>
+    <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
       <DragBar>
         {props.type}
