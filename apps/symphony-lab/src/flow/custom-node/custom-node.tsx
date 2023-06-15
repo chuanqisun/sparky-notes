@@ -247,7 +247,8 @@ export const DragBar = styled.div`
   font-weight: 700;
   font-size: 12px;
   padding: 4px;
-  background-color: #ccc;
+  color: var(--drag-bar-color);
+  background-color: var(--drag-bar-background);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -285,8 +286,11 @@ const StyledOutput = styled.div`
 
 const SelectableNode = styled.div<{ selected: boolean }>`
   background-color: #fff;
-  border: 1px solid ${(props) => (props.selected ? "#00aaff" : "#ddd")};
   width: 320px;
+  border-radius: 4px;
+  overflow: hidden;
+  --drag-bar-background: ${(props) => (props.selected ? "#0077ff" : "#ddd")};
+  --drag-bar-color: ${(props) => (props.selected ? "#fff" : "#000")};
 `;
 
 function combineTwoArrays(arr1: any[], arr2: any[]): any[] {
