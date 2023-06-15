@@ -46,7 +46,11 @@ export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
 ${getSystemMessage({
   input: input,
   responseTemplate: `Reason: <Analyze the user goal, the input, and any previous errors>
-jq: '<query string surrounded by single quotes>'`,
+Final answer:
+\`\`\`jq
+<a valid jq filter string>
+\`\`\`
+`,
 }).trim()}`.trim(),
   };
   const responseText = await onGetChat([systemMessage, ...previousMessages, currentUserMessage]);
@@ -56,16 +60,28 @@ jq: '<query string surrounded by single quotes>'`,
   }
 
   try {
-    const jqString = responseText.match(/^jq\:\s*'(.+?)'/m)?.[1] ?? "";
-    onJqString?.(jqString);
+    const jqString =
+      responseText.match(/^Final answer\:\s*```jq\n(.+?)\n```/m)?.[1] ??
+      responseText.match(/^Final answer\:\s*```\n(.+?)\n```/m)?.[1] ??
+      responseText.match(/^Final answer\:\s*```(.+?)```/m)?.[1] ??
+      responseText.match(/^Final answer\:\s*"(.+?)"/m)?.[1] ??
+      responseText.match(/^Final answer\:\s*'(.+?)'/m)?.[1] ??
+      responseText.match(/^Final answer\:\s*`(.+?)`/m)?.[1] ??
+      "";
 
-    if (!jqString) {
-      const e = new Error(`Error parsing jq string with regex ${String.raw`/^jq\:\s*'(.+?)'/m`}`);
+    const withoutStartingEndingQuotes = jqString.match(/^"(.+)"$/)?.[1] ?? jqString.match(/^'(.+)'$/)?.[1] ?? jqString.match(/^`(.+)`$/)?.[1] ?? jqString;
+
+    console.log([jqString, withoutStartingEndingQuotes]);
+
+    onJqString?.(withoutStartingEndingQuotes);
+
+    if (!withoutStartingEndingQuotes) {
+      const e = new Error(`Error parsing jq string with regex`);
       e.stack = "";
       throw e;
     }
 
-    const result = await promised.json(input, jqString);
+    const result = await promised.json(input, withoutStartingEndingQuotes);
 
     onValidateResult?.(result);
 
@@ -82,7 +98,7 @@ jq: '<query string surrounded by single quotes>'`,
     return jqAutoPrompt({
       ...config,
       lastError: errorMessage,
-      previousMessages: [...previousMessages, currentUserMessage, { role: "system", content: responseText }],
+      previousMessages: [...previousMessages, currentUserMessage, { role: "assistant", content: responseText }],
       retryLeft: retryLeft - 1,
       onGetUserMessage: onGetUserMessage,
     });
