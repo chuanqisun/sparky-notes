@@ -21,7 +21,7 @@ export const claimSearchViewModel: ClaimSearchViewModel = {
 
 export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isProvenanceMode, setIsProvenanceMode] = useState(false);
+  const [shouldTrace, setShouldTrace] = useState(false);
   const { outputList, outputDataList } = useOutputList(props.data);
   const handleRun = async () => {
     const taskId = crypto.randomUUID();
@@ -39,8 +39,8 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
       <Handle type="target" position={Position.Left} />
       <TitleBar
         title={props.type}
-        isDebug={isProvenanceMode}
-        onSetDebug={(v) => setIsProvenanceMode(v)}
+        isDebug={shouldTrace}
+        onSetDebug={(v) => setShouldTrace(v)}
         maxTargetRef={containerRef}
         onRun={handleRun}
         onClear={props.data.clearTaskOutputs}
@@ -48,9 +48,9 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
       <div className="nodrag">
         <InputField type="search" value={props.data.viewModel.query} onChange={(e: any) => props.data.setViewModel({ query: e.target.value })} />
       </div>
-      {isProvenanceMode ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
+      {shouldTrace ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
       <StyledOutput className="nodrag nowheel">
-        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
+        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={shouldTrace ? outputList : outputDataList} /> : "Empty"}
       </StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>

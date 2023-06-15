@@ -27,7 +27,7 @@ export const transformViewModel: TransformViewModel = {
 
 export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isProvenanceMode, setIsProvenanceMode] = useState(false);
+  const [shouldTrace, setShouldTrace] = useState(false);
   const { outputList, outputDataList } = useOutputList(props.data);
 
   const handleRun = async () => {
@@ -81,8 +81,8 @@ ${responseTemplate}
       <Handle type="target" position={Position.Left} />
       <TitleBar
         title={props.type}
-        isDebug={isProvenanceMode}
-        onSetDebug={(v) => setIsProvenanceMode(v)}
+        isDebug={shouldTrace}
+        onSetDebug={(v) => setShouldTrace(v)}
         maxTargetRef={containerRef}
         onRun={handleRun}
         onClear={props.data.clearTaskOutputs}
@@ -115,10 +115,10 @@ ${responseTemplate}
           Lock JQ
         </label>
       </div>
+      {shouldTrace ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
       <StyledOutput className="nodrag nowheel">
-        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
+        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={shouldTrace ? outputList : outputDataList} /> : "Empty"}
       </StyledOutput>
-      {isProvenanceMode ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );

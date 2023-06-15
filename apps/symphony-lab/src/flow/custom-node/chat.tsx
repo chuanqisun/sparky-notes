@@ -21,7 +21,7 @@ export const chatViewModel: ChatNodeViewModel = {
 
 export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isProvenanceMode, setIsProvenanceMode] = useState(false);
+  const [shouldTrace, setShouldTrace] = useState(false);
   const { outputList, outputDataList } = useOutputList(props.data);
 
   const handleRun = async () => {
@@ -63,8 +63,8 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
       <Handle type="target" position={Position.Left} />
       <TitleBar
         title={props.type}
-        isDebug={isProvenanceMode}
-        onSetDebug={(v) => setIsProvenanceMode(v)}
+        isDebug={shouldTrace}
+        onSetDebug={(v) => setShouldTrace(v)}
         maxTargetRef={containerRef}
         onRun={handleRun}
         onClear={props.data.clearTaskOutputs}
@@ -79,10 +79,10 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
           />
         </TextAreaWrapper>
       </div>
+      {shouldTrace ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
       <StyledOutput className="nodrag nowheel">
-        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
+        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={shouldTrace ? outputList : outputDataList} /> : "Empty"}
       </StyledOutput>
-      {isProvenanceMode ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
