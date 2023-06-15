@@ -19,17 +19,10 @@ import "reactflow/dist/style.css";
 import { useModelSelector } from "../account/model-selector";
 import { useAuth } from "../account/use-auth";
 import { Cozo } from "../cozo/cozo";
-import {
-  ChatNode,
-  ClaimSearchNode,
-  TransformNode,
-  chatViewModel,
-  claimSearchViewModel,
-  transformViewModel,
-  type GraphOutputItem,
-  type NodeContext,
-  type NodeData,
-} from "../flow/custom-node/custom-node";
+import { ChatNode, chatViewModel } from "../flow/custom-node/chat";
+import { ClaimSearchNode, claimSearchViewModel } from "../flow/custom-node/claim-search";
+import type { GraphOutputItem, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
+import { TransformNode, transformViewModel } from "../flow/custom-node/transform";
 import { getGraphOutputs, setGraphOutput } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";

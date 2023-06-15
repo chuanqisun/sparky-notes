@@ -1,5 +1,5 @@
 import { Cozo } from "../../cozo/cozo";
-import type { GraphOutputItem } from "../custom-node/custom-node";
+import type { GraphOutputItem } from "../custom-node/shared/graph";
 
 export const SCHEMA = `
 :create graphOutput {
