@@ -77,8 +77,10 @@ export const TraceExplorer = (props: TraceExplorerProps) => {
 };
 
 export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
-  const { outputList, outputDataList } = useOutputList(props.data);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [explorerRootId, setExplorerRootId] = useState<string>();
   const [isProvenanceMode, setIsProvenanceMode] = useState(false);
+  const { outputList, outputDataList } = useOutputList(props.data);
   const handleRun = async () => {
     const taskId = crypto.randomUUID();
     console.log(props.data.viewModel.query);
@@ -90,21 +92,17 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
     );
   };
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [explorerRootId, setExplorerRootId] = useState<string>();
-
   return (
     <SelectableNode ref={containerRef} selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
-      <DragBar>
-        {props.type}
-        <div>
-          <button onClick={() => setIsProvenanceMode((prev) => !prev)}>Trace</button>
-          <button onClick={() => containerRef.current?.requestFullscreen()}>Max</button>
-          <button onClick={handleRun}>Run</button>
-          <button onClick={props.data.clearTaskOutputs}>Clear</button>
-        </div>
-      </DragBar>
+      <TitleBar
+        title={props.type}
+        isDebug={isProvenanceMode}
+        onSetDebug={(v) => setIsProvenanceMode(v)}
+        maxTargetRef={containerRef}
+        onRun={handleRun}
+        onClear={props.data.clearTaskOutputs}
+      />
       <div className="nodrag">
         <InputField type="search" value={props.data.viewModel.query} onChange={(e: any) => props.data.setViewModel({ query: e.target.value })} />
       </div>
@@ -143,8 +141,10 @@ export const chatViewModel: ChatNodeViewModel = {
 };
 
 export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => {
-  const { outputList, outputDataList } = useOutputList(props.data);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [explorerRootId, setExplorerRootId] = useState<string>();
   const [isProvenanceMode, setIsProvenanceMode] = useState(false);
+  const { outputList, outputDataList } = useOutputList(props.data);
 
   const handleRun = async () => {
     console.log(props.data.context.getInputs());
@@ -183,17 +183,14 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
   return (
     <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
-      <DragBar>
-        {props.type}
-        <div>
-          <label>
-            <input type="checkbox" checked={isProvenanceMode} onChange={(e) => setIsProvenanceMode(e.target.checked)} />
-            Debug
-          </label>
-          <button onClick={handleRun}>Run</button>
-          <button onClick={props.data.clearTaskOutputs}>Clear</button>
-        </div>
-      </DragBar>
+      <TitleBar
+        title={props.type}
+        isDebug={isProvenanceMode}
+        onSetDebug={(v) => setIsProvenanceMode(v)}
+        maxTargetRef={containerRef}
+        onRun={handleRun}
+        onClear={props.data.clearTaskOutputs}
+      />
       <div className="nodrag">
         <TextAreaWrapper data-resize-textarea-content={props.data.viewModel.template} maxheight={200}>
           <TextArea
@@ -213,6 +210,28 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
   );
 });
 
+export interface TitleBarProps {
+  isDebug: boolean;
+  onSetDebug: (value: boolean) => void;
+  maxTargetRef: React.RefObject<HTMLDivElement>;
+  title: string;
+  onRun: () => void;
+  onClear: () => void;
+}
+export const TitleBar = (props: TitleBarProps) => {
+  return (
+    <DragBar>
+      {props.title}
+      <div>
+        <button onClick={() => props.onSetDebug(!props.isDebug)}>Trace</button>
+        <button onClick={() => props.maxTargetRef.current?.requestFullscreen()}>Max</button>
+        <button onClick={props.onRun}>Run</button>
+        <button onClick={props.onClear}>Clear</button>
+      </div>
+    </DragBar>
+  );
+};
+
 export interface TransformViewModel {
   plan: string;
   jq: string;
@@ -226,8 +245,10 @@ export const transformViewModel: TransformViewModel = {
 };
 
 export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
-  const { outputList, outputDataList } = useOutputList(props.data);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [explorerRootId, setExplorerRootId] = useState<string>();
   const [isProvenanceMode, setIsProvenanceMode] = useState(false);
+  const { outputList, outputDataList } = useOutputList(props.data);
 
   const handleRun = async () => {
     const inputArray = props.data.context.getInputs()[0] ?? [];
@@ -272,17 +293,14 @@ ${responseTemplate}
   return (
     <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
-      <DragBar>
-        {props.type}
-        <div>
-          <label>
-            <input type="checkbox" checked={isProvenanceMode} onChange={(e) => setIsProvenanceMode(e.target.checked)} />
-            Debug
-          </label>
-          <button onClick={handleRun}>Run</button>
-          <button onClick={props.data.clearTaskOutputs}>Clear</button>
-        </div>
-      </DragBar>
+      <TitleBar
+        title={props.type}
+        isDebug={isProvenanceMode}
+        onSetDebug={(v) => setIsProvenanceMode(v)}
+        maxTargetRef={containerRef}
+        onRun={handleRun}
+        onClear={props.data.clearTaskOutputs}
+      />
       <div className="nodrag">
         <TextAreaWrapper data-resize-textarea-content={props.data.viewModel.plan} maxheight={200}>
           <TextArea
