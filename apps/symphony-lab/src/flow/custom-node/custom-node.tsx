@@ -169,7 +169,7 @@ export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>
 
     const output = await jqAutoPrompt({
       input: props.data.context.getInputs()[0] ?? [],
-      onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 800 }),
+      onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 1200 }),
       onGetUserMessage: ({ lastError }) =>
         lastError ? `The previous query failed with error: ${lastError}. Try a different query` : props.data.viewModel.plan,
       onJqString: (jqString: string) => props.data.setViewModel({ ...props.data.viewModel, jq: jqString }),
@@ -187,7 +187,7 @@ Sample object:
 ${(JSON.stringify(sampleJsonContent(input)), null, 2)}
 \`\`\`
 
-User will provide the desired output or instructions. Use the format delimited by triple quotes:
+Now respond in the format delimited by triple quotes:
 """
 ${responseTemplate}
 """`,

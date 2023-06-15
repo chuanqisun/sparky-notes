@@ -45,12 +45,15 @@ export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
     content: `
 ${getSystemMessage({
   input: input,
-  responseTemplate: `Reason: <Analyze the user goal, the input, and any previous errors>
+  responseTemplate: `
+Reflect: <If available, reflect on any previous error>
+Observe: <Describe the shape of the input>
+Plan: <Describe the solution in plain English>
 Final answer:
 \`\`\`jq
-<a valid jq filter string>
+<The valid jq filter string>
 \`\`\`
-`,
+`.trim(),
 }).trim()}`.trim(),
   };
   const responseText = await onGetChat([systemMessage, ...previousMessages, currentUserMessage]);
