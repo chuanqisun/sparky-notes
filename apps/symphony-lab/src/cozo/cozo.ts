@@ -9,7 +9,7 @@ export const dbAsync = init(wasmUrl).then(() => {
 export interface CozoResult {
   headers: string[];
   ok: boolean;
-  rows: CozoValue[][];
+  rows: any[][];
 }
 
 export interface RelationSchema {
@@ -17,18 +17,26 @@ export interface RelationSchema {
   cols: string[];
 }
 
-export type CozoValue = string | number | boolean | null;
-
 export class Cozo {
+  private intializedDb: Promise<CozoDb>;
+
+  constructor(schema: string) {
+    this.intializedDb = dbAsync.then((db) => {
+      db.run(schema, "", false);
+
+      return db;
+    });
+  }
+
   public async query(cozoScript: string, params?: any) {
-    return dbAsync.then((db) => {
+    return this.intializedDb.then((db) => {
       const result = db.run(cozoScript, params ? JSON.stringify(params) : "", true);
       return JSON.parse(result) as CozoResult;
     });
   }
 
   public async mutate(cozoScript: string, params?: any) {
-    return dbAsync.then((db) => {
+    return this.intializedDb.then((db) => {
       const result = db.run(cozoScript, params ? JSON.stringify(params) : "", false);
       return JSON.parse(result) as CozoResult;
     });

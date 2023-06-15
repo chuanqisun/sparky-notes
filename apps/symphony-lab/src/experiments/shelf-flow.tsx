@@ -29,6 +29,7 @@ import {
   type NodeContext,
   type NodeData,
 } from "../flow/custom-node/custom-node";
+import { SCHEMA, getGraphOutputs, setGraphOutput } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
@@ -49,7 +50,16 @@ export interface GraphModel {
   edges: Edge[];
 }
 
-const db = new Cozo();
+const db = new Cozo(SCHEMA);
+
+// test putting a graph output item
+setGraphOutput(db, "node_1", { id: "item_1", data: { key: "value" }, sourceIds: ["item_10", "item_23"] })
+  .then(console.log)
+  .then(() =>
+    // test getting a graph output item
+    getGraphOutputs(db, "node_1")
+  )
+  .then(console.log);
 
 export const ShelfFlow: React.FC = () => {
   const { chat, ModelSelectorElement } = useModelSelector();
@@ -102,7 +112,10 @@ export const ShelfFlow: React.FC = () => {
         output: [],
         viewModel: initialViewModel[type],
         setViewModel: (viewModel: any) => patchNodeData(id, { viewModel }),
-        setOutput: (output: any[]) => patchNodeData(id, { output }),
+        setOutput: (output: any[]) => {
+          patchNodeData(id, { output });
+          db.mutate(``);
+        },
         appendOutput: (output: any) => patchNodeDataFn(id, (prevData) => ({ ...prevData, output: [...prevData.output, output] })),
       };
 
