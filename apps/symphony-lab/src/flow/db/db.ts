@@ -42,6 +42,29 @@ export async function setGraphOutput(db: Cozo, taskId: string, outputItem: Graph
   );
 }
 
+export function getGraphOutput(db: Cozo, id: string): GraphOutputItem | undefined {
+  const results = db.query(
+    `
+?[id, position, data, taskId, sourceIds] := *graphOutput{id, position, data, taskId, sourceIds}, id = $id
+`,
+    {
+      id,
+    }
+  );
+
+  return results.rows
+    .map((row) => {
+      return {
+        id: row[0] as string,
+        position: row[1] as number,
+        data: row[2] as any,
+        taskId: row[3] as string,
+        sourceIds: row[4] as string[],
+      };
+    })
+    .at(0);
+}
+
 export function getGraphOutputs(db: Cozo, taskId?: string): GraphOutputItem[] {
   if (!taskId) return [];
 
