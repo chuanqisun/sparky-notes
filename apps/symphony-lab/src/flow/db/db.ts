@@ -5,55 +5,64 @@ export const SCHEMA = `
 :create graphOutput {
   id: String
   =>
+  position: Int,
   data: Json,
-  nodeId: String,
+  taskId: String,
   sourceIds: [String]
 }
 `;
 
-export async function setGraphOutput(db: Cozo, nodeId: string, outputItem: GraphOutputItem) {
+export async function setGraphOutput(db: Cozo, taskId: string, outputItem: GraphOutputItem) {
   return db.mutate(
     `
-?[id, data, nodeId, sourceIds] <- [[
+?[id, position, data, taskId, sourceIds] <- [[
   $id,
+  $position,
   json($data),
-  $nodeId,
+  $taskId,
   $sourceIds,
 ]]
 
 :put graphOutput {
   id
   =>
+  position,
   data,
-  nodeId,
+  taskId,
   sourceIds,
 }
 `,
     {
       id: outputItem.id,
+      position: outputItem.position,
       data: outputItem.data,
-      nodeId,
+      taskId: taskId,
       sourceIds: outputItem.sourceIds,
     }
   );
 }
 
-export async function getGraphOutputs(db: Cozo, nodeId: string): Promise<GraphOutputItem[]> {
-  const results = await db.query(
+export function getGraphOutputs(db: Cozo, taskId?: string): GraphOutputItem[] {
+  if (!taskId) return [];
+
+  const results = db.query(
     `
-?[id, data, nodeId, sourceIds] := *graphOutput{id, data, nodeId, sourceIds}, nodeId = $nodeId
+?[id, position, data, taskId, sourceIds] := *graphOutput{id, position, data, taskId, sourceIds}, taskId = $taskId
 `,
     {
-      nodeId,
+      taskId,
     }
   );
 
-  return results.rows.map((row) => {
-    return {
-      id: row[0] as string,
-      data: row[1] as any,
-      nodeId: row[2] as string,
-      sourceIds: row[3] as string[],
-    };
-  });
+  return results.rows
+    .map((row) => {
+      return {
+        id: row[0] as string,
+        position: row[1] as number,
+        data: row[2] as any,
+        taskId: row[3] as string,
+        sourceIds: row[4] as string[],
+      };
+    })
+    .sort((a, b) => a.position - b.position);
 }

@@ -1,13 +1,15 @@
-import { memo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import { Handle, Position, type NodeProps } from "reactflow";
 import styled from "styled-components";
 import type { ChatProxy } from "../../account/model-selector";
+import type { Cozo } from "../../cozo/cozo";
 import { AutoResize } from "../../form/auto-resize";
 import { getSemanticSearchInput, type SemanticSearchProxy } from "../../hits/search-claims";
 import { jqAutoPrompt } from "../../jq/jq-auto-prompt";
 import { jsonToTyping, sampleJsonContent } from "../../jq/json-reflection";
 import type { ChatMessage } from "../../openai/chat";
+import { getGraphOutputs } from "../db/db";
 
 const theme = {
   scheme: "monokai",
@@ -32,17 +34,21 @@ const theme = {
 
 export interface NodeContext {
   chat: ChatProxy;
+  graph: Cozo;
   searchClaims: SemanticSearchProxy;
   selectNode: () => void;
-  getInputs: () => any[][];
+  getInputs: () => GraphOutputItem[][];
 }
 
 export interface NodeData<T = any> {
   context: NodeContext;
+  taskIds: string[];
   output: any[];
   viewModel: T;
   setViewModel: (data: T) => void;
   setOutput: (output: any[]) => void;
+  setTaskOutputs: (taskId: string, items: GraphOutputItem[]) => void;
+  clearTaskOutputs: () => void;
   appendOutput: (output: any) => void;
 }
 
@@ -50,6 +56,7 @@ export interface NodeData<T = any> {
 export interface GraphOutputItem {
   sourceIds: string[];
   id: string;
+  position: number;
   data: any;
 }
 
@@ -63,13 +70,17 @@ export const claimSearchViewModel: ClaimSearchViewModel = {
 
 export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
   const handleRun = async () => {
+    const taskId = crypto.randomUUID();
     console.log(props.data.viewModel.query);
     const searchResults = await props.data.context.searchClaims(getSemanticSearchInput(props.data.viewModel.query, 10));
     console.log(searchResults);
-    props.data.setOutput(searchResults.value ?? []);
+    props.data.setTaskOutputs(
+      taskId,
+      (searchResults.value ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []
+    );
   };
 
-  const handleClear = () => props.data.setOutput([]);
+  const outputList = useOutputList(props.data);
 
   return (
     <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
@@ -78,15 +89,13 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
         {props.type}
         <div>
           <button onClick={handleRun}>Run</button>
-          <button onClick={handleClear}>Clear</button>
+          <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
       </DragBar>
       <div className="nodrag">
         <InputField type="search" value={props.data.viewModel.query} onChange={(e: any) => props.data.setViewModel({ query: e.target.value })} />
       </div>
-      <StyledOutput className="nowheel">
-        {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
-      </StyledOutput>
+      <StyledOutput className="nowheel">{outputList.length ? <JSONTree theme={theme} hideRoot={true} data={outputList} /> : "Empty"}</StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
@@ -101,8 +110,13 @@ export const chatViewModel: ChatNodeViewModel = {
 };
 
 export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => {
+  const outputList = useOutputList(props.data);
+
   const handleRun = async () => {
     console.log(props.data.context.getInputs());
+
+    // clear output first
+    props.data.clearTaskOutputs();
 
     // extract all curly brace surrounded variables
     const inputs = props.data.context.getInputs();
@@ -112,21 +126,25 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
       throw new Error("Template variables and inputs do not match");
     }
 
-    // clear output first
-    props.data.setOutput([]);
+    // get strings for each input
+    const stringInputs = inputs.map((list) => list.map((item) => (typeof item.data === "string" ? item.data : JSON.stringify(item.data))));
 
     // combine all possible values
-    const allParamCombos = combineNArrays(...bulkBindTemplateVariablesByPosition(templateVariables, inputs));
+    const allParamCombos = combineNArrays(...bulkBindTemplateVariablesByPosition(templateVariables, stringInputs));
     console.log("Chat input combos", allParamCombos);
+
+    const responseList: string[] = [];
 
     for (const paramCombo of allParamCombos) {
       const renderedTemplate = renderTemplate(props.data.viewModel.template, paramCombo);
       const response = await props.data.context.chat([{ role: "user", content: renderedTemplate }]);
-      props.data.appendOutput(response);
+      responseList.push(response);
+      const outputItems = responseList.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] }));
+
+      const taskId = crypto.randomUUID();
+      props.data.setTaskOutputs(taskId, outputItems);
     }
   };
-
-  const handleClear = () => props.data.setOutput([]);
 
   return (
     <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
@@ -135,7 +153,7 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
         {props.type}
         <div>
           <button onClick={handleRun}>Run</button>
-          <button onClick={handleClear}>Clear</button>
+          <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
       </DragBar>
       <div className="nodrag">
@@ -148,9 +166,7 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
           />
         </TextAreaWrapper>
       </div>
-      <StyledOutput className="nowheel">
-        {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
-      </StyledOutput>
+      <StyledOutput className="nowheel">{outputList.length ? <JSONTree theme={theme} hideRoot={true} data={outputList} /> : "Empty"}</StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
@@ -169,13 +185,16 @@ export const transformViewModel: TransformViewModel = {
 };
 
 export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
+  const outputList = useOutputList(props.data);
+
   const handleRun = async () => {
-    console.log(props.data.context.getInputs());
+    const inputArray = props.data.context.getInputs()[0] ?? [];
+    console.log("jq transform input", inputArray);
     // clear outputs
-    props.data.setOutput([]);
+    props.data.clearTaskOutputs();
 
     const output = await jqAutoPrompt({
-      input: props.data.context.getInputs()[0] ?? [],
+      input: inputArray,
       onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 1200, temperature: 0 }),
       onGetUserMessage: ({ lastError }) =>
         lastError ? `The previous query failed with error: ${lastError}. Try a different query` : props.data.viewModel.plan,
@@ -200,10 +219,13 @@ ${responseTemplate}
 """`,
     });
 
-    props.data.setOutput(output);
+    const taskId = crypto.randomUUID();
+    // TODO inject sourceIds
+    props.data.setTaskOutputs(
+      taskId,
+      ((output as any[]) ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []
+    );
   };
-
-  const handleClear = () => props.data.setOutput([]);
 
   return (
     <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
@@ -212,7 +234,7 @@ ${responseTemplate}
         {props.type}
         <div>
           <button onClick={handleRun}>Run</button>
-          <button onClick={handleClear}>Clear</button>
+          <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
       </DragBar>
       <div className="nodrag">
@@ -243,15 +265,16 @@ ${responseTemplate}
           Lock JQ
         </label>
       </div>
-      <StyledOutput className="nowheel">
-        {props.data.output.length ? <JSONTree theme={theme} hideRoot={true} data={props.data.output} /> : "Empty"}
-      </StyledOutput>
+      <StyledOutput className="nowheel">{outputList.length ? <JSONTree theme={theme} hideRoot={true} data={outputList} /> : "Empty"}</StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
 });
 
-// NDK
+/***********************
+ Node Develoopment Kit
+ ***********************/
+
 export const DragBar = styled.div`
   font-weight: 700;
   font-size: 12px;
@@ -335,4 +358,19 @@ function renderTemplate(template: string, params: any) {
   return template.replace(/\{([^\}]+)\}/g, (_, p1) => {
     return params[p1];
   });
+}
+
+export function useOutputList(nodeData: NodeData) {
+  const [outputList, setOutputList] = useState<GraphOutputItem[]>([]);
+  const currentTaskId = useMemo(() => nodeData.taskIds.at(-1), [nodeData.taskIds]);
+  useEffect(() => {
+    if (currentTaskId) {
+      const outputs = getGraphOutputs(nodeData.context.graph, currentTaskId);
+      setOutputList(outputs.map((output) => output.data));
+    } else {
+      setOutputList([]);
+    }
+  }, [currentTaskId]);
+
+  return outputList;
 }

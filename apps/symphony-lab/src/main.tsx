@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { Link, Outlet, RouterProvider, createBrowserRouter, type NonIndexRouteObject } from "react-router-dom";
 import { styled } from "styled-components";
 import { AccountContextProvider } from "./account/account-context";
+import { Cozo, dbAsync } from "./cozo/cozo";
+import { SCHEMA, getGraphOutputs, setGraphOutput } from "./flow/db/db";
 import "./index.css";
 import { Main } from "./shell/main";
 import { Nav } from "./shell/nav";
@@ -40,9 +42,27 @@ const ROUTES: NamedRoute[] = [
   {
     displayName: "Shelf flow",
     path: "/experiments/shelf-flow",
-    lazy: () => import("./experiments/shelf-flow").then(({ ShelfFlow }) => ({ Component: ShelfFlow })),
+    lazy: () =>
+      import("./experiments/shelf-flow")
+        .then(async ({ ShelfFlow }) => ({ ShelfFlow, db: await dbAsync }))
+        .then(({ ShelfFlow, db }) => {
+          const graph = new Cozo(db, SCHEMA);
+          testGraph(graph);
+          return { Component: () => <ShelfFlow graph={graph} /> };
+        }),
   },
 ];
+
+function testGraph(graph: Cozo) {
+  // test putting a graph output item
+  setGraphOutput(graph, "node_1", { id: "item_1", position: 0, data: { key: "value" }, sourceIds: ["item_10", "item_23"] })
+    .then(console.log)
+    .then(() =>
+      // test getting a graph output item
+      getGraphOutputs(graph, "node_1")
+    )
+    .then(console.log);
+}
 
 const router = createBrowserRouter([
   {

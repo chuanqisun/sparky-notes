@@ -26,10 +26,11 @@ import {
   chatViewModel,
   claimSearchViewModel,
   transformViewModel,
+  type GraphOutputItem,
   type NodeContext,
   type NodeData,
 } from "../flow/custom-node/custom-node";
-import { SCHEMA, getGraphOutputs, setGraphOutput } from "../flow/db/db";
+import { getGraphOutputs, setGraphOutput } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
@@ -50,18 +51,11 @@ export interface GraphModel {
   edges: Edge[];
 }
 
-const db = new Cozo(SCHEMA);
-
-// test putting a graph output item
-setGraphOutput(db, "node_1", { id: "item_1", data: { key: "value" }, sourceIds: ["item_10", "item_23"] })
-  .then(console.log)
-  .then(() =>
-    // test getting a graph output item
-    getGraphOutputs(db, "node_1")
-  )
-  .then(console.log);
-
-export const ShelfFlow: React.FC = () => {
+export interface ShelfFlowProps {
+  graph: Cozo;
+}
+export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
+  const { graph } = props;
   const { chat, ModelSelectorElement } = useModelSelector();
   const { accessToken } = useAuth();
 
@@ -80,11 +74,11 @@ export const ShelfFlow: React.FC = () => {
   const selectNode = useCallback((id: string) => setNodes((nodes) => nodes.map((node) => ({ ...node, selected: node.id === id }))), [setNodes]);
 
   const patchNodeData = useCallback(
-    (id: string, data: any) => setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, ...data } } : node))),
+    (id: string, data: Partial<NodeData>) => setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, ...data } } : node))),
     [setNodes]
   );
   const patchNodeDataFn = useCallback(
-    (id: string, updateFn: (prevData: any) => any) =>
+    (id: string, updateFn: (prevData: NodeData) => NodeData) =>
       setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: updateFn(node.data) } : node))),
     [setNodes]
   );
@@ -94,11 +88,11 @@ export const ShelfFlow: React.FC = () => {
       const node = model.nodes.find((node) => node.id === id);
       if (!node) return [];
 
-      const inputNodes = getIncomers(node, model.nodes, model.edges).sort((a, b) => {
+      const inputNodes = getIncomers<NodeData>(node, model.nodes, model.edges).sort((a, b) => {
         if (a.position.y !== b.position.y) return a.position.y - b.position.y;
         else return a.position.x - b.position.x;
       });
-      return inputNodes.map((node) => node.data.output as any[]);
+      return inputNodes.map((node) => getGraphOutputs(graph, node.data.taskIds.at(-1)));
     },
     [model.nodes, model.edges]
   );
@@ -110,11 +104,19 @@ export const ShelfFlow: React.FC = () => {
       const data: NodeData<any> = {
         context: {} as any, // will be injected
         output: [],
+        taskIds: [],
         viewModel: initialViewModel[type],
+        clearTaskOutputs: () => {
+          // soft clear
+          patchNodeData(id, { taskIds: [] });
+        },
         setViewModel: (viewModel: any) => patchNodeData(id, { viewModel }),
         setOutput: (output: any[]) => {
           patchNodeData(id, { output });
-          db.mutate(``);
+        },
+        setTaskOutputs: (taskId: string, items: GraphOutputItem[]) => {
+          items.forEach((item) => setGraphOutput(graph, taskId, item));
+          patchNodeDataFn(id, (prevData) => ({ ...prevData, taskIds: [...prevData.taskIds.filter((existingId: any) => existingId !== taskId), taskId] }));
         },
         appendOutput: (output: any) => patchNodeDataFn(id, (prevData) => ({ ...prevData, output: [...prevData.output, output] })),
       };
@@ -138,6 +140,7 @@ export const ShelfFlow: React.FC = () => {
       nodes.map((node) => {
         const context: NodeContext = {
           chat,
+          graph,
           searchClaims,
           getInputs: getInputs.bind(null, node.id),
           selectNode: selectNode.bind(null, node.id),
@@ -148,7 +151,7 @@ export const ShelfFlow: React.FC = () => {
           data: { ...node.data, context },
         };
       }),
-    [nodes, chat, searchClaims, getInputs, selectNode]
+    [nodes, graph, chat, searchClaims, getInputs, selectNode]
   );
 
   // useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);

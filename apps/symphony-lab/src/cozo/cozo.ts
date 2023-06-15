@@ -18,39 +18,32 @@ export interface RelationSchema {
 }
 
 export class Cozo {
-  private intializedDb: Promise<CozoDb>;
+  private initializedDb: CozoDb;
 
-  constructor(schema: string) {
-    this.intializedDb = dbAsync.then((db) => {
-      db.run(schema, "", false);
-
-      return db;
-    });
+  constructor(db: CozoDb, schema: string) {
+    db.run(schema, "", false);
+    this.initializedDb = db;
+    console.log("graph initized to", this.listRelations());
   }
 
-  public async query(cozoScript: string, params?: any) {
-    return this.intializedDb.then((db) => {
-      const result = db.run(cozoScript, params ? JSON.stringify(params) : "", true);
-      return JSON.parse(result) as CozoResult;
-    });
+  public query(cozoScript: string, params?: any) {
+    const result = this.initializedDb.run(cozoScript, params ? JSON.stringify(params) : "", true);
+    return JSON.parse(result) as CozoResult;
   }
 
-  public async mutate(cozoScript: string, params?: any) {
-    return this.intializedDb.then((db) => {
-      const result = db.run(cozoScript, params ? JSON.stringify(params) : "", false);
-      return JSON.parse(result) as CozoResult;
-    });
+  public mutate(cozoScript: string, params?: any) {
+    const result = this.initializedDb.run(cozoScript, params ? JSON.stringify(params) : "", false);
+    return JSON.parse(result) as CozoResult;
   }
 
-  public async listRelations(): Promise<RelationSchema[]> {
-    const res = await this.query("::relations");
+  public listRelations(): RelationSchema[] {
+    const res = this.query("::relations");
     const names = res.rows.map((row) => row[0]);
-    const relations = await Promise.all(
-      names.map(async (name) => ({
-        name: name as string,
-        cols: (await this.query(`::columns ${name}`).then((res) => res.rows.map((row) => row[0]))) as string[],
-      }))
-    );
+    const relations = names.map((name) => ({
+      name,
+      cols: this.query(`::columns ${name}`).rows.map((row) => row[0]),
+    }));
+
     return relations;
   }
 }
