@@ -46,6 +46,13 @@ export interface NodeData<T = any> {
   appendOutput: (output: any) => void;
 }
 
+// TODO track sources for each output
+export interface GraphOutputItem {
+  sourceIds: string[];
+  id: string;
+  data: any;
+}
+
 export interface ClaimSearchViewModel {
   query: string;
 }

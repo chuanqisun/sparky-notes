@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -18,6 +18,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { useModelSelector } from "../account/model-selector";
 import { useAuth } from "../account/use-auth";
+import { Cozo } from "../cozo/cozo";
 import {
   ChatNode,
   ClaimSearchNode,
@@ -25,6 +26,7 @@ import {
   chatViewModel,
   claimSearchViewModel,
   transformViewModel,
+  type NodeContext,
   type NodeData,
 } from "../flow/custom-node/custom-node";
 import { getH20Proxy } from "../hits/proxy";
@@ -46,6 +48,8 @@ export interface GraphModel {
   nodes: Node[];
   edges: Edge[];
 }
+
+const db = new Cozo();
 
 export const ShelfFlow: React.FC = () => {
   const { chat, ModelSelectorElement } = useModelSelector();
@@ -118,14 +122,23 @@ export const ShelfFlow: React.FC = () => {
 
   const nodesWithContext = useMemo(
     () =>
-      nodes.map((node) => ({
-        ...node,
-        data: { ...node.data, context: { chat, searchClaims, getInputs: getInputs.bind(null, node.id), selectNode: selectNode.bind(null, node.id) } },
-      })),
+      nodes.map((node) => {
+        const context: NodeContext = {
+          chat,
+          searchClaims,
+          getInputs: getInputs.bind(null, node.id),
+          selectNode: selectNode.bind(null, node.id),
+        };
+
+        return {
+          ...node,
+          data: { ...node.data, context },
+        };
+      }),
     [nodes, chat, searchClaims, getInputs, selectNode]
   );
 
-  useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);
+  // useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);
 
   return (
     <ReactFlow
