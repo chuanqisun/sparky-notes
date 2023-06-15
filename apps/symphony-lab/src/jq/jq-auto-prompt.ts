@@ -46,9 +46,10 @@ export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
 ${getSystemMessage({
   input: input,
   responseTemplate: `
-Reflect: <If available, reflect on any previous error>
-Observe: <Describe the shape of the input>
-Plan: <Describe the solution in plain English>
+Reflect: <If available, reflect on the cause of any previous error>
+Observe input: <Describe the shape of the input>
+Desired output: <Describe the shape of the output in English>
+Explain solution: <Describe how to transform from input to output in English>
 Final answer:
 \`\`\`jq
 <The valid jq filter string>

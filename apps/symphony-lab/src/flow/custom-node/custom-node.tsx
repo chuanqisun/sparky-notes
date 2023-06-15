@@ -169,7 +169,7 @@ export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>
 
     const output = await jqAutoPrompt({
       input: props.data.context.getInputs()[0] ?? [],
-      onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 1200 }),
+      onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 1200, temperature: 0 }),
       onGetUserMessage: ({ lastError }) =>
         lastError ? `The previous query failed with error: ${lastError}. Try a different query` : props.data.viewModel.plan,
       onJqString: (jqString: string) => props.data.setViewModel({ ...props.data.viewModel, jq: jqString }),
