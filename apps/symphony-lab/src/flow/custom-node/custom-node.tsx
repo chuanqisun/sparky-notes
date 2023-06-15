@@ -95,8 +95,27 @@ export const chatViewModel: ChatNodeViewModel = {
 export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => {
   const handleRun = async () => {
     console.log(props.data.context.getInputs());
-    const response = await props.data.context.chat([{ role: "user", content: props.data.viewModel.template }]);
-    props.data.setOutput([response]);
+
+    // extract all curly brace surrounded variables
+    const inputs = props.data.context.getInputs();
+    const templateVariables = getTemplateVariables(props.data.viewModel.template);
+
+    if (templateVariables.length !== inputs.length) {
+      throw new Error("Template variables and inputs do not match");
+    }
+
+    // clear output first
+    props.data.setOutput([]);
+
+    // combine all possible values
+    const allParamCombos = combineNArrays(...bulkBindTemplateVariablesByPosition(templateVariables, inputs));
+    console.log("Chat input combos", allParamCombos);
+
+    for (const paramCombo of allParamCombos) {
+      const renderedTemplate = renderTemplate(props.data.viewModel.template, paramCombo);
+      const response = await props.data.context.chat([{ role: "user", content: renderedTemplate }]);
+      props.data.appendOutput(response);
+    }
   };
 
   const handleClear = () => props.data.setOutput([]);
@@ -269,3 +288,38 @@ const SelectableNode = styled.div<{ selected: boolean }>`
   border: 1px solid ${(props) => (props.selected ? "#00aaff" : "#ddd")};
   width: 320px;
 `;
+
+function combineTwoArrays(arr1: any[], arr2: any[]): any[] {
+  const combinations = [];
+  for (let i = 0; i < arr1.length; i++) {
+    for (let j = 0; j < arr2.length; j++) {
+      combinations.push({ ...arr1[i], ...arr2[j] });
+    }
+  }
+  return combinations;
+}
+
+function combineNArrays(...arrs: any[][]) {
+  // use reducer and `combineTwoArrays` to combine all arrays
+  return arrs.reduce((acc, arr) => combineTwoArrays(acc, arr));
+}
+
+function getTemplateVariables(template: string) {
+  return [...template.matchAll(/\{([^\}]+)\}/g)].map((match) => match[1]);
+}
+
+function bulkBindTemplateVariablesByPosition(variables: string[], inputs: any[][]) {
+  const variableWithValues = variables.map((variable, variableIndex) => {
+    return inputs[variableIndex].map((input) => ({ [variable]: input }));
+  });
+
+  return variableWithValues;
+}
+
+// for each variable, use the corresponding input to get a list of possible values
+
+function renderTemplate(template: string, params: any) {
+  return template.replace(/\{([^\}]+)\}/g, (_, p1) => {
+    return params[p1];
+  });
+}

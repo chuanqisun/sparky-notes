@@ -56,7 +56,6 @@ jq: '<query string surrounded by single quotes>'`,
   }
 
   try {
-    debugger;
     const jqString = responseText.match(/^jq\:\s*'(.+?)'/m)?.[1] ?? "";
     onJqString?.(jqString);
 

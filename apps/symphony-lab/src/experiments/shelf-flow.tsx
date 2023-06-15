@@ -68,6 +68,11 @@ export const ShelfFlow: React.FC = () => {
     (id: string, data: any) => setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: { ...node.data, ...data } } : node))),
     [setNodes]
   );
+  const patchNodeDataFn = useCallback(
+    (id: string, updateFn: (prevData: any) => any) =>
+      setNodes((nodes) => nodes.map((node) => (node.id === id ? { ...node, data: updateFn(node.data) } : node))),
+    [setNodes]
+  );
 
   const getInputs = useCallback(
     (id: string) => {
@@ -93,7 +98,7 @@ export const ShelfFlow: React.FC = () => {
         viewModel: initialViewModel[type],
         setViewModel: (viewModel: any) => patchNodeData(id, { viewModel }),
         setOutput: (output: any[]) => patchNodeData(id, { output }),
-        appendOutput: (output: any) => patchNodeData(id, { output: [...(model.nodes.find((n) => n.id === id)?.data.output || []), output] }),
+        appendOutput: (output: any) => patchNodeDataFn(id, (prevData) => ({ ...prevData, output: [...prevData.output, output] })),
       };
 
       addNode({
@@ -133,7 +138,6 @@ export const ShelfFlow: React.FC = () => {
         <button onClick={() => addNodeByType("Transform")}>Transform</button>
       </Panel>
       <Panel position="top-right">{ModelSelectorElement}</Panel>
-      <Panel position="bottom-left">test tes test</Panel>
       <Controls />
       <Background />
     </ReactFlow>
