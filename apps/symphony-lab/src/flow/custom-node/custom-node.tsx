@@ -69,6 +69,8 @@ export const claimSearchViewModel: ClaimSearchViewModel = {
 };
 
 export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
+  const { outputList, outputDataList } = useOutputList(props.data);
+  const [isProvenanceMode, setIsProvenanceMode] = useState(false);
   const handleRun = async () => {
     const taskId = crypto.randomUUID();
     console.log(props.data.viewModel.query);
@@ -80,14 +82,16 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
     );
   };
 
-  const outputList = useOutputList(props.data);
-
   return (
     <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
       <DragBar>
         {props.type}
         <div>
+          <label>
+            <input type="checkbox" checked={isProvenanceMode} onChange={(e) => setIsProvenanceMode(e.target.checked)} />
+            Debug
+          </label>
           <button onClick={handleRun}>Run</button>
           <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
@@ -95,7 +99,9 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
       <div className="nodrag">
         <InputField type="search" value={props.data.viewModel.query} onChange={(e: any) => props.data.setViewModel({ query: e.target.value })} />
       </div>
-      <StyledOutput className="nowheel">{outputList.length ? <JSONTree theme={theme} hideRoot={true} data={outputList} /> : "Empty"}</StyledOutput>
+      <StyledOutput className="nodrag nowheel">
+        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
+      </StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
@@ -110,7 +116,8 @@ export const chatViewModel: ChatNodeViewModel = {
 };
 
 export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => {
-  const outputList = useOutputList(props.data);
+  const { outputList, outputDataList } = useOutputList(props.data);
+  const [isProvenanceMode, setIsProvenanceMode] = useState(false);
 
   const handleRun = async () => {
     console.log(props.data.context.getInputs());
@@ -152,6 +159,10 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
       <DragBar>
         {props.type}
         <div>
+          <label>
+            <input type="checkbox" checked={isProvenanceMode} onChange={(e) => setIsProvenanceMode(e.target.checked)} />
+            Debug
+          </label>
           <button onClick={handleRun}>Run</button>
           <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
@@ -166,7 +177,9 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
           />
         </TextAreaWrapper>
       </div>
-      <StyledOutput className="nowheel">{outputList.length ? <JSONTree theme={theme} hideRoot={true} data={outputList} /> : "Empty"}</StyledOutput>
+      <StyledOutput className="nodrag nowheel">
+        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
+      </StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
@@ -185,7 +198,8 @@ export const transformViewModel: TransformViewModel = {
 };
 
 export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
-  const outputList = useOutputList(props.data);
+  const { outputList, outputDataList } = useOutputList(props.data);
+  const [isProvenanceMode, setIsProvenanceMode] = useState(false);
 
   const handleRun = async () => {
     const inputArray = props.data.context.getInputs()[0] ?? [];
@@ -233,6 +247,10 @@ ${responseTemplate}
       <DragBar>
         {props.type}
         <div>
+          <label>
+            <input type="checkbox" checked={isProvenanceMode} onChange={(e) => setIsProvenanceMode(e.target.checked)} />
+            Debug
+          </label>
           <button onClick={handleRun}>Run</button>
           <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
@@ -265,7 +283,9 @@ ${responseTemplate}
           Lock JQ
         </label>
       </div>
-      <StyledOutput className="nowheel">{outputList.length ? <JSONTree theme={theme} hideRoot={true} data={outputList} /> : "Empty"}</StyledOutput>
+      <StyledOutput className="nodrag nowheel">
+        {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
+      </StyledOutput>
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
@@ -366,11 +386,13 @@ export function useOutputList(nodeData: NodeData) {
   useEffect(() => {
     if (currentTaskId) {
       const outputs = getGraphOutputs(nodeData.context.graph, currentTaskId);
-      setOutputList(outputs.map((output) => output.data));
+      setOutputList(outputs);
     } else {
       setOutputList([]);
     }
   }, [currentTaskId]);
 
-  return outputList;
+  const outputDataList = useMemo(() => outputList.map((output) => output.data), [outputList]);
+
+  return { outputList, outputDataList };
 }
