@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -30,7 +30,7 @@ import {
   type NodeContext,
   type NodeData,
 } from "../flow/custom-node/custom-node";
-import { getGraphOutput, getGraphOutputs, setGraphOutput } from "../flow/db/db";
+import { getGraphOutputs, setGraphOutput } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
@@ -156,16 +156,6 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
 
   // useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);
 
-  // provenance module
-  const [provenanceQuery, setProvenanceQuery] = useState("");
-
-  useEffect(() => {
-    console.log(provenanceQuery);
-    console.log(getGraphOutput(graph, provenanceQuery));
-  }, [provenanceQuery]);
-
-  const [provenanceGraph, setProvenanceGraph] = useState<{ nodes: { self: any; parents: any[] }[]; edges: any[] }>({ nodes: [], edges: [] });
-
   return (
     <ReactFlow
       nodeTypes={nodeTypes}
@@ -182,14 +172,7 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
         <button onClick={() => addNodeByType("Transform")}>Transform</button>
       </Panel>
       <Panel position="top-right">{ModelSelectorElement}</Panel>
-      <Panel position="bottom-center">
-        <ul>
-          {provenanceGraph.nodes.map((node, index) => (
-            <li key={index}>...</li>
-          ))}
-        </ul>
-        <input type="search" value={provenanceQuery} onChange={(e) => setProvenanceQuery(e.target.value)} />
-      </Panel>
+
       <Controls />
       <Background />
     </ReactFlow>

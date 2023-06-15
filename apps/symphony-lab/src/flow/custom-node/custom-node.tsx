@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import { Handle, Position, type NodeProps } from "reactflow";
 import styled from "styled-components";
@@ -68,6 +68,14 @@ export const claimSearchViewModel: ClaimSearchViewModel = {
   query: "",
 };
 
+export interface TraceExplorerProps {
+  graph: Cozo;
+  id?: string;
+}
+export const TraceExplorer = (props: TraceExplorerProps) => {
+  return <div>Magic happens here {props.id}!</div>;
+};
+
 export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
   const { outputList, outputDataList } = useOutputList(props.data);
   const [isProvenanceMode, setIsProvenanceMode] = useState(false);
@@ -82,16 +90,17 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
     );
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [explorerRootId, setExplorerRootId] = useState<string>();
+
   return (
-    <SelectableNode selected={props.selected} onFocus={() => props.data.context.selectNode()}>
+    <SelectableNode ref={containerRef} selected={props.selected} onFocus={() => props.data.context.selectNode()}>
       <Handle type="target" position={Position.Left} />
       <DragBar>
         {props.type}
         <div>
-          <label>
-            <input type="checkbox" checked={isProvenanceMode} onChange={(e) => setIsProvenanceMode(e.target.checked)} />
-            Debug
-          </label>
+          <button onClick={() => setIsProvenanceMode((prev) => !prev)}>Trace</button>
+          <button onClick={() => containerRef.current?.requestFullscreen()}>Max</button>
           <button onClick={handleRun}>Run</button>
           <button onClick={props.data.clearTaskOutputs}>Clear</button>
         </div>
@@ -99,6 +108,18 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
       <div className="nodrag">
         <InputField type="search" value={props.data.viewModel.query} onChange={(e: any) => props.data.setViewModel({ query: e.target.value })} />
       </div>
+      {isProvenanceMode ? (
+        <TwoColumns className="nodrag nowheel">
+          <div>
+            {outputList.map((item) => (
+              <div key={item.id}>
+                <button onClick={() => setExplorerRootId(item.id)}>Item {item.position}</button>
+              </div>
+            ))}
+          </div>
+          <TraceExplorer id={explorerRootId} graph={props.data.context.graph} />
+        </TwoColumns>
+      ) : null}
       <StyledOutput className="nodrag nowheel">
         {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
       </StyledOutput>
@@ -106,6 +127,12 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
     </SelectableNode>
   );
 });
+
+const TwoColumns = styled.div`
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+`;
 
 export interface ChatNodeViewModel {
   template: string;
@@ -180,6 +207,7 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
       <StyledOutput className="nodrag nowheel">
         {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={isProvenanceMode ? outputList : outputDataList} /> : "Empty"}
       </StyledOutput>
+
       <Handle type="source" position={Position.Right} />
     </SelectableNode>
   );
