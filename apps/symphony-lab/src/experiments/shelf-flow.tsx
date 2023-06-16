@@ -25,6 +25,7 @@ import { ListNode, listViewModel } from "../flow/custom-node/list";
 import { MapNode, mapViewModel } from "../flow/custom-node/map";
 import type { GraphOutputItem, GraphTaskData, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
 import { TraceGraph } from "../flow/custom-node/shared/trace-explorer";
+import { useMeasure } from "../flow/custom-node/shared/use-measure";
 import { getGraphOutputs, setGraphOutput, setTask } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
@@ -60,8 +61,9 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
   const searchClaims = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
 
   const [model, setModel] = useState<GraphModel>({ nodes: [], edges: [] });
-
   const [selectedOutputId, setSelectedOutputId] = useState<string>();
+  const [visRef, visRect] = useMeasure<HTMLDivElement>();
+  console.log(visRect);
 
   // reducers
   const setNodes = useCallback((updateFn: (prevNodes: Node[]) => Node[]) => setModel((m) => ({ ...m, nodes: updateFn(m.nodes) })), []);
@@ -181,14 +183,14 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
         <Controls />
         <Background />
       </ReactFlow>
-      {selectedOutputId ? (
-        <div>
+      <div ref={visRef}>
+        {selectedOutputId ? (
           <div>
             <button onClick={() => setSelectedOutputId(undefined)}>Close</button>
           </div>
-          <TraceGraph width={200} height={200} graph={props.graph} id={selectedOutputId} />
-        </div>
-      ) : null}
+        ) : null}
+        {selectedOutputId ? <TraceGraph width={visRect?.width ?? 0} height={200} graph={props.graph} id={selectedOutputId} /> : null}
+      </div>
     </>
   );
 };
