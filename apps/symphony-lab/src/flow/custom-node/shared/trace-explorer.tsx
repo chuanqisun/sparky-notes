@@ -46,6 +46,7 @@ const TraceGraph = (props: TraceGraphProps) => {
         nodes: sourceGraph.nodes,
         links: sourceGraph.edges,
       }}
+      linkDirectionalArrowLength={8}
       nodeLabel={(node) => JSON.stringify(node.data)}
       nodeAutoColorBy={(node) => node.task.name}
     />
