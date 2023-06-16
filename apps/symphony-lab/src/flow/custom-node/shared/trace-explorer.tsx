@@ -46,7 +46,7 @@ const TraceGraph = (props: TraceGraphProps) => {
         nodes: sourceGraph.nodes,
         links: sourceGraph.edges,
       }}
-      nodeLabel={"id"}
+      nodeLabel={(node) => JSON.stringify(node.data)}
       nodeAutoColorBy={"taskId"}
     />
   );
