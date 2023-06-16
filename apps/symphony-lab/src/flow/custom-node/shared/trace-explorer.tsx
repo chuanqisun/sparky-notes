@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import styled from "styled-components";
 import type { Cozo } from "../../../cozo/cozo";
@@ -6,32 +6,29 @@ import { getSourceGraphDFS } from "../../db/db";
 import type { GraphOutputItem } from "./graph";
 
 export interface TraceExplorer {
-  graph: Cozo;
+  onSelect: (id: string) => void;
   nodes: GraphOutputItem[];
 }
 
 export const TraceExplorer = (props: TraceExplorer) => {
-  const [explorerRootId, setExplorerRootId] = useState<string>();
-
   return (
-    <TwoColumns className="nodrag nowheel">
-      <ItemList>
-        {props.nodes.map((item) => (
-          <div key={item.id}>
-            <button onClick={() => setExplorerRootId(item.id)}>{item.position}</button>
-          </div>
-        ))}
-      </ItemList>
-      {explorerRootId ? <TraceGraph id={explorerRootId} graph={props.graph} /> : "Select an item to explore"}
-    </TwoColumns>
+    <ItemList>
+      {props.nodes.map((item) => (
+        <div key={item.id}>
+          <button onClick={() => props.onSelect(item.id)}>{item.position}</button>
+        </div>
+      ))}
+    </ItemList>
   );
 };
 
-interface TraceGraphProps {
+export interface TraceGraphProps {
   graph: Cozo;
   id: string;
+  width: number;
+  height: number;
 }
-const TraceGraph = (props: TraceGraphProps) => {
+export const TraceGraph = (props: TraceGraphProps) => {
   const sourceGraph = useMemo(() => getSourceGraphDFS(props.graph, props.id), [props.graph, props.id]);
 
   useEffect(() => {
@@ -40,8 +37,8 @@ const TraceGraph = (props: TraceGraphProps) => {
 
   return (
     <ForceGraph2D
-      height={320}
-      width={280}
+      height={props.height}
+      width={props.width}
       graphData={{
         nodes: sourceGraph.nodes,
         links: sourceGraph.edges,
@@ -54,11 +51,6 @@ const TraceGraph = (props: TraceGraphProps) => {
 };
 
 const ItemList = styled.div`
-  overflow-y: scroll;
-`;
-
-const TwoColumns = styled.div`
-  display: grid;
-  grid-template-columns: 40px 280px;
-  grid-template-rows: 320px;
+  display: flex;
+  flex-wrap: wrap;
 `;

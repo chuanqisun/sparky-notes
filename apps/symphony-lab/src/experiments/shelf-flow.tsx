@@ -24,6 +24,7 @@ import { ClaimSearchNode, claimSearchViewModel } from "../flow/custom-node/claim
 import { ListNode, listViewModel } from "../flow/custom-node/list";
 import { MapNode, mapViewModel } from "../flow/custom-node/map";
 import type { GraphOutputItem, GraphTaskData, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
+import { TraceGraph } from "../flow/custom-node/shared/trace-explorer";
 import { getGraphOutputs, setGraphOutput, setTask } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
@@ -59,6 +60,8 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
   const searchClaims = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
 
   const [model, setModel] = useState<GraphModel>({ nodes: [], edges: [] });
+
+  const [selectedOutputId, setSelectedOutputId] = useState<string>();
 
   // reducers
   const setNodes = useCallback((updateFn: (prevNodes: Node[]) => Node[]) => setModel((m) => ({ ...m, nodes: updateFn(m.nodes) })), []);
@@ -143,6 +146,7 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
           searchClaims,
           getInputs: getInputs.bind(null, node.id),
           selectNode: selectNode.bind(null, node.id),
+          onSelectOutput: setSelectedOutputId,
         };
 
         return {
@@ -156,26 +160,36 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
   // useEffect(() => console.log("[DEBUG] nodes", nodes), [nodes]);
 
   return (
-    <ReactFlow
-      nodeTypes={nodeTypes}
-      nodes={nodesWithContext}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      proOptions={{ hideAttribution: true }}
-    >
-      <Panel position="top-left">
-        <button onClick={() => addNodeByType("ClaimSearch")}>Claim search</button>
-        <button onClick={() => addNodeByType("List")}>List</button>
-        <button onClick={() => addNodeByType("Chat")}>Chat</button>
-        <button onClick={() => addNodeByType("Map")}>Map</button>
-      </Panel>
-      <Panel position="top-right">{ModelSelectorElement}</Panel>
+    <>
+      <ReactFlow
+        nodeTypes={nodeTypes}
+        nodes={nodesWithContext}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        proOptions={{ hideAttribution: true }}
+      >
+        <Panel position="top-left">
+          <button onClick={() => addNodeByType("ClaimSearch")}>Claim search</button>
+          <button onClick={() => addNodeByType("List")}>List</button>
+          <button onClick={() => addNodeByType("Chat")}>Chat</button>
+          <button onClick={() => addNodeByType("Map")}>Map</button>
+        </Panel>
+        <Panel position="top-right">{ModelSelectorElement}</Panel>
 
-      <Controls />
-      <Background />
-    </ReactFlow>
+        <Controls />
+        <Background />
+      </ReactFlow>
+      {selectedOutputId ? (
+        <div>
+          <div>
+            <button onClick={() => setSelectedOutputId(undefined)}>Close</button>
+          </div>
+          <TraceGraph width={200} height={200} graph={props.graph} id={selectedOutputId} />
+        </div>
+      ) : null}
+    </>
   );
 };
 

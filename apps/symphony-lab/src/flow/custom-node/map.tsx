@@ -118,7 +118,7 @@ ${responseTemplate}
           Lock JQ
         </label>
       </div>
-      {shouldTrace ? <TraceExplorer graph={props.data.context.graph} nodes={outputList} /> : null}
+      {shouldTrace ? <TraceExplorer onSelect={props.data.context.onSelectOutput} nodes={outputList} /> : null}
       <StyledOutput className="nodrag nowheel">
         {outputDataList.length ? <JSONTree theme={theme} hideRoot={true} data={shouldTrace ? outputList : outputDataList} /> : "Empty"}
       </StyledOutput>

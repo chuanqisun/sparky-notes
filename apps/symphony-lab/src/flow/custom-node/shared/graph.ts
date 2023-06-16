@@ -8,6 +8,7 @@ export interface NodeContext {
   searchClaims: SemanticSearchProxy;
   selectNode: () => void;
   getInputs: () => GraphOutputItem[][];
+  onSelectOutput: (id: string) => any;
 }
 
 export interface NodeData<T = any> {
