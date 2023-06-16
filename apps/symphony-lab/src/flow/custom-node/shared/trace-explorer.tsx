@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import type { Cozo } from "../../../cozo/cozo";
-import { getSourceGraph } from "../../db/db";
+import { getSourceGraphDFS } from "../../db/db";
 import type { GraphOutputItem } from "./graph";
 
 export interface TraceExplorer {
@@ -31,8 +31,12 @@ interface TraceGraphProps {
   id: string;
 }
 const TraceGraph = (props: TraceGraphProps) => {
-  const sourceGraph = useMemo(() => getSourceGraph(props.graph, props.id), [props.graph, props.id]);
-  console.log(sourceGraph);
+  const sourceGraph = useMemo(() => getSourceGraphDFS(props.graph, props.id), [props.graph, props.id]);
+
+  useEffect(() => {
+    console.log(sourceGraph);
+  }, [sourceGraph]);
+
   return <div>Magic happens here {props.id}!</div>;
 };
 
