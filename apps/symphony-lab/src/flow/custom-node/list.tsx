@@ -29,6 +29,7 @@ export const ListNode = memo((props: NodeProps<NodeData<ListViewModel>>) => {
       .map((item) => item.trim().match(/^- (.*)$/)?.[1])
       .filter(Boolean) as string[];
 
+    props.data.setTask(taskId, { name: "List" });
     props.data.setTaskOutputs(taskId, textItems.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []);
   };
 

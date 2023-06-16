@@ -72,6 +72,7 @@ ${responseTemplate}
     // TODO inject based on actually consumed source
 
     const taskId = crypto.randomUUID();
+    props.data.setTask(taskId, { name: "Map" });
     props.data.setTaskOutputs(
       taskId,
       ((output as any[]) ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [inputArray[position].id] })) ?? []

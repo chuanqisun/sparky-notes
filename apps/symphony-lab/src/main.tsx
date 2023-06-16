@@ -55,13 +55,9 @@ const ROUTES: NamedRoute[] = [
 
 function testGraph(graph: Cozo) {
   // test putting a graph output item
-  setGraphOutput(graph, "node_1", { id: "item_1", position: 0, data: { key: "value" }, sourceIds: ["item_10", "item_23"] })
-    .then(console.log)
-    .then(() =>
-      // test getting a graph output item
-      getGraphOutputs(graph, "node_1")
-    )
-    .then(console.log);
+  setGraphOutput(graph, "node_1", { id: "item_1", position: 0, data: { key: "value" }, sourceIds: ["item_10", "item_23"] });
+  // test getting a graph output item
+  getGraphOutputs(graph, "node_1");
 }
 
 const router = createBrowserRouter([

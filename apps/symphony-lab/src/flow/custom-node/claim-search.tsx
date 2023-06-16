@@ -28,6 +28,7 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
     console.log(props.data.viewModel.query);
     const searchResults = await props.data.context.searchClaims(getSemanticSearchInput(props.data.viewModel.query, 10));
     console.log(searchResults);
+    props.data.setTask(taskId, { name: "Claim search" });
     props.data.setTaskOutputs(
       taskId,
       (searchResults.value ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []

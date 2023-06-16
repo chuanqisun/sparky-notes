@@ -23,8 +23,8 @@ import { ChatNode, chatViewModel } from "../flow/custom-node/chat";
 import { ClaimSearchNode, claimSearchViewModel } from "../flow/custom-node/claim-search";
 import { ListNode, listViewModel } from "../flow/custom-node/list";
 import { MapNode, mapViewModel } from "../flow/custom-node/map";
-import type { GraphOutputItem, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
-import { getGraphOutputs, setGraphOutput } from "../flow/db/db";
+import type { GraphOutputItem, GraphTask, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
+import { getGraphOutputs, setGraphOutput, setTask } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
@@ -109,6 +109,9 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
         setViewModel: (viewModel: any) => patchNodeData(id, { viewModel }),
         setOutput: (output: any[]) => {
           patchNodeData(id, { output });
+        },
+        setTask: (taskId: string, data: GraphTask) => {
+          setTask(graph, taskId, data);
         },
         setTaskOutputs: (taskId: string, items: GraphOutputItem[]) => {
           items.forEach((item) => setGraphOutput(graph, taskId, item));

@@ -54,6 +54,7 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
       const outputItems = responseList.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: paramCombo.sourceIds }));
 
       const taskId = crypto.randomUUID();
+      props.data.setTask(taskId, { name: "Chat" });
       props.data.setTaskOutputs(taskId, outputItems);
     }
   };

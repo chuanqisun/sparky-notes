@@ -18,14 +18,18 @@ export interface NodeData<T = any> {
   setViewModel: (data: T) => void;
   setOutput: (output: any[]) => void;
   setTaskOutputs: (taskId: string, items: GraphOutputItem[]) => void;
+  setTask: (taskId: string, data: GraphTask) => void;
   clearTaskOutputs: () => void;
   appendOutput: (output: any) => void;
 }
 
-// TODO track sources for each output
 export interface GraphOutputItem {
   sourceIds: string[];
   id: string;
   position: number;
   data: any;
+}
+
+export interface GraphTask {
+  name: string;
 }

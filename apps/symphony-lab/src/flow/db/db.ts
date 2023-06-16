@@ -2,17 +2,47 @@ import { Cozo } from "../../cozo/cozo";
 import type { GraphOutputItem } from "../custom-node/shared/graph";
 
 export const SCHEMA = `
-:create graphOutput {
-  id: String
-  =>
-  position: Int,
-  data: Json,
-  taskId: String,
-  sourceIds: [String]
+{
+  :create graphOutput {
+    id: String
+    =>
+    position: Int,
+    data: Json,
+    taskId: String,
+    sourceIds: [String]
+  }
+}
+  {
+  :create tasks {
+    id: String
+    =>
+    data: Json
+  }
 }
 `;
 
-export async function setGraphOutput(db: Cozo, taskId: string, outputItem: GraphOutputItem) {
+export function setTask(db: Cozo, taskId: string, taskData: any) {
+  return db.mutate(
+    `
+?[id, data] <- [[
+  $id,
+  json($data),
+]]
+
+:put tasks {
+  id
+  =>
+  data,
+}
+    `,
+    {
+      id: taskId,
+      data: taskData,
+    }
+  );
+}
+
+export function setGraphOutput(db: Cozo, taskId: string, outputItem: GraphOutputItem) {
   return db.mutate(
     `
 ?[id, position, data, taskId, sourceIds] <- [[
