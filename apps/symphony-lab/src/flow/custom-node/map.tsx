@@ -13,19 +13,19 @@ import { TitleBar } from "./shared/title-bar";
 import { TraceExplorer } from "./shared/trace-explorer";
 import { useOutputList } from "./shared/use-output-list";
 
-export interface TransformViewModel {
+export interface MapViewModel {
   plan: string;
   jq: string;
   isJqLocked: boolean;
 }
 
-export const transformViewModel: TransformViewModel = {
+export const mapViewModel: MapViewModel = {
   plan: "",
   jq: "",
   isJqLocked: false,
 };
 
-export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>>) => {
+export const MapNode = memo((props: NodeProps<NodeData<MapViewModel>>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldTrace, setShouldTrace] = useState(false);
   const { outputList, outputDataList } = useOutputList(props.data);

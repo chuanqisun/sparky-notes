@@ -21,22 +21,25 @@ import { useAuth } from "../account/use-auth";
 import { Cozo } from "../cozo/cozo";
 import { ChatNode, chatViewModel } from "../flow/custom-node/chat";
 import { ClaimSearchNode, claimSearchViewModel } from "../flow/custom-node/claim-search";
+import { ListNode, listViewModel } from "../flow/custom-node/list";
+import { MapNode, mapViewModel } from "../flow/custom-node/map";
 import type { GraphOutputItem, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
-import { TransformNode, transformViewModel } from "../flow/custom-node/transform";
 import { getGraphOutputs, setGraphOutput } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
 const nodeTypes = {
+  List: ListNode,
   ClaimSearch: ClaimSearchNode,
   Chat: ChatNode,
-  Transform: TransformNode,
+  Map: MapNode,
 };
 
 const initialViewModel: Record<string, any> = {
+  List: listViewModel,
   ClaimSearch: claimSearchViewModel,
   Chat: chatViewModel,
-  Transform: transformViewModel,
+  Map: mapViewModel,
 } satisfies Record<keyof typeof nodeTypes, any>;
 
 export interface GraphModel {
@@ -161,8 +164,9 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
     >
       <Panel position="top-left">
         <button onClick={() => addNodeByType("ClaimSearch")}>Claim search</button>
+        <button onClick={() => addNodeByType("List")}>List</button>
         <button onClick={() => addNodeByType("Chat")}>Chat</button>
-        <button onClick={() => addNodeByType("Transform")}>Transform</button>
+        <button onClick={() => addNodeByType("Map")}>Map</button>
       </Panel>
       <Panel position="top-right">{ModelSelectorElement}</Panel>
 
