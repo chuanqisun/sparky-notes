@@ -10,6 +10,8 @@ export interface CozoResult {
   headers: string[];
   ok: boolean;
   rows: any[][];
+  display?: string; // error only
+  message?: string; // error only
 }
 
 export interface RelationSchema {
@@ -28,12 +30,24 @@ export class Cozo {
 
   public query(cozoScript: string, params?: any) {
     const result = this.initializedDb.run(cozoScript, params ? JSON.stringify(params) : "", true);
-    return JSON.parse(result) as CozoResult;
+    const parsedResult = JSON.parse(result) as CozoResult;
+    if (!parsedResult.ok) {
+      console.log(parsedResult.display ?? parsedResult.message);
+      throw new Error(parsedResult.message ?? "Cozo DB query error");
+    }
+
+    return parsedResult;
   }
 
   public mutate(cozoScript: string, params?: any) {
     const result = this.initializedDb.run(cozoScript, params ? JSON.stringify(params) : "", false);
-    return JSON.parse(result) as CozoResult;
+    const parsedResult = JSON.parse(result) as CozoResult;
+    if (!parsedResult.ok) {
+      console.log(parsedResult.display ?? parsedResult.message);
+      throw new Error(parsedResult.message ?? "Cozo DB query error");
+    }
+
+    return parsedResult;
   }
 
   public listRelations(): RelationSchema[] {

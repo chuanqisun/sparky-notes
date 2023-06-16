@@ -65,6 +65,30 @@ export function getGraphOutput(db: Cozo, id: string): GraphOutputItem | undefine
     .at(0);
 }
 
+export interface SourceGraph {
+  nodes: GraphOutputItem[];
+  edges: { source: string; target: string }[];
+}
+export function getSourceGraph(db: Cozo, id: string): SourceGraph {
+  const results = db.query(
+    `
+edge[parentId, childId] := *graphOutput[parentId, parentPos, parentData, parentTask, parentSources], *graphOutput[childId, childPos, childData, childTask, childSources], is_in(parentId, childSources)
+chain[parentId, childId] := edge[parentId, childId], childId = $id
+chain[parentId, childId] := edge[parentId, childId], chain[childId, grandChildId], 
+
+?[parentId, childId] := chain[parentId, childId]
+  `,
+    {
+      id,
+    }
+  );
+
+  return {
+    nodes: results.rows as any[],
+    edges: [],
+  };
+}
+
 export function getGraphOutputs(db: Cozo, taskId?: string): GraphOutputItem[] {
   if (!taskId) return [];
 
