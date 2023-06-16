@@ -36,8 +36,10 @@ export const TransformNode = memo((props: NodeProps<NodeData<TransformViewModel>
     // clear outputs
     props.data.clearTaskOutputs();
 
+    // TODO handle provenance
+
     const output = await jqAutoPrompt({
-      input: inputArray,
+      input: inputArray.map((item) => item.data),
       onGetChat: (messages: ChatMessage[]) => props.data.context.chat(messages, { max_tokens: 1200, temperature: 0 }),
       onGetUserMessage: ({ lastError }) =>
         lastError ? `The previous query failed with error: ${lastError}. Try a different query` : props.data.viewModel.plan,

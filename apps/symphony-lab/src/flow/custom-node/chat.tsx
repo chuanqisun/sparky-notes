@@ -5,7 +5,7 @@ import { TextArea, TextAreaWrapper } from "./shared/form";
 import type { NodeData } from "./shared/graph";
 import { StyledOutput } from "./shared/json-view";
 import { SelectableNode } from "./shared/selectable-node";
-import { bulkBindTemplateVariablesByPosition, combineNArrays, getTemplateVariables, renderTemplate } from "./shared/template";
+import { bulkBindTemplateVariablesByPositionV2, getInputCombos, getTemplateVariables, renderTemplate } from "./shared/template";
 import { theme } from "./shared/theme";
 import { TitleBar } from "./shared/title-bar";
 import { TraceExplorer } from "./shared/trace-explorer";
@@ -41,17 +41,23 @@ export const ChatNode = memo((props: NodeProps<NodeData<ChatNodeViewModel>>) => 
     // get strings for each input
     const stringInputs = inputs.map((list) => list.map((item) => (typeof item.data === "string" ? item.data : JSON.stringify(item.data))));
 
+    const itemInputs = inputs.map((list) => list.map((item) => (typeof item.data === "string" ? item : { ...item, data: JSON.stringify(item.data) })));
+    const namedInputs = bulkBindTemplateVariablesByPositionV2(templateVariables, itemInputs);
+    const combos = getInputCombos(namedInputs);
+    console.log("Chat input combos", combos);
+    debugger;
+
     // combine all possible values
-    const allParamCombos = combineNArrays(...bulkBindTemplateVariablesByPosition(templateVariables, stringInputs));
-    console.log("Chat input combos", allParamCombos);
+    // const allParamCombos = combineNArrays(...bulkBindTemplateVariablesByPosition(templateVariables, stringInputs));
+    // console.log("Chat input combos", allParamCombos);
 
     const responseList: string[] = [];
 
-    for (const paramCombo of allParamCombos) {
-      const renderedTemplate = renderTemplate(props.data.viewModel.template, paramCombo);
+    for (const paramCombo of combos) {
+      const renderedTemplate = renderTemplate(props.data.viewModel.template, paramCombo.variablesDict);
       const response = await props.data.context.chat([{ role: "user", content: renderedTemplate }]);
       responseList.push(response);
-      const outputItems = responseList.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] }));
+      const outputItems = responseList.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: paramCombo.sourceIds }));
 
       const taskId = crypto.randomUUID();
       props.data.setTaskOutputs(taskId, outputItems);
