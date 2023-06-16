@@ -1,20 +1,5 @@
 import type { GraphOutputItem } from "./graph";
 
-function combineTwoArrays(arr1: any[], arr2: any[]): any[] {
-  const combinations = [];
-  for (let i = 0; i < arr1.length; i++) {
-    for (let j = 0; j < arr2.length; j++) {
-      combinations.push({ ...arr1[i], ...arr2[j] });
-    }
-  }
-  return combinations;
-}
-
-export function combineNArrays(...arrs: any[][]) {
-  // use reducer and `combineTwoArrays` to combine all arrays
-  return arrs.reduce((acc, arr) => combineTwoArrays(acc, arr));
-}
-
 export function getTemplateVariables(template: string) {
   return [...template.matchAll(/\{([^\}]+)\}/g)].map((match) => match[1]);
 }
@@ -49,15 +34,6 @@ export function getInputCombos(arrs: NamedInput[][]) {
 
 export type NamedInput = Record<string, GraphOutputItem>;
 export function bulkBindTemplateVariablesByPositionV2(variables: string[], inputs: GraphOutputItem[][]): NamedInput[][] {
-  const variableWithValues = variables.map((variable, variableIndex) => {
-    return inputs[variableIndex].map((input) => ({ [variable]: input }));
-  });
-
-  return variableWithValues;
-}
-
-/** @deprecated due to lack of provenance. */
-export function bulkBindTemplateVariablesByPosition(variables: string[], inputs: any[][]) {
   const variableWithValues = variables.map((variable, variableIndex) => {
     return inputs[variableIndex].map((input) => ({ [variable]: input }));
   });
