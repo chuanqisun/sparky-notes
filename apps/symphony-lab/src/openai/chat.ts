@@ -37,7 +37,7 @@ export async function getChatResponse(
 ): Promise<OpenAIChatResponse> {
   const payload = {
     messages,
-    temperature: 0.7,
+    temperature: 0,
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,

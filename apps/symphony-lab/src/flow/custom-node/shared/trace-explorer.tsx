@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import ForceGraph2D from "react-force-graph-2d";
 import styled from "styled-components";
 import type { Cozo } from "../../../cozo/cozo";
 import { getSourceGraphDFS } from "../../db/db";
@@ -14,13 +15,13 @@ export const TraceExplorer = (props: TraceExplorer) => {
 
   return (
     <TwoColumns className="nodrag nowheel">
-      <div>
+      <ItemList>
         {props.nodes.map((item) => (
           <div key={item.id}>
-            <button onClick={() => setExplorerRootId(item.id)}>Item {item.position}</button>
+            <button onClick={() => setExplorerRootId(item.id)}>{item.position}</button>
           </div>
         ))}
-      </div>
+      </ItemList>
       {explorerRootId ? <TraceGraph id={explorerRootId} graph={props.graph} /> : "Select an item to explore"}
     </TwoColumns>
   );
@@ -37,11 +38,26 @@ const TraceGraph = (props: TraceGraphProps) => {
     console.log(sourceGraph);
   }, [sourceGraph]);
 
-  return <div>Magic happens here {props.id}!</div>;
+  return (
+    <ForceGraph2D
+      height={320}
+      width={280}
+      graphData={{
+        nodes: sourceGraph.nodes,
+        links: sourceGraph.edges,
+      }}
+      nodeLabel={"id"}
+      nodeAutoColorBy={"taskId"}
+    />
+  );
 };
+
+const ItemList = styled.div`
+  overflow-y: scroll;
+`;
 
 const TwoColumns = styled.div`
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1rem;
+  grid-template-columns: 40px 280px;
+  grid-template-rows: 320px;
 `;
