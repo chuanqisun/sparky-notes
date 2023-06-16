@@ -1,5 +1,5 @@
 import { Cozo } from "../../cozo/cozo";
-import type { GraphOutputItem } from "../custom-node/shared/graph";
+import type { GraphOutputItem, GraphTaskData } from "../custom-node/shared/graph";
 
 export const SCHEMA = `
 {
@@ -21,7 +21,7 @@ export const SCHEMA = `
 }
 `;
 
-export function setTask(db: Cozo, taskId: string, taskData: any) {
+export function setTask(db: Cozo, taskId: string, taskData: GraphTaskData) {
   return db.mutate(
     `
 ?[id, data] <- [[
@@ -40,6 +40,23 @@ export function setTask(db: Cozo, taskId: string, taskData: any) {
       data: taskData,
     }
   );
+}
+
+export function getTaskByOutputId(db: Cozo, outputId: string) {
+  const results = db.query(
+    `
+?[taskId, taskData] := *tasks[taskId, taskData], *graphOutput[outputId, position, data, taskId, sourceIds], outputId = $outputId
+
+:limit 1
+  `,
+    { outputId }
+  );
+
+  return results.rows
+    .map((row) => {
+      return row[1] as GraphTaskData;
+    })
+    .at(0);
 }
 
 export function setGraphOutput(db: Cozo, taskId: string, outputItem: GraphOutputItem) {
@@ -96,64 +113,22 @@ export function getGraphOutput(db: Cozo, id: string): GraphOutputItem | undefine
 }
 
 export interface SourceGraph {
-  nodes: GraphOutputItem[];
+  nodes: GraphOutputNode[];
   edges: GraphOutputEdge[];
+}
+export interface GraphOutputNode {
+  id: string;
+  position: number;
+  data: any;
+  task: GraphTaskData;
 }
 export interface GraphOutputEdge {
   source: string;
   target: string;
 }
-export function getSourceGraph(db: Cozo, id: string): SourceGraph {
-  const nodeResults = db.query(
-    `
-edge[parentId, childId] := *graphOutput[parentId, parentPos, parentData, parentTask, parentSources], *graphOutput[childId, childPos, childData, childTask, childSources], is_in(parentId, childSources)
-chain[parentId, childId] := edge[parentId, childId], childId = $id
-chain[parentId, childId] := edge[parentId, childId], chain[childId, grandChildId] 
-reached[id] := chain[id, any] or chain[any, id]
-
-?[id, position, data, taskId, sourceIds] := *graphOutput[id, position, data, taskId, sourceIds], reached[id]
-  `,
-    {
-      id,
-    }
-  );
-
-  const nodes = nodeResults.rows.map((row) => {
-    return {
-      id: row[0] as string,
-      position: row[1] as number,
-      data: row[2] as any,
-      taskId: row[3] as string,
-      sourceIds: row[4] as string[],
-    };
-  });
-
-  const edgeResults = db.query(
-    `
-edge[parentId, childId] := *graphOutput[parentId, parentPos, parentData, parentTask, parentSources], *graphOutput[childId, childPos, childData, childTask, childSources], is_in(parentId, childSources)
-chain[parentId, childId] := edge[parentId, childId], childId = $id
-chain[parentId, childId] := edge[parentId, childId], chain[childId, grandChildId] 
-
-?[parentId, childId] := chain[parentId, childId]
-  `,
-    {
-      id,
-    }
-  );
-
-  const edges = edgeResults.rows.map((row) => ({
-    source: row[0] as string,
-    target: row[1] as string,
-  }));
-
-  return {
-    nodes,
-    edges,
-  };
-}
 
 export function getSourceGraphDFS(db: Cozo, id: string): SourceGraph {
-  const nodes: GraphOutputItem[] = [];
+  const nodes: GraphOutputNode[] = [];
   const edges: GraphOutputEdge[] = [];
 
   const exploredIds = new Set<string>();
@@ -166,7 +141,11 @@ export function getSourceGraphDFS(db: Cozo, id: string): SourceGraph {
 
     const node = getGraphOutput(db, currentId);
     if (!node) continue;
-    nodes.push(node);
+
+    const task = getTaskByOutputId(db, currentId);
+    if (!task) continue;
+
+    nodes.push({ id: node.id, position: node.position, data: node.data, task });
     edges.push(...node.sourceIds.map((sourceId) => ({ source: sourceId, target: currentId })));
 
     pendingIds.push(...node.sourceIds);

@@ -18,7 +18,7 @@ export interface NodeData<T = any> {
   setViewModel: (data: T) => void;
   setOutput: (output: any[]) => void;
   setTaskOutputs: (taskId: string, items: GraphOutputItem[]) => void;
-  setTask: (taskId: string, data: GraphTask) => void;
+  setTask: (taskId: string, data: GraphTaskData) => void;
   clearTaskOutputs: () => void;
   appendOutput: (output: any) => void;
 }
@@ -30,6 +30,6 @@ export interface GraphOutputItem {
   data: any;
 }
 
-export interface GraphTask {
+export interface GraphTaskData {
   name: string;
 }
