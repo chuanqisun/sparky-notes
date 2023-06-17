@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import styled from "styled-components";
 import type { Cozo } from "../../../cozo/cozo";
@@ -22,14 +22,26 @@ export const TraceExplorer = (props: TraceExplorer) => {
   );
 };
 
+export const TraceGraphContainer = styled.div`
+  background-color: black;
+`;
+
 export interface TraceGraphProps {
   graph: Cozo;
+  lens: Record<string, (data: any) => string>;
   id: string;
   width: number;
   height: number;
 }
 export const TraceGraph = (props: TraceGraphProps) => {
   const sourceGraph = useMemo(() => getSourceGraphDFS(props.graph, props.id), [props.graph, props.id]);
+
+  const dataToString = useCallback(
+    ({ task, data }: { task: any; data: any }) => {
+      return props.lens[task?.name ?? ""]?.(data) ?? (typeof data === "string" ? data : JSON.stringify(data));
+    },
+    [props.lens]
+  );
 
   useEffect(() => {
     console.log(sourceGraph);
@@ -43,8 +55,9 @@ export const TraceGraph = (props: TraceGraphProps) => {
         nodes: sourceGraph.nodes,
         links: sourceGraph.edges,
       }}
+      linkColor={() => "#555"}
       linkDirectionalArrowLength={8}
-      nodeLabel={(node) => JSON.stringify(node.data)}
+      nodeLabel={dataToString}
       nodeAutoColorBy={(node) => node.task.name}
     />
   );

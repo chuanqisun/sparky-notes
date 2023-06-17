@@ -20,11 +20,11 @@ import { useModelSelector } from "../account/model-selector";
 import { useAuth } from "../account/use-auth";
 import { Cozo } from "../cozo/cozo";
 import { ChatNode, chatViewModel } from "../flow/custom-node/chat";
-import { ClaimSearchNode, claimSearchViewModel } from "../flow/custom-node/claim-search";
+import { ClaimSearchNode, claimSearchLens, claimSearchViewModel } from "../flow/custom-node/claim-search";
 import { ListNode, listViewModel } from "../flow/custom-node/list";
 import { MapNode, mapViewModel } from "../flow/custom-node/map";
 import type { GraphOutputItem, GraphTaskData, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
-import { TraceGraph } from "../flow/custom-node/shared/trace-explorer";
+import { TraceGraph, TraceGraphContainer } from "../flow/custom-node/shared/trace-explorer";
 import { useMeasure } from "../flow/custom-node/shared/use-measure";
 import { getGraphOutputs, setGraphOutput, setTask } from "../flow/db/db";
 import { getH20Proxy } from "../hits/proxy";
@@ -35,6 +35,10 @@ const nodeTypes = {
   ClaimSearch: ClaimSearchNode,
   Chat: ChatNode,
   Map: MapNode,
+};
+
+const taskLenses = {
+  ClaimSearch: claimSearchLens,
 };
 
 const initialViewModel: Record<string, any> = {
@@ -183,14 +187,14 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
         <Controls />
         <Background />
       </ReactFlow>
-      <div ref={visRef}>
+      <TraceGraphContainer ref={visRef}>
         {selectedOutputId ? (
           <div>
             <button onClick={() => setSelectedOutputId(undefined)}>Close</button>
           </div>
         ) : null}
-        {selectedOutputId ? <TraceGraph width={visRect?.width ?? 0} height={200} graph={props.graph} id={selectedOutputId} /> : null}
-      </div>
+        {selectedOutputId ? <TraceGraph lens={taskLenses} width={visRect?.width ?? 0} height={320} graph={props.graph} id={selectedOutputId} /> : null}
+      </TraceGraphContainer>
     </>
   );
 };

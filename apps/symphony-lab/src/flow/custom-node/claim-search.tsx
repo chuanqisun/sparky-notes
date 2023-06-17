@@ -1,7 +1,8 @@
 import { memo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import { Handle, Position, type NodeProps } from "reactflow";
-import { getSemanticSearchInput } from "../../hits/search-claims";
+import type { SearchResultItem } from "../../azure/cognitive-search";
+import { getSemanticSearchInput, type ClaimDocument } from "../../hits/search-claims";
 import { InputField } from "./shared/form";
 import type { NodeData } from "./shared/graph";
 import { StyledOutput } from "./shared/json-view";
@@ -19,6 +20,8 @@ export const claimSearchViewModel: ClaimSearchViewModel = {
   query: "",
 };
 
+export const claimSearchLens = (data: any) => (data as SearchResultItem<ClaimDocument>).ClaimTitle;
+
 export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewModel>>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldTrace, setShouldTrace] = useState(false);
@@ -28,7 +31,7 @@ export const ClaimSearchNode = memo((props: NodeProps<NodeData<ClaimSearchViewMo
     console.log(props.data.viewModel.query);
     const searchResults = await props.data.context.searchClaims(getSemanticSearchInput(props.data.viewModel.query, 10));
     console.log(searchResults);
-    props.data.setTask(taskId, { name: "Claim search" });
+    props.data.setTask(taskId, { name: "ClaimSearch" });
     props.data.setTaskOutputs(
       taskId,
       (searchResults.value ?? []).map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []
