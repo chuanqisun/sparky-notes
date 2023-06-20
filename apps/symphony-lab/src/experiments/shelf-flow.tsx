@@ -21,6 +21,7 @@ import { useAuth } from "../account/use-auth";
 import { Cozo } from "../cozo/cozo";
 import { ChatNode, chatViewModel } from "../flow/custom-node/chat";
 import { ClaimSearchNode, claimSearchLens, claimSearchViewModel } from "../flow/custom-node/claim-search";
+import { JsonNode, jsonViewModel } from "../flow/custom-node/json";
 import { ListNode, listViewModel } from "../flow/custom-node/list";
 import { MapNode, mapViewModel } from "../flow/custom-node/map";
 import type { GraphOutputItem, GraphTaskData, NodeContext, NodeData } from "../flow/custom-node/shared/graph";
@@ -31,6 +32,7 @@ import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 
 const nodeTypes = {
+  Json: JsonNode,
   List: ListNode,
   ClaimSearch: ClaimSearchNode,
   Chat: ChatNode,
@@ -42,6 +44,7 @@ const taskLenses = {
 };
 
 const initialViewModel: Record<string, any> = {
+  Json: jsonViewModel,
   List: listViewModel,
   ClaimSearch: claimSearchViewModel,
   Chat: chatViewModel,
@@ -177,6 +180,7 @@ export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
         proOptions={{ hideAttribution: true }}
       >
         <Panel position="top-left">
+          <button onClick={() => addNodeByType("Json")}>JSON</button>
           <button onClick={() => addNodeByType("ClaimSearch")}>Claim search</button>
           <button onClick={() => addNodeByType("List")}>List</button>
           <button onClick={() => addNodeByType("Chat")}>Chat</button>
