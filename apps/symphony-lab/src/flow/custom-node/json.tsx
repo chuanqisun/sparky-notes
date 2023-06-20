@@ -19,10 +19,19 @@ export const JsonNode = memo((props: NodeProps<NodeData<JsonViewModel>>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldTrace, setShouldTrace] = useState(false);
   const { outputList, outputDataList } = useOutputList(props.data);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const handleRun = async () => {
     const taskId = crypto.randomUUID();
     props.data.setTask(taskId, { name: "Json" });
-    // props.data.setTaskOutputs(taskId, textItems.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []);
+    const jsonFile = inputRef.current?.files?.[0];
+    if (!jsonFile) return;
+    const obj = JSON.parse(await jsonFile.text());
+
+    // coerce to array
+    const array = Array.isArray(obj) ? obj : [obj];
+    props.data.setTaskOutputs(taskId, array.map((value, position) => ({ data: value, position, id: crypto.randomUUID(), sourceIds: [] })) ?? []);
   };
 
   return (
@@ -37,7 +46,7 @@ export const JsonNode = memo((props: NodeProps<NodeData<JsonViewModel>>) => {
         onClear={props.data.clearTaskOutputs}
       />
       <div className="nodrag">
-        <input type="file" />
+        <input ref={inputRef} type="file" />
       </div>
       {shouldTrace ? <TraceExplorer onSelect={props.data.context.onSelectOutput} nodes={outputList} /> : null}
       <StyledOutput className="nodrag nowheel">
