@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { Link, Outlet, RouterProvider, createBrowserRouter, type NonIndexRouteObject } from "react-router-dom";
 import { styled } from "styled-components";
 import { AccountContextProvider } from "./account/account-context";
-import { Cozo, dbAsync } from "./cozo/cozo";
+import { Cozo, createDb } from "./cozo/cozo";
 import { SCHEMA, getGraphOutputs, setGraphOutput } from "./flow/db/db";
 import "./index.css";
 import { Main } from "./shell/main";
@@ -37,14 +37,19 @@ const ROUTES: NamedRoute[] = [
   {
     displayName: "Basic shelf",
     path: "/experiments/basic-shelf",
-    lazy: () => import("./experiments/basic-shelf").then(({ BasicShelf }) => ({ Component: BasicShelf })),
+    lazy: () =>
+      import("./experiments/basic-shelf")
+        .then(async ({ BasicShelf }) => ({ BasicShelf, db: await createDb() }))
+        .then(({ BasicShelf, db }) => {
+          return { Component: () => <BasicShelf db={db} /> };
+        }),
   },
   {
     displayName: "Shelf flow",
     path: "/experiments/shelf-flow",
     lazy: () =>
       import("./experiments/shelf-flow")
-        .then(async ({ ShelfFlow }) => ({ ShelfFlow, db: await dbAsync }))
+        .then(async ({ ShelfFlow }) => ({ ShelfFlow, db: await createDb() }))
         .then(({ ShelfFlow, db }) => {
           const graph = new Cozo(db, SCHEMA);
           testGraph(graph);

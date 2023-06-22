@@ -6,6 +6,11 @@ export const dbAsync = init(wasmUrl).then(() => {
   return db;
 });
 
+export async function createDb() {
+  await init(wasmUrl);
+  return CozoDb.new();
+}
+
 export interface CozoResult {
   headers: string[];
   ok: boolean;
@@ -22,10 +27,13 @@ export interface RelationSchema {
 export class Cozo {
   private initializedDb: CozoDb;
 
-  constructor(db: CozoDb, schema: string) {
-    db.run(schema, "", false);
+  constructor(db: CozoDb, schema?: string) {
     this.initializedDb = db;
-    console.log("graph initized to", this.listRelations());
+
+    if (schema) {
+      db.run(schema, "", false);
+      console.log("graph initized to", this.listRelations());
+    }
   }
 
   public query(cozoScript: string, params?: any) {
