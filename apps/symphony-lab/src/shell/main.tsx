@@ -16,4 +16,5 @@ const StyledMain = styled.main`
   color-scheme: light;
   display: grid;
   grid-template-rows: auto 1fr;
+  min-height: 0;
 `;

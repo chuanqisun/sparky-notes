@@ -1,5 +1,6 @@
 import { promised } from "jq-web-wasm/jq.wasm";
 import { type ChatMessage } from "../openai/chat";
+import { jsonToTyping, sampleJsonContent } from "./json-reflection";
 
 export interface GetSystemMessageInput {
   input: any;
@@ -21,7 +22,7 @@ export interface JqAutoPromptConfig {
   onValidateResult?: (result: any) => any;
   previousMessages?: ChatMessage[];
   retryLeft?: number;
-  getSystemMessage: (input: GetSystemMessageInput) => string;
+  getSystemMessage?: (input: GetSystemMessageInput) => string;
 }
 
 export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
@@ -36,7 +37,7 @@ export async function jqAutoPrompt(config: JqAutoPromptConfig): Promise<any> {
     onValidateResult,
     previousMessages = [],
     retryLeft = 3,
-    getSystemMessage,
+    getSystemMessage = getDefaultSystemMessage,
   } = config;
 
   const currentUserMessage: ChatMessage = { role: "user", content: onGetUserMessage({ lastError: lastError ? lastError : undefined }) };
@@ -107,4 +108,23 @@ Final answer:
       onGetUserMessage: onGetUserMessage,
     });
   }
+}
+
+function getDefaultSystemMessage({ input, responseTemplate }: GetSystemMessageInput) {
+  return `
+Design with a jq filter that transforms a JSON input into the desired output. The json input is defined by the following type
+
+\`\`\`typescript
+${jsonToTyping(input)}
+\`\`\`
+
+Sample input:
+\`\`\`json
+${(JSON.stringify(sampleJsonContent(input)), null, 2)}
+\`\`\`
+
+Now respond in the format delimited by triple quotes:
+"""
+${responseTemplate}
+"""`;
 }
