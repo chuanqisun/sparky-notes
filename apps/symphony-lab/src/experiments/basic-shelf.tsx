@@ -44,13 +44,13 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       });
 
       setShelf(output);
-    } else if (userMessage.startsWith("/each")) {
+    } else if (userMessage.startsWith("/tag")) {
       if (!Array.isArray(shelf)) {
         setStatus("Shelf must be a list. (hint: use /list to convert)");
         return;
       }
 
-      const eachPlan = userMessage.slice("/each".length).trim();
+      const eachPlan = userMessage.slice("/tag".length).trim();
     } else if (userMessage.startsWith("/list")) {
       const listDescription = userMessage.slice("/list".length).trim();
 
