@@ -1,11 +1,12 @@
 import type { CozoDb } from "cozo-lib-wasm";
 import type React from "react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
+import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 import { jqAutoPrompt } from "../jq/jq-auto-prompt";
 import type { ChatMessage } from "../openai/chat";
 import { CenterClamp } from "../shell/center-clamp";
@@ -18,6 +19,12 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const graph = useRef(new Cozo(db));
 
   const { chat, ModelSelectorElement, embed } = useModelSelector();
+
+  const rateLimitedChat = useMemo(() => {
+    const queue = rateLimitQueue(300, 0.1);
+    const rateLimitedProxy = withAsyncQueue(queue, chat);
+    return rateLimitedProxy;
+  }, [chat]);
 
   const [shelf, setShelf] = useState<any>({});
   const [userMessage, setUserMessage] = useState("");
@@ -37,7 +44,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       const jqPlan = userMessage.slice("/jq".length).trim();
       const output = await jqAutoPrompt({
         input: shelf,
-        onGetChat: (messages: ChatMessage[]) => chat(messages, { max_tokens: 1200, temperature: 0 }),
+        onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
         onGetUserMessage: ({ lastError }) => (lastError ? `The previous query failed with error: ${lastError}. Try a different query` : jqPlan),
         onJqString: (jq) => setStatus(`jq: ${jq}`),
         onRetry: (error) => setStatus(`retry due to ${error}`),
@@ -49,8 +56,43 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
         setStatus("Shelf must be a list. (hint: use /list to convert)");
         return;
       }
+      const results: string[] = [];
+      let resultCount = 0;
+      const tagPlan = userMessage.slice("/tag".length).trim();
 
-      const eachPlan = userMessage.slice("/tag".length).trim();
+      function getTaggingMessage(plan: string, target: any) {
+        const targetString = typeof target === "string" ? target : JSON.stringify(target);
+        const messages: ChatMessage[] = [
+          {
+            role: "system",
+            content: `Follow the instruction to tag the text delimited by triple quotes.
+
+Make sure the tags meet the requirement "${plan}"
+Respond a single line of tags separated by commas, e.g. Tag 1, Tag 2, Tag 3`,
+          },
+          {
+            role: "user",
+            content: `
+"""
+${targetString}
+"""
+            `,
+          },
+        ];
+
+        return messages;
+      }
+
+      await Promise.all(
+        (shelf as any[]).map(async (item, index) => {
+          const result = await rateLimitedChat(getTaggingMessage(tagPlan, item), { max_tokens: 1200, temperature: 0 });
+          results[index] = result;
+          resultCount++;
+          setStatus(`${resultCount} of ${shelf.length}: ${result}`);
+        })
+      );
+
+      setShelf(results);
     } else if (userMessage.startsWith("/list")) {
       const listDescription = userMessage.slice("/list".length).trim();
 
