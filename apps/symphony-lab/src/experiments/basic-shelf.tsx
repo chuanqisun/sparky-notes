@@ -8,7 +8,7 @@ import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
 import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 import { jqAutoPrompt } from "../jq/jq-auto-prompt";
-import { jsAutoPrompt } from "../jq/js-auto-prompt";
+import { jsAutoPromptV2 } from "../jq/js-auto-prompt-v2";
 import type { ChatMessage } from "../openai/chat";
 import { CenterClamp } from "../shell/center-clamp";
 
@@ -43,7 +43,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       } catch {}
     } else if (userMessage.startsWith("/code")) {
       const codePlan = userMessage.slice("/code".length).trim();
-      const output = await jsAutoPrompt({
+      const output = await jsAutoPromptV2({
         input: shelf,
         onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
         onGetUserMessage: ({ lastError }) =>

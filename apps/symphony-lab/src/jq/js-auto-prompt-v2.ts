@@ -22,7 +22,7 @@ export interface JsAutoPromptConfig {
   retryLeft?: number;
 }
 
-export async function jsAutoPrompt(config: JsAutoPromptConfig): Promise<any> {
+export async function jsAutoPromptV2(config: JsAutoPromptConfig): Promise<any> {
   const { input, lastError, onGetChat, onGetUserMessage, onRetry, onShouldAbort, previousMessages = [], retryLeft = 3 } = config;
 
   const currentUserMessage: ChatMessage = { role: "user", content: onGetUserMessage({ lastError: lastError ? lastError : undefined }) };
@@ -49,7 +49,7 @@ export async function jsAutoPrompt(config: JsAutoPromptConfig): Promise<any> {
 
     console.log({ functionParams, functionBody });
     const syntheticFunction = new Function(...[...functionParams, functionBody]);
-    const result = JSON.parse(syntheticFunction(JSON.stringify(input)));
+    const result = syntheticFunction(input);
 
     return result;
   } catch (e: any) {
@@ -61,7 +61,7 @@ export async function jsAutoPrompt(config: JsAutoPromptConfig): Promise<any> {
     const errorMessage = [e?.name, e?.message ?? e?.stack].filter(Boolean).join(" ").trim();
     onRetry?.(errorMessage);
 
-    return jsAutoPrompt({
+    return jsAutoPromptV2({
       ...config,
       lastError: errorMessage,
       previousMessages: [...previousMessages, currentUserMessage, { role: "assistant", content: responseText }],
@@ -73,24 +73,24 @@ export async function jsAutoPrompt(config: JsAutoPromptConfig): Promise<any> {
 
 function getDefaultSystemMessage({ input }: GetSystemMessageInput) {
   return `
-Design a javascript function that transforms a single input parameter into an array that meets the provided goal. The input parameter is defined by the following type
+Design a javascript function that transforms a single input into an array that meets the provided goal.
+The function has the following signature:
 
 \`\`\`typescript
-${jsonToTyping(input)}
+function transform(input: InputType): any[];
+  
+${jsonToTyping(input, "InputType")}
 \`\`\`
 
 Sample input:
-\`\`\`json
+"""
 ${JSON.stringify(sampleJsonContent(input), null, 2)}
-\`\`\`
+"""
 
 Now respond with the source code, use this format
 \`\`\`javascript
 function transform(input) {
-  const inputObject = JSON.parse(input);
   ...
-  const output = JSON.stringify(resultObject);
-  return output;
 }
 \`\`\`
 `;

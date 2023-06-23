@@ -120,7 +120,7 @@ ${jsonToTyping(input)}
 
 Sample input:
 \`\`\`json
-${(JSON.stringify(sampleJsonContent(input)), null, 2)}
+${JSON.stringify(sampleJsonContent(input), null, 2)}
 \`\`\`
 
 Now respond in the format delimited by triple quotes:
