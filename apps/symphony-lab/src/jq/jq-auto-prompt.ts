@@ -112,7 +112,7 @@ Final answer:
 
 function getDefaultSystemMessage({ input, responseTemplate }: GetSystemMessageInput) {
   return `
-Design with a jq filter that transforms a JSON input into the desired output. The json input is defined by the following type
+Design a jq filter that transforms a JSON input into the desired output. The json input is defined by the following type
 
 \`\`\`typescript
 ${jsonToTyping(input)}
