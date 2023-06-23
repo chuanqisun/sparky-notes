@@ -68,7 +68,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
             content: `Follow the instruction to tag the text delimited by triple quotes.
 
 Make sure the tags meet the requirement "${plan}"
-Respond a single line of tags separated by commas, e.g. Tag 1, Tag 2, Tag 3`,
+Respond a single line of tags separated by commas, e.g. "Tag 1, Tag 2, Tag 3"`,
           },
           {
             role: "user",
