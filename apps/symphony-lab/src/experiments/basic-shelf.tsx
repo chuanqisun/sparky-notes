@@ -8,6 +8,7 @@ import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
 import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 import { jqAutoPrompt } from "../jq/jq-auto-prompt";
+import { jsAutoPrompt } from "../jq/js-auto-prompt";
 import type { ChatMessage } from "../openai/chat";
 import { CenterClamp } from "../shell/center-clamp";
 
@@ -40,6 +41,16 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       try {
         setShelf(JSON.parse(jsonText));
       } catch {}
+    } else if (userMessage.startsWith("/code")) {
+      const codePlan = userMessage.slice("/code".length).trim();
+      const output = await jsAutoPrompt({
+        input: shelf,
+        onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
+        onGetUserMessage: ({ lastError }) =>
+          lastError ? `The previous function call failed with error: ${lastError}. Try a different query` : `Goal: ${codePlan}`,
+      });
+
+      setShelf(output);
     } else if (userMessage.startsWith("/jq")) {
       const jqPlan = userMessage.slice("/jq".length).trim();
       const output = await jqAutoPrompt({

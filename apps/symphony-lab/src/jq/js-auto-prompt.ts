@@ -37,7 +37,21 @@ export async function jsAutoPrompt(config: JsAutoPromptConfig): Promise<any> {
   }
 
   try {
-    return responseText;
+    const fencedCode = responseText.match(/```javascript((.|\n)*)```/m)?.[1].trim();
+    const functionParams =
+      fencedCode
+        ?.match(/function\s*.+?\((.+?)\)/m)?.[1]
+        .trim()
+        ?.split(",")
+        .map((i) => i.trim())
+        .filter(Boolean) ?? [];
+    const functionBody = fencedCode?.match(/function\s*.+?\s*\{((.|\n)*)\}/m)?.[1].trim() ?? "";
+
+    console.log({ functionParams, functionBody });
+    const syntheticFunction = new Function(...[...functionParams, functionBody]);
+    const result = JSON.parse(syntheticFunction(JSON.stringify(input)));
+
+    return result;
   } catch (e: any) {
     if (retryLeft <= 0) {
       // two messages per iteration
@@ -59,7 +73,7 @@ export async function jsAutoPrompt(config: JsAutoPromptConfig): Promise<any> {
 
 function getDefaultSystemMessage({ input }: GetSystemMessageInput) {
   return `
-Design with a javascript function that transforms a single input parameter into the desired output. The input parameter is defined by the following type
+Design with a javascript function that transforms a single input parameter into an array that meets the provided goal. The input parameter is defined by the following type
 
 \`\`\`typescript
 ${jsonToTyping(input)}
@@ -73,7 +87,10 @@ ${(JSON.stringify(sampleJsonContent(input)), null, 2)}
 Now respond with the source code, use this format
 \`\`\`javascript
 function transform(input) {
+  const inputObject = JSON.parse(input);
   ...
+  const output = JSON.stringify(resultObject);
+  return output;
 }
 \`\`\`
 `;
