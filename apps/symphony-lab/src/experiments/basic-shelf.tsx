@@ -63,47 +63,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
       setShelf(output);
     } else if (userMessage.startsWith("/tag")) {
-      if (!Array.isArray(shelf)) {
-        setStatus("Shelf must be a list. (hint: use /list to convert)");
-        return;
-      }
-      const results: string[] = [];
-      let resultCount = 0;
-      const tagPlan = userMessage.slice("/tag".length).trim();
-
-      function getTaggingMessage(plan: string, target: any) {
-        const targetString = typeof target === "string" ? target : JSON.stringify(target);
-        const messages: ChatMessage[] = [
-          {
-            role: "system",
-            content: `Follow the instruction to tag the text delimited by triple quotes.
-
-Make sure the tags meet the requirement "${plan}"
-Respond a single line of tags separated by commas, e.g. "Tag 1, Tag 2, Tag 3"`,
-          },
-          {
-            role: "user",
-            content: `
-"""
-${targetString}
-"""
-            `,
-          },
-        ];
-
-        return messages;
-      }
-
-      await Promise.all(
-        (shelf as any[]).map(async (item, index) => {
-          const result = await rateLimitedChat(getTaggingMessage(tagPlan, item), { max_tokens: 1200, temperature: 0 });
-          results[index] = result;
-          resultCount++;
-          setStatus(`${resultCount} of ${shelf.length}: ${result}`);
-        })
-      );
-
-      setShelf(results);
+      throw new Error("Not implemented");
     } else if (userMessage.startsWith("/list")) {
       const listDescription = userMessage.slice("/list".length).trim();
 
