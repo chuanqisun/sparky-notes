@@ -27,7 +27,31 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     return rateLimitedProxy;
   }, [chat]);
 
-  const [shelf, setShelf] = useState<any>({});
+  const [shelfList, setShelfList] = useState<{ index: number; shelves: any[] }>({ index: 0, shelves: [[]] });
+
+  const setShelf = (shelf: any) => {
+    setShelfList((shelfList) => {
+      // truncate later shelves
+      const remainingShelves = shelfList.shelves.slice(0, shelfList.index + 1);
+      // append new shelf
+      const newShelfList = [...remainingShelves, shelf];
+      const newIndex = shelfList.index + 1;
+
+      return { index: newIndex, shelves: newShelfList };
+    });
+  };
+
+  const openShelf = (index: number) => {
+    setShelfList((shelfList) => {
+      if (index < 0 || index >= shelfList.shelves.length) {
+        return shelfList;
+      }
+      return { ...shelfList, index };
+    });
+  };
+
+  const shelf = shelfList.shelves[shelfList.index];
+
   const [userMessage, setUserMessage] = useState("");
   const [status, setStatus] = useState("");
 
@@ -90,6 +114,14 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       <StyledOutput>
         <JSONTree theme={theme} hideRoot={true} data={shelf} />
       </StyledOutput>
+      <div>
+        {shelfList.shelves.map((_, index) => (
+          <button onClick={() => openShelf(index)}>
+            {index === shelfList.index ? "*" : ""}
+            {index}
+          </button>
+        ))}
+      </div>
       <ChatWidget>
         <div>
           <AutoResize data-resize-textarea-content={userMessage}>
@@ -109,7 +141,6 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
 const AppLayout = styled(CenterClamp)`
   display: grid;
-  gap: 1rem;
   width: 100%;
   min-height: 0;
   align-content: start;
