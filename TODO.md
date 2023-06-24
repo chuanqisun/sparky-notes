@@ -40,6 +40,7 @@
 - `/lens + /gpt` for probabilistic non-destructive transform
 - `/code` for destructive transform
 - `/gpt` for probabilistic destructive transform
+- With proxy, lens can track provenance
 
 ## Figma runtime pain point
 
