@@ -1,6 +1,6 @@
 import type { CozoDb } from "cozo-lib-wasm";
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
@@ -18,8 +18,11 @@ export interface BasicShelfProps {
 
 export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const graph = useRef(new Cozo(db));
+  useEffect(() => {
+    console.log(graph);
+  }, [graph]);
 
-  const { chat, ModelSelectorElement, embed } = useModelSelector();
+  const { chat, ModelSelectorElement } = useModelSelector();
 
   const rateLimitedChat = useMemo(() => {
     const queue = rateLimitQueue(300, 0.1);
