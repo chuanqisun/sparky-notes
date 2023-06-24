@@ -18,17 +18,28 @@ export interface JsAutoPromptConfig {
   onRetry?: (errorMessage: string) => any;
   onShouldAbort?: () => boolean;
   onValidateResult?: (result: any) => any;
+  onGetSystemMessage?: (props: GetSystemMessageInput) => string;
   previousMessages?: ChatMessage[];
   retryLeft?: number;
 }
 
 export async function jsAutoPromptV2(config: JsAutoPromptConfig): Promise<any> {
-  const { input, lastError, onGetChat, onGetUserMessage, onRetry, onShouldAbort, previousMessages = [], retryLeft = 3 } = config;
+  const {
+    input,
+    lastError,
+    onGetChat,
+    onGetUserMessage,
+    onGetSystemMessage = getDefaultSystemMessage,
+    onRetry,
+    onShouldAbort,
+    previousMessages = [],
+    retryLeft = 3,
+  } = config;
 
   const currentUserMessage: ChatMessage = { role: "user", content: onGetUserMessage({ lastError: lastError ? lastError : undefined }) };
   const systemMessage: ChatMessage = {
     role: "system",
-    content: `${getDefaultSystemMessage({ input }).trim()}`,
+    content: `${onGetSystemMessage({ input }).trim()}`,
   };
   const responseText = await onGetChat([systemMessage, ...previousMessages, currentUserMessage]);
 
@@ -66,7 +77,7 @@ export async function jsAutoPromptV2(config: JsAutoPromptConfig): Promise<any> {
       lastError: errorMessage,
       previousMessages: [...previousMessages, currentUserMessage, { role: "assistant", content: responseText }],
       retryLeft: retryLeft - 1,
-      onGetUserMessage: onGetUserMessage,
+      onGetUserMessage,
     });
   }
 }
@@ -88,6 +99,32 @@ ${JSON.stringify(sampleJsonContent(input), null, 2)}
 """
 
 Now respond with the source code, use this format
+\`\`\`javascript
+function transform(input) {
+  ...
+}
+\`\`\`
+`;
+}
+
+export function getStringArraySystemMessage({ input }: GetSystemMessageInput) {
+  return `
+Design a javascript function that transforms the input into an array of strings that meet the provided goal.
+The function has the following signature:
+
+\`\`\`typescript
+function transform(input: InputType): string[];
+  
+${jsonToTyping(input, "InputType")}
+\`\`\`
+
+Sample input:
+"""
+${JSON.stringify(sampleJsonContent(input), null, 2)}
+"""
+
+Now respond with the source code, use this format:
+
 \`\`\`javascript
 function transform(input) {
   ...

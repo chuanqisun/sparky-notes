@@ -65,6 +65,12 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       try {
         setShelf(JSON.parse(jsonText));
       } catch {}
+    } else if (userMessage.startsWith("/export")) {
+      const fileHandle = (await (window as any).showSaveFilePicker()) as FileSystemFileHandle;
+      const file = await fileHandle.createWritable();
+      await file.write(JSON.stringify(shelf));
+      await file.close();
+      setStatus("Exported JSON file");
     } else if (userMessage.startsWith("/code")) {
       const codePlan = userMessage.slice("/code".length).trim();
       const output = await jsAutoPromptV2({
@@ -87,24 +93,104 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
       setShelf(output);
     } else if (userMessage.startsWith("/tag")) {
-      throw new Error("Not implemented");
-    } else if (userMessage.startsWith("/list")) {
-      const listDescription = userMessage.slice("/list".length).trim();
+      if (!Array.isArray(shelf)) {
+        setStatus("The shelf must be a list of texts. Hint: /code can help transform it into a list of texts");
+        return;
+      }
 
-      const output = await jqAutoPrompt({
-        input: shelf,
-        onGetChat: (messages: ChatMessage[]) => chat(messages, { max_tokens: 1200, temperature: 0 }),
-        onGetUserMessage: ({ lastError }) => (lastError ? `The previous query failed with error: ${lastError}. Try a different query` : listDescription),
-        onJqString: (jq) => setStatus(`jq: ${jq}`),
-        onRetry: (error) => setStatus(`retry due to ${error}`),
-        onValidateResult: (result) => {
-          if (!Array.isArray(result)) {
-            throw new Error("The result must be a list");
-          }
-        },
+      const tagPlan = userMessage.slice("/tag".length).trim();
+
+      const slidingWindows: { startIndex: number; endIndex: number; focusIndex: number }[] = ((totalLength: number, radius: number) => {
+        const results: { startIndex: number; endIndex: number; focusIndex: number }[] = [];
+        for (let focusIndex = 0; focusIndex < totalLength; focusIndex++) {
+          const startIndex = Math.max(0, focusIndex - radius);
+          const endIndex = Math.min(totalLength, focusIndex + radius + 1);
+          results.push({ startIndex, endIndex, focusIndex });
+        }
+        return results;
+      })(shelf.length, 3);
+
+      const contextBlurbs: string[] = slidingWindows.map(({ startIndex, endIndex, focusIndex }) => {
+        const lines = shelf.slice(startIndex, endIndex);
+        const relativeFocusIndex = focusIndex - startIndex;
+
+        return lines
+          .map((line, index) => {
+            const prefix = index === relativeFocusIndex ? "=>" : "  ";
+            return prefix + line;
+          })
+          .join("\n");
       });
 
-      setShelf(output);
+      const tagRequestMessages: ChatMessage[][] = contextBlurbs.map((contextBlurb) => [
+        {
+          role: "system",
+          content: `Read the entire snippet and tag the line marked with  "=>". Make sure the tags represent "${tagPlan}"
+Respond in the format delimited by triple quotes:
+
+"""
+focus line: <repeat the line marked by the arrow>
+tags: <comma separated tags>
+"""
+        `,
+        },
+        { role: "user", content: contextBlurb },
+      ]);
+
+      let progress = 0;
+
+      const tagsResult = await Promise.all(
+        tagRequestMessages.map((messages) =>
+          rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 })
+            .then((response) => {
+              progress++;
+              const tags =
+                response
+                  .split("\n")
+                  .find((line) => line.startsWith("tags:"))
+                  ?.slice("tags:".length)
+                  .trim()
+                  .split(",")
+                  .map((tag) => tag.trim()) ?? [];
+              setStatus(`Progress: ${progress}/${tagRequestMessages.length}, ${tags.join(", ")}`);
+
+              return tags;
+            })
+            .catch((error) => {
+              progress++;
+              setStatus(`Progress: ${progress}/${tagRequestMessages.length}, ${error}`);
+              return [];
+            })
+        )
+      );
+
+      const tagsFieldNameMessage: ChatMessage[] = [
+        {
+          role: "system",
+          content: `User will provide you a list of tags that represent "${tagPlan}". Provide a lowerCamelCase variable name for the tags. Respond in the format delimited by triple quotes:
+"""
+Observation: <make an observation about the nature of the tags>
+VariableName: <a single lowerCamelCase variable name that represents all the tags>
+"""
+          `,
+        },
+        {
+          role: "user",
+          content: tagsResult.flat().slice(0, 10).join(", "),
+        },
+      ];
+
+      const tagFieldNameResponse = await rateLimitedChat(tagsFieldNameMessage, { max_tokens: 200, temperature: 0 });
+      const tagFieldName = tagFieldNameResponse.match(/VariableName: (.*)/)?.[1].trim() ?? "tags";
+
+      const taggedShelf = shelf.map((line, index) => {
+        const tags = tagsResult[index];
+        return { line, [tagFieldName]: tags };
+      });
+
+      setStatus(`Tags added to "${tagFieldName}" field`);
+
+      setShelf(taggedShelf);
     }
   };
 
@@ -116,7 +202,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       </StyledOutput>
       <div>
         {shelfList.shelves.map((_, index) => (
-          <button onClick={() => openShelf(index)}>
+          <button key={index} onClick={() => openShelf(index)}>
             {index === shelfList.index ? "*" : ""}
             {index}
           </button>

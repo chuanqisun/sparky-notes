@@ -16,7 +16,6 @@ export interface AsyncQueue {
 }
 
 export function rateLimitQueue(rpm: number, margin = 0.1): AsyncQueue {
-  console.log("queue created");
   let queue: any[] = [];
   let started = false;
 
