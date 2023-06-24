@@ -29,27 +29,17 @@
 
 ## Symphony
 
-- History compression: preserve handle turning points and compress straight lines
-- Output thoughts from ambient only
-- Rethink the "Thought" node
-- When there is momentum, allow multiple "Thought" nodes in a row/column chain
-- Category design
-  - Nouns: Question, Thought, Action plan, Observation, Answer, Mixed
-  - Verb: Think, Act, Conclude, Step, Auto-run
-- Workflow design
-  - Workflow starts with Question, expand into Thoughts, Action plans, Observations, and Answers
-  - Applying Think to Question leads to Thoughts, Action plans, or Answers
-  - Applying Act to Action plans leads to Observations
-  - Applying Think to Observations leads to Thoughts, Action plans, or Answers
-  - Applying Conclude to anything leads to Answers
-- Causally connected steps are joined by directed edge
-  - No cycle allowed
-  - All nodes along the path to the root are collectively considered "Context"
-  - When selection is mixed, context is topological sort of the superset of all paths
-- Details
-  - Use constant connector color
-- Context order control (topological sort leads to serveral equivalent orders)
-- Idea: grow the visualization iteratively via GPT-4
+- Use "lens" to achieve universal object r/w
+- Every object has `id` and `data`
+- Every shelf has its data (list of objects) and the source code that generated it
+- First empty shelf comes with `/clear` command
+- "lens" should come with live preview
+- Only support few commands:
+- `/lens` alone behaves like `/code`
+- `/lens + /code` for deterministic non-destructive transform
+- `/lens + /gpt` for probabilistic non-destructive transform
+- `/code` for destructive transform
+- `/gpt` for probabilistic destructive transform
 
 ## Figma runtime pain point
 
