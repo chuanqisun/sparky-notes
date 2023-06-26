@@ -65,7 +65,6 @@ export async function jsAutoPromptV2(config: JsAutoPromptConfig): Promise<any> {
     return result;
   } catch (e: any) {
     if (retryLeft <= 0) {
-      // two messages per iteration
       throw new Error("Auto prompt engineering failed to converge. All retries used up");
     }
 
