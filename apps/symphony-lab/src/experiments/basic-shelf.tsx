@@ -10,81 +10,11 @@ import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 import { jqAutoPrompt } from "../jq/jq-auto-prompt";
 import { jsAutoPromptV2 } from "../jq/js-auto-prompt-v2";
 import type { ChatMessage } from "../openai/chat";
+import { useShelfManager } from "../shelf/use-shelf-manager";
 import { CenterClamp } from "../shell/center-clamp";
 
 export interface BasicShelfProps {
   db: CozoDb;
-}
-
-interface AppState {
-  currentShelfIndex: number;
-  shelves: Shelf[];
-}
-
-interface Shelf {
-  source: string;
-  data: any[];
-}
-
-export function useShelfManager() {
-  const [shelfState, setShelfState] = useState<AppState>({
-    currentShelfIndex: 0,
-    shelves: [
-      {
-        source: "",
-        data: [],
-      },
-    ],
-  });
-
-  const updateCurrentShelf = (updateFn: (shelf: Shelf) => Shelf) => {
-    setShelfState((shelfState) => {
-      const remainingShelves = shelfState.shelves.slice(0, shelfState.currentShelfIndex + 1);
-      const currentShelf = remainingShelves[shelfState.currentShelfIndex];
-      const newShelf = updateFn(currentShelf);
-      remainingShelves[shelfState.currentShelfIndex] = newShelf;
-      return { ...shelfState, shelves: remainingShelves };
-    });
-  };
-
-  const addShelf = (shelf: Shelf) => {
-    setShelfState((shelfState) => {
-      const newShelfList = [...shelfState.shelves, shelf];
-      const newIndex = shelfState.currentShelfIndex + 1;
-      return { currentShelfIndex: newIndex, shelves: newShelfList };
-    });
-  };
-
-  const openShelf = (index: number) => {
-    setShelfState((shelfState) => {
-      if (index < 0 || index >= shelfState.shelves.length) {
-        return shelfState;
-      }
-      return { ...shelfState, currentShelfIndex: index };
-    });
-  };
-
-  const shelves = shelfState.shelves;
-  const currentShelf = shelfState.shelves[shelfState.currentShelfIndex];
-  const userMessage = currentShelf.source;
-
-  const updateUserMessage = (userMessage: string) => {
-    updateCurrentShelf((shelf) => ({ ...shelf, source: userMessage }));
-  };
-
-  const updateShelfData = (data: any[]) => {
-    updateCurrentShelf((shelf) => ({ ...shelf, data }));
-  };
-
-  return {
-    addShelf,
-    currentShelf,
-    openShelf,
-    shelves,
-    updateShelfData,
-    updateUserMessage,
-    userMessage,
-  };
 }
 
 export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
@@ -102,7 +32,6 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   }, [chat]);
 
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
-
   const [status, setStatus] = useState("");
 
   const handleSubmit = async () => {
