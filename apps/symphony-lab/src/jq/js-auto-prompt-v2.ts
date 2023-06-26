@@ -1,5 +1,5 @@
 import { type ChatMessage } from "../openai/chat";
-import { jsonToTyping, sampleJsonContent } from "./json-reflection";
+import { jsonToTyping, sampleJsonContent } from "../reflection/json-reflection";
 
 export interface GetSystemMessageInput {
   input: any;
