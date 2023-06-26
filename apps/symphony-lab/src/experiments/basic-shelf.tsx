@@ -50,12 +50,19 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     ],
   });
 
-  const setShelf = (shelf: Shelf) => {
+  const updateCurrentShelf = (updateFn: (shelf: Shelf) => Shelf) => {
     setShelfState((shelfState) => {
-      // truncate later shelves
       const remainingShelves = shelfState.shelves.slice(0, shelfState.currentShelfIndex + 1);
-      // append new shelf
-      const newShelfList = [...remainingShelves, shelf];
+      const currentShelf = remainingShelves[shelfState.currentShelfIndex];
+      const newShelf = updateFn(currentShelf);
+      remainingShelves[shelfState.currentShelfIndex] = newShelf;
+      return { ...shelfState, shelves: remainingShelves };
+    });
+  };
+
+  const addShelf = (shelf: Shelf) => {
+    setShelfState((shelfState) => {
+      const newShelfList = [...shelfState.shelves, shelf];
       const newIndex = shelfState.currentShelfIndex + 1;
       return { currentShelfIndex: newIndex, shelves: newShelfList };
     });
@@ -71,19 +78,27 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   };
 
   const shelf = shelfState.shelves[shelfState.currentShelfIndex];
+  const userMessage = shelf.source;
 
-  const [userMessage, setUserMessage] = useState("");
+  const updateUserMessage = (userMessage: string) => {
+    updateCurrentShelf((shelf) => ({ ...shelf, source: userMessage }));
+  };
+
+  const updateShelfData = (data: any[]) => {
+    updateCurrentShelf((shelf) => ({ ...shelf, data }));
+  };
+
   const [status, setStatus] = useState("");
 
   const handleSubmit = async () => {
-    setUserMessage("");
+    addShelf({ source: "", data: [] });
     if (userMessage.startsWith("/json")) {
       const [fileHandle] = (await (window as any).showOpenFilePicker()) as FileSystemFileHandle[];
       const file = await fileHandle.getFile();
       const jsonText = await file.text();
       setStatus("Imported JSON file");
       try {
-        setShelf({ source: userMessage, data: JSON.parse(jsonText) });
+        updateShelfData(JSON.parse(jsonText));
       } catch {}
     } else if (userMessage.startsWith("/export")) {
       const fileHandle = (await (window as any).showSaveFilePicker()) as FileSystemFileHandle;
@@ -100,7 +115,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           lastError ? `The previous function call failed with error: ${lastError}. Try a different query` : `Goal: ${codePlan}`,
       });
 
-      setShelf({ source: userMessage, data: output });
+      updateShelfData(output);
     } else if (userMessage.startsWith("/jq")) {
       const jqPlan = userMessage.slice("/jq".length).trim();
       const output = await jqAutoPrompt({
@@ -111,7 +126,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
         onRetry: (error) => setStatus(`retry due to ${error}`),
       });
 
-      setShelf({ source: userMessage, data: output });
+      updateShelfData(output);
     } else if (userMessage.startsWith("/tag")) {
       if (!Array.isArray(shelf)) {
         setStatus("The shelf must be a list of texts. Hint: /code can help transform it into a list of texts");
@@ -209,7 +224,7 @@ VariableName: <a single lowerCamelCase variable name that represents all the tag
       });
 
       setStatus(`Tags added to "${tagFieldName}" field`);
-      setShelf({ source: userMessage, data: taggedShelf });
+      updateShelfData(taggedShelf);
     }
   };
 
@@ -233,7 +248,7 @@ VariableName: <a single lowerCamelCase variable name that represents all the tag
             <textarea
               value={userMessage}
               onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit() : null)}
-              onChange={(e) => setUserMessage(e.target.value)}
+              onChange={(e) => updateUserMessage(e.target.value)}
             />
           </AutoResize>
           <output>{status}</output>
