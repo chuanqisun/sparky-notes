@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getGraphOutputs } from "../../db/db";
-import type { GraphOutputItem, NodeData } from "../claim-search";
+import type { GraphOutputItem, NodeData } from "./graph";
 
 export function useOutputList(nodeData: NodeData) {
   const [outputList, setOutputList] = useState<GraphOutputItem[]>([]);

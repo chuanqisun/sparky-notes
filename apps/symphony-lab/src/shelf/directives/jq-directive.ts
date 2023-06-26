@@ -6,7 +6,7 @@ import type { ShelfDirective } from "./base-directive";
 export function createJqDirective(chat: ChatProxy): ShelfDirective {
   return {
     match: (source) => source.startsWith("/jq"),
-    run: async ({ source, data, updateData: setData, updateStatus: setStatus }) => {
+    run: async ({ source, data, updateStatus: setStatus }) => {
       const jqPlan = source.slice("/jq".length).trim();
       const output = await jqAutoPrompt({
         input: data,
