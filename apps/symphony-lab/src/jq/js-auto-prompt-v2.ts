@@ -85,6 +85,7 @@ export async function jsAutoPromptV2(config: JsAutoPromptConfig): Promise<any> {
 function getDefaultSystemMessage({ input }: GetSystemMessageInput) {
   return `
 Design a javascript function that transforms a single input into an array that meets the provided goal.
+All child function decalarations must be inlined into the function body.
 The function has the following signature:
 
 \`\`\`typescript

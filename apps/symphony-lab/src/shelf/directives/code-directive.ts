@@ -10,7 +10,7 @@ export function createCodeDirective(chat: ChatProxy): ShelfDirective {
       const codePlan = source.slice("/code".length).trim();
       const output = await jsAutoPromptV2({
         input: data,
-        onGetChat: (messages: ChatMessage[]) => chat(messages, { max_tokens: 1200, temperature: 0 }),
+        onGetChat: (messages: ChatMessage[]) => chat(messages, { max_tokens: 2400, temperature: 0 }),
         onGetUserMessage: ({ lastError }) =>
           lastError ? `The previous function call failed with error: ${lastError}. Try a different query` : `Goal: ${codePlan}`,
       });
