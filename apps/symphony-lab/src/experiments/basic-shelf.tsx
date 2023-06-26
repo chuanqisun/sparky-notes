@@ -26,20 +26,7 @@ interface Shelf {
   data: any[];
 }
 
-export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
-  const graph = useRef(new Cozo(db));
-  useEffect(() => {
-    console.log(graph);
-  }, [graph]);
-
-  const { chat, ModelSelectorElement } = useModelSelector();
-
-  const rateLimitedChat = useMemo(() => {
-    const queue = rateLimitQueue(300, 0.1);
-    const rateLimitedProxy = withAsyncQueue(queue, chat);
-    return rateLimitedProxy;
-  }, [chat]);
-
+export function useShelfManager() {
   const [shelfState, setShelfState] = useState<AppState>({
     currentShelfIndex: 0,
     shelves: [
@@ -77,8 +64,9 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     });
   };
 
-  const shelf = shelfState.shelves[shelfState.currentShelfIndex];
-  const userMessage = shelf.source;
+  const shelves = shelfState.shelves;
+  const currentShelf = shelfState.shelves[shelfState.currentShelfIndex];
+  const userMessage = currentShelf.source;
 
   const updateUserMessage = (userMessage: string) => {
     updateCurrentShelf((shelf) => ({ ...shelf, source: userMessage }));
@@ -87,6 +75,33 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const updateShelfData = (data: any[]) => {
     updateCurrentShelf((shelf) => ({ ...shelf, data }));
   };
+
+  return {
+    addShelf,
+    currentShelf,
+    openShelf,
+    shelves,
+    updateShelfData,
+    updateUserMessage,
+    userMessage,
+  };
+}
+
+export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
+  const graph = useRef(new Cozo(db));
+  useEffect(() => {
+    console.log(graph);
+  }, [graph]);
+
+  const { chat, ModelSelectorElement } = useModelSelector();
+
+  const rateLimitedChat = useMemo(() => {
+    const queue = rateLimitQueue(300, 0.1);
+    const rateLimitedProxy = withAsyncQueue(queue, chat);
+    return rateLimitedProxy;
+  }, [chat]);
+
+  const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
 
   const [status, setStatus] = useState("");
 
@@ -103,13 +118,13 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     } else if (userMessage.startsWith("/export")) {
       const fileHandle = (await (window as any).showSaveFilePicker()) as FileSystemFileHandle;
       const file = await fileHandle.createWritable();
-      await file.write(JSON.stringify(shelf));
+      await file.write(JSON.stringify(currentShelf));
       await file.close();
       setStatus("Exported JSON file");
     } else if (userMessage.startsWith("/code")) {
       const codePlan = userMessage.slice("/code".length).trim();
       const output = await jsAutoPromptV2({
-        input: shelf,
+        input: currentShelf,
         onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
         onGetUserMessage: ({ lastError }) =>
           lastError ? `The previous function call failed with error: ${lastError}. Try a different query` : `Goal: ${codePlan}`,
@@ -119,7 +134,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     } else if (userMessage.startsWith("/jq")) {
       const jqPlan = userMessage.slice("/jq".length).trim();
       const output = await jqAutoPrompt({
-        input: shelf,
+        input: currentShelf,
         onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
         onGetUserMessage: ({ lastError }) => (lastError ? `The previous query failed with error: ${lastError}. Try a different query` : jqPlan),
         onJqString: (jq) => setStatus(`jq: ${jq}`),
@@ -128,7 +143,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
       updateShelfData(output);
     } else if (userMessage.startsWith("/tag")) {
-      if (!Array.isArray(shelf)) {
+      if (!Array.isArray(currentShelf)) {
         setStatus("The shelf must be a list of texts. Hint: /code can help transform it into a list of texts");
         return;
       }
@@ -143,10 +158,10 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           results.push({ startIndex, endIndex, focusIndex });
         }
         return results;
-      })(shelf.length, 3);
+      })(currentShelf.length, 3);
 
       const contextBlurbs: string[] = slidingWindows.map(({ startIndex, endIndex, focusIndex }) => {
-        const lines = shelf.slice(startIndex, endIndex);
+        const lines = currentShelf.slice(startIndex, endIndex);
         const relativeFocusIndex = focusIndex - startIndex;
 
         return lines
@@ -218,7 +233,7 @@ VariableName: <a single lowerCamelCase variable name that represents all the tag
       const tagFieldNameResponse = await rateLimitedChat(tagsFieldNameMessage, { max_tokens: 200, temperature: 0 });
       const tagFieldName = tagFieldNameResponse.match(/VariableName: (.*)/)?.[1].trim() ?? "tags";
 
-      const taggedShelf = shelf.map((line, index) => {
+      const taggedShelf = currentShelf.map((line, index) => {
         const tags = tagsResult[index];
         return { line, [tagFieldName]: tags };
       });
@@ -232,12 +247,12 @@ VariableName: <a single lowerCamelCase variable name that represents all the tag
     <AppLayout>
       <header>{ModelSelectorElement}</header>
       <StyledOutput>
-        <JSONTree theme={theme} hideRoot={true} data={shelf.data} />
+        <JSONTree theme={theme} hideRoot={true} data={currentShelf.data} />
       </StyledOutput>
       <div>
-        {shelfState.shelves.map((_, index) => (
+        {shelves.map((shelf, index) => (
           <button key={index} onClick={() => openShelf(index)}>
-            {index === shelfState.currentShelfIndex ? "*" : ""}
+            {shelf === currentShelf ? "*" : ""}
             {index}
           </button>
         ))}
