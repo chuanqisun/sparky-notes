@@ -16,6 +16,16 @@ export interface BasicShelfProps {
   db: CozoDb;
 }
 
+interface AppState {
+  currentShelfIndex: number;
+  shelves: Shelf[];
+}
+
+interface Shelf {
+  source: string;
+  data: any[];
+}
+
 export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const graph = useRef(new Cozo(db));
   useEffect(() => {
@@ -30,30 +40,37 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     return rateLimitedProxy;
   }, [chat]);
 
-  const [shelfList, setShelfList] = useState<{ index: number; shelves: any[] }>({ index: 0, shelves: [[]] });
+  const [shelfState, setShelfState] = useState<AppState>({
+    currentShelfIndex: 0,
+    shelves: [
+      {
+        source: "",
+        data: [],
+      },
+    ],
+  });
 
-  const setShelf = (shelf: any) => {
-    setShelfList((shelfList) => {
+  const setShelf = (shelf: Shelf) => {
+    setShelfState((shelfState) => {
       // truncate later shelves
-      const remainingShelves = shelfList.shelves.slice(0, shelfList.index + 1);
+      const remainingShelves = shelfState.shelves.slice(0, shelfState.currentShelfIndex + 1);
       // append new shelf
       const newShelfList = [...remainingShelves, shelf];
-      const newIndex = shelfList.index + 1;
-
-      return { index: newIndex, shelves: newShelfList };
+      const newIndex = shelfState.currentShelfIndex + 1;
+      return { currentShelfIndex: newIndex, shelves: newShelfList };
     });
   };
 
   const openShelf = (index: number) => {
-    setShelfList((shelfList) => {
-      if (index < 0 || index >= shelfList.shelves.length) {
-        return shelfList;
+    setShelfState((shelfState) => {
+      if (index < 0 || index >= shelfState.shelves.length) {
+        return shelfState;
       }
-      return { ...shelfList, index };
+      return { ...shelfState, currentShelfIndex: index };
     });
   };
 
-  const shelf = shelfList.shelves[shelfList.index];
+  const shelf = shelfState.shelves[shelfState.currentShelfIndex];
 
   const [userMessage, setUserMessage] = useState("");
   const [status, setStatus] = useState("");
@@ -66,7 +83,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       const jsonText = await file.text();
       setStatus("Imported JSON file");
       try {
-        setShelf(JSON.parse(jsonText));
+        setShelf({ source: userMessage, data: JSON.parse(jsonText) });
       } catch {}
     } else if (userMessage.startsWith("/export")) {
       const fileHandle = (await (window as any).showSaveFilePicker()) as FileSystemFileHandle;
@@ -83,7 +100,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           lastError ? `The previous function call failed with error: ${lastError}. Try a different query` : `Goal: ${codePlan}`,
       });
 
-      setShelf(output);
+      setShelf({ source: userMessage, data: output });
     } else if (userMessage.startsWith("/jq")) {
       const jqPlan = userMessage.slice("/jq".length).trim();
       const output = await jqAutoPrompt({
@@ -94,7 +111,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
         onRetry: (error) => setStatus(`retry due to ${error}`),
       });
 
-      setShelf(output);
+      setShelf({ source: userMessage, data: output });
     } else if (userMessage.startsWith("/tag")) {
       if (!Array.isArray(shelf)) {
         setStatus("The shelf must be a list of texts. Hint: /code can help transform it into a list of texts");
@@ -192,8 +209,7 @@ VariableName: <a single lowerCamelCase variable name that represents all the tag
       });
 
       setStatus(`Tags added to "${tagFieldName}" field`);
-
-      setShelf(taggedShelf);
+      setShelf({ source: userMessage, data: taggedShelf });
     }
   };
 
@@ -201,12 +217,12 @@ VariableName: <a single lowerCamelCase variable name that represents all the tag
     <AppLayout>
       <header>{ModelSelectorElement}</header>
       <StyledOutput>
-        <JSONTree theme={theme} hideRoot={true} data={shelf} />
+        <JSONTree theme={theme} hideRoot={true} data={shelf.data} />
       </StyledOutput>
       <div>
-        {shelfList.shelves.map((_, index) => (
+        {shelfState.shelves.map((_, index) => (
           <button key={index} onClick={() => openShelf(index)}>
-            {index === shelfList.index ? "*" : ""}
+            {index === shelfState.currentShelfIndex ? "*" : ""}
             {index}
           </button>
         ))}
