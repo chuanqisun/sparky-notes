@@ -1,15 +1,17 @@
 import type { CozoDb } from "cozo-lib-wasm";
 import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
 import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
-import { jqAutoPrompt } from "../jq/jq-auto-prompt";
-import { jsAutoPromptV2 } from "../jq/js-auto-prompt-v2";
-import type { ChatMessage } from "../openai/chat";
+import { createCodeDirective } from "../shelf/directives/code-directive";
+import { createExportDirective } from "../shelf/directives/export-directive";
+import { createJqDirective } from "../shelf/directives/jq-directive";
+import { createJsonDirective } from "../shelf/directives/json-directive";
+import { createTagDirective } from "../shelf/directives/tag-directive";
 import { useShelfManager } from "../shelf/use-shelf-manager";
 import { CenterClamp } from "../shell/center-clamp";
 
@@ -34,143 +36,38 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");
 
-  const handleSubmit = async () => {
-    addShelf({ source: "", data: [] });
-    if (userMessage.startsWith("/json")) {
-      const [fileHandle] = (await (window as any).showOpenFilePicker()) as FileSystemFileHandle[];
-      const file = await fileHandle.getFile();
-      const jsonText = await file.text();
-      setStatus("Imported JSON file");
-      try {
-        updateShelfData(JSON.parse(jsonText));
-      } catch {}
-    } else if (userMessage.startsWith("/export")) {
-      const fileHandle = (await (window as any).showSaveFilePicker()) as FileSystemFileHandle;
-      const file = await fileHandle.createWritable();
-      await file.write(JSON.stringify(currentShelf));
-      await file.close();
-      setStatus("Exported JSON file");
-    } else if (userMessage.startsWith("/code")) {
-      const codePlan = userMessage.slice("/code".length).trim();
-      const output = await jsAutoPromptV2({
-        input: currentShelf,
-        onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
-        onGetUserMessage: ({ lastError }) =>
-          lastError ? `The previous function call failed with error: ${lastError}. Try a different query` : `Goal: ${codePlan}`,
-      });
+  const codeDirective = useMemo(() => createCodeDirective(rateLimitedChat), [rateLimitedChat]);
+  const exportDirective = useMemo(() => createExportDirective(), []);
+  const jqDirective = useMemo(() => createJqDirective(rateLimitedChat), [rateLimitedChat]);
+  const jsonDirective = useMemo(() => createJsonDirective(), []);
+  const tagDirective = useMemo(() => createTagDirective(rateLimitedChat), [rateLimitedChat]);
 
-      updateShelfData(output);
-    } else if (userMessage.startsWith("/jq")) {
-      const jqPlan = userMessage.slice("/jq".length).trim();
-      const output = await jqAutoPrompt({
-        input: currentShelf,
-        onGetChat: (messages: ChatMessage[]) => rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 }),
-        onGetUserMessage: ({ lastError }) => (lastError ? `The previous query failed with error: ${lastError}. Try a different query` : jqPlan),
-        onJqString: (jq) => setStatus(`jq: ${jq}`),
-        onRetry: (error) => setStatus(`retry due to ${error}`),
-      });
+  const allDirective = [codeDirective, exportDirective, jqDirective, jsonDirective, tagDirective];
 
-      updateShelfData(output);
-    } else if (userMessage.startsWith("/tag")) {
-      if (!Array.isArray(currentShelf)) {
-        setStatus("The shelf must be a list of texts. Hint: /code can help transform it into a list of texts");
-        return;
-      }
+  const handleSubmit = useCallback(async () => {
+    setStatus("Running...");
 
-      const tagPlan = userMessage.slice("/tag".length).trim();
-
-      const slidingWindows: { startIndex: number; endIndex: number; focusIndex: number }[] = ((totalLength: number, radius: number) => {
-        const results: { startIndex: number; endIndex: number; focusIndex: number }[] = [];
-        for (let focusIndex = 0; focusIndex < totalLength; focusIndex++) {
-          const startIndex = Math.max(0, focusIndex - radius);
-          const endIndex = Math.min(totalLength, focusIndex + radius + 1);
-          results.push({ startIndex, endIndex, focusIndex });
-        }
-        return results;
-      })(currentShelf.length, 3);
-
-      const contextBlurbs: string[] = slidingWindows.map(({ startIndex, endIndex, focusIndex }) => {
-        const lines = currentShelf.slice(startIndex, endIndex);
-        const relativeFocusIndex = focusIndex - startIndex;
-
-        return lines
-          .map((line, index) => {
-            const prefix = index === relativeFocusIndex ? "=>" : "  ";
-            return prefix + line;
-          })
-          .join("\n");
-      });
-
-      const tagRequestMessages: ChatMessage[][] = contextBlurbs.map((contextBlurb) => [
-        {
-          role: "system",
-          content: `Read the entire snippet and tag the line marked with  "=>". Make sure the tags represent "${tagPlan}"
-Respond in the format delimited by triple quotes:
-
-"""
-focus line: <repeat the line marked by the arrow>
-tags: <comma separated tags>
-"""
-        `,
-        },
-        { role: "user", content: contextBlurb },
-      ]);
-
-      let progress = 0;
-
-      const tagsResult = await Promise.all(
-        tagRequestMessages.map((messages) =>
-          rateLimitedChat(messages, { max_tokens: 1200, temperature: 0 })
-            .then((response) => {
-              progress++;
-              const tags =
-                response
-                  .split("\n")
-                  .find((line) => line.startsWith("tags:"))
-                  ?.slice("tags:".length)
-                  .trim()
-                  .split(",")
-                  .map((tag) => tag.trim()) ?? [];
-              setStatus(`Progress: ${progress}/${tagRequestMessages.length}, ${tags.join(", ")}`);
-
-              return tags;
-            })
-            .catch((error) => {
-              progress++;
-              setStatus(`Progress: ${progress}/${tagRequestMessages.length}, ${error}`);
-              return [];
-            })
-        )
-      );
-
-      const tagsFieldNameMessage: ChatMessage[] = [
-        {
-          role: "system",
-          content: `User will provide you a list of tags that represent "${tagPlan}". Provide a lowerCamelCase variable name for the tags. Respond in the format delimited by triple quotes:
-"""
-Observation: <make an observation about the nature of the tags>
-VariableName: <a single lowerCamelCase variable name that represents all the tags>
-"""
-          `,
-        },
-        {
-          role: "user",
-          content: tagsResult.flat().slice(0, 10).join(", "),
-        },
-      ];
-
-      const tagFieldNameResponse = await rateLimitedChat(tagsFieldNameMessage, { max_tokens: 200, temperature: 0 });
-      const tagFieldName = tagFieldNameResponse.match(/VariableName: (.*)/)?.[1].trim() ?? "tags";
-
-      const taggedShelf = currentShelf.map((line, index) => {
-        const tags = tagsResult[index];
-        return { line, [tagFieldName]: tags };
-      });
-
-      setStatus(`Tags added to "${tagFieldName}" field`);
-      updateShelfData(taggedShelf);
+    const matchedDirective = allDirective.find((directive) => directive.match(userMessage));
+    if (!matchedDirective) {
+      setStatus("No directive matched");
+      return;
     }
-  };
+
+    addShelf({ source: "", data: [] });
+
+    const { data, status } = await matchedDirective.run({
+      source: userMessage,
+      data: currentShelf.data,
+      updateStatus: setStatus,
+      updateData: updateShelfData,
+    });
+
+    if (data !== undefined) {
+      updateShelfData(data);
+    }
+
+    setStatus(status ?? "Success");
+  }, [...allDirective, setStatus, updateShelfData]);
 
   return (
     <AppLayout>
