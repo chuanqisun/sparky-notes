@@ -7,6 +7,7 @@ import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
 import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
+import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
 import { createJqDirective } from "../shelf/directives/jq-directive";
@@ -37,13 +38,14 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");
 
+  const antidoteDirective = useMemo(() => createAntidoteDirective(rateLimitedChat), [rateLimitedChat]);
   const codeDirective = useMemo(() => createCodeDirective(rateLimitedChat), [rateLimitedChat]);
   const exportDirective = useMemo(() => createExportDirective(), []);
   const jqDirective = useMemo(() => createJqDirective(rateLimitedChat), [rateLimitedChat]);
   const jsonDirective = useMemo(() => createJsonDirective(), []);
   const tagDirective = useMemo(() => createTagDirective(rateLimitedChat), [rateLimitedChat]);
 
-  const allDirective = [codeDirective, exportDirective, jqDirective, jsonDirective, tagDirective];
+  const allDirective = [antidoteDirective, codeDirective, exportDirective, jqDirective, jsonDirective, tagDirective];
 
   const handleSubmit = useCallback(async () => {
     setStatus("Running...");

@@ -1,64 +1,93 @@
-export interface FeedbackLoopConfig<T> {
-  state: T;
-  iterate: (state: T) => IterateOutput<T>;
-  retry?: number;
+import type { ChatProxy } from "../account/model-selector";
+import { type ChatMessage } from "../openai/chat";
+
+export interface GetSystemMessageInput {
+  input: any;
 }
 
-export interface IterateOutput<T> {
-  success?: boolean;
-  state: T;
+export interface GetUserMessageInput {
+  lastError?: string;
 }
 
-export async function runFeedbackLoop<T>(config: FeedbackLoopConfig<T>): Promise<T> {
-  const { state, iterate, retry = 3 } = config;
-  const resut = await iterate(state);
-
-  if (resut.success) return resut.state;
-  if (retry <= 0) throw new Error("Max retry failed");
-
-  return runFeedbackLoop({ state: resut.state, iterate: iterate, retry: retry - 1 });
+export interface FeedbackLoopConfig {
+  chat: ChatProxy;
+  initialPrompt: string;
+  input: any;
+  lastError?: string;
+  onGetErrorMessage: (error: string) => string;
+  onGetSystemMessage?: (props: GetSystemMessageInput) => string;
+  onJsString?: (jqString: string) => any;
+  onRetry?: (errorMessage: string) => any;
+  onShouldAbort?: () => boolean;
+  onValidateResult?: (result: any) => any;
+  previousMessages?: ChatMessage[];
+  retryLeft?: number;
+  systemPrompt: string;
 }
 
-export interface LensLoopState {
-  testData: any;
-  attempts: {
-    lens?: any;
-    result?: any;
-    feedback?: any;
-  }[];
-}
+export async function feedbackLoop(config: FeedbackLoopConfig): Promise<any> {
+  const { lastError, chat, initialPrompt, onGetErrorMessage, systemPrompt, onRetry, onShouldAbort, previousMessages = [], retryLeft = 3 } = config;
 
-export async function iterateLens(state: LensLoopState) {
+  const currentUserMessage: ChatMessage = { role: "user", content: lastError ? onGetErrorMessage(lastError) : initialPrompt };
+  const systemMessage: ChatMessage = {
+    role: "system",
+    content: systemPrompt,
+  };
+  const responseText = await chat([systemMessage, ...previousMessages, currentUserMessage]);
+
+  if (onShouldAbort?.()) {
+    throw new Error("Aborted");
+  }
+
   try {
-    const currentAttempt = state.attempts.at(-1)!;
-    currentAttempt.lens = await proposeLens(state);
-    const result = applyLens(currentAttempt.lens, state.testData);
-    if (!validateLensResult(result)) throw new Error("Invalid lens");
-
-    return {
-      success: true,
-      state,
-    };
+    // evaluate response
   } catch (e: any) {
-    const sensibleErrorMessage = [e?.name, e?.message ?? e?.stack].filter(Boolean).join(" ").trim();
-    return {
-      success: false,
-      state: {
-        ...state,
-        attempts: [...state.attempts, { lens: state.proposedLens, result: null, feedback: sensibleErrorMessage }],
-      },
-    };
+    if (retryLeft <= 0) {
+      throw new Error("Feedback loop failed to converge. All retries used up");
+    }
+
+    const errorMessage = [e?.name, e?.message ?? e?.stack].filter(Boolean).join(" ").trim();
+    onRetry?.(errorMessage);
+
+    return feedbackLoop({
+      ...config,
+      lastError: errorMessage,
+      previousMessages: [...previousMessages, currentUserMessage, { role: "assistant", content: responseText }],
+      retryLeft: retryLeft - 1,
+    });
   }
 }
 
-async function proposeLens(state: LensLoopState) {
-  return "";
+export interface LoopConfig {
+  dev: (history: Attempt[]) => any;
+  test: (program: any) => any;
+  /** @default 0 */
+  retries?: number;
+
+  /** @private */
+  history: Attempt[];
 }
 
-function applyLens(lens: any, data: any) {
-  return lens(data);
+export interface Attempt {
+  program?: string;
+  issue?: string;
 }
 
-function validateLensResult(result: any) {
-  return true;
+export async function loop(props: LoopConfig) {
+  const currentAttempt = props.history.at(-1)!;
+
+  const program = await props.dev(props.history);
+  const testResult = await props.test(program);
+
+  currentAttempt.program = program;
+  currentAttempt.issue = testResult?.issue;
+
+  if (!currentAttempt.issue) {
+    return program;
+  } else {
+    return loop({
+      ...props,
+      history: [...props.history, {}],
+    });
+  }
 }
