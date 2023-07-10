@@ -96,9 +96,9 @@ export function modelToEndpoint(model?: ChatModel): string {
 export function modelToRequestsPerMinute(model?: ChatModel): number {
   switch (model) {
     case "v4-32k":
-      return 1;
+      return 18;
     case "v4-8k":
-      return 1;
+      return 18;
     case "v3.5-turbo":
     default:
       return 300;

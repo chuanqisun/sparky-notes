@@ -379,12 +379,56 @@ Alternative names: ${alternativeNames.join(", ")}
   return listItems;
 }
 
+export async function interpretFindings(
+  chatProxy: SimpleChatProxy,
+  onProgress: (input: AggregatedItem, interpretation: string) => any,
+  concept: Concept,
+  items: AggregatedItem[]
+) {
+  const results = Promise.all(
+    items.map(async (item) => {
+      const response = await chatProxy({
+        messages: [
+          {
+            role: "system",
+            content: `User is looking for UX research findings about ${concept.name}, defined as ${concept.definition}.
+
+Based on the provided assumption and search query, interpret the finding. Respond in this format:
+
+Interpretation: <Interpretation>
+Category: <support | contradict | inform | indirectly_support | indirectly_contradict | irrelevant>`,
+          },
+          {
+            role: "user",
+            content: `
+${item.queries.map(
+  (q, i) => `
+Assuming: ${q.assumption}
+Searching: "${q.raw}"`
+)}
+Found: "${item.caption}"
+        `.trim(),
+          },
+        ],
+        max_tokens: 320,
+        temperature: 0,
+      });
+
+      const interpretation = response.choices[0].message.content ?? "";
+      onProgress(item, interpretation);
+      return interpretation;
+    })
+  );
+
+  return results;
+}
+
 export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concept, aggregatedItems: AggregatedItem[]) {
   const textSources = aggregatedItems
     .map((item, index) =>
       `
 [${index + 1}]
-Question: ${item.queries.map((q) => q.decorated).join(", and ")}
+Question: ${item.queries.map((q) => q.impliedQuestion).join(", and ")}
 Finding: ${item.caption}
 `.trim()
     )

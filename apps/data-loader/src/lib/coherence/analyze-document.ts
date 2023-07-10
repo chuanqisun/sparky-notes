@@ -12,12 +12,13 @@ import {
   inferSupporters,
   inferUserGoals,
   inferUserProblems,
+  interpretFindings,
   questionToConcepts,
 } from "./pipeline/inference";
 import { parseCuration } from "./pipeline/parse-curation";
-import { decorateQuery } from "./pipeline/reflect";
+import { getAssumption, getImpliedQuestion } from "./pipeline/reflect";
 import { renderMarkdown } from "./pipeline/render-markdown";
-import { bulkSemanticQuery, groupById } from "./pipeline/semantic-search";
+import { bulkSemanticQuery, groupById, type DecoratedQuery } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
   assert(process.env.OPENAI_API_KEY, "OPENAI_API_KEY is required");
@@ -68,6 +69,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       questions: any;
       questionedConcepts: any;
       rankedResults: any;
+      interpretations: any;
       curationResponse: any;
     } = {} as any;
 
@@ -93,6 +95,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferSupporters = true;
     const resumeInferProtesters = true;
     const resumeSemanticSearch = true;
+    const resumeInterpretSearchResult = false;
     const resumeCurationReponse = true; // (!)
 
     const proxies = {
@@ -104,6 +107,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       problems: chatProxy, // short
       supporters: chatProxy, // short
       protesters: chatProxy, // short
+      interpretation: chatProxy, // short
       curation: lengthSensitiveProxyGpt4,
     };
 
@@ -170,11 +174,33 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
     const aggregated = rankedResults
       .flatMap((item) =>
-        item.responses.map((res) => ({ ...res, queries: [{ raw: item.query, decorated: decorateQuery(progressObject, concept.name, item.query) }] }))
+        item.responses.map((res) => ({
+          ...res,
+          queries: [
+            {
+              raw: item.query,
+              impliedQuestion: getImpliedQuestion(progressObject, concept.name, item.query),
+              assumption: getAssumption(progressObject, concept.name, item.query),
+            } satisfies DecoratedQuery,
+          ],
+        }))
       )
       .reduce(groupById, [])
       .sort((a, b) => b.score - a.score)
       .slice(0, 30); // prevent overflow
+
+    const interpreted = await resumeOrRun(resumeInterpretSearchResult, progressObject.interpretations, () =>
+      interpretFindings(
+        proxies.interpretation,
+        (input, output) => {
+          console.log({ result: input.caption, interpretation: output });
+        },
+        concept,
+        aggregated
+      )
+    );
+    await logger("interpret", `interpretation ${interpreted.length} items.`);
+    incrementalLogObject({ interpreted });
 
     // analyze aggregation quality with top, avg, bottom scores
     const allScores = aggregated.map((item) => item.score);
