@@ -379,7 +379,7 @@ Alternative names: ${alternativeNames.join(", ")}
   return listItems;
 }
 
-export async function interpretFindings(
+export async function interpretFindingsFn(
   chatProxy: SimpleChatProxy,
   onProgress: (input: AggregatedItem, interpretation: string) => any,
   concept: Concept,
@@ -388,6 +388,26 @@ export async function interpretFindings(
   const results = Promise.all(
     items.map(async (item) => {
       const response = await chatProxy({
+        function_call: { name: "interpret_findings" },
+        functions: [
+          {
+            name: "interpret_findings",
+            parameters: {
+              type: "object",
+              properties: {
+                role: {
+                  type: "string",
+                  enum: ["support", "contradict", "inform", "indirectly_support", "indirectly_contradict", "irrelevant"],
+                },
+                interpretation: {
+                  type: "string",
+                },
+              },
+              required: ["category", "interpretation"],
+            },
+          },
+        ],
+
         messages: [
           {
             role: "system",
@@ -421,6 +441,67 @@ Found: "${item.caption}"
   );
 
   return results;
+}
+
+export async function interpretFindings(
+  chatProxy: SimpleChatProxy,
+  onProgress: (input: AggregatedItem, output: { interpretation: string; category: string }) => any,
+  concept: Concept,
+  items: AggregatedItem[]
+) {
+  const results = await Promise.all(
+    items.map(async (item) => {
+      const response = await chatProxy({
+        messages: [
+          {
+            role: "system",
+            content: `User is looking for UX research findings about ${concept.name}, defined as ${concept.definition}.
+
+Based on the provided assumption and search query, interpret the finding. Respond in this format:
+
+Interpretation: <Interpretation>
+Category: <support | contradict | inform | indirectly_related | irrelevant>`,
+          },
+          {
+            role: "user",
+            content: `
+${item.queries.map(
+  (q, i) => `
+Assuming: ${q.assumption}
+Searching: "${q.raw}"`
+)}
+Found: "${item.caption}"
+        `.trim(),
+          },
+        ],
+        max_tokens: 320,
+        temperature: 0,
+      });
+
+      const rawResponse = response.choices[0].message.content ?? "";
+      const interpretation = rawResponse.match(/Interpretation: (.*)/)?.[1] ?? "";
+      const category = rawResponse.match(/Category: (.*)/)?.[1] ?? "";
+      const normalizedCategory = ["support", "contract", "inform", "indirectly_related", "irrelevant"].includes(category) ? category : "irrelevant";
+      const output = { interpretation, category: normalizedCategory };
+      onProgress(item, output);
+      return output;
+    })
+  );
+
+  const statsItem: { category: string; count: number }[] = results.reduce((acc, item) => {
+    const existingItem = acc.find((i) => i.category === item.category);
+    if (existingItem) {
+      existingItem.count += 1;
+    } else {
+      acc.push({ category: item.category, count: 1 });
+    }
+    return acc;
+  }, [] as { category: string; count: number }[]);
+
+  return {
+    stats: statsItem,
+    results,
+  };
 }
 
 export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concept, aggregatedItems: AggregatedItem[]) {

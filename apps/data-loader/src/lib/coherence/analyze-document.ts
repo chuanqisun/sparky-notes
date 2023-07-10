@@ -45,7 +45,6 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const startTime = Date.now();
   const filenames = await readdir(dir);
   const allFileLazyTasks = filenames.map((filename, i) => async () => {
-    // TODO rename dos and donts into "best practice"
     // TODO persona based semantic search query expansion
     // TODO list unused footnotes under the "other" group
     // TODO handle untitled section in source document
@@ -193,13 +192,13 @@ export async function analyzeDocument(dir: string, outDir: string) {
       interpretFindings(
         proxies.interpretation,
         (input, output) => {
-          console.log({ result: input.caption, interpretation: output });
+          console.log({ finding: input.caption, interpretation: output.interpretation, category: output.category });
         },
         concept,
         aggregated
       )
     );
-    await logger("interpret", `interpretation ${interpreted.length} items.`);
+    await logger("interpret", `${interpreted.stats.map((statItem) => `${statItem.count} ${statItem.category}`).join(", ")}`);
     incrementalLogObject({ interpreted });
 
     // analyze aggregation quality with top, avg, bottom scores
