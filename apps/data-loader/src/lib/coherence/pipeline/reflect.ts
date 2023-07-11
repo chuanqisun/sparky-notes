@@ -19,7 +19,7 @@ const assumptions = {
   guidanceDont: (concept: string, query: string) => `"${query}" might be a best practice for ${concept}`,
   conceptAlternativeNames: (concept: string, query: string) => `${concept} might be known as ${query}`,
   questionedConcepts: (concept: string, query: string) => `${concept} might raise the question ${query}`,
-  "": (_concept: string, query: string) => query,
+  "": (_concept: string, query: string) => `None`,
 };
 
 function getDecoratorName(progressObject: any, query: string): keyof typeof decorators {
