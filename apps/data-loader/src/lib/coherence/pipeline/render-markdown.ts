@@ -5,6 +5,7 @@ export function renderMarkdown(pattern: string, curation: ParsedCuration): strin
 # ${pattern}
      
 ## Research insights
+
 ${curation.groups
   .map((group) =>
     `
@@ -15,9 +16,10 @@ ${group.intro}
 ${group.items.map((item) => `- ${item.text} ${item.sources.map((source) => `[${source.pos}]`).join("")}`).join("\n")}
 `.trim()
   )
-  .join("\n")}
+  .join("\n\n")}
 
 ## References
+
 ${curation.footnotes.map((item) => `${item.pos}. [${item.title}](${item.url}) *${item.rootTitle}*`).join("\n")}
 `.trim();
 

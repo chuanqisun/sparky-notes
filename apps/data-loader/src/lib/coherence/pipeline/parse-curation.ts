@@ -1,6 +1,6 @@
 import { EntityName } from "../../hits/entity";
 import { responseToList } from "../../hits/format";
-import type { AggregatedItem } from "./semantic-search";
+import type { InterpretedItem } from "./inference";
 
 export interface CuratedGroup {
   name: string;
@@ -20,6 +20,7 @@ export interface CuratedSource {
 }
 
 export interface ParsedCuration {
+  generatedAt: string;
   groups: CuratedGroup[];
   usedFootNotePositions: number[];
   unusedFootNotePositions: number[];
@@ -27,8 +28,8 @@ export interface ParsedCuration {
   footnotes: CuratedSource[];
 }
 
-export function parseCuration(aggregatedItems: AggregatedItem[], curationResponse: string): ParsedCuration {
-  const footnotes = aggregatedItems.map((item, index) => ({
+export function parseCuration(interpretedItems: InterpretedItem[], curationResponse: string): ParsedCuration {
+  const footnotes = interpretedItems.map((item, index) => ({
     pos: index + 1,
     title: item.title,
     rootTitle: item.rootTitle,
@@ -78,6 +79,7 @@ export function parseCuration(aggregatedItems: AggregatedItem[], curationRespons
   const unusedFootNotePositions = footnotes.map((note) => note.pos).filter((pos) => !usedFootNotePositions.has(pos));
 
   return {
+    generatedAt: new Date().toISOString(),
     groups: correlatedGroups,
     usedFootNotePositions: [...usedFootNotePositions],
     unusedFootNotePositions: [...unusedFootNotePositions],

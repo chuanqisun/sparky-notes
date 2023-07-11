@@ -4,9 +4,10 @@ import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatP
 import { getClaimIndexProxy } from "../hits/search-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
 import {
-  curateClaimsV2,
+  curateClaimsV3,
   getConcept,
   getGuidance,
+  getInterpretationStats,
   getQuestions,
   inferProtesters,
   inferSupporters,
@@ -94,7 +95,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferSupporters = true;
     const resumeInferProtesters = true;
     const resumeSemanticSearch = true;
-    const resumeInterpretSearchResult = false;
+    const resumeInterpretSearchResult = true; // (!)
     const resumeCurationReponse = true; // (!)
 
     const proxies = {
@@ -186,20 +187,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       )
       .reduce(groupById, [])
       .sort((a, b) => b.score - a.score)
-      .slice(0, 30); // prevent overflow
-
-    const interpreted = await resumeOrRun(resumeInterpretSearchResult, progressObject.interpretations, () =>
-      interpretFindings(
-        proxies.interpretation,
-        (input, output) => {
-          console.log({ finding: input.caption, interpretation: output.interpretation, category: output.category });
-        },
-        concept,
-        aggregated
-      )
-    );
-    await logger("interpret", `${interpreted.stats.map((statItem) => `${statItem.count} ${statItem.category}`).join(", ")}`);
-    incrementalLogObject({ interpreted });
+      .slice(0, 40); // prevent overflow
 
     // analyze aggregation quality with top, avg, bottom scores
     const allScores = aggregated.map((item) => item.score);
@@ -209,13 +197,34 @@ export async function analyzeDocument(dir: string, outDir: string) {
     await logger("search", `aggregation ${aggregated.length} items. Score top ${topScore}, avg ${avgScore}, bottom ${bottomScore}`);
     incrementalLogObject({ aggregated });
 
+    const interpretations = await resumeOrRun(resumeInterpretSearchResult, progressObject.interpretations, () =>
+      interpretFindings(
+        proxies.interpretation,
+        (input, output) => {
+          console.log({ finding: input.caption, interpretation: output.interpretation, category: output.category });
+        },
+        concept,
+        aggregated
+      )
+    );
+
+    await logger(
+      "interpret",
+      `${getInterpretationStats(interpretations)
+        .map((statItem) => `${statItem.count} ${statItem.category}`)
+        .join(", ")}`
+    );
+    incrementalLogObject({ interpretations });
+
+    const relevantInterpretations = interpretations.filter((item) => item.category !== "irrelevant");
     const curationResponse = await resumeOrRun(resumeCurationReponse, progressObject.curationResponse, () =>
-      curateClaimsV2(proxies.curation, concept, aggregated)
+      curateClaimsV3(proxies.curation, concept, relevantInterpretations)
     );
     await logger("curate", `curation ${curationResponse.length} chars`);
     incrementalLogObject({ curationResponse });
 
-    const parsedCuration = parseCuration(aggregated, curationResponse);
+    const parsedCuration = parseCuration(relevantInterpretations, curationResponse);
+
     const footnoteUtilizationRate = parsedCuration.usedFootNotePositions.length / parsedCuration.footnotes.length;
     const citationsPerItem =
       parsedCuration.groups.reduce((a, b) => a + b.items.reduce((x, y) => x + y.sources.length, 0), 0) /

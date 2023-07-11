@@ -2,7 +2,7 @@ import type { ChatMessage, SimpleChatProxy } from "../../azure/chat";
 import { responseToList } from "../../hits/format";
 
 import { arrayToBulletList } from "../../hits/format";
-import type { AggregatedItem } from "./semantic-search";
+import type { AggregatedItem, SemanticResult } from "./semantic-search";
 
 export async function getSemanticQueries(chatProxy: SimpleChatProxy, markdownFile: string, limitHint: number) {
   const claims = await chatProxy({
@@ -443,12 +443,18 @@ Found: "${item.caption}"
   return results;
 }
 
+export interface InterpretedItem extends SemanticResult {
+  assumptions: string[];
+  interpretation: string;
+  category: string;
+}
+
 export async function interpretFindings(
   chatProxy: SimpleChatProxy,
   onProgress: (input: AggregatedItem, output: { interpretation: string; category: string }) => any,
   concept: Concept,
   items: AggregatedItem[]
-) {
+): Promise<InterpretedItem[]> {
   const results = await Promise.all(
     items.map(async (item) => {
       const response = await chatProxy({
@@ -457,7 +463,7 @@ export async function interpretFindings(
             role: "system",
             content: `User is looking for UX research findings about ${concept.name}, defined as ${concept.definition}.
 
-Based on the provided assumption and search query, interpret the finding. Respond in this format:
+Interpret the finding against the provided assumption. Respond in this format:
 
 Interpretation: <Interpretation>
 Category: <support | contradict | inform | indirectly_related | irrelevant>`,
@@ -467,8 +473,8 @@ Category: <support | contradict | inform | indirectly_related | irrelevant>`,
             content: `
 ${item.queries.map(
   (q, i) => `
-Assuming: ${q.assumption}
-Searching: "${q.raw}"`
+Assumption: ${q.assumption}
+Query: "${q.raw}"`
 )}
 Found: "${item.caption}"
         `.trim(),
@@ -482,13 +488,20 @@ Found: "${item.caption}"
       const interpretation = rawResponse.match(/Interpretation: (.*)/)?.[1] ?? "";
       const category = rawResponse.match(/Category: (.*)/)?.[1] ?? "";
       const normalizedCategory = ["support", "contract", "inform", "indirectly_related", "irrelevant"].includes(category) ? category : "irrelevant";
-      const output = { interpretation, category: normalizedCategory };
+      const output = { assumptions: item.queries.map((q) => q.assumption), interpretation, category: normalizedCategory };
       onProgress(item, output);
-      return output;
+      return {
+        ...item,
+        ...output,
+      };
     })
   );
 
-  const statsItem: { category: string; count: number }[] = results.reduce((acc, item) => {
+  return results;
+}
+
+export function getInterpretationStats(items: InterpretedItem[]) {
+  const statsItem: { category: string; count: number }[] = items.reduce((acc, item) => {
     const existingItem = acc.find((i) => i.category === item.category);
     if (existingItem) {
       existingItem.count += 1;
@@ -498,10 +511,66 @@ Found: "${item.caption}"
     return acc;
   }, [] as { category: string; count: number }[]);
 
-  return {
-    stats: statsItem,
-    results,
-  };
+  return statsItem;
+}
+
+export async function curateClaimsV3(chatProxy: SimpleChatProxy, concept: Concept, interpretedItems: InterpretedItem[]) {
+  const textSources = interpretedItems
+    .map((item, index) =>
+      `
+[${index + 1}]
+Assumptions: ${item.assumptions.join(", and ")}
+Finding: ${item.caption}
+Interpretation: (${item.category}) ${item.interpretation}
+`.trim()
+    )
+    .join("\n\n");
+
+  console.log(textSources);
+
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content: `
+Carefully read all the findings are about "${concept.name}", also known as ${concept.alternativeNames.join(", ")}, and defined as: ${concept.definition}.
+
+Shorten the findings into key points and sort the key points into groups.
+Each key point must end with citation of one or more Finding numbers. Use square brackets, e.g. [1][2][3] for Finding 1, 2, and 3.
+
+Respond in this format:
+
+Group 1: <Humble and engaging title>
+Intro: <One paragraph introduction, explain how the findings connect to "${concept.name}" in details>
+Findings: <List of key points>
+- <Key point 1> <citation>
+- <Key point 2> <citation>
+- <Key point 3> <citation>
+...
+
+Group 2: ...
+Intro: ...
+Findings:
+- ...
+- ...
+- ...
+...
+
+...(repeat until *all* the findings are categorized. Identify as many groups as you can)
+`.trim(),
+    },
+    {
+      role: "user",
+      content: textSources,
+    },
+  ];
+
+  const response = await chatProxy({ messages, max_tokens: 2000, temperature: 0 });
+  const textResponse = response.choices[0].message.content ?? "";
+
+  // TODO parse citation graph
+  console.log("curation raw response", textResponse);
+
+  return textResponse;
 }
 
 export async function curateClaimsV2(chatProxy: SimpleChatProxy, concept: Concept, aggregatedItems: AggregatedItem[]) {
