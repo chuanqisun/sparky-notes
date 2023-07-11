@@ -95,8 +95,8 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferSupporters = true;
     const resumeInferProtesters = true;
     const resumeSemanticSearch = true;
-    const resumeInterpretSearchResult = true; // (!)
-    const resumeCurationReponse = true; // (!)
+    const resumeInterpretSearchResult = false; // (!)
+    const resumeCurationReponse = false; // (!)
 
     const proxies = {
       concept: lengthSensitiveProxy,

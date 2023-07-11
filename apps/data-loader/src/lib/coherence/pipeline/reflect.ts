@@ -11,14 +11,14 @@ const decorators = {
 };
 
 const assumptions = {
-  goals: (concept: string, query: string) => `${concept} might help achieve "${query}"`,
-  problems: (concept: string, query: string) => `${concept} might solve "${query}"`,
+  goals: (concept: string, query: string) => `${concept} might help achieve ${query}`,
+  problems: (concept: string, query: string) => `${concept} might solve ${query}`,
   supporters: (concept: string, query: string) => `${concept} might benefit ${query}`,
   protesters: (concept: string, query: string) => `${concept} might not benefit ${query}`,
   guidanceDo: (concept: string, query: string) => `"${query}" might be a best practice for ${concept}`,
   guidanceDont: (concept: string, query: string) => `"${query}" might be a best practice for ${concept}`,
-  conceptAlternativeNames: (concept: string, query: string) => `${concept} might be known as "${query}"`,
-  questionedConcepts: (concept: string, query: string) => `${concept} might raise the question "${query}"`,
+  conceptAlternativeNames: (concept: string, query: string) => `${concept} might be known as ${query}`,
+  questionedConcepts: (concept: string, query: string) => `${concept} might raise the question ${query}`,
   "": (_concept: string, query: string) => query,
 };
 

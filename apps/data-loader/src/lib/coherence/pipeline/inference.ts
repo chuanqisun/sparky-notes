@@ -463,7 +463,7 @@ export async function interpretFindings(
             role: "system",
             content: `User is looking for UX research findings about ${concept.name}, defined as ${concept.definition}.
 
-Interpret the finding against the provided assumption. Respond in this format:
+Interpret and categorize the finding against the provided assumption. Respond in this format:
 
 Interpretation: <Interpretation>
 Category: <support | contradict | inform | indirectly_related | irrelevant>`,
@@ -476,7 +476,7 @@ ${item.queries.map(
 Assumption: ${q.assumption}
 Query: "${q.raw}"`
 )}
-Found: "${item.caption}"
+Finding: "${item.caption}"
         `.trim(),
           },
         ],
@@ -487,7 +487,7 @@ Found: "${item.caption}"
       const rawResponse = response.choices[0].message.content ?? "";
       const interpretation = rawResponse.match(/Interpretation: (.*)/)?.[1] ?? "";
       const category = rawResponse.match(/Category: (.*)/)?.[1] ?? "";
-      const normalizedCategory = ["support", "contract", "inform", "indirectly_related", "irrelevant"].includes(category) ? category : "irrelevant";
+      const normalizedCategory = ["support", "contradict", "inform", "indirectly_related", "irrelevant"].includes(category) ? category : "irrelevant";
       const output = { assumptions: item.queries.map((q) => q.assumption), interpretation, category: normalizedCategory };
       onProgress(item, output);
       return {
@@ -519,9 +519,9 @@ export async function curateClaimsV3(chatProxy: SimpleChatProxy, concept: Concep
     .map((item, index) =>
       `
 [${index + 1}]
+Source: ${item.caption}
 Assumptions: ${item.assumptions.join(", and ")}
-Finding: ${item.caption}
-Interpretation: (${item.category}) ${item.interpretation}
+Finding: ${item.interpretation}
 `.trim()
     )
     .join("\n\n");
@@ -532,15 +532,15 @@ Interpretation: (${item.category}) ${item.interpretation}
     {
       role: "system",
       content: `
-Carefully read all the findings are about "${concept.name}", also known as ${concept.alternativeNames.join(", ")}, and defined as: ${concept.definition}.
+Carefully read all the findings are about ${concept.name}, defined as: ${concept.definition}.
 
 Shorten the findings into key points and sort the key points into groups.
-Each key point must end with citation of one or more Finding numbers. Use square brackets, e.g. [1][2][3] for Finding 1, 2, and 3.
+Each key point must end with citation of one or more Source numbers. Use square brackets, e.g. [1][2][3] for Source 1, 2, and 3.
 
 Respond in this format:
 
-Group 1: <Humble and engaging title>
-Intro: <One paragraph introduction, explain how the findings connect to "${concept.name}" in details>
+Group 1: <Concise title for this group of findings>
+Intro: <One paragraph introduction, be humble, state any assumptions and explain how the findings connect to "${concept.name}" in details>
 Findings: <List of key points>
 - <Key point 1> <citation>
 - <Key point 2> <citation>
