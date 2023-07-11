@@ -519,9 +519,9 @@ export async function curateClaimsV3(chatProxy: SimpleChatProxy, concept: Concep
     .map((item, index) =>
       `
 [${index + 1}]
-Source: ${item.caption}
+Finding: ${item.caption}
 Assumptions: ${item.assumptions.join(", and ")}
-Finding: ${item.interpretation}
+Interpretation: ${item.interpretation}
 `.trim()
     )
     .join("\n\n");
@@ -532,15 +532,15 @@ Finding: ${item.interpretation}
     {
       role: "system",
       content: `
-Carefully read all the findings are about ${concept.name}, defined as: ${concept.definition}.
+Summarize all findings about ${concept.name}, defined as: ${concept.definition}.
 
-Shorten the findings into key points and sort the key points into groups.
-Each key point must end with citation of one or more Source numbers. Use square brackets, e.g. [1][2][3] for Source 1, 2, and 3.
+Use the provied assumptions and interpretations to summarize the findings into groups of key points.
+Each key point must end with citation of one or more Finding numbers. Use square brackets, e.g. [1][2][3] for Source 1, 2, and 3.
 
 Respond in this format:
 
 Group 1: <Concise title for this group of findings>
-Intro: <One paragraph introduction, be humble, state any assumptions and explain how the findings connect to "${concept.name}" in details>
+Intro: <One paragraph introduction, use humble voice, state any assumptions and explain in details how the findings and their assumptions relate to ${concept.name}>
 Findings: <List of key points>
 - <Key point 1> <citation>
 - <Key point 2> <citation>
