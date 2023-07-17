@@ -1,6 +1,15 @@
 {
   "configurations": [
     {
+      "name": "tsx current file",
+      "request": "launch",
+      "runtimeArgs": ["run-script", "env"],
+      "runtimeExecutable": "npm",
+      "args": ["tsx", "${relativeFile}"],
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
       "name": "Debug data loader",
       "request": "launch",
       "runtimeArgs": ["run-script", "start:repl"],
