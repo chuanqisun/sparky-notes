@@ -53,7 +53,7 @@ export function parseCuration(interpretedItems: InterpretedItem[], curationRespo
     .map((rawGroup) => rawGroup.match(/Group \d:(.+)(\n)+Intro:(.+)(\n)+Findings:\n((- .*\n)+)/m))
     .map((match) => ({
       name: match![1].trim(),
-      intro: match![3].trim(),
+      intro: parseIntro(match![3].trim()),
       items: responseToList(match![5].trim()).listItems.map((item) => parseCitations(item)),
     }));
 
@@ -86,6 +86,11 @@ export function parseCuration(interpretedItems: InterpretedItem[], curationRespo
     unknownFootNotePositions: [...unknownSources],
     footnotes,
   };
+}
+
+function parseIntro(line: string): string {
+  // remove all trailing citations
+  return parseCitations(line).text;
 }
 
 function parseCitations(line: string): { text: string; citations: number[] } {
