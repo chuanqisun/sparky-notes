@@ -52,6 +52,13 @@ export function useModelSelector() {
     },
     [selectedEmbeddineModelDisplayId, getChatEndpoint]
   );
+
+  const selectedEndpoint = useMemo(() => {
+    if (!selectedChatModelDisplayId) return null;
+    const chatEndpoint = getChatEndpoint?.(selectedChatModelDisplayId);
+    return chatEndpoint ?? null;
+  }, [selectedChatModelDisplayId, getChatEndpoint]);
+
   const ModelSelectorElement = useMemo(
     () =>
       connections?.length ? (
@@ -106,6 +113,7 @@ export function useModelSelector() {
   return {
     chat,
     embed,
+    selectedEndpoint,
     ModelSelectorElement,
   };
 }

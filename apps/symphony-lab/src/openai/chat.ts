@@ -5,7 +5,7 @@ export interface OpenAIChatPayload {
   frequency_penalty: number;
   presence_penalty: number;
   max_tokens: number;
-  stop: string | string[];
+  stop: null | string | string[];
 }
 
 export interface ChatMessage {

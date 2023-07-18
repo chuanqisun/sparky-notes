@@ -1,3 +1,4 @@
+import { azureOpenAIChatWorker, createLoopChat, getOpenAIJsonProxy, simpleChat, type ChatMessage } from "@h20/chat";
 import type { CozoDb } from "cozo-lib-wasm";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -6,7 +7,7 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
-import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
+import type { OpenAIChatPayload } from "../openai/chat";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
@@ -27,23 +28,42 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     console.log(graph);
   }, [graph]);
 
-  const { chat, ModelSelectorElement } = useModelSelector();
+  const { ModelSelectorElement, selectedEndpoint } = useModelSelector();
 
-  const rateLimitedChat = useMemo(() => {
-    const queue = rateLimitQueue(300, 0.1);
-    const rateLimitedProxy = withAsyncQueue(queue, chat);
-    return rateLimitedProxy;
-  }, [chat]);
+  const loopChat = useMemo(() => {
+    if (!selectedEndpoint) return null;
+    const worker = azureOpenAIChatWorker({
+      proxy: getOpenAIJsonProxy({
+        endpoint: selectedEndpoint.endpoint,
+        apiKey: selectedEndpoint.apiKey,
+      }),
+      model: "gpt-35-turbo",
+      tokensPerMinute: 3000,
+    });
+
+    const loopChat = createLoopChat({
+      workers: [worker],
+    });
+
+    return loopChat;
+  }, [selectedEndpoint]);
+
+  const chat = useMemo(() => {
+    return (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => {
+      if (!loopChat) throw new Error("Chat API not loaded");
+      return simpleChat(loopChat, ["gpt-35-turbo"], { messages, ...config }).then((response) => response.choices[0].message.content ?? "");
+    };
+  }, [loopChat]);
 
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");
 
-  const antidoteDirective = useMemo(() => createAntidoteDirective(rateLimitedChat), [rateLimitedChat]);
-  const codeDirective = useMemo(() => createCodeDirective(rateLimitedChat), [rateLimitedChat]);
+  const antidoteDirective = useMemo(() => createAntidoteDirective(chat), [chat]);
+  const codeDirective = useMemo(() => createCodeDirective(chat), [chat]);
   const exportDirective = useMemo(() => createExportDirective(), []);
-  const jqDirective = useMemo(() => createJqDirective(rateLimitedChat), [rateLimitedChat]);
+  const jqDirective = useMemo(() => createJqDirective(chat), [chat]);
   const jsonDirective = useMemo(() => createJsonDirective(), []);
-  const tagDirective = useMemo(() => createTagDirective(rateLimitedChat), [rateLimitedChat]);
+  const tagDirective = useMemo(() => createTagDirective(chat), [chat]);
 
   const allDirective = [antidoteDirective, codeDirective, exportDirective, jqDirective, jsonDirective, tagDirective];
 
