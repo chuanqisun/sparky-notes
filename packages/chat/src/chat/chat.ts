@@ -155,6 +155,7 @@ export function getChatRunner(): RunFn<ChatTask, ChatWorker> {
         }));
       },
       (err) => {
+        // TODO on 429 error, pause the worker from running new task
         // on error, requeue the task
         if (task.retryLeft <= 0) {
           console.log("no retry left", err);
