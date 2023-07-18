@@ -8,7 +8,6 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
-import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
@@ -68,20 +67,16 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     console.log("endpoints", allChatEndpoints);
 
     const workers = allChatEndpoints.map((endpoint) => {
-      const q = rateLimitQueue(120);
-      const rateLimitedProxy = withAsyncQueue(
-        q,
-        getOpenAIJsonProxy({
-          endpoint: endpoint.endpoint,
-          apiKey: endpoint.apiKey,
-        })
-      );
+      const rawProxy = getOpenAIJsonProxy({
+        endpoint: endpoint.endpoint,
+        apiKey: endpoint.apiKey,
+      });
 
       const { tokenLimit, tokenLimitWindowSize } = modelIdToTokenLimit(endpoint.modelDisplayName as ModelName);
       const worker = azureOpenAIChatWorker({
-        proxy: rateLimitedProxy,
+        proxy: rawProxy,
         model: endpoint.modelDisplayName as ModelName,
-        parallelism: 50,
+        parallelism: 5,
         tokenLimit,
         tokenLimitWindowSize,
       });
