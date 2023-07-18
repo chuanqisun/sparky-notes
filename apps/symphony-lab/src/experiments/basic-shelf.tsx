@@ -81,7 +81,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       const worker = azureOpenAIChatWorker({
         proxy: rateLimitedProxy,
         model: endpoint.modelDisplayName as ModelName,
-        parallelism: 1,
+        parallelism: 50,
         tokenLimit,
         tokenLimitWindowSize,
       });
