@@ -24,16 +24,23 @@ export function createTagDirective(chat: ChatProxy): ShelfDirective {
         return results;
       })(data.length, 3);
 
-      const contextBlurbs: string[] = slidingWindows.map(({ startIndex, endIndex, focusIndex }) => {
+      const contextBlurbs: { blurb: string; focusLine: string }[] = slidingWindows.map(({ startIndex, endIndex, focusIndex }) => {
         const lines = data.slice(startIndex, endIndex);
         const relativeFocusIndex = focusIndex - startIndex;
 
-        return lines
+        const blurb = lines
           .map((line, index) => {
             const prefix = index === relativeFocusIndex ? "=>" : "  ";
             return prefix + line;
           })
           .join("\n");
+
+        const focusLine = lines[relativeFocusIndex];
+
+        return {
+          blurb,
+          focusLine,
+        };
       });
 
       const tagRequestMessages: ChatMessage[][] = contextBlurbs.map((contextBlurb) => [
@@ -48,14 +55,16 @@ tags: <comma separated tags>
 """
         `,
         },
-        { role: "user", content: contextBlurb },
+        { role: "user", content: contextBlurb.blurb },
       ]);
+
+      const tokenEstimates: number[] = contextBlurbs.map((contextBlurb) => contextBlurb.focusLine.split(" ").length * 2 + 50);
 
       let progress = 0;
 
       const tagsResult = await Promise.all(
-        tagRequestMessages.map((messages) =>
-          chat(messages, { max_tokens: 400, temperature: 0 })
+        tagRequestMessages.map((messages, index) =>
+          chat(messages, { max_tokens: tokenEstimates[index], temperature: 0 })
             .then((response) => {
               progress++;
               const tags =
