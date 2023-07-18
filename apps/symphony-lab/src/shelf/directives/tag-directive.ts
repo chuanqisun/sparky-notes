@@ -55,7 +55,7 @@ tags: <comma separated tags>
 
       const tagsResult = await Promise.all(
         tagRequestMessages.map((messages) =>
-          chat(messages, { max_tokens: 1200, temperature: 0 })
+          chat(messages, { max_tokens: 400, temperature: 0 })
             .then((response) => {
               progress++;
               const tags =
