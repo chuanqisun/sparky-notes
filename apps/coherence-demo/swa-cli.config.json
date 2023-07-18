@@ -3,7 +3,7 @@
   "configurations": {
     "coherence-demo": {
       "appLocation": ".",
-      "outputLocation": "build",
+      "outputLocation": "dist",
       "swaConfigLocation": ".",
       "appName": "coherence-research-demo",
       "tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47",
