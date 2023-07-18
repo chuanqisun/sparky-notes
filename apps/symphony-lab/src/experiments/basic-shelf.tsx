@@ -1,5 +1,6 @@
-import { azureOpenAIChatWorker, createLoopChat, getOpenAIJsonProxy, simpleChat, type ChatMessage } from "@h20/chat";
+import { azureOpenAIChatWorker, getChatTaskRunner, getOpenAIJsonProxy, getSimpleRESTChat, type ModelName } from "@h20/chat";
 import type { CozoDb } from "cozo-lib-wasm";
+import gptTokenizer from "gpt-tokenizer";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
@@ -7,7 +8,6 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
-import type { OpenAIChatPayload } from "../openai/chat";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
@@ -22,38 +22,84 @@ export interface BasicShelfProps {
   db: CozoDb;
 }
 
+const modelIdToTokenLimit = (modelId: ModelName) => {
+  switch (modelId) {
+    case "gpt-35-turbo":
+      return {
+        tokenLimit: 120_000,
+        tokenLimitWindowSize: 65_000,
+      };
+    case "gpt-35-turbo-16k":
+      return {
+        tokenLimit: 87_000,
+        tokenLimitWindowSize: 65_000,
+      };
+
+    case "gpt-4":
+      return {
+        tokenLimit: 10_000,
+        tokenLimitWindowSize: 65_000,
+      };
+    case "gpt-4-32k":
+      return {
+        tokenLimit: 30_000,
+        tokenLimitWindowSize: 65_000,
+      };
+
+    default:
+      console.warn(`Unknown modelId: ${modelId}`);
+      return {
+        tokenLimit: 10_000,
+        tokenLimitWindowSize: 65_000,
+      };
+  }
+};
+
 export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const graph = useRef(new Cozo(db));
   useEffect(() => {
     console.log(graph);
   }, [graph]);
 
-  const { ModelSelectorElement, selectedEndpoint } = useModelSelector();
+  const { ModelSelectorElement, allChatEndpoints } = useModelSelector();
 
-  const loopChat = useMemo(() => {
-    if (!selectedEndpoint) return null;
-    const worker = azureOpenAIChatWorker({
-      proxy: getOpenAIJsonProxy({
-        endpoint: selectedEndpoint.endpoint,
-        apiKey: selectedEndpoint.apiKey,
-      }),
-      model: "gpt-35-turbo",
-      tokensPerMinute: 3000,
+  const chatTaskRunner = useMemo(() => {
+    // TODO load all available endpoints
+    console.log("endpoints", allChatEndpoints);
+
+    const workers = allChatEndpoints.map((endpoint) => {
+      const { tokenLimit, tokenLimitWindowSize } = modelIdToTokenLimit(endpoint.modelDisplayName as ModelName);
+      const worker = azureOpenAIChatWorker({
+        proxy: getOpenAIJsonProxy({
+          endpoint: endpoint.endpoint,
+          apiKey: endpoint.apiKey,
+        }),
+        model: endpoint.modelDisplayName as ModelName,
+        tokenLimit,
+        tokenLimitWindowSize,
+      });
+
+      return worker;
     });
 
-    const loopChat = createLoopChat({
-      workers: [worker],
+    const chatTaskRunner = getChatTaskRunner({
+      verbose: true,
+      workers,
     });
 
-    return loopChat;
-  }, [selectedEndpoint]);
+    return chatTaskRunner;
+  }, [allChatEndpoints]);
 
   const chat = useMemo(() => {
-    return (messages: ChatMessage[], config?: Partial<OpenAIChatPayload>) => {
-      if (!loopChat) throw new Error("Chat API not loaded");
-      return simpleChat(loopChat, ["gpt-35-turbo"], { messages, ...config }).then((response) => response.choices[0].message.content ?? "");
-    };
-  }, [loopChat]);
+    return chatTaskRunner
+      ? getSimpleRESTChat({
+          chatTaskRunner: chatTaskRunner,
+          getTokenCount: (input) => gptTokenizer.encodeChat(input, "gpt-3.5-turbo").length * 1.25, // be conservative
+        })
+      : () => {
+          throw new Error("No chat task runner");
+        };
+  }, [chatTaskRunner]);
 
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");

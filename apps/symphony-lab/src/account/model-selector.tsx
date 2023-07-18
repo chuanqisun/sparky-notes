@@ -33,6 +33,26 @@ export function useModelSelector() {
     }
   }, [selectedEmbeddineModelDisplayId, selectedChatModelDisplayId, connections]);
 
+  const allChatEndpoints = useMemo(() => {
+    if (!connections || !getChatEndpoint) return [];
+
+    return connections.reduce((acc, connection) => {
+      if (!connection.models) return acc;
+      return [
+        ...acc,
+        ...connection.models
+          .filter((model) => model.type === "chat")
+          .map((model) => ({
+            endpoint: getChatEndpoint(model.displayId)!.endpoint,
+            apiKey: connection.apiKey,
+            modelId: model.modelId,
+            modelDisplayId: model.displayId,
+            modelDisplayName: model.displayName,
+          })),
+      ];
+    }, [] as { endpoint: string; apiKey: string; modelDisplayName: string }[]);
+  }, [connections, getChatEndpoint]);
+
   const chat = useCallback<ChatProxy>(
     (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => {
       const chatEndpoint = getChatEndpoint?.(selectedChatModelDisplayId ?? "");
@@ -113,6 +133,7 @@ export function useModelSelector() {
   return {
     chat,
     embed,
+    allChatEndpoints,
     selectedEndpoint,
     ModelSelectorElement,
   };
