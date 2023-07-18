@@ -8,6 +8,7 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
+import { rateLimitQueue, withAsyncQueue } from "../http/rate-limit";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
@@ -64,17 +65,23 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const { ModelSelectorElement, allChatEndpoints } = useModelSelector();
 
   const chatTaskRunner = useMemo(() => {
-    // TODO load all available endpoints
     console.log("endpoints", allChatEndpoints);
 
     const workers = allChatEndpoints.map((endpoint) => {
-      const { tokenLimit, tokenLimitWindowSize } = modelIdToTokenLimit(endpoint.modelDisplayName as ModelName);
-      const worker = azureOpenAIChatWorker({
-        proxy: getOpenAIJsonProxy({
+      const q = rateLimitQueue(120);
+      const rateLimitedProxy = withAsyncQueue(
+        q,
+        getOpenAIJsonProxy({
           endpoint: endpoint.endpoint,
           apiKey: endpoint.apiKey,
-        }),
+        })
+      );
+
+      const { tokenLimit, tokenLimitWindowSize } = modelIdToTokenLimit(endpoint.modelDisplayName as ModelName);
+      const worker = azureOpenAIChatWorker({
+        proxy: rateLimitedProxy,
         model: endpoint.modelDisplayName as ModelName,
+        parallelism: 1,
         tokenLimit,
         tokenLimitWindowSize,
       });
