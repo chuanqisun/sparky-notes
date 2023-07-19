@@ -62,8 +62,8 @@ export class ChatWorker implements IChatWorker {
 
   private getTaskRequest(): IWorkerTaskRequest {
     return {
-      tokenLimit: 100,
-      models: [],
+      tokenLimit: this.config.tokensPerMinute, // TODO implement limits
+      models: this.config.models,
     };
   }
 

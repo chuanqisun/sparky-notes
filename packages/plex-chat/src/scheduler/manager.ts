@@ -35,17 +35,17 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     }
 
     // todo, capacity and model check
-    const availableTasks = this.taskHandles.filter((t) => !t.isRunning);
-    console.log(`[manager] ${availableTasks.length} tasks available`);
+    const pendingTasks = this.taskHandles.filter((t) => !t.isRunning);
+    const matchedTask = this.getMatchedTask(req, pendingTasks);
 
-    if (!availableTasks.length) {
+    if (!matchedTask) {
+      console.log(`[manager] no task found from ${pendingTasks.length} pending tasks`);
       return null;
     }
 
-    const candidateTask = availableTasks.at(0)!;
-    candidateTask.isRunning = true;
-
-    return candidateTask.task;
+    console.log(`[manager] task found from ${pendingTasks.length} pending tasks`);
+    matchedTask.isRunning = true;
+    return matchedTask.task;
   }
 
   public respond(task: IChatTask, result: IWorkerTaskResponse) {
@@ -58,5 +58,18 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     } else {
       taskHandle.resolve(result.output);
     }
+  }
+
+  private getMatchedTask(req: IWorkerTaskRequest, availableHandles: TaskHandle[]): TaskHandle | null {
+    return (
+      availableHandles.find((handle) => {
+        return (
+          // model matched
+          handle.task.models.some((demandedModel) => req.models.includes(demandedModel)) &&
+          // token limit matched
+          handle.task.tokenDemand <= req.tokenLimit
+        );
+      }) ?? null
+    );
   }
 }

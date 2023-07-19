@@ -20,6 +20,7 @@ export interface IWorkerTaskResponse {
 }
 
 export interface IChatTask extends ChatInput {
+  tokenDemand: number;
   models: string[];
 }
 
