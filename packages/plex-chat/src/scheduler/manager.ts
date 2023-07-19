@@ -6,7 +6,7 @@ interface TaskHandle {
   resolve: (result: ChatOutput) => void;
   reject: (error: any) => void;
   isRunning?: boolean;
-  retriesLeft?: number;
+  retryLeft: number;
 }
 
 export class ChatManager implements IChatTaskManager, IChatWorkerManager {
@@ -18,6 +18,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     return new Promise<ChatOutput>((resolve, reject) => {
       const taskHandle: TaskHandle = {
         task,
+        retryLeft: 3,
         resolve,
         reject,
       };
@@ -53,7 +54,12 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
 
     this.taskHandles = this.taskHandles.filter((t) => t !== taskHandle);
     if (result.error) {
-      taskHandle.reject(result.error); // todo handle error and retry
+      taskHandle.retryLeft--;
+      if (!taskHandle.retryLeft) {
+        taskHandle.reject(result.error);
+      } else {
+        this.taskHandles.push(taskHandle);
+      }
     } else {
       taskHandle.resolve(result.data!);
     }
