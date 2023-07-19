@@ -22,9 +22,8 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
         resolve,
         reject,
       };
-      this.taskHandles.push(taskHandle);
-      console.log(`[manager] ${this.taskHandles.length} tasks | ${this.workers.length} workers`);
-      this.workers.forEach((worker) => worker.start(this));
+
+      this.announceNewTask(taskHandle);
     });
   }
 
@@ -58,11 +57,18 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
       if (!taskHandle.retryLeft) {
         taskHandle.reject(result.error);
       } else {
-        this.taskHandles.push(taskHandle);
+        console.log(`[manager] task requeued, ${taskHandle.retryLeft} retries left`);
+        this.announceNewTask(taskHandle);
       }
     } else {
       taskHandle.resolve(result.data!);
     }
+  }
+
+  private announceNewTask(handle: TaskHandle) {
+    this.taskHandles.push(handle);
+    console.log(`[manager] ${this.taskHandles.length} tasks | ${this.workers.length} workers`);
+    this.workers.forEach((worker) => worker.start(this));
   }
 
   private getMatchedTask(req: IWorkerTaskRequest, availableHandles: TaskHandle[]): TaskHandle | null {
