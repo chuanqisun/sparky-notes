@@ -15,7 +15,7 @@ export interface IWorkerTaskRequest {
 }
 
 export interface IWorkerTaskResponse {
-  output: ChatOutput;
+  data?: ChatOutput;
   error?: any;
 }
 

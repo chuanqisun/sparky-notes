@@ -22,7 +22,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
         reject,
       };
       this.taskHandles.push(taskHandle);
-      console.log(`[manager] dispatch ${this.taskHandles.length} tasks to ${this.workers.length} workers`);
+      console.log(`[manager] ${this.taskHandles.length} tasks | ${this.workers.length} workers`);
       this.workers.forEach((worker) => worker.start(this));
     });
   }
@@ -55,7 +55,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     if (result.error) {
       taskHandle.reject(result.error); // todo handle error and retry
     } else {
-      taskHandle.resolve(result.output);
+      taskHandle.resolve(result.data!);
     }
   }
 

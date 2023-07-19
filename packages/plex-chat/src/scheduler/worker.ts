@@ -10,10 +10,18 @@ export interface IPoller {
 }
 
 export interface ChatWorkerConfig {
-  proxy: (input: ChatInput) => Promise<ChatOutput>;
+  proxy: ChatProxy;
   models: string[];
   concurrency: number;
   tokensPerMinute: number;
+}
+
+export type ChatProxy = (input: ChatInput, signal?: AbortSignal) => Promise<ChatProxyResult>;
+
+export interface ChatProxyResult {
+  data?: ChatOutput;
+  error?: string;
+  retryAfterMs?: number;
 }
 
 export interface TaskRecord {
@@ -29,6 +37,7 @@ export class ChatWorker implements IChatWorker {
   private poller: IPoller;
   private previousRequest: IWorkerTaskRequest | null = null;
   private records: TaskRecord[] = [];
+  private coolDownUntil = 0;
 
   constructor(private config: ChatWorkerConfig) {
     this.poller = new Poller(100);
@@ -68,6 +77,14 @@ export class ChatWorker implements IChatWorker {
   }
 
   private getTaskRequest(): IWorkerTaskRequest {
+    // BLocked due to cooldown
+    if (this.coolDownUntil > Date.now()) {
+      return {
+        tokenCapacity: 0,
+        models: this.config.models,
+      };
+    }
+
     // Blocked due to max concurrency
     if (this.tasks.length >= this.config.concurrency) {
       return {
@@ -103,8 +120,15 @@ export class ChatWorker implements IChatWorker {
     // mock async run task
     this.records.push({ startedAt: Date.now(), tokenDemand: task.tokenDemand });
 
-    const output = await this.config.proxy(task.input);
-    manager.respond(task, { output });
+    const { error, data, retryAfterMs } = await this.config.proxy(task.input);
+    if (!error) {
+      manager.respond(task, { data });
+    } else {
+      if (retryAfterMs !== undefined) {
+        this.coolDownUntil = Date.now() + retryAfterMs;
+      }
+      manager.respond(task, { error });
+    }
 
     this.tasks = this.tasks.filter((t) => t !== task);
 
