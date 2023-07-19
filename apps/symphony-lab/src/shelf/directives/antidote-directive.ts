@@ -5,7 +5,7 @@ import type { ShelfDirective } from "./base-directive";
 export function createAntidoteDirective(chat: ChatProxy): ShelfDirective {
   return {
     match: (source) => source.startsWith("/antidote"),
-    run: async ({ data, updateStatus: setStatus, source }) => {
+    run: async ({ data, updateStatus: setStatus }) => {
       if (!Array.isArray(data)) {
         return {
           status: "The shelf must be a list of texts. Hint: /code can help transform it into a list of texts",
