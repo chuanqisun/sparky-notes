@@ -1,3 +1,4 @@
+import { getTokenCapacity } from "./capacity";
 import { Poller } from "./poller";
 import type { IChatTask, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
 
@@ -13,13 +14,10 @@ export interface ChatWorkerConfig {
   tokensPerMinute: number;
 }
 
-// TODO request based on capacity
-// ref: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/quota#understanding-rate-limits
-// check model compatibility
-// check tpm capacity (1 min window: < tpm limit)
-// check tpm capacity (10 sec window: < (tpm - consumed)/6 if not first req)
-// check tpm capacity (1 sec window: < (tpm - consumed)/60 if not first req)
-// check max parallelism
+export interface TaskRecord {
+  startedAt: number;
+  tokenDemand: number;
+}
 
 // Chat worker is responsible for polling task when its self has change in capacity
 // Only chat manager can stop chat worker polling
@@ -28,6 +26,7 @@ export class ChatWorker implements IChatWorker {
   private tasks: IChatTask[] = [];
   private poller: IPoller;
   private previousRequest: IWorkerTaskRequest | null = null;
+  private records: TaskRecord[] = [];
 
   constructor(private config: ChatWorkerConfig) {
     this.poller = new Poller(100);
@@ -53,6 +52,7 @@ export class ChatWorker implements IChatWorker {
   }
 
   private updateTaskRequest(): { isChanged: boolean; request: IWorkerTaskRequest } {
+    this.updateRecordsWindow();
     const request = this.getTaskRequest();
     const isChanged = JSON.stringify(request)! == JSON.stringify(this.previousRequest);
     this.previousRequest = request;
@@ -60,9 +60,22 @@ export class ChatWorker implements IChatWorker {
     return { isChanged, request };
   }
 
+  private updateRecordsWindow() {
+    // remove history older than 1 min
+    this.records = this.records.filter((r) => r.startedAt > Date.now() - 60 * 1000);
+  }
+
   private getTaskRequest(): IWorkerTaskRequest {
+    // Blocked due to max concurrency
+    if (this.tasks.length >= this.config.concurrency) {
+      return {
+        tokenCapacity: 0,
+        models: this.config.models,
+      };
+    }
+
     return {
-      tokenLimit: this.config.tokensPerMinute, // TODO implement limits
+      tokenCapacity: getTokenCapacity(this.config.tokensPerMinute, this.records),
       models: this.config.models,
     };
   }
@@ -81,8 +94,12 @@ export class ChatWorker implements IChatWorker {
 
   private async runTask(manager: IChatWorkerManager, task: IChatTask) {
     // mock async run task
+    this.records.push({ startedAt: Date.now(), tokenDemand: task.tokenDemand });
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
     manager.respond(task, { output: {} as any });
+
+    this.tasks = this.tasks.filter((t) => t !== task);
 
     // after each run, restart the poller because capacity might have changed
     this.start(manager);

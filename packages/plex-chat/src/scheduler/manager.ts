@@ -34,7 +34,6 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
       return null;
     }
 
-    // todo, capacity and model check
     const pendingTasks = this.taskHandles.filter((t) => !t.isRunning);
     const matchedTask = this.getMatchedTask(req, pendingTasks);
 
@@ -67,7 +66,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
           // model matched
           handle.task.models.some((demandedModel) => req.models.includes(demandedModel)) &&
           // token limit matched
-          handle.task.tokenDemand <= req.tokenLimit
+          handle.task.tokenDemand <= req.tokenCapacity
         );
       }) ?? null
     );

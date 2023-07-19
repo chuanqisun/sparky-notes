@@ -10,7 +10,7 @@ export interface IChatWorkerManager {
 }
 
 export interface IWorkerTaskRequest {
-  tokenLimit: number;
+  tokenCapacity: number;
   models: string[];
 }
 
