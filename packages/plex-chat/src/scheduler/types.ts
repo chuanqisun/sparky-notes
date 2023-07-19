@@ -1,12 +1,12 @@
 import type { ChatInput, ChatOutput } from "../openai/types";
 
-export interface IChatWorker {
-  start: (manager: IChatWorkerManager) => void;
+export interface IChatTaskManager {
+  submit: (task: IChatTask) => Promise<ChatOutput>;
 }
 
 export interface IChatWorkerManager {
-  requestTask: (req: IWorkerTaskRequest) => IChatTask | null;
-  respondTask: (task: IChatTask, result: IWorkerTaskResult) => void;
+  request: (request: IWorkerTaskRequest) => IChatTask | null;
+  respond: (task: IChatTask, response: IWorkerTaskResponse) => void;
 }
 
 export interface IWorkerTaskRequest {
@@ -14,7 +14,7 @@ export interface IWorkerTaskRequest {
   models: string[];
 }
 
-export interface IWorkerTaskResult {
+export interface IWorkerTaskResponse {
   output: ChatOutput;
   error?: any;
 }
@@ -23,6 +23,7 @@ export interface IChatTask extends ChatInput {
   models: string[];
 }
 
-export interface IChatTaskManager {
-  submit: (task: IChatTask) => Promise<ChatOutput>;
+export interface IChatWorker {
+  start: (manager: IChatWorkerManager) => void;
+  stop: () => void;
 }

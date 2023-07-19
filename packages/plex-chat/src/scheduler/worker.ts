@@ -47,6 +47,10 @@ export class ChatWorker implements IChatWorker {
     });
   }
 
+  public stop() {
+    this.poller.unset();
+  }
+
   private updateTaskRequest(): { isChanged: boolean; request: IWorkerTaskRequest } {
     const request = this.getTaskRequest();
     const isChanged = JSON.stringify(request)! == JSON.stringify(this.previousRequest);
@@ -63,7 +67,7 @@ export class ChatWorker implements IChatWorker {
   }
 
   private poll(manager: IChatWorkerManager, request: IWorkerTaskRequest) {
-    const task = manager.requestTask(request);
+    const task = manager.request(request);
     if (task) {
       this.tasks.push(task);
       this.runTask(manager, task);
@@ -73,7 +77,7 @@ export class ChatWorker implements IChatWorker {
   private async runTask(manager: IChatWorkerManager, task: any) {
     // mock async run task
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    manager.respondTask(task, { result: "ok" });
+    manager.respond(task, { output: {} as any });
 
     // after each run, restart the poller because capacity might have changed
     this.start(manager);

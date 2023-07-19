@@ -1,5 +1,5 @@
 import type { ChatOutput } from "../openai/types";
-import type { IChatTask, IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest, IWorkerTaskResult } from "./types";
+import type { IChatTask, IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest, IWorkerTaskResponse } from "./types";
 
 interface TaskHandle {
   task: IChatTask;
@@ -26,7 +26,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     });
   }
 
-  public requestTask(req: IWorkerTaskRequest): IChatTask | null {
+  public request(req: IWorkerTaskRequest): IChatTask | null {
     if (!this.taskHandles.length) return null;
 
     const candidateTask = this.taskHandles.at(0)!; // todo, capacity and model check
@@ -34,7 +34,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     return candidateTask.task;
   }
 
-  public respondTask(task: IChatTask, result: IWorkerTaskResult) {
+  public respond(task: IChatTask, result: IWorkerTaskResponse) {
     const taskHandle = this.taskHandles.find((t) => t.task === task);
     if (!taskHandle) throw new Error("task not found");
 
