@@ -16,21 +16,35 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
 
   public async submit(task: IChatTask) {
     return new Promise<ChatOutput>((resolve, reject) => {
-      const taskHandles: TaskHandle = {
+      const taskHandle: TaskHandle = {
         task,
         resolve,
         reject,
       };
-      this.taskHandles.push(taskHandles);
+      this.taskHandles.push(taskHandle);
+      console.log(`[manager] dispatch ${this.taskHandles.length} tasks to ${this.workers.length} workers`);
       this.workers.forEach((worker) => worker.start(this));
     });
   }
 
   public request(req: IWorkerTaskRequest): IChatTask | null {
-    if (!this.taskHandles.length) return null;
+    if (!this.taskHandles.length) {
+      console.log(`[manager] all tasks completed, stopping workers`);
+      this.workers.forEach((worker) => worker.stop());
+      return null;
+    }
 
-    const candidateTask = this.taskHandles.at(0)!; // todo, capacity and model check
+    // todo, capacity and model check
+    const availableTasks = this.taskHandles.filter((t) => !t.isRunning);
+    console.log(`[manager] ${availableTasks.length} tasks available`);
+
+    if (!availableTasks.length) {
+      return null;
+    }
+
+    const candidateTask = availableTasks.at(0)!;
     candidateTask.isRunning = true;
+
     return candidateTask.task;
   }
 

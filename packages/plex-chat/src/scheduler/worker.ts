@@ -1,5 +1,5 @@
 import { Poller } from "./poller";
-import type { IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
+import type { IChatTask, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
 
 export interface IPoller {
   // run the event handler at interval, do not start immediately
@@ -9,9 +9,8 @@ export interface IPoller {
 
 export interface ChatWorkerConfig {
   models: string[];
-  maxConcurrency: number;
+  concurrency: number;
   tokensPerMinute: number;
-  clockInterval: number;
 }
 
 // TODO request based on capacity
@@ -26,18 +25,19 @@ export interface ChatWorkerConfig {
 // Only chat manager can stop chat worker polling
 
 export class ChatWorker implements IChatWorker {
-  private tasks: any[] = [];
+  private tasks: IChatTask[] = [];
   private poller: IPoller;
   private previousRequest: IWorkerTaskRequest | null = null;
 
   constructor(private config: ChatWorkerConfig) {
-    this.poller = new Poller(config.clockInterval);
+    this.poller = new Poller(100);
   }
 
   public start(manager: IChatWorkerManager) {
+    console.log(`[worker] started`);
     // poll immediately because start was requested by the manager
     this.poll(manager, this.updateTaskRequest().request);
-    // start interval based polling because capacity might have changed
+    // start interval based polling because capacity might have changed due to timeout
     this.poller.unset();
     this.poller.set(() => {
       const taskRequestChange = this.updateTaskRequest();
@@ -48,6 +48,7 @@ export class ChatWorker implements IChatWorker {
   }
 
   public stop() {
+    console.log(`[worker] stopped`);
     this.poller.unset();
   }
 
@@ -69,12 +70,16 @@ export class ChatWorker implements IChatWorker {
   private poll(manager: IChatWorkerManager, request: IWorkerTaskRequest) {
     const task = manager.request(request);
     if (task) {
+      console.log(`[worker] task aquired`);
       this.tasks.push(task);
       this.runTask(manager, task);
     }
+    {
+      console.log(`[worker] no task available`);
+    }
   }
 
-  private async runTask(manager: IChatWorkerManager, task: any) {
+  private async runTask(manager: IChatWorkerManager, task: IChatTask) {
     // mock async run task
     await new Promise((resolve) => setTimeout(resolve, 1000));
     manager.respond(task, { output: {} as any });
