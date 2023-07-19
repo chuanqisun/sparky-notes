@@ -81,6 +81,11 @@ export class ChatWorker implements IChatWorker {
   }
 
   private poll(manager: IChatWorkerManager, request: IWorkerTaskRequest) {
+    if (request.tokenCapacity === 0) {
+      console.log(`[worker] skip poll due to 0 capacity`);
+      return;
+    }
+
     const task = manager.request(request);
     if (task) {
       console.log(`[worker] task aquired`);
