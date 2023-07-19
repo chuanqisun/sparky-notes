@@ -1,20 +1,23 @@
 import type { ModelName } from "../openai/types";
 
 export interface IChatWorker {
-  tryAssign: (task: any) => boolean;
-  onDone: (eventHandler: any) => void;
-  onCapacityChange: (eventHandler: any) => void;
+  start: (manager: IChatManager) => void;
 }
 
 export interface IChatManager {
-  addWorkers: (...workers: IChatWorker[]) => void;
+  // user facing
   submit: (task: any) => Promise<any>;
+  addWorkers: (...workers: IChatWorker[]) => void;
+
+  // worker facing
+  requestTask: (req: any) => any | null;
+  respondTask: (task: any, result: any) => void;
 }
 
 export interface IClock {
-  start: () => void;
+  // run the event handler every tick, start with the tick immediately
+  start: (eventHandler: any) => void;
   stop: () => void;
-  on: (eventHandler: any) => void;
 }
 
 interface ChatWorkerConfig {
@@ -23,89 +26,86 @@ interface ChatWorkerConfig {
   tokensPerMinute: number;
 }
 
-interface ChatTask {
-  isDone?: boolean;
-  tokensConsumed: number;
+class ChatWorker implements IChatWorker {
+  private pendingTasks: any[] = [];
+  private activeClock = new Clock(100);
+
+  constructor(private config: ChatWorkerConfig) {}
+
+  public start(manager: IChatManager) {
+    this.activeClock?.stop();
+    this.activeClock.start(() => this.pollNextTask(manager));
+  }
+
+  private pollNextTask(manager: IChatManager) {
+    // calculate capacity
+    const task = manager.requestTask({ capacity: 999 });
+    if (task) {
+      this.pendingTasks.push(task);
+      this.runTask(manager, task);
+    }
+  }
+
+  private async runTask(manager: IChatManager, task: any) {
+    // mock async run task
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    manager.respondTask(task, { result: "ok" });
+    this.activeClock.start(() => this.pollNextTask(manager));
+  }
 }
 
-class ChatWorker implements IChatWorker {
-  private doneHandler: any;
-  private capacityChangeHandler: any;
-  private pendingTasks: any[] = [];
-  private clock = new Clock(100);
+// TODO request based on capacity
+// ref: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/quota#understanding-rate-limits
+// check model compatibility
+// check tpm capacity (1 min window: < tpm limit)
+// check tpm capacity (10 sec window: < (tpm - consumed)/6 if not first req)
+// check tpm capacity (1 sec window: < (tpm - consumed)/60 if not first req)
+// check max parallelism
 
-  constructor(private config: ChatWorkerConfig) {
-    this.clock.on(() => this.cleanUp());
-    this.clock.start();
-  }
-
-  public tryAssign(task: any) {
-    // ref: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/quota#understanding-rate-limits
-    // check model compatibility
-    // check tpm capacity (1 min window: < tpm limit)
-    // check tpm capacity (10 sec window: < (tpm - consumed)/6 if not first req)
-    // check tpm capacity (1 sec window: < (tpm - consumed)/60 if not first req)
-    // check max parallelism
-
-    return false;
-  }
-
-  public onDone(eventHandler: any) {
-    // mark task as done
-
-    this.doneHandler = eventHandler;
-  }
-
-  public onCapacityChange(eventHandler: any) {
-    this.capacityChangeHandler = eventHandler;
-  }
-
-  private cleanUp() {
-    // remove expired tasks
-    // announce capacity change
-  }
+interface TaskHandle {
+  task: any;
+  resolve: (result: any) => void;
+  reject: (error: any) => void;
+  isRunning?: boolean;
+  retriesLeft?: number;
 }
 
 class ChatManager implements IChatManager {
   private workers: IChatWorker[] = [];
-  private pendingTasks: any[] = [];
-  private clock = new Clock(100);
-
-  constructor() {
-    this.clock.on(() => this.assignTasks());
-  }
-
-  public start() {
-    this.clock.start();
-  }
-
-  public stop() {
-    this.clock.stop();
-  }
+  private taskHandles: TaskHandle[] = [];
 
   public addWorkers(...workers: IChatWorker[]) {
-    workers.forEach((worker) => {
-      worker.onDone(() => {});
-      worker.onCapacityChange(() => {});
-      this.workers.push(worker);
-    });
+    this.workers.push(...workers);
   }
 
   public async submit(task: any) {
-    this.pendingTasks.push(task);
-    // immediately assign new tasks
-    this.assignTasks();
+    return new Promise((resolve, reject) => {
+      const taskHandles: TaskHandle = {
+        task,
+        resolve,
+        reject,
+      };
+      this.taskHandles.push(taskHandles);
+      this.workers.forEach((worker) => worker.start(this));
+    });
   }
 
-  private assignTasks() {
-    this.workers.forEach((worker) => {
-      for (const task of this.pendingTasks) {
-        if (worker.tryAssign(task)) {
-          this.pendingTasks = this.pendingTasks.filter((t) => t !== task);
-          break;
-        }
-      }
-    });
+  public requestTask(req: any) {
+    // select from pending tasks
+    // assign to worker
+    if (!this.taskHandles.length) return null;
+
+    const candidateTask = this.taskHandles.at(0)!; // todo, capacity and model check
+    candidateTask.isRunning = true;
+    return candidateTask.task;
+  }
+
+  public respondTask(task: any, result: any) {
+    const taskHandle = this.taskHandles.find((t) => t.task === task);
+    if (!taskHandle) throw new Error("task not found");
+
+    this.taskHandles = this.taskHandles.filter((t) => t !== taskHandle);
+    taskHandle.resolve(result); // todo handle error
   }
 }
 
@@ -116,7 +116,9 @@ class Clock implements IClock {
 
   constructor(private interval: number) {}
 
-  public start() {
+  public start(eventHandler: any) {
+    this.stop();
+    this.eventHandler = eventHandler;
     this.isRunning = true;
     this.tick();
   }
@@ -131,9 +133,5 @@ class Clock implements IClock {
   public stop() {
     this.isRunning = false;
     clearTimeout(this.clearHandle);
-  }
-
-  public on(eventHandler: any) {
-    this.eventHandler = eventHandler;
   }
 }
