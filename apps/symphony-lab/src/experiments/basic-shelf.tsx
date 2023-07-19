@@ -1,4 +1,5 @@
-import { azureOpenAIChatWorker, getChatTaskRunner, getOpenAIJsonProxy, getSimpleRESTChat, type ModelName } from "@h20/chat";
+import { ChatManager, ChatWorker, getOpenAIJsonProxy } from "@h20/plex-chat";
+import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
 import type { CozoDb } from "cozo-lib-wasm";
 import gptTokenizer from "gpt-tokenizer";
 import type React from "react";
@@ -8,6 +9,7 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
+import type { ChatMessage, OpenAIChatPayload } from "../openai/chat";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
@@ -22,36 +24,18 @@ export interface BasicShelfProps {
   db: CozoDb;
 }
 
-const modelIdToTokenLimit = (modelId: ModelName) => {
+const modelIdToTokenLimit = (modelId: string) => {
   switch (modelId) {
     case "gpt-35-turbo":
-      return {
-        tokenLimit: 120_000,
-        tokenLimitWindowSize: 65_000,
-      };
+      return 120_000;
     case "gpt-35-turbo-16k":
-      return {
-        tokenLimit: 87_000,
-        tokenLimitWindowSize: 65_000,
-      };
-
+      return 87_000;
     case "gpt-4":
-      return {
-        tokenLimit: 10_000,
-        tokenLimitWindowSize: 65_000,
-      };
+      return 10_000;
     case "gpt-4-32k":
-      return {
-        tokenLimit: 30_000,
-        tokenLimitWindowSize: 65_000,
-      };
-
+      return 30_000;
     default:
-      console.warn(`Unknown modelId: ${modelId}`);
-      return {
-        tokenLimit: 10_000,
-        tokenLimitWindowSize: 65_000,
-      };
+      throw new Error(`Unknown model id: ${modelId}`);
   }
 };
 
@@ -63,45 +47,49 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
   const { ModelSelectorElement, allChatEndpoints } = useModelSelector();
 
-  const chatTaskRunner = useMemo(() => {
+  const chatManager = useMemo(() => {
     console.log("endpoints", allChatEndpoints);
 
-    const workers = allChatEndpoints.map((endpoint) => {
-      const rawProxy = getOpenAIJsonProxy({
-        endpoint: endpoint.endpoint,
-        apiKey: endpoint.apiKey,
-      });
+    const workers = allChatEndpoints.map(
+      (endpoint) =>
+        new ChatWorker({
+          proxy: getOpenAIJsonProxy({
+            apiKey: endpoint.apiKey,
+            endpoint: endpoint.endpoint,
+          }),
+          models: [endpoint.modelDisplayName],
+          concurrency: 10,
+          tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName),
+          logLevel: LogLevel.Error,
+        })
+    );
 
-      const { tokenLimit, tokenLimitWindowSize } = modelIdToTokenLimit(endpoint.modelDisplayName as ModelName);
-      const worker = azureOpenAIChatWorker({
-        proxy: rawProxy,
-        model: endpoint.modelDisplayName as ModelName,
-        parallelism: 5,
-        tokenLimit,
-        tokenLimitWindowSize,
-      });
-
-      return worker;
-    });
-
-    const chatTaskRunner = getChatTaskRunner({
-      verbose: true,
-      workers,
-    });
-
-    return chatTaskRunner;
+    return new ChatManager({ workers, logLevel: LogLevel.Info });
   }, [allChatEndpoints]);
 
   const chat = useMemo(() => {
-    return chatTaskRunner
-      ? getSimpleRESTChat({
-          chatTaskRunner: chatTaskRunner,
-          getTokenCount: (input) => gptTokenizer.encodeChat(input, "gpt-3.5-turbo").length * 1.25, // be conservative
-        })
-      : () => {
-          throw new Error("No chat task runner");
-        };
-  }, [chatTaskRunner]);
+    return async (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => {
+      if (!chatManager) throw new Error("No chat manager");
+      const tokenDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
+
+      const rawOutput = await chatManager.submit({
+        tokenDemand,
+        models: ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
+        input: {
+          temperature: 0,
+          top_p: 1,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+          max_tokens: 60,
+          stop: "",
+          ...modelConfig,
+          messages,
+        },
+      });
+
+      return rawOutput.choices[0].message.content ?? "";
+    };
+  }, [chatManager]);
 
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");

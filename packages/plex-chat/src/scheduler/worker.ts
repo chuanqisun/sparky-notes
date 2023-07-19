@@ -1,5 +1,6 @@
 import type { ChatInput, ChatOutput } from "../openai/types";
 import { getTokenCapacity } from "./capacity";
+import { LogLevel, getLogger, type ILogger } from "./logger";
 import { Poller } from "./poller";
 import type { IChatTask, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
 
@@ -14,6 +15,7 @@ export interface ChatWorkerConfig {
   models: string[];
   concurrency: number;
   tokensPerMinute: number;
+  logLevel?: LogLevel;
 }
 
 export type ChatProxy = (input: ChatInput, signal?: AbortSignal) => Promise<ChatProxyResult>;
@@ -38,13 +40,15 @@ export class ChatWorker implements IChatWorker {
   private previousRequest: IWorkerTaskRequest | null = null;
   private records: TaskRecord[] = [];
   private coolDownUntil = 0;
+  private logger: ILogger;
 
   constructor(private config: ChatWorkerConfig) {
     this.poller = new Poller(100);
+    this.logger = getLogger(config.logLevel);
   }
 
   public start(manager: IChatWorkerManager) {
-    console.log(`[worker] started`);
+    this.logger.debug(`[worker] started`);
     // poll immediately because start was requested by the manager
     this.poll(manager, this.updateTaskRequest().request);
     // start interval based polling because capacity might have changed due to timeout
@@ -58,7 +62,7 @@ export class ChatWorker implements IChatWorker {
   }
 
   public stop() {
-    console.log(`[worker] stopped`);
+    this.logger.info(`[worker] stopped`);
     this.poller.unset();
   }
 
@@ -101,18 +105,18 @@ export class ChatWorker implements IChatWorker {
 
   private poll(manager: IChatWorkerManager, request: IWorkerTaskRequest) {
     if (request.tokenCapacity === 0) {
-      console.log(`[worker] skip poll due to 0 capacity`);
+      this.logger.debug(`[worker] skip poll due to 0 capacity`);
       return;
     }
 
     const task = manager.request(request);
     if (task) {
-      console.log(`[worker] task aquired`);
+      this.logger.info(`[worker] task aquired`);
       this.tasks.push(task);
       this.runTask(manager, task);
     }
     {
-      console.log(`[worker] no task available`);
+      this.logger.debug(`[worker] no task available`);
     }
   }
 

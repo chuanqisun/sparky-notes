@@ -1,4 +1,5 @@
 import type { ChatOutput } from "../openai/types";
+import { LogLevel, getLogger, type ILogger } from "./logger";
 import type { IChatTask, IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest, IWorkerTaskResponse } from "./types";
 
 interface TaskHandle {
@@ -9,10 +10,20 @@ interface TaskHandle {
   retryLeft: number;
 }
 
+export interface ChatManagerConfig {
+  workers: IChatWorker[];
+  logLevel: LogLevel;
+}
 export class ChatManager implements IChatTaskManager, IChatWorkerManager {
+  private workers: IChatWorker[];
   private taskHandles: TaskHandle[] = [];
+  private logger: ILogger;
+  private finishedCount = 0;
 
-  constructor(private workers: IChatWorker[]) {}
+  constructor(config: ChatManagerConfig) {
+    this.workers = config.workers;
+    this.logger = getLogger(config.logLevel);
+  }
 
   public async submit(task: IChatTask) {
     return new Promise<ChatOutput>((resolve, reject) => {
@@ -29,7 +40,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
 
   public request(req: IWorkerTaskRequest): IChatTask | null {
     if (!this.taskHandles.length) {
-      console.log(`[manager] all tasks completed, stopping workers`);
+      this.logger.info(`[manager] all tasks completed, stopping workers`);
       this.workers.forEach((worker) => worker.stop());
       return null;
     }
@@ -38,18 +49,21 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     const matchedTask = this.getMatchedTask(req, pendingTasks);
 
     if (!matchedTask) {
-      console.log(`[manager] no task found from ${pendingTasks.length} pending tasks`);
+      this.logger.debug(`[manager] no task found from ${pendingTasks.length} pending tasks`);
       return null;
     }
 
-    console.log(`[manager] task found from ${pendingTasks.length} pending tasks`);
+    this.logger.debug(`[manager] task found from ${pendingTasks.length} pending tasks`);
     matchedTask.isRunning = true;
     return matchedTask.task;
   }
 
   public respond(task: IChatTask, result: IWorkerTaskResponse) {
     const taskHandle = this.taskHandles.find((t) => t.task === task);
-    if (!taskHandle) throw new Error("task not found");
+    if (!taskHandle) {
+      this.logger.error(`[manager] task handle not found`);
+      throw new Error("task handle not found");
+    }
 
     this.taskHandles = this.taskHandles.filter((t) => t !== taskHandle);
     if (result.error) {
@@ -57,17 +71,19 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
       if (!taskHandle.retryLeft) {
         taskHandle.reject(result.error);
       } else {
-        console.log(`[manager] task requeued, ${taskHandle.retryLeft} retries left`);
+        this.logger.warn(`[manager] task requeued, ${taskHandle.retryLeft} retries left`);
         this.announceNewTask(taskHandle);
       }
     } else {
+      const runningTasks = this.taskHandles.filter((t) => t.isRunning);
+      this.logger.info(`[manager] ${this.taskHandles.length - runningTasks.length} waiting | ${runningTasks.length} running | ${++this.finishedCount} done`);
       taskHandle.resolve(result.data!);
     }
   }
 
   private announceNewTask(handle: TaskHandle) {
     this.taskHandles.push(handle);
-    console.log(`[manager] ${this.taskHandles.length} tasks | ${this.workers.length} workers`);
+    this.logger.info(`[manager] ${this.taskHandles.length} tasks | ${this.workers.length} workers`);
     this.workers.forEach((worker) => worker.start(this));
   }
 
