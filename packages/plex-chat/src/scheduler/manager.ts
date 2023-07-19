@@ -1,22 +1,21 @@
-import type { IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
+import type { ChatOutput } from "../openai/types";
+import type { IChatTask, IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest, IWorkerTaskResult } from "./types";
 
 interface TaskHandle {
-  task: any;
-  resolve: (result: any) => void;
+  task: IChatTask;
+  resolve: (result: ChatOutput) => void;
   reject: (error: any) => void;
   isRunning?: boolean;
   retriesLeft?: number;
 }
-
-// Chat manager is responsible for pushing task when its task queue has changes
 
 export class ChatManager implements IChatTaskManager, IChatWorkerManager {
   private taskHandles: TaskHandle[] = [];
 
   constructor(private workers: IChatWorker[]) {}
 
-  public async submit(task: any) {
-    return new Promise((resolve, reject) => {
+  public async submit(task: IChatTask) {
+    return new Promise<ChatOutput>((resolve, reject) => {
       const taskHandles: TaskHandle = {
         task,
         resolve,
@@ -27,9 +26,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     });
   }
 
-  public requestTask(req: IWorkerTaskRequest) {
-    // select from pending tasks
-    // assign to worker
+  public requestTask(req: IWorkerTaskRequest): IChatTask | null {
     if (!this.taskHandles.length) return null;
 
     const candidateTask = this.taskHandles.at(0)!; // todo, capacity and model check
@@ -37,11 +34,15 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     return candidateTask.task;
   }
 
-  public respondTask(task: any, result: any) {
+  public respondTask(task: IChatTask, result: IWorkerTaskResult) {
     const taskHandle = this.taskHandles.find((t) => t.task === task);
     if (!taskHandle) throw new Error("task not found");
 
     this.taskHandles = this.taskHandles.filter((t) => t !== taskHandle);
-    taskHandle.resolve(result); // todo handle error
+    if (result.error) {
+      taskHandle.reject(result.error); // todo handle error and retry
+    } else {
+      taskHandle.resolve(result.output);
+    }
   }
 }
