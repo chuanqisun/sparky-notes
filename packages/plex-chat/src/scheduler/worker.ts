@@ -1,3 +1,4 @@
+import type { ChatInput, ChatOutput } from "../openai/types";
 import { getTokenCapacity } from "./capacity";
 import { Poller } from "./poller";
 import type { IChatTask, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
@@ -9,6 +10,7 @@ export interface IPoller {
 }
 
 export interface ChatWorkerConfig {
+  proxy: (input: ChatInput) => Promise<ChatOutput>;
   models: string[];
   concurrency: number;
   tokensPerMinute: number;
@@ -101,8 +103,8 @@ export class ChatWorker implements IChatWorker {
     // mock async run task
     this.records.push({ startedAt: Date.now(), tokenDemand: task.tokenDemand });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    manager.respond(task, { output: {} as any });
+    const output = await this.config.proxy(task.input);
+    manager.respond(task, { output });
 
     this.tasks = this.tasks.filter((t) => t !== task);
 

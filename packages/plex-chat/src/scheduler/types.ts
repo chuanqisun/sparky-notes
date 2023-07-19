@@ -19,9 +19,10 @@ export interface IWorkerTaskResponse {
   error?: any;
 }
 
-export interface IChatTask extends ChatInput {
+export interface IChatTask {
   tokenDemand: number;
   models: string[];
+  input: ChatInput;
 }
 
 export interface IChatWorker {
