@@ -1,18 +1,20 @@
 export interface IChatWorker {
-  start: (manager: IChatManager) => void;
+  start: (manager: IChatWorkerManager) => void;
 }
 
-export interface IChatManager {
+export interface IChatWorkerManager {
+  requestTask: (req: IWorkerTaskRequest) => any | null;
+  respondTask: (req: IWorkerTaskRequest, result: any) => void;
+}
+
+export interface IWorkerTaskRequest {
+  tokenLimit: number;
+  models: string[];
+}
+
+export interface IChatTaskManager {
   // user facing
   submit: (task: any) => Promise<any>;
-
-  // worker facing
-  requestTask: (req: any) => any | null;
-  respondTask: (task: any, result: any) => void;
 }
 
-export interface IClock {
-  // run the event handler every tick, start with the tick immediately
-  on: (eventHandler: any) => void;
-  off: () => void;
-}
+export interface IUserTask {}

@@ -1,9 +1,14 @@
-import type { ModelName } from "../openai/types";
-import { Clock } from "./task";
-import type { IChatManager, IChatWorker, IClock } from "./types";
+import { Poller } from "./poller";
+import type { IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
+
+export interface IPoller {
+  // run the event handler at interval, do not start immediately
+  set: (eventHandler: any) => void;
+  unset: () => void;
+}
 
 export interface ChatWorkerConfig {
-  models: ModelName[];
+  models: string[];
   maxConcurrency: number;
   tokensPerMinute: number;
   clockInterval: number;
@@ -17,32 +22,60 @@ export interface ChatWorkerConfig {
 // check tpm capacity (1 sec window: < (tpm - consumed)/60 if not first req)
 // check max parallelism
 
+// Chat worker is responsible for polling task when its self has change in capacity
+// Only chat manager can stop chat worker polling
+
 export class ChatWorker implements IChatWorker {
-  private pendingTasks: any[] = [];
-  private clock: IClock;
+  private tasks: any[] = [];
+  private poller: IPoller;
+  private previousRequest: IWorkerTaskRequest | null = null;
 
   constructor(private config: ChatWorkerConfig) {
-    this.clock = new Clock(config.clockInterval);
+    this.poller = new Poller(config.clockInterval);
   }
 
-  public start(manager: IChatManager) {
-    this.clock.off();
-    this.clock.on(() => this.pollNextTask(manager));
+  public start(manager: IChatWorkerManager) {
+    // poll immediately because start was requested by the manager
+    this.poll(manager, this.updateTaskRequest().request);
+    // start interval based polling because capacity might have changed
+    this.poller.unset();
+    this.poller.set(() => {
+      const taskRequestChange = this.updateTaskRequest();
+      if (taskRequestChange.isChanged) {
+        this.poll(manager, taskRequestChange.request);
+      }
+    });
   }
 
-  private pollNextTask(manager: IChatManager) {
-    // calculate capacity
-    const task = manager.requestTask({ capacity: 999 });
+  private updateTaskRequest(): { isChanged: boolean; request: IWorkerTaskRequest } {
+    const request = this.getTaskRequest();
+    const isChanged = JSON.stringify(request)! == JSON.stringify(this.previousRequest);
+    this.previousRequest = request;
+
+    return { isChanged, request };
+  }
+
+  private getTaskRequest(): IWorkerTaskRequest {
+    return {
+      tokenLimit: 100,
+      models: [],
+    };
+  }
+
+  private poll(manager: IChatWorkerManager, request: IWorkerTaskRequest) {
+    const task = manager.requestTask(request);
     if (task) {
-      this.pendingTasks.push(task);
+      this.tasks.push(task);
       this.runTask(manager, task);
     }
   }
 
-  private async runTask(manager: IChatManager, task: any) {
+  private async runTask(manager: IChatWorkerManager, task: any) {
     // mock async run task
     await new Promise((resolve) => setTimeout(resolve, 1000));
     manager.respondTask(task, { result: "ok" });
-    this.clock.on(() => this.pollNextTask(manager));
+
+    // after each run, restart the poller because capacity might have changed
+    this.start(manager);
   }
 }

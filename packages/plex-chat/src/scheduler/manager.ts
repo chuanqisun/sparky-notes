@@ -1,4 +1,4 @@
-import type { IChatManager, IChatWorker } from "./types";
+import type { IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
 
 interface TaskHandle {
   task: any;
@@ -8,7 +8,9 @@ interface TaskHandle {
   retriesLeft?: number;
 }
 
-export class ChatManager implements IChatManager {
+// Chat manager is responsible for pushing task when its task queue has changes
+
+export class ChatManager implements IChatTaskManager, IChatWorkerManager {
   private taskHandles: TaskHandle[] = [];
 
   constructor(private workers: IChatWorker[]) {}
@@ -25,7 +27,7 @@ export class ChatManager implements IChatManager {
     });
   }
 
-  public requestTask(req: any) {
+  public requestTask(req: IWorkerTaskRequest) {
     // select from pending tasks
     // assign to worker
     if (!this.taskHandles.length) return null;
