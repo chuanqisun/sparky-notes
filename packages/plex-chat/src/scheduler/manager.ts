@@ -12,7 +12,7 @@ interface TaskHandle {
 
 export interface ChatManagerConfig {
   workers: IChatWorker[];
-  logLevel: LogLevel;
+  logLevel?: LogLevel;
 }
 export class ChatManager implements IChatTaskManager, IChatWorkerManager {
   private workers: IChatWorker[];
