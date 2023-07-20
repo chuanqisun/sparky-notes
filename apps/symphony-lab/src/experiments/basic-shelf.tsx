@@ -15,6 +15,7 @@ import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
 import { createJqDirective } from "../shelf/directives/jq-directive";
 import { createJsonDirective } from "../shelf/directives/json-directive";
+import { createLensDirective } from "../shelf/directives/lens-directive";
 import { createTagDirective } from "../shelf/directives/tag-directive";
 import { StyledOutput, theme } from "../shelf/json-view";
 import { useShelfManager } from "../shelf/use-shelf-manager";
@@ -112,11 +113,12 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const antidoteDirective = useMemo(() => createAntidoteDirective(chat), [chat]);
   const codeDirective = useMemo(() => createCodeDirective(chat), [chat]);
   const exportDirective = useMemo(() => createExportDirective(), []);
+  const lensDirective = useMemo(() => createLensDirective(chat), [chat]);
   const jqDirective = useMemo(() => createJqDirective(chat), [chat]);
   const jsonDirective = useMemo(() => createJsonDirective(), []);
   const tagDirective = useMemo(() => createTagDirective(chat), [chat]);
 
-  const allDirective = [antidoteDirective, codeDirective, exportDirective, jqDirective, jsonDirective, tagDirective];
+  const allDirective = [antidoteDirective, codeDirective, exportDirective, lensDirective, jqDirective, jsonDirective, tagDirective];
 
   const handleSubmit = useCallback(async () => {
     setStatus("Running...");

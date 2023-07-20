@@ -76,31 +76,6 @@ codenames: <comma separated names or N/A>
           });
       }
 
-      // const tagsResult = await Promise.all(
-      //   tagRequestMessages.map((messages) =>
-      //     chat(messages, { max_tokens: 1200, temperature: 0 })
-      //       .then((response) => {
-      //         progress++;
-      //         const tags =
-      //           response
-      //             .split("\n")
-      //             .find((line) => line.startsWith("codenames:"))
-      //             ?.slice("codenames:".length)
-      //             .trim()
-      //             .split(",")
-      //             .map((tag) => tag.trim()) ?? [];
-      //         setStatus(`Progress: ${progress}/${tagRequestMessages.length}, ${tags.join(", ")}`);
-
-      //         return tags;
-      //       })
-      //       .catch((error) => {
-      //         progress++;
-      //         setStatus(`Progress: ${progress}/${tagRequestMessages.length}, ${error}`);
-      //         return [];
-      //       })
-      //   )
-      // );
-
       const taggedShelf = data.map((line, index) => {
         const tags = tagsResult[index];
         return { line, names: tags };
