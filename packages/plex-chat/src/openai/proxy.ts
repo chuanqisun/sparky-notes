@@ -35,6 +35,7 @@ export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy
         if (response.status === 429) {
           const cooldownText = response.headers.get("retry-after") ?? errorText.match(/(\d+) second/)?.[1];
           if (!cooldownText) console.warn("429 response received without specific retry timeout");
+          console.warn(`[proxy] cooldown ${endpoint}: ${cooldownText}`);
           retryAfterMs = cooldownText ? (parseInt(cooldownText) + 1) * 1000 : 30_000; // add 1 sec for safety
         }
       } catch (e) {

@@ -82,7 +82,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
         this.logger.warn(`[manager] task aborted`);
         taskHandle.reject(result.error);
       } else {
-        this.logger.warn(`[manager] task requeued, ${taskHandle.retryLeft} retries left`);
+        this.logger.warn(`[manager] task requeued, ${taskHandle.retryLeft} retries left`, result.error);
         this.announceNewTask(taskHandle);
       }
     } else {
