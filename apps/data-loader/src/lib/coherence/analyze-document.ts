@@ -30,7 +30,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
       apiKey: process.env.OPENAI_API_KEY!,
       endpoint: process.env.OPENAI_CHAT_ENDPOINT!,
       model: "gpt-35-turbo",
-      contextWindow: 8192,
+      contextWindow: 8_192,
       tpm: 120_000,
     },
     {
@@ -85,7 +85,7 @@ export async function analyzeDocument(dir: string, outDir: string) {
         }),
         contextWindow: endpoint.contextWindow,
         models: [endpoint.model],
-        concurrency: 1,
+        concurrency: 10,
         tokensPerMinute: endpoint.tpm,
         logLevel: LogLevel.Info,
       })
