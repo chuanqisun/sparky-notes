@@ -130,7 +130,6 @@ export class ChatWorker implements IChatWorker {
   }
 
   private async runTask(manager: IChatWorkerManager, task: IChatTask) {
-    // mock async run task
     this.records.push({ startedAt: Date.now(), tokenDemand: task.tokenDemand });
 
     const { error, data, retryAfterMs } = await this.config.proxy(task.input, task.controller?.signal);
