@@ -33,7 +33,7 @@ export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy
         errorText = `${error?.code} ${error?.message ?? "Unknown API error"}`.trim();
 
         if (response.status === 429) {
-          const cooldownText = errorText.match(/(\d+) second/)?.[1];
+          const cooldownText = response.headers.get("retry-after") ?? errorText.match(/(\d+) second/)?.[1];
           retryAfterMs = cooldownText ? parseInt(cooldownText) * 1000 : 30_000;
         }
       } catch (e) {

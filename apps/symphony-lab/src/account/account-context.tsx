@@ -116,7 +116,7 @@ export const AccountContextProvider = (props: { children?: JSX.Element | JSX.Ele
     () =>
       getEndpoint.bind(
         null,
-        (apiHost: string, modelId: string) => `${removeTrailingSlash(apiHost)}/openai/deployments/${modelId}/chat/completions?api-version=2023-05-15`
+        (apiHost: string, modelId: string) => `${removeTrailingSlash(apiHost)}/openai/deployments/${modelId}/chat/completions?api-version=2023-07-01-preview`
       ),
     [getEndpoint]
   );
