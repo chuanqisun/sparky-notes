@@ -57,7 +57,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     console.log(graph);
   }, [graph]);
 
-  const { ModelSelectorElement, allChatEndpoints } = useModelSelector();
+  const { allChatEndpoints } = useModelSelector();
 
   const chatManager = useMemo(() => {
     console.log("endpoints", allChatEndpoints);
@@ -150,18 +150,6 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
   return (
     <AppLayout>
-      <header>{ModelSelectorElement}</header>
-      <StyledOutput>
-        <JSONTree theme={theme} hideRoot={true} data={currentShelf.data} />
-      </StyledOutput>
-      <div>
-        {shelves.map((shelf, index) => (
-          <button key={index} onClick={() => openShelf(index)}>
-            {shelf === currentShelf ? "*" : ""}
-            {index}
-          </button>
-        ))}
-      </div>
       <ChatWidget>
         <div>
           <AutoResize data-resize-textarea-content={userMessage}>
@@ -181,6 +169,17 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           <button onClick={handleAbort}>Stop</button>
         </ButtonStack>
       </ChatWidget>
+      <div>
+        {shelves.map((shelf, index) => (
+          <button key={index} onClick={() => openShelf(index)}>
+            {shelf === currentShelf ? "*" : ""}
+            {index}
+          </button>
+        ))}
+      </div>
+      <StyledOutput>
+        <JSONTree theme={theme} hideRoot={true} data={currentShelf.data} />
+      </StyledOutput>
     </AppLayout>
   );
 };
@@ -190,7 +189,7 @@ const AppLayout = styled(CenterClamp)`
   width: 100%;
   min-height: 0;
   align-content: start;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr;
 `;
 
 const ChatWidget = styled.div`
