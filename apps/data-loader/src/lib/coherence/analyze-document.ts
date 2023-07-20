@@ -1,6 +1,9 @@
+import { ChatManager, ChatWorker, getOpenAIJsonProxy, type ChatInput } from "@h20/plex-chat";
+import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
 import { assert } from "console";
 import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
-import { getLengthSensitiveChatProxy, getLoadBalancedChatProxyV2, getSimpleChatProxy } from "../azure/chat";
+import gptTokenzier from "gpt-tokenizer";
+import { type SimpleChatInput } from "../azure/chat";
 import { getClaimIndexProxy } from "../hits/search-claims";
 import { extractMarkdownTitle } from "./pipeline/extract-markdown-title";
 import {
@@ -22,26 +25,105 @@ import { renderMarkdown } from "./pipeline/render-markdown";
 import { bulkSemanticQuery, groupById, type DecoratedQuery } from "./pipeline/semantic-search";
 
 export async function analyzeDocument(dir: string, outDir: string) {
+  const endpoints = [
+    {
+      apiKey: process.env.OPENAI_API_KEY!,
+      endpoint: process.env.OPENAI_CHAT_ENDPOINT!,
+      model: "gpt-35-turbo",
+      contextWindow: 8192,
+      tpm: 120_000,
+    },
+    {
+      apiKey: process.env.OPENAI_DEV_API_KEY!,
+      endpoint: process.env.OPENAI_CHAT_ENDPOINT_V35!,
+      model: "gpt-35-turbo",
+      contextWindow: 8_192,
+      tpm: 120_000,
+    },
+    {
+      apiKey: process.env.OPENAI_DEV_API_KEY!,
+      endpoint: process.env.OPENAI_CHAT_ENDPOINT_V35_16K!,
+      model: "gpt-35-turbo-16k",
+      contextWindow: 16_384,
+      tpm: 87_000,
+    },
+    {
+      apiKey: process.env.OPENAI_DEV_API_KEY!,
+      endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!,
+      model: "gpt-4",
+      contextWindow: 8_192,
+      tpm: 10_000,
+    },
+    {
+      apiKey: process.env.OPENAI_DEV_API_KEY!,
+      endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!,
+      model: "gpt-4-32k",
+      contextWindow: 32_768,
+      tpm: 30_000,
+    },
+  ];
+  assert(
+    endpoints.every((e) => e.apiKey),
+    "Some api key is missing"
+  );
+  assert(
+    endpoints.every((e) => e.endpoint),
+    "Some endpoint is missing"
+  );
+
   assert(process.env.OPENAI_API_KEY, "OPENAI_API_KEY is required");
   assert(process.env.HITS_UAT_SEARCH_API_KEY, "HITS_UAT_SEARCH_API_KEY is required");
 
   mkdir(outDir, { recursive: true });
 
-  const chatProxy = getSimpleChatProxy(process.env.OPENAI_API_KEY!, "v3.5-turbo");
-  const shortChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-8k");
-  const longChatProxy = getSimpleChatProxy(process.env.OPENAI_DEV_API_KEY!, "v4-32k");
-  const balancerChatProxy = getLoadBalancedChatProxyV2(shortChatProxy, longChatProxy);
-  const allInOneProxy = getLoadBalancedChatProxyV2(chatProxy, shortChatProxy, longChatProxy);
+  const workers: ChatWorker[] = endpoints.map(
+    (endpoint) =>
+      new ChatWorker({
+        proxy: getOpenAIJsonProxy({
+          apiKey: endpoint.apiKey,
+          endpoint: endpoint.endpoint,
+        }),
+        contextWindow: endpoint.contextWindow,
+        models: [endpoint.model],
+        concurrency: 1,
+        tokensPerMinute: endpoint.tpm,
+        logLevel: LogLevel.Info,
+      })
+  );
+
+  const manager = new ChatManager({ workers, logLevel: LogLevel.Info });
+
+  const defaultChatInput: ChatInput = {
+    messages: [],
+    temperature: 0,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    max_tokens: 60,
+    stop: "",
+  };
+
+  const gpt4Proxy = (input: SimpleChatInput) =>
+    manager.submit({
+      tokenDemand: gptTokenzier.encodeChat(input.messages, "gpt-4").length * 1.05 + (input.max_tokens ?? defaultChatInput.max_tokens),
+      models: ["gpt-4", "gpt-4-32k"],
+      input: {
+        ...defaultChatInput,
+        ...input,
+      },
+    });
+
+  const gpt35Proxy = (input: SimpleChatInput) =>
+    manager.submit({
+      tokenDemand: gptTokenzier.encodeChat(input.messages, "gpt-3.5-turbo").length * 1.05 + (input.max_tokens ?? defaultChatInput.max_tokens),
+      models: ["gpt-35-turbo", "gpt-35-turbo-16k"],
+      input: {
+        ...defaultChatInput,
+        ...input,
+      },
+    });
+
   const claimSearchProxy = getClaimIndexProxy(process.env.HITS_UAT_SEARCH_API_KEY!);
-
-  // PROD - GPT4 only
-  const lengthSensitiveProxyGpt4 = getLengthSensitiveChatProxy(balancerChatProxy, longChatProxy, 8000);
-
-  // PERF mode - Multi-thread
-  // const lengthSensitiveProxy = getLengthSensitiveChatProxy(allInOneProxy, longChatProxy, 8000);
-
-  // DEBUG only - GPT3.5 only
-  const lengthSensitiveProxy = getLengthSensitiveChatProxy(chatProxy, longChatProxy, 8000);
 
   const startTime = Date.now();
   const filenames = await readdir(dir);
@@ -95,20 +177,20 @@ export async function analyzeDocument(dir: string, outDir: string) {
     const resumeInferSupporters = true;
     const resumeInferProtesters = true;
     const resumeSemanticSearch = true;
-    const resumeInterpretSearchResult = false; // (!)
-    const resumeCurationReponse = false; // (!)
+    const resumeInterpretSearchResult = true;
+    const resumeCurationReponse = true;
 
     const proxies = {
-      concept: lengthSensitiveProxy,
-      guidance: lengthSensitiveProxy,
-      questions: lengthSensitiveProxy,
-      questionToConcept: chatProxy, // short
-      goals: chatProxy, // short
-      problems: chatProxy, // short
-      supporters: chatProxy, // short
-      protesters: chatProxy, // short
-      interpretation: chatProxy, // short
-      curation: lengthSensitiveProxyGpt4,
+      concept: gpt35Proxy,
+      guidance: gpt35Proxy,
+      questions: gpt35Proxy,
+      questionToConcept: gpt35Proxy,
+      goals: gpt35Proxy,
+      problems: gpt35Proxy,
+      supporters: gpt35Proxy,
+      protesters: gpt35Proxy,
+      interpretation: gpt35Proxy,
+      curation: gpt4Proxy,
     };
 
     await logger("main", "started");
@@ -243,9 +325,9 @@ export async function analyzeDocument(dir: string, outDir: string) {
 
   // remove quotation marks in semantic queries
   // serial execution for debugging
-  await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
+  // await allFileLazyTasks.reduce(reducePromisesSerial, Promise.resolve());
   // parallel execution
-  // await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
+  await Promise.all(allFileLazyTasks.map((lazyTask) => lazyTask()));
 }
 
 function reducePromisesSerial(acc: Promise<any>, item: () => Promise<any>) {

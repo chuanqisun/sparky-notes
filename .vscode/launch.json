@@ -10,11 +10,11 @@
       "type": "node"
     },
     {
-      "name": "Debug data loader",
+      "name": "Debug document analyzer",
       "request": "launch",
-      "runtimeArgs": ["run-script", "start:repl"],
+      "runtimeArgs": ["run-script", "start", "--", "analyze-document"],
       "cwd": "${workspaceFolder}/apps/data-loader",
-      "runtimeVersion": "18",
+      "runtimeVersion": "20",
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
       "type": "node",
