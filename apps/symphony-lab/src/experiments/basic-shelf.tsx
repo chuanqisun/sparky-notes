@@ -27,13 +27,25 @@ export interface BasicShelfProps {
 const modelIdToTokenLimit = (modelId: string) => {
   switch (modelId) {
     case "gpt-35-turbo":
-      return 120_000;
+      return {
+        tpm: 120_000,
+        contextWindow: 8_192,
+      };
     case "gpt-35-turbo-16k":
-      return 87_000;
+      return {
+        tpm: 87_000,
+        contextWindow: 16_384,
+      };
     case "gpt-4":
-      return 10_000;
+      return {
+        tpm: 10_000,
+        contextWindow: 8_192,
+      };
     case "gpt-4-32k":
-      return 30_000;
+      return {
+        tpm: 30_000,
+        contextWindow: 32_768,
+      };
     default:
       throw new Error(`Unknown model id: ${modelId}`);
   }
@@ -59,7 +71,8 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           }),
           models: [endpoint.modelDisplayName],
           concurrency: 10,
-          tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName),
+          tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).tpm,
+          contextWindow: modelIdToTokenLimit(endpoint.modelDisplayName).contextWindow,
           logLevel: LogLevel.Warn,
         })
     );
