@@ -73,6 +73,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     }
 
     // remove task handle from list
+    taskHandle.isRunning = false;
     this.taskHandles = this.taskHandles.filter((t) => t !== taskHandle);
 
     if (result.error) {

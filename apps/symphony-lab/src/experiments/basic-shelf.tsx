@@ -60,7 +60,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           models: [endpoint.modelDisplayName],
           concurrency: 10,
           tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName),
-          logLevel: LogLevel.Error,
+          logLevel: LogLevel.Warn,
         })
     );
 

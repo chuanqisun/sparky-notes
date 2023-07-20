@@ -141,7 +141,10 @@ export class ChatWorker implements IChatWorker {
     if (!error) {
       manager.respond(task, { data });
     } else {
-      if (retryAfterMs !== undefined) this.coolDownUntil = Date.now() + retryAfterMs;
+      if (retryAfterMs !== undefined) {
+        this.coolDownUntil = Date.now() + retryAfterMs;
+        this.logger.warn(`[worker] cooldown started ${retryAfterMs}ms`);
+      }
       manager.respond(task, { error });
     }
 

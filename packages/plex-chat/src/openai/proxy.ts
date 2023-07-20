@@ -26,20 +26,21 @@ export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy
     }
 
     if (!response.ok) {
-      let cooldown: number;
+      let retryAfterMs: number | undefined;
       let errorText: string;
       try {
         const { error } = (await response.json()) as { error: { code: string; message: string } };
         errorText = `${error?.code} ${error?.message ?? "Unknown API error"}`.trim();
 
         if (response.status === 429) {
-          const cooldownText = errorText.match(/(\d+) seconds/)?.[1];
-          cooldown = cooldownText ? parseInt(cooldownText) * 1000 : 30_000;
+          const cooldownText = errorText.match(/(\d+) second/)?.[1];
+          retryAfterMs = cooldownText ? parseInt(cooldownText) * 1000 : 30_000;
         }
       } catch (e) {
         errorText = `${(e as any)?.message}`;
       } finally {
         return {
+          retryAfterMs,
           error: errorText!,
         };
       }
