@@ -70,12 +70,12 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const chat = useMemo(() => {
     return async (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => {
       if (!chatManager) throw new Error("No chat manager");
-      const tokenDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
+      const inputDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
       const controller = new AbortController();
 
       const rawOutput = await chatManager.submit({
         controller,
-        tokenDemand,
+        tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
         models: ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
         input: {
           temperature: 0,

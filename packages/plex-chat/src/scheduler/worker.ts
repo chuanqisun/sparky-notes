@@ -120,7 +120,7 @@ export class ChatWorker implements IChatWorker {
 
     const task = manager.request(request);
     if (task) {
-      this.logger.info(`[worker] task aquired`);
+      this.logger.debug(`[worker] task aquired (asked ${request.tokenCapacity}, got ${task.tokenDemand})`);
       this.tasks.push(task);
       this.runTask(manager, task);
     }
