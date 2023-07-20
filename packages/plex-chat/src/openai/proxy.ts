@@ -19,7 +19,7 @@ export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy
         signal,
       });
     } catch (e) {
-      // fetch error
+      // fetch or abort error
       return {
         error: `${(e as any)?.message}`,
       };

@@ -2,6 +2,7 @@ import type { ChatInput, ChatOutput } from "../openai/types";
 
 export interface IChatTaskManager {
   submit: (task: IChatTask) => Promise<ChatOutput>;
+  abortAll: () => void;
 }
 
 export interface IChatWorkerManager {
@@ -23,9 +24,14 @@ export interface IChatTask {
   tokenDemand: number;
   models: string[];
   input: ChatInput;
+  controller?: AbortController;
 }
 
 export interface IChatWorker {
+  // worker must immediately request work and start polling
   start: (manager: IChatWorkerManager) => void;
+  // worker must stop polling new tasks and immediately reject all running tasks with Abort error
+  abortAll: () => void;
+  // worker must top polling future tasks but can continue with unfinished tasks
   stop: () => void;
 }

@@ -71,8 +71,10 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     return async (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => {
       if (!chatManager) throw new Error("No chat manager");
       const tokenDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
+      const controller = new AbortController();
 
       const rawOutput = await chatManager.submit({
+        controller,
         tokenDemand,
         models: ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
         input: {
@@ -128,6 +130,11 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     setStatus(status ?? "Success");
   }, [...allDirective, setStatus, updateShelfData]);
 
+  const handleAbort = useCallback(() => {
+    chatManager.abortAll();
+    setStatus("Stopped by user");
+  }, [chatManager]);
+
   return (
     <AppLayout>
       <header>{ModelSelectorElement}</header>
@@ -154,6 +161,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           <output>{status}</output>
         </div>
         <button onClick={handleSubmit}>Submit (Ctrl + Enter)</button>
+        <button onClick={handleAbort}>Stop (Ctrl + q)</button>
       </ChatWidget>
     </AppLayout>
   );

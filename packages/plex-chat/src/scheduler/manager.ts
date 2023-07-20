@@ -38,6 +38,14 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
     });
   }
 
+  public abortAll() {
+    // clear all unassigned tasks
+    this.taskHandles = this.taskHandles.filter((t) => t.isRunning);
+
+    // abort all assigned tasks
+    this.workers.forEach((worker) => worker.abortAll());
+  }
+
   public request(req: IWorkerTaskRequest): IChatTask | null {
     if (!this.taskHandles.length) {
       this.logger.info(`[manager] all tasks completed, stopping workers`);
@@ -65,10 +73,13 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
       throw new Error("task handle not found");
     }
 
+    // remove task handle from list
     this.taskHandles = this.taskHandles.filter((t) => t !== taskHandle);
+
     if (result.error) {
       taskHandle.retryLeft--;
-      if (!taskHandle.retryLeft) {
+      if (task.controller?.signal.aborted || !taskHandle.retryLeft) {
+        this.logger.warn(`[manager] task aborted`);
         taskHandle.reject(result.error);
       } else {
         this.logger.warn(`[manager] task requeued, ${taskHandle.retryLeft} retries left`);

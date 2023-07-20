@@ -61,6 +61,15 @@ export class ChatWorker implements IChatWorker {
     });
   }
 
+  public abortAll() {
+    this.logger.info(`[worker] abort all tasks`);
+    this.poller.unset();
+
+    this.tasks.forEach((task) => {
+      task.controller?.abort();
+    });
+  }
+
   public stop() {
     this.logger.info(`[worker] stopped`);
     this.poller.unset();
@@ -124,19 +133,22 @@ export class ChatWorker implements IChatWorker {
     // mock async run task
     this.records.push({ startedAt: Date.now(), tokenDemand: task.tokenDemand });
 
-    const { error, data, retryAfterMs } = await this.config.proxy(task.input);
+    const { error, data, retryAfterMs } = await this.config.proxy(task.input, task.controller?.signal);
+
+    // remove task from running task pool
+    this.tasks = this.tasks.filter((t) => t !== task);
+
     if (!error) {
       manager.respond(task, { data });
     } else {
-      if (retryAfterMs !== undefined) {
-        this.coolDownUntil = Date.now() + retryAfterMs;
-      }
+      if (retryAfterMs !== undefined) this.coolDownUntil = Date.now() + retryAfterMs;
       manager.respond(task, { error });
     }
 
-    this.tasks = this.tasks.filter((t) => t !== task);
-
     // after each run, restart the poller because capacity might have changed
-    this.start(manager);
+    // but do not restart if aborted
+    if (!task.controller?.signal.aborted) {
+      this.start(manager);
+    }
   }
 }
