@@ -28,7 +28,8 @@ export interface ChatProxyResult {
 
 export interface TaskRecord {
   startedAt: number;
-  tokenDemand: number;
+  tokensDemanded: number;
+  tokensUsed?: number;
 }
 
 // Chat worker is responsible for polling task when its self has change in capacity
@@ -130,11 +131,13 @@ export class ChatWorker implements IChatWorker {
   }
 
   private async runTask(manager: IChatWorkerManager, task: IChatTask) {
-    this.records.push({ startedAt: Date.now(), tokenDemand: task.tokenDemand });
+    const record: TaskRecord = { startedAt: Date.now(), tokensDemanded: task.tokenDemand };
+    this.records.push(record);
 
     const { error, data, retryAfterMs } = await this.config.proxy(task.input, task.controller?.signal);
 
     // remove task from running task pool
+    record.tokensUsed = data?.usage?.total_tokens;
     this.tasks = this.tasks.filter((t) => t !== task);
 
     if (!error) {

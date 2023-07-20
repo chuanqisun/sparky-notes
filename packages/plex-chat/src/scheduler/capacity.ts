@@ -23,16 +23,19 @@ export function getTokenCapacity(tokensPerMinute: number, records: TaskRecord[])
   const windowedRecords = records.reduce<Usage>(
     (result, record) => {
       if (record.startedAt > ago60s) {
+        // TODO Azure does not use actual usage for throttling. Otherwise, we can switch to tokensUsed
+        const usage = record.tokensDemanded;
+
         result.count60s++;
-        result.usage60s += record.tokenDemand;
+        result.usage60s += usage;
 
         if (record.startedAt > ago10s) {
           result.count10s++;
-          result.usage10s += record.tokenDemand;
+          result.usage10s += usage;
 
           if (record.startedAt > ago1s) {
             result.count1s++;
-            result.usage1s += record.tokenDemand;
+            result.usage1s += usage;
           }
         }
       }
