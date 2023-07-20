@@ -14,6 +14,7 @@ export interface ChatWorkerConfig {
   proxy: ChatProxy;
   models: string[];
   concurrency: number;
+  contextWindow: number;
   tokensPerMinute: number;
   logLevel?: LogLevel;
 }
@@ -108,7 +109,7 @@ export class ChatWorker implements IChatWorker {
     }
 
     return {
-      tokenCapacity: getTokenCapacity(this.config.tokensPerMinute, this.records),
+      tokenCapacity: Math.min(this.config.contextWindow, getTokenCapacity(this.config.tokensPerMinute, this.records)),
       models: this.config.models,
     };
   }
