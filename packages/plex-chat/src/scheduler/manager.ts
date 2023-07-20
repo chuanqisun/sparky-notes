@@ -18,7 +18,6 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
   private workers: IChatWorker[];
   private taskHandles: TaskHandle[] = [];
   private logger: ILogger;
-  private finishedCount = 0;
 
   constructor(config: ChatManagerConfig) {
     this.workers = config.workers;
@@ -86,10 +85,11 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
         this.announceNewTask(taskHandle);
       }
     } else {
-      const runningTasks = this.taskHandles.filter((t) => t.isRunning);
-      this.logger.info(`[manager] ${this.taskHandles.length - runningTasks.length} waiting | ${runningTasks.length} running | ${++this.finishedCount} done`);
       taskHandle.resolve(result.data!);
     }
+
+    const runningTasks = this.taskHandles.filter((t) => t.isRunning);
+    this.logger.info(`[manager] ${this.taskHandles.length - runningTasks.length} waiting | ${runningTasks.length} running`);
   }
 
   private announceNewTask(handle: TaskHandle) {
