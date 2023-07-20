@@ -160,8 +160,13 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           </AutoResize>
           <output>{status}</output>
         </div>
-        <button onClick={handleSubmit}>Submit (Ctrl + Enter)</button>
-        <button onClick={handleAbort}>Stop (Ctrl + q)</button>
+        <ButtonStack>
+          <button onClick={handleSubmit}>
+            Submit
+            <br /> (Ctrl + Enter)
+          </button>
+          <button onClick={handleAbort}>Stop</button>
+        </ButtonStack>
       </ChatWidget>
     </AppLayout>
   );
@@ -178,4 +183,8 @@ const AppLayout = styled(CenterClamp)`
 const ChatWidget = styled.div`
   display: grid;
   grid-template-columns: 1fr auto;
+`;
+
+const ButtonStack = styled.div`
+  display: grid;
 `;
