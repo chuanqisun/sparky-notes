@@ -87,7 +87,7 @@ export class ChatWorker implements IChatWorker {
 
   private updateRecordsWindow() {
     // remove history older than 1 min
-    this.records = this.records.filter((r) => r.startedAt > Date.now() - 60 * 1000);
+    this.records = this.records.filter((r) => r.startedAt > Date.now() - 60_000);
   }
 
   private getTaskRequest(): IWorkerTaskRequest {
