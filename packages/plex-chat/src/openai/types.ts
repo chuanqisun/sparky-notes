@@ -1,5 +1,5 @@
-// Schema: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/readme.md
-// Documentation: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference
+// schema: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/readme.md
+// doc: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference
 export interface ChatInput {
   messages: ChatMessage[];
   functions?: FunctionDefinition[];
@@ -14,7 +14,7 @@ export interface ChatInput {
 
 export interface ChatMessage {
   role: "assistant" | "system" | "user";
-  content: string; // FIXME: this can be undefined when using function_call
+  content: string; // FIXME: blank when content_filter or function_call is active
   function_call?: {
     name: string;
     arguments: string;
@@ -31,14 +31,7 @@ export type ChatOutput = {
   choices: {
     finish_reason: "stop" | "length" | "content_filter" | null;
     index: number;
-    message: {
-      content?: string; // blank when content_filter is active
-      role: "assistant";
-      function_call?: {
-        name: string;
-        arguments: string;
-      };
-    };
+    message: ChatMessage;
   }[];
   usage: {
     completion_tokens: number;
