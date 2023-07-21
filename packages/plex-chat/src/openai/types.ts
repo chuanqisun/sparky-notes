@@ -1,9 +1,7 @@
-// ref: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference
+// Schema: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/readme.md
+// Documentation: https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference
 export interface ChatInput {
   messages: ChatMessage[];
-  /**
-   * Pending support: https://stackoverflow.com/questions/76543136/how-to-do-function-calling-using-azure-openai
-   */
   functions?: FunctionDefinition[];
   function_call?: "auto" | "none" | { name: string };
   temperature: number;
@@ -16,7 +14,11 @@ export interface ChatInput {
 
 export interface ChatMessage {
   role: "assistant" | "system" | "user";
-  content: string;
+  content: string; // FIXME: this can be undefined when using function_call
+  function_call?: {
+    name: string;
+    arguments: string;
+  };
 }
 
 export interface FunctionDefinition {
