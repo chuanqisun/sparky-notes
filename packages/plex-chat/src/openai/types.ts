@@ -15,10 +15,12 @@ export interface ChatInput {
 export interface ChatMessage {
   role: "assistant" | "system" | "user";
   content: string; // FIXME: blank when content_filter or function_call is active
-  function_call?: {
-    name: string;
-    arguments: string;
-  };
+  function_call?: FunctionCall;
+}
+
+export interface FunctionCall {
+  name: string;
+  arguments: string;
 }
 
 export interface FunctionDefinition {

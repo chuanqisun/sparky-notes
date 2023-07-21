@@ -154,7 +154,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   }, []);
 
   const antidoteDirective = useMemo(() => createAntidoteDirective(chat), [chat]);
-  const codeDirective = useMemo(() => createCodeDirective(chat), [chat]);
+  const codeDirective = useMemo(() => createCodeDirective(fnCall), [fnCall]);
   const exportDirective = useMemo(() => createExportDirective(), []);
   const lensDirective = useMemo(() => createLensDirective(fnCall), [fnCall]);
   const jqDirective = useMemo(() => createJqDirective(chat), [chat]);
