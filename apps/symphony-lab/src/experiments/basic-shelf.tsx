@@ -140,6 +140,18 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
 
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");
+  const setTimestampedStatus = useCallback(
+    (message: string) => {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      setStatus(`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${message}`);
+    },
+    [setStatus]
+  );
+
+  useEffect(() => {
+    setTimestampedStatus("System online");
+  }, []);
 
   const antidoteDirective = useMemo(() => createAntidoteDirective(chat), [chat]);
   const codeDirective = useMemo(() => createCodeDirective(chat), [chat]);
@@ -152,11 +164,11 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const allDirective = [antidoteDirective, codeDirective, exportDirective, lensDirective, jqDirective, jsonDirective, tagDirective];
 
   const handleSubmit = useCallback(async () => {
-    setStatus("Running...");
+    setTimestampedStatus("Running...");
 
     const matchedDirective = allDirective.find((directive) => directive.match(userMessage));
     if (!matchedDirective) {
-      setStatus("No directive matched");
+      setTimestampedStatus("No directive matched");
       return;
     }
 
@@ -165,7 +177,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     const { data, status } = await matchedDirective.run({
       source: userMessage,
       data: currentShelf.data,
-      updateStatus: setStatus,
+      updateStatus: setTimestampedStatus,
       updateData: updateShelfData,
     });
 
@@ -173,12 +185,12 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       updateShelfData(data);
     }
 
-    setStatus(status ?? "Success");
-  }, [...allDirective, setStatus, updateShelfData]);
+    setTimestampedStatus(status ?? "Success");
+  }, [...allDirective, setTimestampedStatus, updateShelfData]);
 
   const handleAbort = useCallback(() => {
     chatManager.abortAll();
-    setStatus("Stopped by user");
+    setTimestampedStatus("Stopped by user");
   }, [chatManager]);
 
   return (
@@ -192,14 +204,10 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
               onChange={(e) => updateUserMessage(e.target.value)}
             />
           </AutoResize>
-          <output>{status}</output>
         </div>
         <ButtonStack>
-          <button onClick={handleSubmit}>
-            Submit
-            <br /> (Ctrl + Enter)
-          </button>
-          <button onClick={handleAbort}>Stop</button>
+          <button onClick={handleSubmit}>▶️</button>
+          <button onClick={handleAbort}>⛔</button>
         </ButtonStack>
       </ChatWidget>
       <div>
@@ -210,6 +218,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           </button>
         ))}
       </div>
+      <StatusDisplay>{status}</StatusDisplay>
       <StyledOutput>
         <JSONTree theme={theme} hideRoot={true} data={currentShelf.data} />
       </StyledOutput>
@@ -217,12 +226,20 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   );
 };
 
+const StatusDisplay = styled.output`
+  display: block;
+  background-color: ${theme.base00};
+  padding-left: 0.5rem;
+  color: ${theme.base09};
+  border-bottom: 1px solid ${theme.base03};
+`;
+
 const AppLayout = styled(CenterClamp)`
   display: grid;
   width: 100%;
   min-height: 0;
   align-content: start;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto auto 1fr;
 `;
 
 const ChatWidget = styled.div`
