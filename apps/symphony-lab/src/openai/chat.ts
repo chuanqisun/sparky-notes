@@ -1,33 +1,16 @@
-export interface OpenAIChatPayload {
-  messages: ChatMessage[];
-  temperature: number;
-  top_p: number;
-  frequency_penalty: number;
-  presence_penalty: number;
-  max_tokens: number;
-  stop: null | string | string[];
+import type { ChatInput, ChatMessage, ChatOutput } from "@h20/plex-chat";
+export type { ChatMessage } from "@h20/plex-chat";
+
+export type ChatProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<string>;
+export type FnCallProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<{ arguments: string; name: string }>;
+
+export type OpenAIChatPayload = ChatInput;
+
+export interface SimpleModelConfig extends Partial<ChatInput> {
+  models?: string[];
 }
 
-export interface ChatMessage {
-  role: "assistant" | "user" | "system";
-  content: string;
-}
-
-export type OpenAIChatResponse = {
-  choices: {
-    finish_reason: "stop" | "length" | "content_filter" | null;
-    index: number;
-    message: {
-      content?: string; // blank when content_filter is active
-      role: "assistant";
-    };
-  }[];
-  usage: {
-    completion_tokens: number;
-    prompt_tokens: number;
-    total_tokens: number;
-  };
-};
+export type OpenAIChatResponse = ChatOutput;
 
 export async function getChatResponse(
   apiKey: string,

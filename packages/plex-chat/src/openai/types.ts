@@ -32,6 +32,10 @@ export type ChatOutput = {
     message: {
       content?: string; // blank when content_filter is active
       role: "assistant";
+      function_call?: {
+        name: string;
+        arguments: string;
+      };
     };
   }[];
   usage: {

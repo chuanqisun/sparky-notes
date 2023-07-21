@@ -9,7 +9,7 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
-import type { ChatMessage, OpenAIChatPayload } from "../openai/chat";
+import type { ChatMessage, FnCallProxy, SimpleModelConfig } from "../openai/chat";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
@@ -81,16 +81,19 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     return new ChatManager({ workers, logLevel: LogLevel.Info });
   }, [allChatEndpoints]);
 
-  const chat = useMemo(() => {
-    return async (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => {
+  const fnCall: FnCallProxy = useMemo(() => {
+    return async (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => {
       if (!chatManager) throw new Error("No chat manager");
-      const inputDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
+      const inputDemand =
+        gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25 + gptTokenizer.encode(JSON.stringify(modelConfig?.function_call)).length;
       const controller = new AbortController();
+
+      const { models, ...restConfig } = modelConfig ?? {};
 
       const rawOutput = await chatManager.submit({
         controller,
         tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
-        models: ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
+        models: models ?? ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
         input: {
           temperature: 0,
           top_p: 1,
@@ -98,7 +101,35 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           presence_penalty: 0,
           max_tokens: 60,
           stop: "",
-          ...modelConfig,
+          ...restConfig,
+          messages,
+        },
+      });
+
+      return rawOutput.choices[0].message.function_call!;
+    };
+  }, [chatManager]);
+
+  const chat = useMemo(() => {
+    return async (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => {
+      if (!chatManager) throw new Error("No chat manager");
+      const inputDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
+      const controller = new AbortController();
+
+      const { models, ...restConfig } = modelConfig ?? {};
+
+      const rawOutput = await chatManager.submit({
+        controller,
+        tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
+        models: models ?? ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
+        input: {
+          temperature: 0,
+          top_p: 1,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+          max_tokens: 60,
+          stop: "",
+          ...restConfig,
           messages,
         },
       });
@@ -113,7 +144,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const antidoteDirective = useMemo(() => createAntidoteDirective(chat), [chat]);
   const codeDirective = useMemo(() => createCodeDirective(chat), [chat]);
   const exportDirective = useMemo(() => createExportDirective(), []);
-  const lensDirective = useMemo(() => createLensDirective(chat), [chat]);
+  const lensDirective = useMemo(() => createLensDirective(fnCall), [fnCall]);
   const jqDirective = useMemo(() => createJqDirective(chat), [chat]);
   const jsonDirective = useMemo(() => createJsonDirective(), []);
   const tagDirective = useMemo(() => createTagDirective(chat), [chat]);

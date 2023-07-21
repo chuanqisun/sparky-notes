@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BasicSelect } from "../form/form";
-import { getChatResponse, type ChatMessage, type OpenAIChatPayload } from "../openai/chat";
+import { getChatResponse, type ChatMessage, type OpenAIChatPayload, type SimpleModelConfig } from "../openai/chat";
 import { getEmbedding } from "../openai/embedding";
 import { useAccountContext } from "./account-context";
 
-export type ChatProxy = (messages: ChatMessage[], modelConfig?: Partial<OpenAIChatPayload>) => Promise<string>;
+export type ChatProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<string>;
 
 export function useModelSelector() {
   const [selectedChatModelDisplayId, setSelectedChatModelDisplayId] = useState<string | null>(null);
