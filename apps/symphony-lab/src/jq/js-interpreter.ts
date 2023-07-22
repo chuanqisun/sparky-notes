@@ -1,6 +1,6 @@
 import type { FunctionDefinition } from "@h20/plex-chat";
 import { type ChatMessage, type FnCallProxy } from "../openai/chat";
-import { jsonToTyping, sampleJsonContent } from "../reflection/json-reflection";
+import { jsonToTyping } from "../reflection/json-reflection";
 
 export interface GetSystemMessageInput {
   data: string;
@@ -30,7 +30,7 @@ export async function jsInterpreter(config: JsInterpreterConfig): Promise<any> {
     content: `${getSystemMessage({ data }).trim()}`,
   };
   const fnCallResponse = await fnCallProxy([systemMessage, ...previousMessages, currentUserMessage], {
-    function_call: { name: "define_js_function" },
+    function_call: { name: "write_ts_program" },
     functions: getFunctionDefinition(),
   });
 
@@ -74,34 +74,56 @@ export async function jsInterpreter(config: JsInterpreterConfig): Promise<any> {
 
 function getSystemMessage({ data }: GetSystemMessageInput) {
   return `
-Define a javascript function based on the goal. It must have the following signature:
-\`\`\`
-function main(input: InputType): any[];
+Write a typescript program to meet the goal.
 
+You can access input data on a global variable called "input". It has the following type:
+
+\`\`\`
 ${jsonToTyping(data, "InputType")}
 \`\`\`
 
-Sample input:
-\`\`\`json
-${JSON.stringify(sampleJsonContent(data), null, 2)}
-\`\`\`
-
-You can assume an AI library exists for any inference tasks. You can all ai.methodName without defining it.
-Now respond the source code of the main function.
+Requirements: 
+1. No import/export
+2. The program must explicitly return the result on the last line by calling \`exit(result);\`.
+3. Use at least one method from an imaginary AI library.
+4. AI library methods must work in parallel on array items, like this \`const outputs = await Promise.all(items.map(item => aiLibrary.methodName(item)));\`
 `;
 }
 
 function getFunctionDefinition(): FunctionDefinition[] {
   return [
     {
-      name: "define_js_function",
+      name: "write_ts_program",
       description: "",
       parameters: {
         type: "object",
         properties: {
           src: {
-            type: "string",
-            description: "Source code of the main function. Must be valid single-line json string",
+            type: "array",
+            items: {
+              type: "string",
+            },
+            description: "lines of the source code",
+          },
+          aiLibraryMethodsUsed: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "Name of the method",
+                },
+                description: {
+                  type: "string",
+                  description: "Describe what the method does",
+                },
+                typescriptSignature: {
+                  type: "string",
+                  description: "Typescript function signature with input and return types",
+                },
+              },
+            },
           },
         },
         required: ["src"],
