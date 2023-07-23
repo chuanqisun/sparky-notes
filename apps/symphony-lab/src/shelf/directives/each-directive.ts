@@ -2,14 +2,11 @@ import { jsInterpreter } from "../../jq/js-interpreter";
 import type { ChatMessage, FnCallProxy, SimpleModelConfig } from "../../openai/chat";
 import type { ShelfDirective } from "./base-directive";
 
-/**
- * Note: GPT-3 is struggling with code authoring. Consider locking to GPT-4
- */
-export function createRunDirective(fnCall: FnCallProxy): ShelfDirective {
+export function createEachDirective(fnCall: FnCallProxy): ShelfDirective {
   return {
     match: (source) => source.startsWith("/run"),
     run: async ({ source, data }) => {
-      const goal = source.slice("/run".length).trim();
+      const goal = source.slice("/each".length).trim();
       const output = await jsInterpreter({
         data,
         goal,
