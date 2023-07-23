@@ -7,8 +7,23 @@ async function feedbackLoop<T>(onIterate: (previousError?: any) => T, retryLeft 
   }
 }
 
-async function llmForEachTransform(data: any, goal: string) {
-  const onIterate = (previousError?: any) => {};
+async function llmForEachTransform(data: any, goal: string, fnCall: any, chatCall: any) {
+  const designLens = async (previousError?: any) => {
+    const messages = getChatMessages(goal, data, previousError);
+    const result = await fnCall(messages);
+    const createLens = getLensFactory(result);
+    return createLens(data);
+  };
 
-  return feedbackLoop(onIterate);
+  const lenses = await feedbackLoop(designLens);
+  const results = lenses.map((lens) => lens.set(chatCall(lens.get())));
+
+  return results;
+}
+function getChatMessages(goal: string, data: any, previousError: any) {
+  return [] as string[];
+}
+
+function getLensFactory(result: any) {
+  return (...args: any[]) => ({} as any[]);
 }
