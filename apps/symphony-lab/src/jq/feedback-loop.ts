@@ -1,8 +1,14 @@
-async function feedbackLoop<T>(runFn: (previousError?: any) => T, retryLeft = 3, previousError?: any) {
+async function feedbackLoop<T>(onIterate: (previousError?: any) => T, retryLeft = 3, previousError?: any) {
   if (retryLeft <= 0) throw new Error("Failed to converge");
   try {
-    return await runFn(previousError);
+    return await onIterate(previousError);
   } catch (e: any) {
-    return feedbackLoop(runFn, retryLeft - 1, e);
+    return feedbackLoop(onIterate, retryLeft - 1, e);
   }
+}
+
+async function llmForEachTransform(data: any, goal: string) {
+  const onIterate = (previousError?: any) => {};
+
+  return feedbackLoop(onIterate);
 }
