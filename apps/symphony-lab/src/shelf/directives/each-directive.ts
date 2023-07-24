@@ -7,13 +7,14 @@ import type { ShelfDirective } from "./base-directive";
 export function createEachDirective(fnCall: FnCallProxy, chat: ChatProxy): ShelfDirective {
   return {
     match: (source) => source.startsWith("/each"),
-    run: async ({ source, data }) => {
+    run: async ({ source, data, updateStatus }) => {
       const goal = source.slice("/each".length).trim();
       const output = await llmTransformEach({
         data,
         goal,
+        updateStatus,
         fnCallProxy: (messages: ChatMessage[], config?: SimpleModelConfig) =>
-          fnCall(messages, { max_tokens: 2400, temperature: 0, ...config, models: ["gpt-35-turbo"] }),
+          fnCall(messages, { max_tokens: 2400, temperature: 0, ...config, models: ["gpt-4", "gpt-4-32k"] }),
         chatProxy: chat,
       });
 
@@ -27,6 +28,7 @@ export function createEachDirective(fnCall: FnCallProxy, chat: ChatProxy): Shelf
 export interface LlmTransformEachConfig {
   data: any[];
   goal: string;
+  updateStatus?: (status: string) => any;
   fnCallProxy: FnCallProxy;
   chatProxy: ChatProxy;
 }
@@ -47,12 +49,56 @@ async function llmTransformEach(config: LlmTransformEachConfig) {
   const { transform, itemLevelTask } = await feedbackLoop(getTransformer);
   console.log("synthetic function", transform);
 
-  const llmInferenceFn = (input: string) => {
-    return fnCallProxy(
+  const llmInferenceFn = createFnCallingInferenceFn(fnCallProxy, itemLevelTask);
+  const llmInferenceChatFn = createChatInferenceFn(chatProxy, itemLevelTask);
+
+  const results = await transform(data, llmInferenceChatFn);
+  return results as any[];
+}
+
+function createSyntheticFunction(src: string) {
+  const AsyncFunction = async function () {}.constructor as any;
+
+  const functionParams =
+    src
+      ?.match(/(?:async\s)?function\s*.+?\((.+?)\)/m)?.[1]
+      .trim()
+      ?.split(",")
+      .map((i) => i.trim())
+      .filter(Boolean) ?? [];
+  const functionBody = src?.match(/(?:async\s)?function\s*.+?\s*\{((.|\n)*)\}/m)?.[1].trim() ?? "";
+  const syntheticFunction = new AsyncFunction(...functionParams, functionBody);
+  return syntheticFunction as (...args: any[]) => Promise<any>;
+}
+
+function createChatInferenceFn(chatProxy: ChatProxy, task: string) {
+  return (input: string) =>
+    chatProxy(
       [
         {
           role: "system",
-          content: `Transform the input by performing this task: ${itemLevelTask}`,
+          content: `Perform the following task: ${task}
+          
+Respond the result of the task in this format. Do not add prefix or explanations:
+"""
+Output: <plaintext result>
+"""
+
+          `,
+        },
+        { role: "user", content: input },
+      ],
+      { max_tokens: 120 }
+    ).then((result) => result.match(/Output: (.+)/)?.[1] ?? "Error: No output");
+}
+
+function createFnCallingInferenceFn(fnCallProxy: FnCallProxy, task: string) {
+  return (input: string) =>
+    fnCallProxy(
+      [
+        {
+          role: "system",
+          content: `Transform the input by performing this task: ${task}`,
         },
         {
           role: "user",
@@ -82,25 +128,6 @@ async function llmTransformEach(config: LlmTransformEachConfig) {
     )
       .then((result) => (JSON.parse(result.arguments) as any).result as string)
       .catch((e) => `Error: ${e.message}`);
-  };
-
-  const results = await transform(data, llmInferenceFn);
-  return results as any[];
-}
-
-function createSyntheticFunction(src: string) {
-  const AsyncFunction = async function () {}.constructor as any;
-
-  const functionParams =
-    src
-      ?.match(/(?:async\s)?function\s*.+?\((.+?)\)/m)?.[1]
-      .trim()
-      ?.split(",")
-      .map((i) => i.trim())
-      .filter(Boolean) ?? [];
-  const functionBody = src?.match(/(?:async\s)?function\s*.+?\s*\{((.|\n)*)\}/m)?.[1].trim() ?? "";
-  const syntheticFunction = new AsyncFunction(...functionParams, functionBody);
-  return syntheticFunction as (...args: any[]) => Promise<any>;
 }
 
 const TRIPLE_TICKS = "```";
