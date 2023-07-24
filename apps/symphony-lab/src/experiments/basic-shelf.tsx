@@ -159,7 +159,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     () => [
       createAntidoteDirective(chat),
       createCodeDirective(fnCall),
-      createEachDirective(fnCall),
+      createEachDirective(fnCall, chat),
       createExportDirective(),
       createLensDirective(fnCall),
       createJqDirective(chat),

@@ -1,10 +1,10 @@
 import type { ChatInput, FunctionCallRequest, FunctionDefinition } from "@h20/plex-chat";
 import { feedbackLoop } from "../../jq/feedback-loop";
-import type { ChatMessage, FnCallProxy, SimpleModelConfig } from "../../openai/chat";
+import type { ChatMessage, ChatProxy, FnCallProxy, SimpleModelConfig } from "../../openai/chat";
 import { jsonToTyping, sampleJsonContent } from "../../reflection/json-reflection";
 import type { ShelfDirective } from "./base-directive";
 
-export function createEachDirective(fnCall: FnCallProxy): ShelfDirective {
+export function createEachDirective(fnCall: FnCallProxy, chat: ChatProxy): ShelfDirective {
   return {
     match: (source) => source.startsWith("/each"),
     run: async ({ source, data }) => {
@@ -14,7 +14,7 @@ export function createEachDirective(fnCall: FnCallProxy): ShelfDirective {
         goal,
         fnCallProxy: (messages: ChatMessage[], config?: SimpleModelConfig) =>
           fnCall(messages, { max_tokens: 2400, temperature: 0, ...config, models: ["gpt-35-turbo"] }),
-        chatProxy: () => {},
+        chatProxy: chat,
       });
 
       return {
@@ -28,7 +28,7 @@ export interface LlmTransformEachConfig {
   data: any[];
   goal: string;
   fnCallProxy: FnCallProxy;
-  chatProxy: any;
+  chatProxy: ChatProxy;
 }
 async function llmTransformEach(config: LlmTransformEachConfig) {
   const { data, goal, fnCallProxy, chatProxy } = config;
@@ -40,14 +40,67 @@ async function llmTransformEach(config: LlmTransformEachConfig) {
     const result = await fnCallProxy(messages, { ...fnCallConfig });
     const { transformSourceCodeString, inferenceTask } = JSON.parse(result.arguments) as any;
     console.log({ transformSourceCodeString, inferenceTask });
-    const createLens = getLensFactory(result);
-    return createLens(data);
+    const syntheticFunction = createSyntheticFunction(transformSourceCodeString);
+    return { transform: syntheticFunction, itemLevelTask: inferenceTask };
   };
 
-  const lenses = await feedbackLoop(getTransformer);
-  const results = lenses.map((lens) => lens.set(chatProxy(lens.get())));
+  const { transform, itemLevelTask } = await feedbackLoop(getTransformer);
+  console.log("synthetic function", transform);
 
-  return results;
+  const llmInferenceFn = (input: string) => {
+    return fnCallProxy(
+      [
+        {
+          role: "system",
+          content: `Transform the input by performing this task: ${itemLevelTask}`,
+        },
+        {
+          role: "user",
+          content: input,
+        },
+      ],
+      {
+        max_tokens: 120,
+        function_call: { name: "set_result" },
+        functions: [
+          {
+            name: "set_result",
+            description: "",
+            parameters: {
+              type: "object",
+              properties: {
+                result: {
+                  type: "string",
+                  description: "The output of the transform task",
+                },
+              },
+              required: ["result"],
+            },
+          },
+        ],
+      }
+    )
+      .then((result) => (JSON.parse(result.arguments) as any).result as string)
+      .catch((e) => `Error: ${e.message}`);
+  };
+
+  const results = await transform(data, llmInferenceFn);
+  return results as any[];
+}
+
+function createSyntheticFunction(src: string) {
+  const AsyncFunction = async function () {}.constructor as any;
+
+  const functionParams =
+    src
+      ?.match(/(?:async\s)?function\s*.+?\((.+?)\)/m)?.[1]
+      .trim()
+      ?.split(",")
+      .map((i) => i.trim())
+      .filter(Boolean) ?? [];
+  const functionBody = src?.match(/(?:async\s)?function\s*.+?\s*\{((.|\n)*)\}/m)?.[1].trim() ?? "";
+  const syntheticFunction = new AsyncFunction(...functionParams, functionBody);
+  return syntheticFunction as (...args: any[]) => Promise<any>;
 }
 
 const TRIPLE_TICKS = "```";
@@ -100,7 +153,7 @@ function getFnCallConfig(): Partial<ChatInput> {
           },
           inferenceTask: {
             type: "string",
-            description: "Describe what the llmInference function should do to each item",
+            description: "Rephrase the top level goal as llmInference task on the per item level",
           },
         },
         required: ["transformSourceCodeString", "inferenceTask"],
@@ -112,8 +165,4 @@ function getFnCallConfig(): Partial<ChatInput> {
     function_call: fnCall,
     functions: fnDef,
   };
-}
-
-function getLensFactory(result: any) {
-  return (...args: any[]) => ({} as any[]);
 }
