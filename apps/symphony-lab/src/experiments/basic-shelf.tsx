@@ -12,6 +12,7 @@ import { AutoResize } from "../form/auto-resize";
 import type { ChatMessage, FnCallProxy, SimpleModelConfig } from "../openai/chat";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
+import { createEachDirective } from "../shelf/directives/each-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
 import { createJqDirective } from "../shelf/directives/jq-directive";
 import { createJsonDirective } from "../shelf/directives/json-directive";
@@ -154,16 +155,20 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     setTimestampedStatus("System online");
   }, []);
 
-  const antidoteDirective = useMemo(() => createAntidoteDirective(chat), [chat]);
-  const codeDirective = useMemo(() => createCodeDirective(fnCall), [fnCall]);
-  const exportDirective = useMemo(() => createExportDirective(), []);
-  const lensDirective = useMemo(() => createLensDirective(fnCall), [fnCall]);
-  const jqDirective = useMemo(() => createJqDirective(chat), [chat]);
-  const jsonDirective = useMemo(() => createJsonDirective(), []);
-  const runDirective = useMemo(() => createRunDirective(fnCall), [fnCall]);
-  const tagDirective = useMemo(() => createTagDirective(chat), [chat]);
-
-  const allDirective = [antidoteDirective, codeDirective, exportDirective, lensDirective, jqDirective, jsonDirective, runDirective, tagDirective];
+  const allDirective = useMemo(
+    () => [
+      createAntidoteDirective(chat),
+      createCodeDirective(fnCall),
+      createEachDirective(fnCall),
+      createExportDirective(),
+      createLensDirective(fnCall),
+      createJqDirective(chat),
+      createJsonDirective(),
+      createRunDirective(fnCall),
+      createTagDirective(chat),
+    ],
+    [chat, fnCall]
+  );
 
   const handleSubmit = useCallback(async () => {
     setTimestampedStatus("Running...");
