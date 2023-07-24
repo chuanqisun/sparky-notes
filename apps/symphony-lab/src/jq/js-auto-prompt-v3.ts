@@ -50,21 +50,18 @@ export async function jsAutoPromptV3(config: JsAutoPromptConfig): Promise<any> {
         parameters: {
           type: "object",
           properties: {
-            srcLines: {
-              type: "array",
-              items: {
-                type: "string",
-              },
-              description: "Line by line source code of the function",
+            functionSrc: {
+              type: "string",
+              description: "function source code, serialized to one-line JSON string",
             },
           },
-          required: ["srcLines"],
+          required: ["functionSrc"],
         },
       },
     ],
   });
   const parsedFn = JSON.parse(fnCallResponse.arguments) as any;
-  const fnSrc = parsedFn.srcLines.join("\n") as string;
+  const fnSrc = parsedFn.functionSrc as string;
 
   if (onShouldAbort?.()) {
     throw new Error("Aborted");
