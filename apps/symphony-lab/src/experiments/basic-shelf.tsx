@@ -6,9 +6,12 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
+import { useAuthContext } from "../account/auth-context";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
+import { getH20Proxy } from "../hits/proxy";
+import { getSemanticSearchProxy } from "../hits/search-claims";
 import type { ChatProxy, FnCallProxy, RawProxy } from "../openai/chat";
 import { defaultModelConfig, defaultModels } from "../openai/config";
 import { estimateChatTokenDemand } from "../openai/tokens";
@@ -16,6 +19,7 @@ import { createAntidoteDirective } from "../shelf/directives/antidote-directive"
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createEachDirective } from "../shelf/directives/each-directive";
 import { createExportDirective } from "../shelf/directives/export-directive";
+import { createHitsDirective } from "../shelf/directives/hits-directive";
 import { createJqDirective } from "../shelf/directives/jq-directive";
 import { createJsonDirective } from "../shelf/directives/json-directive";
 import { createLensDirective } from "../shelf/directives/lens-directive";
@@ -65,6 +69,7 @@ const modelIdToTokenLimit = (modelId: string) => {
 };
 
 export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
+  const auth = useAuthContext();
   const graph = useRef(new Cozo(db));
   useEffect(() => {
     console.log(graph);
@@ -126,6 +131,9 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     [completionCall]
   );
 
+  const h20Proxy = getH20Proxy(auth.accessToken);
+  const semanticSearchProxy = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
+
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");
   const setTimestampedStatus = useCallback(
@@ -147,6 +155,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       createCodeDirective(fnCall),
       createEachDirective(fnCall, chat),
       createExportDirective(),
+      createHitsDirective(semanticSearchProxy),
       createLensDirective(fnCall),
       createJqDirective(chat),
       createJsonDirective(),
