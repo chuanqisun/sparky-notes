@@ -18,6 +18,7 @@ export interface IWorkerTaskRequest {
 export interface IWorkerTaskResponse {
   data?: ChatOutput;
   error?: any;
+  shouldRetry?: boolean;
 }
 
 export interface IChatTask {

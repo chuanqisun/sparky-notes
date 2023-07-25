@@ -11,3 +11,7 @@ export function withTimeout(abortReason: string, timeout: number, controller: Ab
 }
 
 export const TIMEOUT_ABORT_REASON = "Request timed out";
+
+export function getTimeoutFunction(minTimeoutMs: number, additionalMsPerToken: number) {
+  return (tokenDemand: number) => minTimeoutMs + tokenDemand * additionalMsPerToken;
+}

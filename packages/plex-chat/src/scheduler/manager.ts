@@ -84,7 +84,7 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
       //
       // TODO, implement rule 1
       if (!taskHandle.retryLeft) {
-        this.logger.warn(`[manager] task aborted`);
+        this.logger.warn(`[manager] no retry left`);
         taskHandle.reject(result.error);
       } else {
         this.logger.warn(`[manager] task requeued, ${taskHandle.retryLeft} retries left`, result.error);

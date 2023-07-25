@@ -1,4 +1,5 @@
 import { ChatManager, ChatWorker, getOpenAIJsonProxy } from "@h20/plex-chat";
+import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
 import type { CozoDb } from "cozo-lib-wasm";
 import gptTokenizer from "gpt-tokenizer";
@@ -33,24 +34,28 @@ const modelIdToTokenLimit = (modelId: string) => {
       return {
         rpm: 720,
         tpm: 120_000,
+        timeout: getTimeoutFunction(3_000, 25),
         contextWindow: 8_192,
       };
     case "gpt-35-turbo-16k":
       return {
         rpm: 522,
         tpm: 87_000,
+        timeout: getTimeoutFunction(3_000, 25),
         contextWindow: 16_384,
       };
     case "gpt-4":
       return {
         rpm: 60,
         tpm: 10_000,
+        timeout: getTimeoutFunction(5_000, 30),
         contextWindow: 8_192,
       };
     case "gpt-4-32k":
       return {
         rpm: 180,
         tpm: 30_000,
+        timeout: getTimeoutFunction(5_000, 30),
         contextWindow: 32_768,
       };
     default:
@@ -69,21 +74,22 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
   const chatManager = useMemo(() => {
     console.log("endpoints", allChatEndpoints);
 
-    const workers = allChatEndpoints.map(
-      (endpoint) =>
-        new ChatWorker({
-          proxy: getOpenAIJsonProxy({
-            apiKey: endpoint.apiKey,
-            endpoint: endpoint.endpoint,
-          }),
-          models: [endpoint.modelDisplayName],
-          concurrency: 10,
-          requestsPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).rpm,
-          tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).tpm,
-          contextWindow: modelIdToTokenLimit(endpoint.modelDisplayName).contextWindow,
-          logLevel: LogLevel.Warn,
-        })
-    );
+    const workers = allChatEndpoints.map((endpoint) => {
+      const limits = modelIdToTokenLimit(endpoint.modelDisplayName);
+      return new ChatWorker({
+        proxy: getOpenAIJsonProxy({
+          apiKey: endpoint.apiKey,
+          endpoint: endpoint.endpoint,
+        }),
+        models: [endpoint.modelDisplayName],
+        concurrency: 10,
+        timeout: limits.timeout,
+        requestsPerMinute: limits.rpm,
+        tokensPerMinute: limits.tpm,
+        contextWindow: limits.contextWindow,
+        logLevel: LogLevel.Warn,
+      });
+    });
 
     return new ChatManager({ workers, logLevel: LogLevel.Info });
   }, [allChatEndpoints]);

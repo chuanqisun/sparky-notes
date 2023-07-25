@@ -17,6 +17,7 @@ export interface ChatWorkerConfig {
   concurrency: number;
   contextWindow: number;
   requestsPerMinute: number;
+  timeout: (tokenDemand: number) => number;
   tokensPerMinute: number;
   logLevel?: LogLevel;
 }
@@ -77,7 +78,7 @@ export class ChatWorker implements IChatWorker {
     this.poller.unset();
 
     this.tasks.forEach((task) => {
-      task.controller?.abort(TIMEOUT_ABORT_REASON);
+      task.controller?.abort();
     });
   }
 
@@ -158,31 +159,36 @@ export class ChatWorker implements IChatWorker {
     const record: TaskRecord = { startedAt: Date.now(), tokensDemanded: taskHandle.task.tokenDemand };
     this.capacityRecords.push(record);
 
-    // TODO better retry curve based on demand and previous timeout history
-    const unwatch = withTimeout(TIMEOUT_ABORT_REASON, 5_000 + taskHandle.task.tokenDemand * 20, taskHandle.controller);
-    const { error, data, retryAfterMs } = await this.config.proxy(taskHandle.task.input, { signal: taskHandle.controller.signal });
+    const unwatch = withTimeout(TIMEOUT_ABORT_REASON, this.config.timeout(taskHandle.task.tokenDemand), taskHandle.controller);
+    const { error, data, retryAfterMs } = await this.config
+      .proxy(taskHandle.task.input, { signal: taskHandle.controller.signal })
+      .catch((error) => ({ data: undefined, error, retryAfterMs: undefined }));
     unwatch();
 
     // remove task from running task pool
     record.tokensUsed = data?.usage?.total_tokens;
     this.tasks = this.tasks.filter((t) => t !== taskHandle);
+    const hasError = error !== undefined;
 
-    if (!error) {
-      manager.respond(taskHandle.task, { data });
-    } else {
+    if (hasError) {
       if (retryAfterMs !== undefined) {
         this.coolDownUntil = Date.now() + retryAfterMs;
         this.logger.warn(`[worker] reject task with cooldown ${retryAfterMs}ms`);
       }
+
       if (taskHandle.controller.signal.reason === TIMEOUT_ABORT_REASON) {
         this.logger.warn(`[worker] reject task without cooldown`);
       }
-      manager.respond(taskHandle.task, { error });
     }
 
+    const isUserAborted = taskHandle.controller.signal.aborted && taskHandle.controller.signal.reason.abortReason !== TIMEOUT_ABORT_REASON;
+
+    const shouldRetry = !isUserAborted && hasError;
+    manager.respond(taskHandle.task, { data, error, shouldRetry });
+
     // After each run, restart the poller because capacity might have changed
-    // Normally do not restart when aborted, but if abort reason is timeout, we should still restart
-    if (taskHandle.controller.signal.aborted && taskHandle.controller.signal.reason.abortReason === TIMEOUT_ABORT_REASON) {
+    // But do not restart if user wants to stop the program
+    if (!isUserAborted) {
       this.start(manager);
     }
   }
