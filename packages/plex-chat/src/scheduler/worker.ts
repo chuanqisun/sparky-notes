@@ -1,3 +1,4 @@
+import { TIMEOUT_ABORT_REASON, withTimeout } from "../controller/timeout";
 import type { ChatInput, ChatOutput } from "../openai/types";
 import { getCapacity } from "./capacity";
 import { LogLevel, getLogger, type ILogger } from "./logger";
@@ -20,7 +21,7 @@ export interface ChatWorkerConfig {
   logLevel?: LogLevel;
 }
 
-export type ChatProxy = (input: ChatInput, signal?: AbortSignal) => Promise<ChatProxyResult>;
+export type ChatProxy = (input: ChatInput, init?: RequestInit) => Promise<ChatProxyResult>;
 
 export interface ChatProxyResult {
   data?: ChatOutput;
@@ -38,12 +39,13 @@ export interface TaskRecord {
 // Only chat manager can stop chat worker polling
 
 export class ChatWorker implements IChatWorker {
+  /** Only running tasks */
   private tasks: IChatTask[] = [];
   private poller: IPoller;
   private previousRequest: IWorkerTaskRequest | null = null;
-  private records: TaskRecord[] = [];
+  /** Records are temporary for capacity calculation. It may outlive the task list */
+  private capacityRecords: TaskRecord[] = [];
   private coolDownUntil = 0;
-  private isRunning = false;
   private logger: ILogger;
 
   constructor(private config: ChatWorkerConfig) {
@@ -53,7 +55,6 @@ export class ChatWorker implements IChatWorker {
 
   public start(manager: IChatWorkerManager) {
     this.logger.debug(`[worker] started`);
-    this.isRunning = true;
     // poll immediately because start was requested by the manager
     this.poll(manager, this.updateTaskRequest().request);
     // start interval based polling because capacity might have changed due to timeout
@@ -68,17 +69,15 @@ export class ChatWorker implements IChatWorker {
 
   public abortAll() {
     this.logger.info(`[worker] abort all tasks`);
-    this.isRunning = false;
     this.poller.unset();
 
     this.tasks.forEach((task) => {
-      task.controller?.abort();
+      task.controller?.abort(TIMEOUT_ABORT_REASON);
     });
   }
 
   public stop() {
     this.logger.info(`[worker] stopped`);
-    this.isRunning = false;
     this.poller.unset();
   }
 
@@ -93,7 +92,7 @@ export class ChatWorker implements IChatWorker {
 
   private updateRecordsWindow() {
     // remove history older than 1 min
-    this.records = this.records.filter((r) => r.startedAt > Date.now() - 60_000);
+    this.capacityRecords = this.capacityRecords.filter((r) => r.startedAt > Date.now() - 60_000);
   }
 
   private getTaskRequest(): IWorkerTaskRequest {
@@ -113,7 +112,7 @@ export class ChatWorker implements IChatWorker {
       };
     }
 
-    const capacity = getCapacity(this.config.requestsPerMinute, this.config.tokensPerMinute, this.records);
+    const capacity = getCapacity(this.config.requestsPerMinute, this.config.tokensPerMinute, this.capacityRecords);
 
     // Blocked due to Requests limit
     if (capacity.requests === 0) {
@@ -148,9 +147,12 @@ export class ChatWorker implements IChatWorker {
 
   private async runTask(manager: IChatWorkerManager, task: IChatTask) {
     const record: TaskRecord = { startedAt: Date.now(), tokensDemanded: task.tokenDemand };
-    this.records.push(record);
+    this.capacityRecords.push(record);
 
-    const { error, data, retryAfterMs } = await this.config.proxy(task.input, task.controller?.signal);
+    // TODO better retry curve based on demand and previous timeout history
+    const unwatch = withTimeout(TIMEOUT_ABORT_REASON, 5_000 + task.tokenDemand * 20, task.controller);
+    const { error, data, retryAfterMs } = await this.config.proxy(task.input, { signal: task.controller.signal });
+    unwatch();
 
     // remove task from running task pool
     record.tokensUsed = data?.usage?.total_tokens;
@@ -163,11 +165,15 @@ export class ChatWorker implements IChatWorker {
         this.coolDownUntil = Date.now() + retryAfterMs;
         this.logger.warn(`[worker] cooldown started ${retryAfterMs}ms`);
       }
+      if (task.controller.signal.reason === TIMEOUT_ABORT_REASON) {
+        this.logger.warn(`[worker] cooldown due to timeout`);
+      }
       manager.respond(task, { error });
     }
 
-    // after each run, restart the poller because capacity might have changed
-    if (this.isRunning) {
+    // After each run, restart the poller because capacity might have changed
+    // Normally do not restart when aborted, but if abort reason is timeout, we should still restart
+    if (task.controller.signal.aborted && task.controller.signal.reason.abortReason === TIMEOUT_ABORT_REASON) {
       this.start(manager);
     }
   }

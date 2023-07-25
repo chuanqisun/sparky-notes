@@ -6,7 +6,7 @@ export interface ProxyConfig {
   endpoint: string;
 }
 export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy {
-  return async (input: ChatInput, signal?: AbortSignal) => {
+  return async (input: ChatInput, init?: RequestInit) => {
     let response: Response;
     try {
       response = await fetch(endpoint, {
@@ -16,7 +16,7 @@ export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy
           "api-key": apiKey,
         },
         body: JSON.stringify(input),
-        signal,
+        ...init,
       });
     } catch (e) {
       // fetch or abort error

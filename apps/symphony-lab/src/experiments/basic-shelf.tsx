@@ -77,7 +77,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
             endpoint: endpoint.endpoint,
           }),
           models: [endpoint.modelDisplayName],
-          concurrency: 3,
+          concurrency: 10,
           requestsPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).rpm,
           tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).tpm,
           contextWindow: modelIdToTokenLimit(endpoint.modelDisplayName).contextWindow,
@@ -93,6 +93,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       if (!chatManager) throw new Error("No chat manager");
       const inputDemand =
         gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25 + gptTokenizer.encode(JSON.stringify(modelConfig?.function_call)).length;
+      // FIXME, the controller must be abstracted in order to support retries.
       const controller = new AbortController();
 
       const { models, ...restConfig } = modelConfig ?? {};
