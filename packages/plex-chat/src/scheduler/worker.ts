@@ -172,10 +172,10 @@ export class ChatWorker implements IChatWorker {
     } else {
       if (retryAfterMs !== undefined) {
         this.coolDownUntil = Date.now() + retryAfterMs;
-        this.logger.warn(`[worker] cooldown started ${retryAfterMs}ms`);
+        this.logger.warn(`[worker] reject task with cooldown ${retryAfterMs}ms`);
       }
       if (taskHandle.controller.signal.reason === TIMEOUT_ABORT_REASON) {
-        this.logger.warn(`[worker] cooldown due to timeout`);
+        this.logger.warn(`[worker] reject task without cooldown`);
       }
       manager.respond(taskHandle.task, { error });
     }
