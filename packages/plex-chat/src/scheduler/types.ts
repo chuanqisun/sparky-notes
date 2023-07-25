@@ -24,7 +24,7 @@ export interface IChatTask {
   tokenDemand: number;
   models: string[];
   input: ChatInput;
-  controller?: AbortController;
+  controller: AbortController;
 }
 
 export interface IChatWorker {

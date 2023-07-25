@@ -31,21 +31,25 @@ const modelIdToTokenLimit = (modelId: string) => {
   switch (modelId) {
     case "gpt-35-turbo":
       return {
+        rpm: 720,
         tpm: 120_000,
         contextWindow: 8_192,
       };
     case "gpt-35-turbo-16k":
       return {
+        rpm: 522,
         tpm: 87_000,
         contextWindow: 16_384,
       };
     case "gpt-4":
       return {
+        rpm: 60,
         tpm: 10_000,
         contextWindow: 8_192,
       };
     case "gpt-4-32k":
       return {
+        rpm: 180,
         tpm: 30_000,
         contextWindow: 32_768,
       };
@@ -74,6 +78,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
           }),
           models: [endpoint.modelDisplayName],
           concurrency: 3,
+          requestsPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).rpm,
           tokensPerMinute: modelIdToTokenLimit(endpoint.modelDisplayName).tpm,
           contextWindow: modelIdToTokenLimit(endpoint.modelDisplayName).contextWindow,
           logLevel: LogLevel.Warn,

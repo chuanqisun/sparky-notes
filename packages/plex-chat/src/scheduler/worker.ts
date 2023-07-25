@@ -1,5 +1,5 @@
 import type { ChatInput, ChatOutput } from "../openai/types";
-import { getTokenCapacity } from "./capacity";
+import { getCapacity } from "./capacity";
 import { LogLevel, getLogger, type ILogger } from "./logger";
 import { Poller } from "./poller";
 import type { IChatTask, IChatWorker, IChatWorkerManager, IWorkerTaskRequest } from "./types";
@@ -15,7 +15,7 @@ export interface ChatWorkerConfig {
   models: string[];
   concurrency: number;
   contextWindow: number;
-  requestsPerMinute?: number;
+  requestsPerMinute: number;
   tokensPerMinute: number;
   logLevel?: LogLevel;
 }
@@ -43,6 +43,7 @@ export class ChatWorker implements IChatWorker {
   private previousRequest: IWorkerTaskRequest | null = null;
   private records: TaskRecord[] = [];
   private coolDownUntil = 0;
+  private isRunning = false;
   private logger: ILogger;
 
   constructor(private config: ChatWorkerConfig) {
@@ -52,6 +53,7 @@ export class ChatWorker implements IChatWorker {
 
   public start(manager: IChatWorkerManager) {
     this.logger.debug(`[worker] started`);
+    this.isRunning = true;
     // poll immediately because start was requested by the manager
     this.poll(manager, this.updateTaskRequest().request);
     // start interval based polling because capacity might have changed due to timeout
@@ -66,6 +68,7 @@ export class ChatWorker implements IChatWorker {
 
   public abortAll() {
     this.logger.info(`[worker] abort all tasks`);
+    this.isRunning = false;
     this.poller.unset();
 
     this.tasks.forEach((task) => {
@@ -75,6 +78,7 @@ export class ChatWorker implements IChatWorker {
 
   public stop() {
     this.logger.info(`[worker] stopped`);
+    this.isRunning = false;
     this.poller.unset();
   }
 
@@ -109,8 +113,18 @@ export class ChatWorker implements IChatWorker {
       };
     }
 
+    const capacity = getCapacity(this.config.requestsPerMinute, this.config.tokensPerMinute, this.records);
+
+    // Blocked due to Requests limit
+    if (capacity.requests === 0) {
+      return {
+        tokenCapacity: 0,
+        models: this.config.models,
+      };
+    }
+
     return {
-      tokenCapacity: Math.min(this.config.contextWindow, getTokenCapacity(this.config.tokensPerMinute, this.records)),
+      tokenCapacity: Math.min(this.config.contextWindow, capacity.tokens),
       models: this.config.models,
     };
   }
@@ -153,8 +167,7 @@ export class ChatWorker implements IChatWorker {
     }
 
     // after each run, restart the poller because capacity might have changed
-    // but do not restart if aborted
-    if (!task.controller?.signal.aborted) {
+    if (this.isRunning) {
       this.start(manager);
     }
   }
