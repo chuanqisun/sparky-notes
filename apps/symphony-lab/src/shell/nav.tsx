@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { useAuthContext } from "../account/auth-context";
 import { ConnectionSetupDialog } from "../account/connection-setup-form";
-import { useAuth } from "../account/use-auth";
 import { BasicFormButton } from "../form/form";
 import { useDialog } from "../utils/use-dialog";
 
 export function Nav() {
   const { DialogComponent, open, close } = useDialog();
   const handleConnectionsButtonClick = () => open();
-  const { isConnected, signOut, signIn } = useAuth();
+  const { isConnected, signOut, signIn } = useAuthContext();
 
   return (
     <NavLayout>

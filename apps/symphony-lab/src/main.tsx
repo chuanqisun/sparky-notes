@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { Link, Outlet, RouterProvider, createBrowserRouter, type NonIndexRouteObject } from "react-router-dom";
 import { styled } from "styled-components";
 import { AccountContextProvider } from "./account/account-context";
+import { AuthContextProvider } from "./account/auth-context";
 import { Cozo, createDb } from "./cozo/cozo";
 import { SCHEMA, getGraphOutputs, setGraphOutput } from "./flow/db/db";
 import "./index.css";
@@ -112,8 +113,10 @@ const StyledNav = styled.nav`
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <AccountContextProvider>
-      <RouterProvider router={router} />
-    </AccountContextProvider>
+    <AuthContextProvider>
+      <AccountContextProvider>
+        <RouterProvider router={router} />
+      </AccountContextProvider>
+    </AuthContextProvider>
   </React.StrictMode>
 );
