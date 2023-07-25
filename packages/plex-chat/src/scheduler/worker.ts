@@ -15,6 +15,7 @@ export interface ChatWorkerConfig {
   models: string[];
   concurrency: number;
   contextWindow: number;
+  requestsPerMinute?: number;
   tokensPerMinute: number;
   logLevel?: LogLevel;
 }

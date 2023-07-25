@@ -15,7 +15,8 @@ export function createEachDirective(fnCall: FnCallProxy, chat: ChatProxy): Shelf
         updateStatus,
         fnCallProxy: (messages: ChatMessage[], config?: SimpleModelConfig) =>
           fnCall(messages, { max_tokens: 2400, temperature: 0, ...config, models: ["gpt-4", "gpt-4-32k"] }),
-        chatProxy: chat,
+        chatProxy: (messages: ChatMessage[], modelConfig?: SimpleModelConfig) =>
+          chat(messages, { ...modelConfig, models: ["gpt-35-turbo", "gpt-35-turbo-16k"] }),
       });
 
       return {
