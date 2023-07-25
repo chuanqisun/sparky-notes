@@ -94,12 +94,10 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
       const inputDemand =
         gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25 + gptTokenizer.encode(JSON.stringify(modelConfig?.function_call)).length;
       // FIXME, the controller must be abstracted in order to support retries.
-      const controller = new AbortController();
 
       const { models, ...restConfig } = modelConfig ?? {};
 
       const rawOutput = await chatManager.submit({
-        controller,
         tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
         models: models ?? ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
         input: {
@@ -122,12 +120,10 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     return async (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => {
       if (!chatManager) throw new Error("No chat manager");
       const inputDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
-      const controller = new AbortController();
 
       const { models, ...restConfig } = modelConfig ?? {};
 
       const rawOutput = await chatManager.submit({
-        controller,
         tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
         models: models ?? ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
         input: {
