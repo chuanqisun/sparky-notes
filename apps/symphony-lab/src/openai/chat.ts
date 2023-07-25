@@ -1,6 +1,7 @@
 import type { ChatInput, ChatMessage, ChatOutput } from "@h20/plex-chat";
 export type { ChatMessage } from "@h20/plex-chat";
 
+export type RawProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<ChatOutput>;
 export type ChatProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<string>;
 export type FnCallProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<{ arguments: string; name: string }>;
 

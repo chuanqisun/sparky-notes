@@ -1,8 +1,7 @@
-import { ChatManager, ChatWorker, getOpenAIJsonProxy } from "@h20/plex-chat";
+import { ChatManager, ChatWorker, getOpenAIWorkerProxy } from "@h20/plex-chat";
 import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
 import type { CozoDb } from "cozo-lib-wasm";
-import gptTokenizer from "gpt-tokenizer";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JSONTree } from "react-json-tree";
@@ -10,7 +9,9 @@ import styled from "styled-components";
 import { useModelSelector } from "../account/model-selector";
 import { Cozo } from "../cozo/cozo";
 import { AutoResize } from "../form/auto-resize";
-import type { ChatMessage, FnCallProxy, SimpleModelConfig } from "../openai/chat";
+import type { ChatProxy, FnCallProxy, RawProxy } from "../openai/chat";
+import { defaultModelConfig, defaultModels } from "../openai/config";
+import { estimateChatTokenDemand } from "../openai/tokens";
 import { createAntidoteDirective } from "../shelf/directives/antidote-directive";
 import { createCodeDirective } from "../shelf/directives/code-directive";
 import { createEachDirective } from "../shelf/directives/each-directive";
@@ -77,7 +78,7 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     const workers = allChatEndpoints.map((endpoint) => {
       const limits = modelIdToTokenLimit(endpoint.modelDisplayName);
       return new ChatWorker({
-        proxy: getOpenAIJsonProxy({
+        proxy: getOpenAIWorkerProxy({
           apiKey: endpoint.apiKey,
           endpoint: endpoint.endpoint,
         }),
@@ -94,59 +95,36 @@ export const BasicShelf: React.FC<BasicShelfProps> = ({ db }) => {
     return new ChatManager({ workers, logLevel: LogLevel.Info });
   }, [allChatEndpoints]);
 
-  const fnCall: FnCallProxy = useMemo(() => {
-    return async (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => {
+  const completionCall = useCallback<RawProxy>(
+    (messages, modelConfig) => {
       if (!chatManager) throw new Error("No chat manager");
-      const inputDemand =
-        gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25 + gptTokenizer.encode(JSON.stringify(modelConfig?.function_call)).length;
-      // FIXME, the controller must be abstracted in order to support retries.
 
-      const { models, ...restConfig } = modelConfig ?? {};
+      const { models, ...restConfig } = { models: defaultModels, ...modelConfig };
 
-      const rawOutput = await chatManager.submit({
-        tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
-        models: models ?? ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
-        input: {
-          temperature: 0,
-          top_p: 1,
-          frequency_penalty: 0,
-          presence_penalty: 0,
-          max_tokens: 60,
-          stop: "",
-          ...restConfig,
-          messages,
-        },
+      const finalInput = {
+        ...defaultModelConfig,
+        ...restConfig,
+        messages,
+      };
+
+      return chatManager.submit({
+        tokenDemand: estimateChatTokenDemand(finalInput),
+        models,
+        input: finalInput,
       });
+    },
+    [chatManager]
+  );
 
-      return rawOutput.choices[0].message.function_call!;
-    };
-  }, [chatManager]);
+  const fnCall = useCallback<FnCallProxy>(
+    (messages, modelConfig) => completionCall(messages, modelConfig).then((rawOutput) => rawOutput.choices[0].message.function_call!),
+    [completionCall]
+  );
 
-  const chat = useMemo(() => {
-    return async (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => {
-      if (!chatManager) throw new Error("No chat manager");
-      const inputDemand = gptTokenizer.encodeChat(messages, "gpt-3.5-turbo").length * 1.25; // be conservative
-
-      const { models, ...restConfig } = modelConfig ?? {};
-
-      const rawOutput = await chatManager.submit({
-        tokenDemand: inputDemand + (modelConfig?.max_tokens ?? 60),
-        models: models ?? ["gpt-35-turbo", "gpt-35-turbo-16k", "gpt-4", "gpt-4-32k"],
-        input: {
-          temperature: 0,
-          top_p: 1,
-          frequency_penalty: 0,
-          presence_penalty: 0,
-          max_tokens: 60,
-          stop: "",
-          ...restConfig,
-          messages,
-        },
-      });
-
-      return rawOutput.choices[0].message.content ?? "";
-    };
-  }, [chatManager]);
+  const chat = useCallback<ChatProxy>(
+    (messages, modelConfig) => completionCall(messages, modelConfig).then((rawOutput) => rawOutput.choices[0].message.content ?? ""),
+    [completionCall]
+  );
 
   const { addShelf, openShelf, currentShelf, shelves, userMessage, updateShelfData, updateUserMessage } = useShelfManager();
   const [status, setStatus] = useState("");

@@ -12,7 +12,7 @@ export interface IPoller {
 }
 
 export interface ChatWorkerConfig {
-  proxy: ChatProxy;
+  proxy: WorkerChatProxy;
   models: string[];
   concurrency: number;
   contextWindow: number;
@@ -22,9 +22,9 @@ export interface ChatWorkerConfig {
   logLevel?: LogLevel;
 }
 
-export type ChatProxy = (input: ChatInput, init?: RequestInit) => Promise<ChatProxyResult>;
+export type WorkerChatProxy = (input: ChatInput, init?: RequestInit) => Promise<WorkerChatProxyResult>;
 
-export interface ChatProxyResult {
+export interface WorkerChatProxyResult {
   data?: ChatOutput;
   error?: string;
   retryAfterMs?: number;

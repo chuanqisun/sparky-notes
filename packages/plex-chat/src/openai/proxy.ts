@@ -1,11 +1,11 @@
-import type { ChatProxy } from "../scheduler/worker";
+import type { WorkerChatProxy } from "../scheduler/worker";
 import type { ChatInput, ChatOutput } from "./types";
 
 export interface ProxyConfig {
   apiKey: string;
   endpoint: string;
 }
-export function getOpenAIJsonProxy({ apiKey, endpoint }: ProxyConfig): ChatProxy {
+export function getOpenAIWorkerProxy({ apiKey, endpoint }: ProxyConfig): WorkerChatProxy {
   return async (input: ChatInput, init?: RequestInit) => {
     let response: Response;
     try {
