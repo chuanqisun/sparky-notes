@@ -35,12 +35,17 @@ export interface TaskRecord {
   tokensUsed?: number;
 }
 
+export interface WorkerTaskHandle {
+  controller: AbortController;
+  task: IChatTask;
+}
+
 // Chat worker is responsible for polling task when its self has change in capacity
 // Only chat manager can stop chat worker polling
 
 export class ChatWorker implements IChatWorker {
   /** Only running tasks */
-  private tasks: IChatTask[] = [];
+  private tasks: WorkerTaskHandle[] = [];
   private poller: IPoller;
   private previousRequest: IWorkerTaskRequest | null = null;
   /** Records are temporary for capacity calculation. It may outlive the task list */
@@ -137,43 +142,47 @@ export class ChatWorker implements IChatWorker {
     const task = manager.request(request);
     if (task) {
       this.logger.debug(`[worker] task aquired (asked ${request.tokenCapacity}, got ${task.tokenDemand})`);
-      this.tasks.push(task);
-      this.runTask(manager, task);
+      const taskHandle: WorkerTaskHandle = {
+        controller: new AbortController(),
+        task,
+      };
+      this.tasks.push(taskHandle);
+      this.runTask(manager, taskHandle);
     }
     {
       this.logger.debug(`[worker] no task available`);
     }
   }
 
-  private async runTask(manager: IChatWorkerManager, task: IChatTask) {
-    const record: TaskRecord = { startedAt: Date.now(), tokensDemanded: task.tokenDemand };
+  private async runTask(manager: IChatWorkerManager, taskHandle: WorkerTaskHandle) {
+    const record: TaskRecord = { startedAt: Date.now(), tokensDemanded: taskHandle.task.tokenDemand };
     this.capacityRecords.push(record);
 
     // TODO better retry curve based on demand and previous timeout history
-    const unwatch = withTimeout(TIMEOUT_ABORT_REASON, 5_000 + task.tokenDemand * 20, task.controller);
-    const { error, data, retryAfterMs } = await this.config.proxy(task.input, { signal: task.controller.signal });
+    const unwatch = withTimeout(TIMEOUT_ABORT_REASON, 5_000 + taskHandle.task.tokenDemand * 20, taskHandle.controller);
+    const { error, data, retryAfterMs } = await this.config.proxy(taskHandle.task.input, { signal: taskHandle.controller.signal });
     unwatch();
 
     // remove task from running task pool
     record.tokensUsed = data?.usage?.total_tokens;
-    this.tasks = this.tasks.filter((t) => t !== task);
+    this.tasks = this.tasks.filter((t) => t !== taskHandle);
 
     if (!error) {
-      manager.respond(task, { data });
+      manager.respond(taskHandle.task, { data });
     } else {
       if (retryAfterMs !== undefined) {
         this.coolDownUntil = Date.now() + retryAfterMs;
         this.logger.warn(`[worker] cooldown started ${retryAfterMs}ms`);
       }
-      if (task.controller.signal.reason === TIMEOUT_ABORT_REASON) {
+      if (taskHandle.controller.signal.reason === TIMEOUT_ABORT_REASON) {
         this.logger.warn(`[worker] cooldown due to timeout`);
       }
-      manager.respond(task, { error });
+      manager.respond(taskHandle.task, { error });
     }
 
     // After each run, restart the poller because capacity might have changed
     // Normally do not restart when aborted, but if abort reason is timeout, we should still restart
-    if (task.controller.signal.aborted && task.controller.signal.reason.abortReason === TIMEOUT_ABORT_REASON) {
+    if (taskHandle.controller.signal.aborted && taskHandle.controller.signal.reason.abortReason === TIMEOUT_ABORT_REASON) {
       this.start(manager);
     }
   }

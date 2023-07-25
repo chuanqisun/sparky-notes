@@ -1,4 +1,3 @@
-import { TIMEOUT_ABORT_REASON } from "../controller/timeout";
 import type { ChatOutput } from "../openai/types";
 import { LogLevel, getLogger, type ILogger } from "./logger";
 import type { IChatTask, IChatTaskManager, IChatWorker, IChatWorkerManager, IWorkerTaskRequest, IWorkerTaskResponse } from "./types";
@@ -82,7 +81,9 @@ export class ChatManager implements IChatTaskManager, IChatWorkerManager {
       // Exit condition:
       // 1. Task is aborted by non-timeout reason, OR
       // 2. Retry used up
-      if (task.controller?.signal.reason !== TIMEOUT_ABORT_REASON || !taskHandle.retryLeft) {
+      //
+      // TODO, implement rule 1
+      if (!taskHandle.retryLeft) {
         this.logger.warn(`[manager] task aborted`);
         taskHandle.reject(result.error);
       } else {
