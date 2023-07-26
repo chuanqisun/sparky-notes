@@ -96,7 +96,7 @@ item level
 
 Note: `All /core/<operator>` can be simplified to `/<operator>`
 
-## Playground
+## Language frontend
 
 ```
 
@@ -121,10 +121,22 @@ Note: `All /core/<operator>` can be simplified to `/<operator>`
 /groupBy <criteria>
 /each /groupBy <criteria>
 
-# Some operators has auto, infer, compute variants
+# Most operators has, blank, auto, infer, compute variants. Blank must behalf as one of the infer, compute, or auto variants
 /filter
+/filter/auto
 /filter/infer
 /filter/compute
 
+# Some operators may ignore /each /all selectors
+/import/json
+/export/excel
 
 ```
+
+## Language backend (future)
+
+Programs can be "compiled" to achieve deterministic behaviors
+
+- All `/compute` tasks should be persisted with the code
+- All natural language queries should be transformed to hard parameters
+- When running against new data, the program might need JIT-compiled to handle data type changes
