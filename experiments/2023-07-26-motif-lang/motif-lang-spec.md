@@ -133,6 +133,14 @@ Note: `All /core/<operator>` can be simplified to `/<operator>`
 /import/json
 /export/excel
 
+# When an operator is unambiguous, prefix can be omitted
+/llm/infer
+/infer # OK
+
+/llm/sort
+/core/sort
+/sort # ERR: ambiguous operator, which one?
+
 ```
 
 ## Language backend (future)
