@@ -1,10 +1,12 @@
-# Semi-structured Query Language
+# Motif Language
+
+Modular Object Transform and Inference Formula
 
 ## Principles
 
 1. Expressive
-2. Flexible
-3. Learnable
+2. Natural
+3. Modular
 
 ## Data structure
 
