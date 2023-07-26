@@ -90,9 +90,41 @@ item level
   - `/core/export`
   - `/core/clear`
   - `/core/new`
+  - `/core/compute`
 - Agent
   - `@hits review the literature about "create new" pattern`
 
 Note: `All /core/<operator>` can be simplified to `/<operator>`
 
-## Extended examples
+## Playground
+
+```
+
+# Item level by default
+/<do>
+/each /<do>
+
+# Item level with field lens
+/each title /<do>
+
+# Shelf level
+/all /<do>
+
+# Shelf level with field lens
+/all titles /<do>
+
+# Item level operators can affect total number of items
+/filter <predicate>
+/each /filter <predicate>
+
+# Item level operator can affect shape of all items
+/groupBy <criteria>
+/each /groupBy <criteria>
+
+# Some operators has auto, infer, compute variants
+/filter
+/filter/infer
+/filter/compute
+
+
+```
