@@ -57,6 +57,11 @@ const ROUTES: NamedRoute[] = [
           return { Component: () => <ShelfFlow graph={graph} /> };
         }),
   },
+  {
+    displayName: "Motif shelf",
+    path: "/experiments/motif-shelf",
+    lazy: () => import("./experiments/motif-shelf").then(({ MotifShelf }) => ({ Component: MotifShelf })),
+  },
 ];
 
 function testGraph(graph: Cozo) {
