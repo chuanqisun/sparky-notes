@@ -1,8 +1,8 @@
 export interface MotifProgram {
-  clauses: MotifClause[];
+  statements: MotifStatement[];
 }
 
-export interface MotifClause {
+export interface MotifStatement {
   operator: string;
   operand: string;
 }
@@ -10,8 +10,8 @@ export interface MotifClause {
 /**
  * Motif grammar
  *
- * program ::= clause+
- * clause ::= operator operand?
+ * program ::= statement+
+ * statement ::= operator operand?
  * operator ::= segment+
  * segment ::= '/'alphaNumeric+
  * alphaNumeric ::= [a-zA-Z0-9]
@@ -21,30 +21,20 @@ export interface MotifClause {
  */
 
 export function parseProgram(input: string): MotifProgram {
-  const tokens = input
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((token) => {
-      if (token.startsWith("/")) {
-        return { type: "operator", value: token };
-      } else {
-        return { type: "operand", value: token };
-      }
-    });
+  const operatorStarIndices = [...input.matchAll(/\//g)].map((match) => match.index);
+  if (!operatorStarIndices.length) throw new Error(`The program has no statement`);
+  if (operatorStarIndices[0] !== 0) throw new Error(`The program is missing an operator at the beginning`);
 
-  return tokens.reduce<MotifProgram>(
-    (program, token) => {
-      if (token.type === "operator") {
-        program.clauses.push({ operator: token.value, operand: "" });
-        return program;
-      }
+  const statements = operatorStarIndices.reduce<MotifStatement[]>((statements, operatorStarIndex, index) => {
+    const nextOperatorStarIndex = operatorStarIndices[index + 1];
+    const statement = input.slice(operatorStarIndex, nextOperatorStarIndex);
+    const operator = statement.match(/\/[a-zA-Z0-9]+/)?.[0].trim();
+    if (!operator) throw new Error(`Statement has invalid operator: "${statement}"`);
+    const operand = statement.slice(operator.length).trim();
+    statements.push({ operator, operand });
 
-      const currentClause = program.clauses[program.clauses.length - 1];
-      if (!currentClause) throw new Error(`Unexpected operand "${token.value}"`);
+    return statements;
+  }, []);
 
-      currentClause.operand = token.value;
-      return program;
-    },
-    { clauses: [] }
-  );
+  return { statements };
 }
