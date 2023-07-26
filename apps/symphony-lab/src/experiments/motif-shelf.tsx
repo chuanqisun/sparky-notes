@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { AutoResize } from "../form/auto-resize";
@@ -12,8 +12,28 @@ export interface MotifShelfProps {}
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const { userMessage, updateUserMessage, shelves, openShelf, currentShelf } = useMotifShelfManager();
   const [status, setStatus] = useState("Ready");
-  const handleSubmit = () => {};
-  const handleAbort = () => {};
+  const handleSubmit = useCallback(() => {
+    console.log(Date.now());
+  }, []);
+  const handleAbort = useCallback(() => {
+    console.log("aborted", Date.now());
+  }, []);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    window.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Q" && e.shiftKey && e.ctrlKey) {
+          handleAbort();
+          e.preventDefault();
+        }
+      },
+      { signal: abortController.signal }
+    );
+
+    return () => abortController.abort();
+  }, [handleSubmit, handleAbort]);
 
   return (
     <AppLayout>
