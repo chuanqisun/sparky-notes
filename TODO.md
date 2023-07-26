@@ -32,15 +32,36 @@
 - Use "lens" to achieve universal object r/w
 - Every object has `id` and `data`
 - Every shelf has its data (list of objects) and the source code that generated it
-- First empty shelf comes with `/clear` command
-- "lens" should come with live preview
-- Only support few commands:
-- `/lens` alone behaves like `/code`
-- `/lens + /code` for deterministic non-destructive transform
-- `/lens + /gpt` for probabilistic non-destructive transform
-- `/code` for destructive transform
-- `/gpt` for probabilistic destructive transform
-- With proxy, lens can track provenance
+- Syntax design:
+- Whole shelf directives:
+  - `/shelf`: transform the entire shelf
+  - `/item`: use specific fields for itemized transforms
+    - `/item <fields> /filter <predicate>`
+    - `/item <fields> /searchhits`
+    - `/item <fields> /categorize <options>`
+    - `/item <fields> /infer <conclusion>`
+    - `/item <fields> /code <instruction>`
+    - `/item <fields> /theme <goal>`
+  - `/theme`: theme analysis on all shelf items
+  - `/code`
+  - `/searchhits`: search HITS insights
+  - `/json`
+  - `/export`
+  - `/excel`
+- Remarks
+  - Omitting `/item` means use the default target for the directive
+    - `/item` only
+      - `/filter`
+      - `/categorize`
+    - `/shelf` only
+      - `/theme`
+      - `/json`
+      - `/export`
+      - `/excel`
+    - Both
+      - `/hits`
+      - `/infer`
+      - `/code`
 
 ## Figma runtime pain point
 
