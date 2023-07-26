@@ -150,3 +150,25 @@ Programs can be "compiled" to achieve deterministic behaviors
 - All `/compute` tasks should be persisted with the code
 - All natural language queries should be transformed to hard parameters
 - When running against new data, the program might need JIT-compiled to handle data type changes
+
+## Multi-clause program (future)
+
+```
+# Each clause can span multiple lines
+/each title
+/filter/infer contains positive sentiment
+
+# Multiple clauses can be "piped", even with newlines in between
+/each title
+/filter/infer contains positive sentiment
+|
+/each title
+/filter/infer is related to Azure
+
+# Alternatively
+/each title
+/filter/infer contains positive sentiment
+/pipe
+/each title
+/filter/infer is related to Azure
+```

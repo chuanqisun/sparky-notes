@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { AutoResize } from "../form/auto-resize";
+import { parseProgram } from "../motif-lang/parse";
 import { useMotifShelfManager } from "../motif-shelf/use-motif-shelf-manager";
 import { StyledOutput, theme } from "../shelf/json-view";
 import { CenterClamp } from "../shell/center-clamp";
@@ -13,8 +14,14 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const { userMessage, updateUserMessage, shelves, openShelf, currentShelf } = useMotifShelfManager();
   const [status, setStatus] = useState("Ready");
   const handleSubmit = useCallback(() => {
-    console.log(Date.now());
-  }, []);
+    console.log("submitted", userMessage);
+    try {
+      const program = parseProgram(userMessage);
+      console.log(program);
+    } catch (e) {
+      console.error("Motif parser error", e);
+    }
+  }, [userMessage]);
   const handleAbort = useCallback(() => {
     console.log("aborted", Date.now());
   }, []);
