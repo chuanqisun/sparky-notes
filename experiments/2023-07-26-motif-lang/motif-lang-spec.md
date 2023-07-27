@@ -151,6 +151,12 @@ Programs can be "compiled" to achieve deterministic behaviors
 - All natural language queries should be transformed to hard parameters
 - When running against new data, the program might need JIT-compiled to handle data type changes
 
+## Multi-shelf operation (future)
+
+```
+/shelf problems and solutions /llm/correlate
+```
+
 ## Multi-clause program (future)
 
 ```
