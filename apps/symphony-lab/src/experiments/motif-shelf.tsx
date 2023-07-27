@@ -1,10 +1,11 @@
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { AutoResize } from "../form/auto-resize";
 import { parseProgram } from "../motif-lang/compiler";
 import { run, type Runtime } from "../motif-lang/runtime";
+import { hitsSearch } from "../motif-lib/hits/search";
 import { useMotifShelfManager } from "../motif-shelf/use-motif-shelf-manager";
 import { StyledOutput, theme } from "../shelf/json-view";
 import { CenterClamp } from "../shell/center-clamp";
@@ -14,6 +15,9 @@ export interface MotifShelfProps {}
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const { userMessage, updateUserMessage, shelves, openShelf, currentShelf, updateShelfData } = useMotifShelfManager();
   const [status, setStatus] = useState("Ready");
+
+  const plugins = useMemo(() => [hitsSearch()], []);
+
   const handleSubmit = useCallback(async () => {
     console.log("submitted", userMessage);
     try {
@@ -27,7 +31,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
       await run({
         program,
-        libFunctions: {},
+        plugins,
         data: [],
         runtime,
       });

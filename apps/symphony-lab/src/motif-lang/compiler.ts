@@ -41,9 +41,3 @@ export function parseProgram(input: string): MotifProgram {
 
   return { statements };
 }
-
-export enum TokenType {
-  Slash = "SLASH",
-  Literal = "LITERAL",
-  Pipe = "PIPE",
-}

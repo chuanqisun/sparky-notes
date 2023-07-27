@@ -1,7 +1,9 @@
-import type { LibraryFunction } from "../../motif-lang/runtime";
+import type { Plugin } from "../../motif-lang/runtime";
 
-const hitsSearch: LibraryFunction = {
-  operator: "/hits/search",
-  description: "Search HITS for UX insights",
-  run: async (data, operand, context) => {},
-};
+export function hitsSearch(): Plugin {
+  return {
+    operator: "/hits/search",
+    description: "Search HITS for UX insights",
+    run: async (data, operand, context) => {},
+  };
+}
