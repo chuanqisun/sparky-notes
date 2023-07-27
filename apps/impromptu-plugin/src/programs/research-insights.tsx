@@ -4,7 +4,7 @@ import { removeHighlightHtml } from "../hits/highlight";
 import { getInsightQuery } from "../hits/search";
 import { stickyColors } from "../utils/colors";
 import { createTargetNodes, moveStickiesToSection, setFillColor } from "../utils/edit";
-import { Description, FormTitle, getFieldByLabel, getTextByContent, TextField } from "../utils/form";
+import { Description, FormTitle, TextField, getFieldByLabel, getTextByContent } from "../utils/form";
 import { getNextNodes } from "../utils/graph";
 import { filterToType } from "../utils/query";
 import { CreationContext, Program, ProgramContext, ReflectionContext } from "./program";
@@ -59,7 +59,7 @@ export class ResearchInsightsProgram implements Program {
     const foundClaimIds = new Set();
 
     while (hasMore && resultCount < limit) {
-      const searchSummary = await context.hitsSearch(getInsightQuery({ query, top: pageSize, skip: currentSkip, count: currentSkip === 0 }));
+      const searchSummary = await context.hitsSearch(getInsightQuery({ query, top: pageSize, skip: currentSkip, count: true }));
       hasMore = searchSummary.totalCount > currentSkip + pageSize;
       console.log(searchSummary);
 
