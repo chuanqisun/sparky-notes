@@ -167,6 +167,17 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
   return (
     <AppLayout>
+      <div>
+        <button>⬅️</button>
+        <button>➡️</button>
+        {shelves.map((shelf, index) => (
+          <button key={index} onClick={() => openShelf(index)}>
+            {shelf === currentShelf ? "*" : ""}
+            {index}
+          </button>
+        ))}
+        <button>🆕</button>
+      </div>
       <ChatWidget>
         <div>
           <AutoResize data-resize-textarea-content={userMessage}>
@@ -178,14 +189,6 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
           </AutoResize>
         </div>
       </ChatWidget>
-      <div>
-        {shelves.map((shelf, index) => (
-          <button key={index} onClick={() => openShelf(index)}>
-            {shelf === currentShelf ? "*" : ""}
-            {index}
-          </button>
-        ))}
-      </div>
       <StatusDisplay>{status}</StatusDisplay>
       <StyledOutput>
         <JSONTree theme={theme} hideRoot={true} data={currentShelf.data} />
