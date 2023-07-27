@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { AutoResize } from "../form/auto-resize";
-import { parseProgram } from "../motif-lang/parse";
+import { parseProgram } from "../motif-lang/compiler";
 import { run, type Runtime } from "../motif-lang/runtime";
 import { useMotifShelfManager } from "../motif-shelf/use-motif-shelf-manager";
 import { StyledOutput, theme } from "../shelf/json-view";

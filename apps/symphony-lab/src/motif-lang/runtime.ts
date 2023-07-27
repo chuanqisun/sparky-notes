@@ -1,4 +1,4 @@
-import type { MotifProgram } from "./parse";
+import type { MotifProgram } from "./compiler";
 
 export interface Runtime {
   addItems: (...items: any[]) => void;
