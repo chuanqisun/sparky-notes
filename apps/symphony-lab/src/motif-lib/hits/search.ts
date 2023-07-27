@@ -6,9 +6,50 @@ export function hitsSearch(fnCallProxy: FnCallProxy, semanticSearchProxy: Semant
   return {
     operator: "/hits/search",
     description: "Search HITS for UX insights",
-    run: async (data, operand, context) => {
-      // parse operand into params: query, limit
-      const searchResults = await semanticSearchProxy(getSemanticSearchInput(operand, 50));
+    run: async (_data, operand, context) => {
+      context.updateStatus("Interpreting...");
+
+      const paramsText = await fnCallProxy(
+        [
+          {
+            role: "user",
+            content: `Search ${operand}`,
+          },
+        ],
+        {
+          function_call: { name: "search_insights" },
+          functions: [
+            {
+              name: "search_insights",
+              description: "Search for UX insights",
+              parameters: {
+                type: "object",
+                properties: {
+                  query: {
+                    type: "string",
+                    description: "Plaintext query only",
+                  },
+                  limit: {
+                    type: "number",
+                    description: "Number of items to return, max is 100",
+                    default: 10,
+                  },
+                },
+                required: ["query", "limit"],
+              },
+            },
+          ],
+        }
+      );
+
+      console.log("params text", paramsText);
+
+      const { query, limit } = JSON.parse(paramsText.arguments);
+
+      context.updateStatus(`Searching top ${limit} insights: "${query}"`);
+      const searchResults = await semanticSearchProxy(getSemanticSearchInput(query, limit));
+
+      context.updateStatus(`Done. Top ${searchResults.value?.length ?? 0} of ${searchResults["@odata.count"]}`);
 
       context.addItems(...(searchResults.value ?? []));
     },

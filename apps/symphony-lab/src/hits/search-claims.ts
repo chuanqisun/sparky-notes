@@ -27,6 +27,7 @@ export function getSemanticSearchInput(query: string, top: number): CognitiveSea
   // ref: https://learn.microsoft.com/en-us/azure/search/semantic-how-to-query-request?tabs=rest%2Crest-query
   return {
     captions: "extractive|highlight-false",
+    count: true,
     search: query,
     queryType: "semantic",
     queryLanguage: "en-us",
