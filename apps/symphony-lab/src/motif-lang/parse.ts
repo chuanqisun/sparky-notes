@@ -17,7 +17,7 @@ export interface MotifStatement {
  * alphaNumeric ::= [a-zA-Z0-9]
  * operand ::= string
  *
- * Whitespace is ignored.
+ * Whitespace is insignificant
  */
 
 export function parseProgram(input: string): MotifProgram {
