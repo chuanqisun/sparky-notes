@@ -19,7 +19,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       const program = parseProgram(userMessage);
       console.log(program);
     } catch (e) {
-      console.error("Motif parser error", e);
+      setStatus(`Motif parser error: ${(e as any).message}`);
     }
   }, [userMessage]);
   const handleAbort = useCallback(() => {

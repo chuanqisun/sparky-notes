@@ -29,7 +29,7 @@ export function parseProgram(input: string): MotifProgram {
     const nextOperatorStarIndex = operatorStarIndices[index + 1];
     const statement = input.slice(operatorStarIndex, nextOperatorStarIndex);
     const operator = statement.match(/\/[a-zA-Z0-9]+/)?.[0].trim();
-    if (!operator) throw new Error(`Statement has invalid operator: "${statement}"`);
+    if (!operator) throw new Error(`Invalid indentifier at the beginning of the statement: "${statement}"`);
     const operand = statement.slice(operator.length).trim();
     statements.push({ operator, operand });
 
