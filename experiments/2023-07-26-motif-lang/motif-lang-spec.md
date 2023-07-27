@@ -172,3 +172,9 @@ Programs can be "compiled" to achieve deterministic behaviors
 /each title
 /filter/infer is related to Azure
 ```
+
+## Pinning
+
+- Allow items from the current shelf to be preserved in the next shelf
+- Can be used for pagination
+- Can be used for favorite + find similar

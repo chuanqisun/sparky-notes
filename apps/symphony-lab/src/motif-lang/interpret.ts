@@ -1,3 +1,8 @@
 import type { MotifProgram } from "./parse";
 
-export async function interpret(program: MotifProgram, lib: any, onEffect: any) {}
+export interface SystemApi {
+  addItems: (...items: any[]) => void;
+  notifyProgress: (progress: number, total: number) => void;
+}
+
+export async function interpret(program: MotifProgram, lib: any) {}
