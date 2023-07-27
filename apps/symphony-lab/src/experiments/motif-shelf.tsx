@@ -4,6 +4,7 @@ import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { AutoResize } from "../form/auto-resize";
 import { parseProgram } from "../motif-lang/parse";
+import { run, type Runtime } from "../motif-lang/runtime";
 import { useMotifShelfManager } from "../motif-shelf/use-motif-shelf-manager";
 import { StyledOutput, theme } from "../shelf/json-view";
 import { CenterClamp } from "../shell/center-clamp";
@@ -11,17 +12,30 @@ import { CenterClamp } from "../shell/center-clamp";
 export interface MotifShelfProps {}
 
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
-  const { userMessage, updateUserMessage, shelves, openShelf, currentShelf } = useMotifShelfManager();
+  const { userMessage, updateUserMessage, shelves, openShelf, currentShelf, updateShelfData } = useMotifShelfManager();
   const [status, setStatus] = useState("Ready");
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     console.log("submitted", userMessage);
     try {
       const program = parseProgram(userMessage);
       console.log(program);
+      const runtime: Runtime = {
+        signal: new AbortController().signal,
+        addItems: (...items) => updateShelfData(items), // TODO allow itemized update
+        updateStatus: setStatus,
+      };
+
+      await run({
+        program,
+        libFunctions: {},
+        data: [],
+        runtime,
+      });
     } catch (e) {
       setStatus(`Syntax error: ${(e as any).message}`);
     }
-  }, [userMessage]);
+  }, [userMessage, setStatus]);
+
   const handleAbort = useCallback(() => {
     console.log("aborted", Date.now());
   }, []);
