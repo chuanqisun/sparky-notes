@@ -10,10 +10,10 @@ import { useModelSelector } from "../account/model-selector";
 import { AutoResize } from "../form/auto-resize";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
-import { parseProgram } from "../motif-lang/compiler";
-import { run, type Runtime } from "../motif-lang/runtime";
-import { hitsSearch } from "../motif-lib/hits/search";
-import { useWorkspace } from "../motif-workspace/use-workspace";
+import { parseProgram } from "../motif/lang/compiler";
+import { run, type Runtime } from "../motif/lang/runtime";
+import { hitsSearch } from "../motif/plugins/hits/search";
+import { useWorkspace } from "../motif/workspace/use-workspace";
 import type { ChatProxy, FnCallProxy, RawProxy } from "../openai/chat";
 import { defaultModelConfig, defaultModels } from "../openai/config";
 import { estimateChatTokenDemand } from "../openai/tokens";
@@ -63,13 +63,7 @@ interface Shelf {
 }
 
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
-  const {
-    tabs,
-    state: shelf,
-    openTab,
-    tab,
-    replaceState: replaceShelf,
-  } = useWorkspace<Shelf>({
+  const { tabs, activeTab, activeState, duplicateTab, openTab, pushTab, replaceState } = useWorkspace<Shelf>({
     source: "",
     data: [],
   });
@@ -137,27 +131,33 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
   const plugins = useMemo(() => [hitsSearch(fnCall, semanticSearchProxy)], [fnCall, semanticSearchProxy]);
 
-  const handleSubmit = useCallback(async () => {
-    console.log("submitted", shelf.source);
-    try {
-      const program = parseProgram(shelf.source);
-      console.log(program);
-      const runtime: Runtime = {
-        signal: new AbortController().signal,
-        addItems: (...items) => replaceShelf((prev) => ({ ...prev, data: items })),
-        updateStatus: setStatus,
-      };
+  const handleSubmit = useCallback(
+    async (newTab: boolean) => {
+      console.log("submitted", activeState.source);
 
-      await run({
-        program,
-        plugins,
-        data: [],
-        runtime,
-      });
-    } catch (e) {
-      setStatus(`Syntax error: ${(e as any).message}`);
-    }
-  }, [shelf.source, setStatus]);
+      if (newTab) duplicateTab();
+
+      try {
+        const program = parseProgram(activeState.source);
+        console.log(program);
+        const runtime: Runtime = {
+          signal: new AbortController().signal,
+          setItems: (...items) => replaceState((prev) => ({ ...prev, data: items })),
+          setStatus,
+        };
+
+        await run({
+          program,
+          plugins,
+          data: [],
+          runtime,
+        });
+      } catch (e) {
+        setStatus(`${(e as any).name}: ${(e as any).message}`);
+      }
+    },
+    [activeState.source, setStatus]
+  );
 
   const handleAbort = useCallback(() => {
     console.log("aborted", Date.now());
@@ -186,7 +186,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
         <button>➡️</button>
         {tabs.map((tab, index) => (
           <button key={index} onClick={() => openTab(index)}>
-            {tab === tab ? "*" : ""}
+            {tab === activeTab ? "*" : ""}
             {index}
           </button>
         ))}
@@ -194,18 +194,18 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       </div>
       <ChatWidget>
         <div>
-          <AutoResize data-resize-textarea-content={shelf.source}>
+          <AutoResize data-resize-textarea-content={activeState.source}>
             <textarea
-              value={shelf.source}
-              onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit() : null)}
-              onChange={(e) => replaceShelf((prev) => ({ ...prev, source: e.target.value }))}
+              value={activeState.source}
+              onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
+              onChange={(e) => replaceState((prev) => ({ ...prev, source: e.target.value }))}
             />
           </AutoResize>
         </div>
       </ChatWidget>
       <StatusDisplay>{status}</StatusDisplay>
       <StyledOutput>
-        <JSONTree theme={theme} hideRoot={true} data={shelf.data} />
+        <JSONTree theme={theme} hideRoot={true} data={activeState.data} />
       </StyledOutput>
     </AppLayout>
   );

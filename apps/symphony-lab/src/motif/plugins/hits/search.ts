@@ -1,13 +1,13 @@
-import { getSemanticSearchInput, type SemanticSearchProxy } from "../../hits/search-claims";
-import type { Plugin } from "../../motif-lang/runtime";
-import type { FnCallProxy } from "../../openai/chat";
+import { getSemanticSearchInput, type SemanticSearchProxy } from "../../../hits/search-claims";
+import type { FnCallProxy } from "../../../openai/chat";
+import type { Plugin } from "../../lang/runtime";
 
 export function hitsSearch(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): Plugin {
   return {
     operator: "/hits/search",
     description: "Search HITS for UX insights",
     run: async (_data, operand, context) => {
-      context.updateStatus("Interpreting...");
+      context.setStatus("Interpreting...");
 
       const paramsText = await fnCallProxy(
         [
@@ -46,12 +46,12 @@ export function hitsSearch(fnCallProxy: FnCallProxy, semanticSearchProxy: Semant
 
       const { query, limit } = JSON.parse(paramsText.arguments);
 
-      context.updateStatus(`Searching top ${limit} insights: "${query}"`);
+      context.setStatus(`Searching top ${limit} insights: "${query}"`);
       const searchResults = await semanticSearchProxy(getSemanticSearchInput(query, limit));
 
-      context.updateStatus(`Done. Top ${searchResults.value?.length ?? 0} of ${searchResults["@odata.count"]}`);
+      context.setStatus(`Done. Top ${searchResults.value?.length ?? 0} of ${searchResults["@odata.count"]}`);
 
-      context.addItems(...(searchResults.value ?? []));
+      context.setItems(...(searchResults.value ?? []));
     },
   };
 }

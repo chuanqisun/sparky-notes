@@ -1,3 +1,5 @@
+import { SyntaxError } from "./error";
+
 export interface MotifProgram {
   statements: MotifStatement[];
 }
@@ -25,14 +27,14 @@ const OPERATOR_PATTERN_ALL = /(\/[a-zA-Z0-9]+)+/g;
 
 export function parseProgram(input: string): MotifProgram {
   const operatorStarIndices = [...input.matchAll(OPERATOR_PATTERN_ALL)].map((match) => match.index);
-  if (!operatorStarIndices.length) throw new Error(`The program has no statement`);
-  if (operatorStarIndices[0] !== 0) throw new Error(`The program is missing an operator at the beginning`);
+  if (!operatorStarIndices.length) throw new SyntaxError(`The program has no statement`);
+  if (operatorStarIndices[0] !== 0) throw new SyntaxError(`The program is missing an operator at the beginning`);
 
   const statements = operatorStarIndices.reduce<MotifStatement[]>((statements, operatorStarIndex, index) => {
     const nextOperatorStarIndex = operatorStarIndices[index + 1];
     const statement = input.slice(operatorStarIndex, nextOperatorStarIndex);
     const operator = statement.match(OPERATOR_PATTERN)?.[0].trim();
-    if (!operator) throw new Error(`Invalid indentifier at the beginning of the statement: "${statement}"`);
+    if (!operator) throw new SyntaxError(`Invalid indentifier at the beginning of the statement: "${statement}"`);
     const operand = statement.slice(operator.length).trim();
     statements.push({ operator, operand });
 

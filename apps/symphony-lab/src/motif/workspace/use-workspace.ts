@@ -32,6 +32,16 @@ export function useWorkspace<T>(initialState: T) {
     });
   };
 
+  const duplicateTab = () => {
+    setAppState((appState) => {
+      const mutableTabs = appState.tabs.slice();
+      const currentTab = mutableTabs[appState.currentTabIndex];
+      const newTab = { ...currentTab };
+      mutableTabs.splice(appState.currentTabIndex + 1, 0, newTab);
+      return { ...appState, tabs: mutableTabs, currentTabIndex: appState.currentTabIndex + 1 };
+    });
+  };
+
   const pushTab = (initialState: T) => {
     setAppState((appState) => {
       const newTab: Tab<T> = {
@@ -76,16 +86,17 @@ export function useWorkspace<T>(initialState: T) {
   };
 
   const tabs = appState.tabs;
-  const tab = appState.tabs[appState.currentTabIndex];
-  const state = tab.states[tab.currentStateIndex];
+  const activeTab = appState.tabs[appState.currentTabIndex];
+  const activeState = activeTab.states[activeTab.currentStateIndex];
 
   return {
+    duplicateTab,
     pushTab,
     openTab,
     pushState,
     replaceState,
-    state,
-    tab,
+    activeState,
+    activeTab,
     tabs,
   };
 }

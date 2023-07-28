@@ -1,8 +1,8 @@
 import type { MotifProgram } from "./compiler";
 
 export interface Runtime {
-  addItems: (...items: any[]) => void;
-  updateStatus: (status: string) => void;
+  setItems: (...items: any[]) => void;
+  setStatus: (status: string) => void;
   signal: AbortSignal;
 }
 
