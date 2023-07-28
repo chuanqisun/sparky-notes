@@ -1,8 +1,8 @@
 import { getSemanticSearchInput, type SemanticSearchProxy } from "../../../hits/search-claims";
 import type { FnCallProxy } from "../../../openai/chat";
-import type { Plugin } from "../../lang/runtime";
+import type { RuntimePlugin } from "../../lang/runtime";
 
-export function hitsSearch(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): Plugin {
+export function hitsSearchPlugin(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): RuntimePlugin {
   return {
     operator: "/hits/search",
     description: "Search HITS for UX insights",
@@ -51,7 +51,7 @@ export function hitsSearch(fnCallProxy: FnCallProxy, semanticSearchProxy: Semant
 
       context.setStatus(`Done. Top ${searchResults.value?.length ?? 0} of ${searchResults["@odata.count"]}`);
 
-      context.setItems(...(searchResults.value ?? []));
+      context.setItems(searchResults.value ?? []);
     },
   };
 }

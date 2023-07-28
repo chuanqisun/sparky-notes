@@ -1,12 +1,12 @@
 import type { MotifProgram } from "./compiler";
 
 export interface Runtime {
-  setItems: (...items: any[]) => void;
+  setItems: (items: any[]) => void;
   setStatus: (status: string) => void;
   signal: AbortSignal;
 }
 
-export interface Plugin {
+export interface RuntimePlugin {
   operator: string;
   description?: string;
   run: (data: any[], operand: string, runtime: Runtime) => Promise<void>;
@@ -14,7 +14,7 @@ export interface Plugin {
 
 export interface InterpretInput {
   program: MotifProgram;
-  plugins: Plugin[];
+  plugins: RuntimePlugin[];
   data: any[];
   runtime: Runtime;
 }

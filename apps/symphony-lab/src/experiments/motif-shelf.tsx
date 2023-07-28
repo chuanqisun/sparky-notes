@@ -12,7 +12,8 @@ import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
-import { hitsSearch } from "../motif/plugins/hits/search";
+import { fileImportPlugin } from "../motif/plugins/file/import";
+import { hitsSearchPlugin } from "../motif/plugins/hits/search";
 import { useWorkspace } from "../motif/workspace/use-workspace";
 import type { ChatProxy, FnCallProxy, RawProxy } from "../openai/chat";
 import { defaultModelConfig, defaultModels } from "../openai/config";
@@ -142,7 +143,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const h20Proxy = getH20Proxy(accessToken);
   const semanticSearchProxy = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
 
-  const plugins = useMemo(() => [hitsSearch(fnCall, semanticSearchProxy)], [fnCall, semanticSearchProxy]);
+  const plugins = useMemo(() => [hitsSearchPlugin(fnCall, semanticSearchProxy), fileImportPlugin()], [fnCall, semanticSearchProxy]);
 
   const handleSubmit = useCallback(
     async (newTab: boolean) => {
@@ -160,7 +161,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
         console.log(program);
         const runtime: Runtime = {
           signal: new AbortController().signal,
-          setItems: (...items) => replaceState((prev) => ({ ...prev, data: items })),
+          setItems: (items) => replaceState((prev) => ({ ...prev, data: items })),
           setStatus,
         };
 
