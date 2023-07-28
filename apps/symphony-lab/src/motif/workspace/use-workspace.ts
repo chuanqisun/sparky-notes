@@ -1,22 +1,22 @@
 import { useState } from "react";
 
 interface AppState<T> {
-  currentTabIndex: number;
+  activeTabIndex: number;
   tabs: Tab<T>[];
 }
 
 export interface Tab<T> {
   states: T[];
-  currentStateIndex: number;
+  activeStateIndex: number;
 }
 
 export function useWorkspace<T>(initialState: T) {
   const [appState, setAppState] = useState<AppState<T>>({
-    currentTabIndex: 0,
+    activeTabIndex: 0,
     tabs: [
       {
         states: [initialState],
-        currentStateIndex: 0,
+        activeStateIndex: 0,
       },
     ],
   });
@@ -25,33 +25,35 @@ export function useWorkspace<T>(initialState: T) {
   const replaceTab = (updateFn: (tab: Tab<T>) => Tab<T>) => {
     setAppState((appState) => {
       const mutableTabs = appState.tabs.slice();
-      const currentTab = mutableTabs[appState.currentTabIndex];
-      const newTab = updateFn(currentTab);
-      mutableTabs[appState.currentTabIndex] = newTab;
+      const activeTab = mutableTabs[appState.activeTabIndex];
+      const newTab = updateFn(activeTab);
+      mutableTabs[appState.activeTabIndex] = newTab;
       return { ...appState, tabs: mutableTabs };
     });
   };
 
-  const duplicateTab = () => {
+  const insertAfterActiveTab = (updateFn: (activeTab: Tab<T>) => Tab<T>) => {
     setAppState((appState) => {
       const mutableTabs = appState.tabs.slice();
-      const currentTab = mutableTabs[appState.currentTabIndex];
-      const newTab = { ...currentTab };
-      mutableTabs.splice(appState.currentTabIndex + 1, 0, newTab);
-      return { ...appState, tabs: mutableTabs, currentTabIndex: appState.currentTabIndex + 1 };
+      const activeTab = mutableTabs[appState.activeTabIndex];
+      const newTab = updateFn(activeTab);
+      mutableTabs.splice(appState.activeTabIndex + 1, 0, newTab);
+      return { ...appState, tabs: mutableTabs, activeTabIndex: appState.activeTabIndex + 1 };
     });
   };
 
-  const pushTab = (initialState: T) => {
+  const duplicateActiveTab = () => insertAfterActiveTab((activeTab) => ({ ...activeTab }));
+
+  const appendTab = (initialState: T) => {
     setAppState((appState) => {
       const newTab: Tab<T> = {
         states: [initialState],
-        currentStateIndex: 0,
+        activeStateIndex: 0,
       };
 
       const newTabs = [...appState.tabs, newTab];
-      const newIndex = appState.currentTabIndex + 1;
-      return { currentTabIndex: newIndex, tabs: newTabs };
+      const lastIndex = newTabs.length - 1;
+      return { activeTabIndex: lastIndex, tabs: newTabs };
     });
   };
 
@@ -60,38 +62,38 @@ export function useWorkspace<T>(initialState: T) {
       if (index < 0 || index >= appState.tabs.length) {
         return appState;
       }
-      return { ...appState, currentTabIndex: index };
+      return { ...appState, activeTabIndex: index };
     });
   };
 
   /** States are causally linked. Updating a state should destroy subsequent states */
   const replaceState = (updateFn: (state: T) => T) => {
     replaceTab((tab) => {
-      const mutableStates = tab.states.slice(0, tab.currentStateIndex + 1);
-      const currentState = mutableStates[tab.currentStateIndex];
-      const newState = updateFn(currentState);
-      mutableStates[tab.currentStateIndex] = newState;
+      const mutableStates = tab.states.slice(0, tab.activeStateIndex + 1);
+      const activeState = mutableStates[tab.activeStateIndex];
+      const newState = updateFn(activeState);
+      mutableStates[tab.activeStateIndex] = newState;
       return { ...tab, states: mutableStates };
     });
   };
 
   const pushState = (updateFn: (state: T) => T) => {
     replaceTab((tab) => {
-      const mutableStates = tab.states.slice(0, tab.currentStateIndex + 1);
-      const currentState = mutableStates[tab.currentStateIndex];
-      const newState = updateFn(currentState);
+      const mutableStates = tab.states.slice(0, tab.activeStateIndex + 1);
+      const activeState = mutableStates[tab.activeStateIndex];
+      const newState = updateFn(activeState);
       mutableStates.push(newState);
-      return { ...tab, states: mutableStates, currentStateIndex: mutableStates.length - 1 };
+      return { ...tab, states: mutableStates, activeStateIndex: mutableStates.length - 1 };
     });
   };
 
   const tabs = appState.tabs;
-  const activeTab = appState.tabs[appState.currentTabIndex];
-  const activeState = activeTab.states[activeTab.currentStateIndex];
+  const activeTab = appState.tabs[appState.activeTabIndex];
+  const activeState = activeTab.states[activeTab.activeStateIndex];
 
   return {
-    duplicateTab,
-    pushTab,
+    appendTab,
+    duplicateActiveTab,
     openTab,
     pushState,
     replaceState,

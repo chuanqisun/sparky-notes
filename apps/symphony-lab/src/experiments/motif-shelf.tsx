@@ -63,7 +63,7 @@ interface Shelf {
 }
 
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
-  const { tabs, activeTab, activeState, duplicateTab, openTab, pushTab, replaceState } = useWorkspace<Shelf>({
+  const { tabs, activeTab, activeState, duplicateActiveTab, openTab, appendTab, replaceState } = useWorkspace<Shelf>({
     source: "",
     data: [],
   });
@@ -135,7 +135,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
     async (newTab: boolean) => {
       console.log("submitted", activeState.source);
 
-      if (newTab) duplicateTab();
+      if (newTab) duplicateActiveTab();
 
       try {
         const program = parseProgram(activeState.source);
@@ -190,7 +190,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
             {index}
           </button>
         ))}
-        <button>🆕</button>
+        <button onClick={() => appendTab({ source: "", data: [] })}>+</button>
       </div>
       <ChatWidget>
         <div>
