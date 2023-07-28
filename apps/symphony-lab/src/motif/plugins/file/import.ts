@@ -48,11 +48,12 @@ async function importJson(file: File) {
 
 async function importExcel(file: File) {
   const sheet = read(await file.arrayBuffer());
-  console.log(sheet);
+  console.log("Sheet loaded", sheet);
 
   const activeSheet = sheet.Sheets[sheet.SheetNames[0]];
   if (!activeSheet) return;
 
-  const rows = utils.sheet_to_json(activeSheet);
+  const rows = utils.sheet_to_json(activeSheet, { defval: null, skipHidden: true });
+  console.log("Rows loaded", rows);
   return rows;
 }
