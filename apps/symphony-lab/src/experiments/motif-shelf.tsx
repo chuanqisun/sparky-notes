@@ -63,7 +63,7 @@ interface Shelf {
 }
 
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
-  const { tabs, activeTab, activeState, duplicateActiveTab, openTab, appendTab, replaceState } = useWorkspace<Shelf>({
+  const { tabs, activeTab, activeState, duplicateActiveTab, openTab, appendTab, replaceState, openPrevState, openNextState, pushState } = useWorkspace<Shelf>({
     source: "",
     data: [],
   });
@@ -137,6 +137,11 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
       if (newTab) duplicateActiveTab();
 
+      pushState(() => ({
+        source: "",
+        data: activeState.data,
+      }));
+
       try {
         const program = parseProgram(activeState.source);
         console.log(program);
@@ -182,8 +187,8 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   return (
     <AppLayout>
       <div>
-        <button>⬅️</button>
-        <button>➡️</button>
+        <button onClick={openPrevState}>⬅️</button>
+        <button onClick={openNextState}>➡️</button>
         {tabs.map((tab, index) => (
           <button key={index} onClick={() => openTab(index)}>
             {tab === activeTab ? "*" : ""}

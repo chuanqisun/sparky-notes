@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface AppState<T> {
   activeTabIndex: number;
@@ -87,15 +87,39 @@ export function useWorkspace<T>(initialState: T) {
     });
   };
 
+  const openNextState = () => {
+    replaceTab((tab) => {
+      const nextStateIndex = tab.activeStateIndex + 1;
+      if (nextStateIndex >= tab.states.length) return tab;
+
+      return { ...tab, activeStateIndex: nextStateIndex };
+    });
+  };
+
+  const openPrevState = () => {
+    replaceTab((tab) => {
+      const prevStateIndex = tab.activeStateIndex - 1;
+      if (prevStateIndex < 0) return tab;
+
+      return { ...tab, activeStateIndex: prevStateIndex };
+    });
+  };
+
   const tabs = appState.tabs;
   const activeTab = appState.tabs[appState.activeTabIndex];
   const activeState = activeTab.states[activeTab.activeStateIndex];
+
+  useEffect(() => {
+    console.log(appState);
+  }, [appState]);
 
   return {
     appendTab,
     duplicateActiveTab,
     openTab,
     pushState,
+    openNextState,
+    openPrevState,
     replaceState,
     activeState,
     activeTab,
