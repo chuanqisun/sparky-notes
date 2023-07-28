@@ -1,5 +1,23 @@
 import { threePointSampleArrayItems } from "./array";
 
+export interface InferJsonTypeConfig {
+  /** @default "Root" */
+  rootTypeName?: string;
+  /** @default "full" */
+  arraySampleStrategy?: "full" | "head";
+}
+export function inferJsonType(object: any, config?: InferJsonTypeConfig): string {
+  const finalConfig = {
+    rootTypeName: "Root",
+    arraySampleStrategy: "full",
+    ...config,
+  };
+
+  if (finalConfig.arraySampleStrategy === "head") return jsonToTyping(object, finalConfig.rootTypeName);
+
+  return "";
+}
+
 export function jsonToTyping(object: any, rootName = "Root"): string {
   const ast = getJsonAst(object, rootName);
   const emitResult = emitNode(ast);
