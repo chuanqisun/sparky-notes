@@ -1,4 +1,5 @@
 import type { FnCallProxy } from "../../../openai/chat";
+import { jsonArrayToItemTyping } from "../../../reflection/json-reflection";
 import type { RuntimePlugin } from "../../lang/runtime";
 
 export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
@@ -7,6 +8,13 @@ export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
     description: "Work on one item at a time, with an optional focus on specific fields",
     run: async (data, operand, context) => {
       context.setStatus("Interpreting...");
+
+      if (!Array.isArray(data)) {
+        throw new Error("Expected an array");
+      }
+
+      // TODO, need to make a full reflection to handle inconsistent data shapes
+      const itemType = jsonArrayToItemTyping(data);
 
       const paramsText = await fnCallProxy(
         [

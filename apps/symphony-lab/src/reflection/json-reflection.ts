@@ -6,6 +6,12 @@ export function jsonToTyping(object: any, rootName = "Root"): string {
   return printEmittedResult(emitResult, rootName);
 }
 
+export function jsonArrayToItemTyping(array: any[], rootName = "Item"): string {
+  const ast = getJsonAst(array[0], rootName);
+  const emitResult = emitNode(ast);
+  return printEmittedResult(emitResult, rootName);
+}
+
 export function printEmittedResult(emittedNode: EmittedNode, rootName = "Root"): string {
   return [getRootLevelTyping(emittedNode, rootName), ...getInterfaceTyping(emittedNode)].join("\n\n");
 }
