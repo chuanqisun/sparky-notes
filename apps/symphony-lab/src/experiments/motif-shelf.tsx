@@ -159,6 +159,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       try {
         const program = parseProgram(activeState.source);
         console.log(program);
+
         const runtime: Runtime = {
           signal: new AbortController().signal,
           setItems: (items) => replaceState((prev) => ({ ...prev, data: items })),
@@ -168,7 +169,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
         await run({
           program,
           plugins,
-          data: [],
+          data: activeState.data,
           runtime,
         });
       } catch (e) {
