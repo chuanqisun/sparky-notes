@@ -13,7 +13,7 @@ import { getSemanticSearchProxy } from "../hits/search-claims";
 import { parseProgram } from "../motif-lang/compiler";
 import { run, type Runtime } from "../motif-lang/runtime";
 import { hitsSearch } from "../motif-lib/hits/search";
-import { useMotifShelfManager } from "../motif-shelf/use-motif-shelf-manager";
+import { useWorkspace } from "../motif-workspace/use-workspace";
 import type { ChatProxy, FnCallProxy, RawProxy } from "../openai/chat";
 import { defaultModelConfig, defaultModels } from "../openai/config";
 import { estimateChatTokenDemand } from "../openai/tokens";
@@ -57,8 +57,22 @@ const modelIdToTokenLimit = (modelId: string) => {
   }
 };
 
+interface Shelf {
+  source: string;
+  data: any[];
+}
+
 export const MotifShelf: React.FC<MotifShelfProps> = () => {
-  const { userMessage, updateUserMessage, shelves, openShelf, currentShelf, updateShelfData } = useMotifShelfManager();
+  const {
+    tabs,
+    state: shelf,
+    openTab,
+    tab,
+    replaceState: replaceShelf,
+  } = useWorkspace<Shelf>({
+    source: "",
+    data: [],
+  });
   const [status, setStatus] = useState("Ready");
 
   const { accessToken } = useAuthContext();
@@ -124,13 +138,13 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const plugins = useMemo(() => [hitsSearch(fnCall, semanticSearchProxy)], [fnCall, semanticSearchProxy]);
 
   const handleSubmit = useCallback(async () => {
-    console.log("submitted", userMessage);
+    console.log("submitted", shelf.source);
     try {
-      const program = parseProgram(userMessage);
+      const program = parseProgram(shelf.source);
       console.log(program);
       const runtime: Runtime = {
         signal: new AbortController().signal,
-        addItems: (...items) => updateShelfData(items), // TODO allow itemized update
+        addItems: (...items) => replaceShelf((prev) => ({ ...prev, data: items })),
         updateStatus: setStatus,
       };
 
@@ -143,7 +157,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
     } catch (e) {
       setStatus(`Syntax error: ${(e as any).message}`);
     }
-  }, [userMessage, setStatus]);
+  }, [shelf.source, setStatus]);
 
   const handleAbort = useCallback(() => {
     console.log("aborted", Date.now());
@@ -170,9 +184,9 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       <div>
         <button>⬅️</button>
         <button>➡️</button>
-        {shelves.map((shelf, index) => (
-          <button key={index} onClick={() => openShelf(index)}>
-            {shelf === currentShelf ? "*" : ""}
+        {tabs.map((tab, index) => (
+          <button key={index} onClick={() => openTab(index)}>
+            {tab === tab ? "*" : ""}
             {index}
           </button>
         ))}
@@ -180,18 +194,18 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       </div>
       <ChatWidget>
         <div>
-          <AutoResize data-resize-textarea-content={userMessage}>
+          <AutoResize data-resize-textarea-content={shelf.source}>
             <textarea
-              value={userMessage}
+              value={shelf.source}
               onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit() : null)}
-              onChange={(e) => updateUserMessage(e.target.value)}
+              onChange={(e) => replaceShelf((prev) => ({ ...prev, source: e.target.value }))}
             />
           </AutoResize>
         </div>
       </ChatWidget>
       <StatusDisplay>{status}</StatusDisplay>
       <StyledOutput>
-        <JSONTree theme={theme} hideRoot={true} data={currentShelf.data} />
+        <JSONTree theme={theme} hideRoot={true} data={shelf.data} />
       </StyledOutput>
     </AppLayout>
   );
