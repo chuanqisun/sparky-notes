@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface AppState<T> {
   activeTabIndex: number;
@@ -109,9 +109,8 @@ export function useWorkspace<T>(initialState: T) {
   const activeTab = appState.tabs[appState.activeTabIndex];
   const activeState = activeTab.states[activeTab.activeStateIndex];
 
-  useEffect(() => {
-    console.log(appState);
-  }, [appState]);
+  const hasPrevState = activeTab.activeStateIndex > 0;
+  const hasNextState = activeTab.activeStateIndex < activeTab.states.length - 1;
 
   return {
     appendTab,
@@ -124,5 +123,7 @@ export function useWorkspace<T>(initialState: T) {
     activeState,
     activeTab,
     tabs,
+    hasPrevState,
+    hasNextState,
   };
 }
