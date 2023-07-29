@@ -88,6 +88,18 @@ assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: 2 }]), mockNode("array", { 0: m
 assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: "" }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "string"]) }) }));
 assert.deepEqual(getJsonTypeTree([{ a: 1 }, {}]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
 assert.deepEqual(getJsonTypeTree([{}, { a: 1 }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
+assert.deepEqual(
+  getJsonTypeTree([{ a: 1 }, { b: 1 }]),
+  mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]), b: mockNode(["number", "undefined"]) }) })
+);
+assert.deepEqual(
+  getJsonTypeTree([{ a: { x: 1 } }, { a: {} }]),
+  mockNode("array", { 0: mockNode("object", { a: mockNode(["object", "undefined"], { x: mockNode(["number", "undefined"]) }) }) })
+);
+assert.deepEqual(
+  getJsonTypeTree([{ a: { x: 1 } }, {}]),
+  mockNode("array", { 0: mockNode(["object"], { a: mockNode(["object", "undefined"], { x: mockNode("number") }) }) })
+);
 
 function mockNode(types?: string | string[], children?: Record<string | number, JsonTypeNode>): JsonTypeNode {
   const node: JsonTypeNode = {};
