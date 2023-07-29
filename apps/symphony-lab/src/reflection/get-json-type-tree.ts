@@ -2,7 +2,7 @@ import { jsonTreeWalk } from "./tree-walk";
 
 export interface JsonTypeNode {
   children?: Map<string | 0, JsonTypeNode>;
-  types?: Set<string>; // primitive for leaf node, `object` or `array` for parent node
+  types: Set<string>; // primitive for leaf node, `object` or `array` for parent node
 }
 
 export function getJsonTypeTree(data: any): JsonTypeNode {
@@ -23,8 +23,7 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
     switch (event.eventType) {
       case "visitLeaf": {
         const key = typeof event.key === "number" ? 0 : event.key;
-        const childNode = currentNode.children!.get(key) ?? {};
-        childNode.types ??= new Set();
+        const childNode = currentNode.children!.get(key) ?? { types: new Set() };
         childNode.types.add(event.valueType);
 
         // mark key as visited, if we are re-visiting
@@ -35,9 +34,8 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
       }
       case "openObject": {
         const key = typeof event.key === "number" ? 0 : event.key;
-        const openedNode = currentNode?.children?.get(key) ?? {};
+        const openedNode = currentNode?.children?.get(key) ?? { types: new Set() };
         openedNode.children ??= new Map();
-        openedNode.types ??= new Set();
         openedNode.types.add(event.valueType);
 
         // start tracking required re-visits

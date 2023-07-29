@@ -11,6 +11,17 @@ assert.deepEqual(getJsonTypeTree([]), mockNode("array", {}));
 
 assert.deepEqual(getJsonTypeTree({ a: 1, b: "" }), mockNode("object", { a: mockNode("number"), b: mockNode("string") }));
 assert.deepEqual(getJsonTypeTree([1, ""]), mockNode("array", { 0: mockNode(["number", "string"]) }));
+
+assert.deepEqual(getJsonTypeTree([{}]), mockNode("array", { 0: mockNode("object", {}) }));
+assert.deepEqual(getJsonTypeTree([[]]), mockNode("array", { 0: mockNode("array", {}) }));
+assert.deepEqual(getJsonTypeTree([{}, []]), mockNode("array", { 0: mockNode(["object", "array"], {}) }));
+assert.deepEqual(getJsonTypeTree([{ a: 1 }, []]), mockNode("array", { 0: mockNode(["object", "array"], { a: mockNode(["number", "undefined"]) }) }));
+assert.deepEqual(getJsonTypeTree([{}, [1]]), mockNode("array", { 0: mockNode(["object", "array"], { 0: mockNode(["number", "undefined"]) }) }));
+assert.deepEqual(getJsonTypeTree([1, "", {}, []]), mockNode("array", { 0: mockNode(["number", "string", "object", "array"], {}) }));
+assert.deepEqual(
+  getJsonTypeTree([{ a: 1 }, ["test"]]),
+  mockNode("array", { 0: mockNode(["object", "array"], { a: mockNode(["number", "undefined"]), 0: mockNode(["string", "undefined"]) }) })
+);
 assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: 2 }]), mockNode("array", { 0: mockNode("object", { a: mockNode("number") }) }));
 assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: "" }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "string"]) }) }));
 assert.deepEqual(getJsonTypeTree([{ a: 1 }, {}]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
@@ -28,9 +39,9 @@ assert.deepEqual(
   mockNode("array", { 0: mockNode(["object"], { a: mockNode(["object", "undefined"], { x: mockNode("number") }) }) })
 );
 
-function mockNode(types?: string | string[], children?: Record<string | number, JsonTypeNode>): JsonTypeNode {
-  const node: JsonTypeNode = {};
-  if (types) node.types = new Set(Array.isArray(types) ? types : [types]);
+function mockNode(types: string | string[], children?: Record<string | number, JsonTypeNode>): JsonTypeNode {
+  const node: JsonTypeNode = { types: new Set() };
+  node.types = new Set(Array.isArray(types) ? types : [types]);
   if (children) node.children = new Map(Object.entries(children)) as any;
   return node;
 }
