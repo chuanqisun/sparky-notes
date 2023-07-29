@@ -1,4 +1,4 @@
-import { jsonTreeWalk, type TreeWalkEvent } from "./tree-walk";
+import { type TreeWalkEvent } from "./tree-walk";
 
 export interface JsonTypeNode {
   key: string | number;
@@ -13,7 +13,7 @@ export function inferJsonType(treeWalkEvents: Generator<TreeWalkEvent>): JsonTyp
 
   for (const event of treeWalkEvents) {
     const currentNode = stack[stack.length - 1];
-    switch (event.type) {
+    switch (event.eventType) {
       case "openObject":
         const objectNode: JsonTypeNode = { key: event.key, typeHash: "", children: [] };
         currentNode.children ??= [];
@@ -45,7 +45,7 @@ export function inferJsonType(treeWalkEvents: Generator<TreeWalkEvent>): JsonTyp
 // console.log(JSON.stringify([...jsonTreeWalk(100)], null, 2));
 // console.log(JSON.stringify([...jsonTreeWalk({ a: 1, b: 2 })], null, 2));
 
-console.log(JSON.stringify(inferJsonType(jsonTreeWalk([{ x: "123" }, { x: "123", y: 123 }, { x: "xx" }])), null, 2));
+// console.log(JSON.stringify(inferJsonType(jsonTreeWalk([{ x: "123" }, { x: "123", y: 123 }, { x: "xx" }])), null, 2));
 // const astNode = inferJsonType(jsonTreeWalk([1, { x: "test" }]));
 
 // const emitResult = emitNode(astNode);
