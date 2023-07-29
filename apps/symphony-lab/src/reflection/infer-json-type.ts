@@ -40,6 +40,8 @@ export function inferJsonType(treeWalkEvents: Generator<TreeWalkEvent>): JsonTyp
   return root.children![0];
 }
 
+// TODO merge the types from bottom up
+
 // console.log(JSON.stringify([...jsonTreeWalk(100)], null, 2));
 // console.log(JSON.stringify([...jsonTreeWalk({ a: 1, b: 2 })], null, 2));
 
