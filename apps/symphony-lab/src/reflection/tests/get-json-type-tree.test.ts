@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { getJsonTypeTree, type JsonTypeNode } from "../get-json-type-tree";
 
-assert.deepEqual(getJsonTypeTree(undefined), mockNode("undefined"));
+assert.deepEqual(getJsonTypeTree(undefined), mockNode("undefined")); // normally, json would not have undefined
 assert.deepEqual(getJsonTypeTree(null), mockNode("null"));
 assert.deepEqual(getJsonTypeTree(1), mockNode("number"));
 assert.deepEqual(getJsonTypeTree("test"), mockNode("string"));
