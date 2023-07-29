@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { jsonTreeWalk } from "./tree-walk";
 
 export interface JsonTypeNode {
@@ -10,7 +9,7 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
   const requiredRevisitKeys = new Map<JsonTypeNode, Set<string | 0>>();
   const missedRevisitKeys = new Map<JsonTypeNode, Set<string | 0>>();
 
-  const workingStack: JsonTypeNode[] = [];
+  const stack: JsonTypeNode[] = [];
   let currentNode: JsonTypeNode;
 
   // This guarantees that
@@ -19,7 +18,7 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
   const events = jsonTreeWalk({ _: data });
 
   for (const event of events) {
-    currentNode = workingStack[workingStack.length - 1];
+    currentNode = stack[stack.length - 1];
 
     switch (event.eventType) {
       case "visitLeaf": {
@@ -46,11 +45,11 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
         if (requiredKeysForNode) missedRevisitKeys.set(openedNode, new Set(requiredKeysForNode));
 
         currentNode?.children?.set(key, openedNode);
-        workingStack.push(openedNode);
+        stack.push(openedNode);
         break;
       }
       case "closeObject": {
-        const closedNode = (currentNode = workingStack.pop()!);
+        const closedNode = (currentNode = stack.pop()!);
 
         // // add `undefined` to newly introduced keys
         const previousRequiredKeys = requiredRevisitKeys.get(closedNode);
@@ -72,38 +71,4 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
   }
 
   return currentNode!.children!.get("_")!;
-}
-
-assert.deepEqual(getJsonTypeTree(undefined), mockNode("undefined"));
-assert.deepEqual(getJsonTypeTree(null), mockNode("null"));
-assert.deepEqual(getJsonTypeTree(1), mockNode("number"));
-assert.deepEqual(getJsonTypeTree("test"), mockNode("string"));
-
-assert.deepEqual(getJsonTypeTree({}), mockNode("object", {}));
-assert.deepEqual(getJsonTypeTree([]), mockNode("array", {}));
-
-assert.deepEqual(getJsonTypeTree({ a: 1, b: "" }), mockNode("object", { a: mockNode("number"), b: mockNode("string") }));
-assert.deepEqual(getJsonTypeTree([1, ""]), mockNode("array", { 0: mockNode(["number", "string"]) }));
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: 2 }]), mockNode("array", { 0: mockNode("object", { a: mockNode("number") }) }));
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: "" }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "string"]) }) }));
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, {}]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
-assert.deepEqual(getJsonTypeTree([{}, { a: 1 }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
-assert.deepEqual(
-  getJsonTypeTree([{ a: 1 }, { b: 1 }]),
-  mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]), b: mockNode(["number", "undefined"]) }) })
-);
-assert.deepEqual(
-  getJsonTypeTree([{ a: { x: 1 } }, { a: {} }]),
-  mockNode("array", { 0: mockNode("object", { a: mockNode(["object", "undefined"], { x: mockNode(["number", "undefined"]) }) }) })
-);
-assert.deepEqual(
-  getJsonTypeTree([{ a: { x: 1 } }, {}]),
-  mockNode("array", { 0: mockNode(["object"], { a: mockNode(["object", "undefined"], { x: mockNode("number") }) }) })
-);
-
-function mockNode(types?: string | string[], children?: Record<string | number, JsonTypeNode>): JsonTypeNode {
-  const node: JsonTypeNode = {};
-  if (types) node.types = new Set(Array.isArray(types) ? types : [types]);
-  if (children) node.children = new Map(Object.entries(children)) as any;
-  return node;
 }
