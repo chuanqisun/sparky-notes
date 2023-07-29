@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { getJsonTypeTree, type JsonTypeNode } from "./get-json-type-tree";
 
 export function emitType(typeNode: JsonTypeNode, rootName = "Root") {
@@ -14,6 +15,7 @@ export function emitType(typeNode: JsonTypeNode, rootName = "Root") {
 // Use interface when possible
 // use ? for undefined
 // when in union, object type should refer to a child type
+// use ; for type, omit for interface
 
 export function emitArrayItemType(typeNode: JsonTypeNode, rootName = "Item") {
   const displayTypeNode = getDisplayTypeNode(typeNode, []);
@@ -27,13 +29,40 @@ export function emitArrayItemType(typeNode: JsonTypeNode, rootName = "Item") {
   return lines;
 }
 
-console.log(debugEmitter([{ a: 1 }, { b: "test" }, { a: "test" }]));
+assertEmitter(
+  [{ a: 1 }, { b: "test" }, { a: "test" }],
+  `
+type IRoot = IRootItem[];
 
-function debugEmitter(json: any): string {
+type IRootItem = {
+  a: number | undefined | string;
+  b: string | undefined;
+};
+`
+);
+
+assertArrayItemEmitter(
+  [{ a: 1 }, { b: "test" }, { a: "test" }],
+  `
+type IItem = {
+  a: number | undefined | string;
+  b: string | undefined;
+};
+  `
+);
+
+function assertEmitter(json: any, type: string) {
+  const typeNode = getJsonTypeTree(json);
+  const lines = emitType(typeNode);
+
+  assert.equal(lines.join("\n\n"), type.trim());
+}
+
+function assertArrayItemEmitter(json: any, type: string) {
   const typeNode = getJsonTypeTree(json);
   const lines = emitArrayItemType(typeNode);
 
-  return lines.join("\n\n");
+  assert.equal(lines.join("\n\n"), type.trim());
 }
 
 // first print node itself, then recursively print children
@@ -105,7 +134,7 @@ function printDisplayTypeNode(node: DisplayTypeNode): string {
 
   const rightHand = [...primitives, ...arrays, ...objects].join(" | ");
 
-  return `type ${leftHand} = ${rightHand}`;
+  return `type ${leftHand} = ${rightHand};`;
 }
 
 function getShallowTypeName(node: DisplayTypeNode): string {
