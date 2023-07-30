@@ -15,7 +15,7 @@ print([1]);
 console.log("---");
 print({ a: 1 });
 console.log("---");
-print([{ a: 1 }]);
+print([{}, [], { x: true }]);
 
 interface ObjectDeclaration {
   statement: string;
@@ -67,23 +67,29 @@ function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; r
     } else {
       // push the name only
       types.push(`${pathToName(path)}Object`);
+
+      // reference just the object part of the current node
+      const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
+      referencedNodes.push({ path, node: { types: new Set(["object"]), children: new Map(keyedChildren) } });
     }
   }
 
-  // TODO handle referenced nodes
   return { inlineTypes: types, referencedNodes };
 }
 
 function renderItemShallow(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes?: LocatedNode[] } {
-  const types = [...node.types].filter((type) => type !== "object" && type !== "array");
+  const inlineTypes = [...node.types].filter((type) => type !== "object" && type !== "array");
   const referencedNodes: LocatedNode[] = [];
 
   if (node.types.has("object") || node.types.has("array")) {
-    types.push(pathToName(path));
-    referencedNodes.push({ path, node });
+    inlineTypes.push(pathToName(path));
+    const typesWithoutPrimitive = new Set([...node.types].filter((type) => type === "object" || type === "array"));
+    const nonPrimitiveNode = { ...node, types: typesWithoutPrimitive };
+
+    referencedNodes.push({ path, node: nonPrimitiveNode });
   }
 
-  return { inlineTypes: types, referencedNodes };
+  return { inlineTypes, referencedNodes };
 }
 
 function pathToName(path: (string | 0)[]) {

@@ -5,6 +5,11 @@ export interface JsonTypeNode {
   types: Set<string>; // primitive for leaf node, `object` or `array` for parent node
 }
 
+// TODO issues discovered by the emitter
+// 1. `undefined` should be handled separately between indexed and keyed children
+// 2. types and children are implicitly coupled, creating a lot of complexity
+//    - We can track primitive type only, and use indexedChildren and keyedChildren to track children
+
 export function getJsonTypeTree(data: any): JsonTypeNode {
   const requiredRevisitKeys = new Map<JsonTypeNode, Set<string | 0>>();
   const missedRevisitKeys = new Map<JsonTypeNode, Set<string | 0>>();
