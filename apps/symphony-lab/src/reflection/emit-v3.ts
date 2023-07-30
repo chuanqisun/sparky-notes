@@ -6,6 +6,7 @@ assertEmitter(1, `type IRoot = number;`);
 assertEmitter({}, `type IRoot = any;`);
 assertEmitter([], `type IRoot = any[];`);
 assertEmitter([1], `type IRoot = number[];`);
+assertEmitter([1, true, "string"], `type IRoot = number[];`);
 
 assertEmitter(
   { a: 1 },
@@ -27,7 +28,29 @@ interface IRootA {
 }
 `
 );
+assertEmitter(
+  [{ a: [{}, {}, {}] }],
+  `
+type IRoot = IRootItem[];
 
+interface IRootItem {
+  a: any[];
+}
+`
+);
+assertEmitter([[], [], []], `type IRoot = any[][];`);
+assertEmitter(
+  [{ a: 1 }, {}, {}],
+  `
+type IRoot = IRootItem[];
+
+interface IRootItem {
+  a?: number;
+}`
+);
+
+// TODO: union of arrays should be array of unions
+// TODO: optional parameters
 function getDeclarations(node: JsonTypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
   const path = [rootName ?? "Root"];
