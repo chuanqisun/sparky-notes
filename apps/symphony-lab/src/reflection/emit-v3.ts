@@ -10,21 +10,21 @@ assertEmitter([1], `type IRoot = number[];`);
 assertEmitter(
   { a: 1 },
   `
-type IRoot = {
+interface IRoot {
   a: number;
-};`
+}`
 );
 
 assertEmitter(
   { a: { x: 1 } },
   `
-type IRoot = {
+interface IRoot {
   a: IRootA;
-};
+}
 
-type IRootA = {
+interface IRootA {
   x: number;
-};
+}
 `
 );
 
@@ -40,14 +40,13 @@ interface GetIdentifiersConfig {
   inlineObject?: boolean;
 }
 function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
-  const declarations: string[] = [];
+  // identifiers are primitives, arrays, or empty objects: all primitives, {}, [], and array of irreducible types
   const identifiers = [...node.types].filter(isPrimitive);
+  const declarations: string[] = [];
   const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string");
   const indexedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "number");
   const hasEmptyArray = node.types.has("array") && !indexedChildren.length;
   const hasEmptyObject = node.types.has("object") && !keyedChildren.length;
-
-  // irreducible types: all primitives, {}, [], and array of irreducible types
 
   const { indexedChildIndentifiers, indexedChildDeclarations } = indexedChildren.reduce(
     (result, item) => {
@@ -95,6 +94,7 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
       const declaration = renderDeclaration({
         lValue: pathToName(path),
         rValue: renderIdentifiers([keyedChildIdentifiers]),
+        isInterface: true,
       });
 
       declarations.unshift(declaration);
@@ -105,6 +105,8 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
     const declaration = renderDeclaration({
       lValue: pathToName(path),
       rValue: renderIdentifiers(identifiers),
+      // HACK: render interface if and only if identifer is a single object
+      isInterface: identifiers.length === 1 && identifiers[0].startsWith("{"),
     });
 
     declarations.unshift(declaration);
