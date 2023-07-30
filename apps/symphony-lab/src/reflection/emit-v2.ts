@@ -27,27 +27,43 @@ function getDeclarations(node: JsonTypeNode, rootName?: string): ObjectDeclarati
 }
 
 function getObjectDeclarations(path: Path, node: JsonTypeNode): ObjectDeclaration[] {
-  const { inlineTypes, referencedNodes } = getShallowValueTypes(path, node);
+  const { inlineTypes, referencedNodes } = renderTypes(path, node);
 
   const self = [{ statement: `type ${pathToName(path)} = ${inlineTypes.join(" | ")}` }];
-  const dependencies = [...(node.children?.entries() ?? [])].flatMap(([key, child]) => getObjectDeclarations([...path, key], child));
+  const dependencies = referencedNodes.flatMap(({ path, node }) => getObjectDeclarations(path, node));
 
   return [...self, ...dependencies];
 }
 
-function getShallowValueTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes: JsonTypeNode[] } {
+interface LocatedNode {
+  path: Path;
+  node: JsonTypeNode;
+}
+
+function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes: LocatedNode[] } {
   const types = [...node.types].filter((type) => type !== "object" && type !== "array");
 
-  const indexedChild = node.children?.get(0);
-  if (node.types.has("array")) types.push(indexedChild ? `${pathToName([...path, 0])}[]` : "any[]");
+  const referencedNodes: LocatedNode[] = [];
 
-  const childrenKeys = [...(node.children?.keys() ?? [])].filter((key) => typeof key === "string");
+  if (node.types.has("array")) {
+    const indexedChild = node.children?.get(0);
+    const indexedChildType = indexedChild ? renderItemShallow([...path, 0], indexedChild) : undefined;
+    types.push(`${unionGroup(indexedChildType?.inlineTypes ?? ["any"])}[]`);
+    referencedNodes.push(...(indexedChildType?.referencedNodes ?? []));
+  }
+
   if (node.types.has("object")) {
-    if (!childrenKeys.length) {
-      types.push("any");
-    } else if (!types.length) {
-      // ok to expand
-      types.push(`{\n${childrenKeys.map((key) => `  ${key}: ${pathToName([...path, key])}`)}\n}`);
+    // expand object only if there are no other union types
+    if (!types.length) {
+      const interfaceRows: [key: string, value: string][] = [];
+      const childEntries = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
+      childEntries.forEach(([key, child]) => {
+        const keyedChildType = renderItemShallow([...path, key], child);
+        interfaceRows.push([key, unionGroup(keyedChildType.inlineTypes)]);
+        referencedNodes.push(...(keyedChildType.referencedNodes ?? []));
+      });
+
+      types.push(interfaceRows.length ? `{\n${interfaceRows.map(([key, value]) => `  ${key}: ${value}`)}\n}` : `any`);
     } else {
       // push the name only
       types.push(`${pathToName(path)}Object`);
@@ -55,7 +71,19 @@ function getShallowValueTypes(path: Path, node: JsonTypeNode): { inlineTypes: st
   }
 
   // TODO handle referenced nodes
-  return { inlineTypes: types, referencedNodes: [] };
+  return { inlineTypes: types, referencedNodes };
+}
+
+function renderItemShallow(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes?: LocatedNode[] } {
+  const types = [...node.types].filter((type) => type !== "object" && type !== "array");
+  const referencedNodes: LocatedNode[] = [];
+
+  if (node.types.has("object") || node.types.has("array")) {
+    types.push(pathToName(path));
+    referencedNodes.push({ path, node });
+  }
+
+  return { inlineTypes: types, referencedNodes };
 }
 
 function pathToName(path: (string | 0)[]) {
@@ -79,4 +107,8 @@ function print(data: any) {
   const declarations = getDeclarations(jsonTypeNode);
 
   console.log(declarations.map((d) => d.statement).join("\n\n"));
+}
+
+function unionGroup(items: string[]): string {
+  return items.length > 1 ? `(${items.join(" | ")})` : items[0];
 }
