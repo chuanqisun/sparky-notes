@@ -31,9 +31,13 @@ function getDeclarations(node: JsonTypeNode, rootName?: string): ObjectDeclarati
 }
 
 function getObjectDeclarations(path: Path, node: JsonTypeNode): ObjectDeclaration[] {
-  const { inlineTypes, referencedNodes } = renderTypes(path, node);
+  const { useInterface, inlineTypes, referencedNodes } = renderTypes(path, node);
 
-  const self = [{ statement: `type ${pathToName(path)} = ${inlineTypes.join(" | ")}` }];
+  const self = [
+    useInterface
+      ? { statement: `interface ${pathToName(path)} ${inlineTypes.at(0)}` }
+      : { statement: `type ${pathToName(path)} = ${inlineTypes.join(" | ")};` },
+  ];
   const dependencies = referencedNodes.flatMap(({ path, node }) => getObjectDeclarations(path, node));
 
   return [...self, ...dependencies];
@@ -46,17 +50,15 @@ interface LocatedNode {
 
 // TODO
 // recursive hoisting non-object types
-// Use interface when possible
-// use ? for undefined
 // Do not expand object when it's part of a union
-// use ; for type, omit for interface
 // use the shortest path name possible
 // handle "item" keyword collision
 
-function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes: LocatedNode[] } {
+function renderTypes(path: Path, node: JsonTypeNode): { useInterface?: boolean; inlineTypes: string[]; referencedNodes: LocatedNode[] } {
   const types = [...node.types].filter((type) => type !== "object" && type !== "array");
 
   const referencedNodes: LocatedNode[] = [];
+  let useInterface = false;
 
   if (node.types.has("array")) {
     const indexedChild = node.children?.get(0);
@@ -67,18 +69,21 @@ function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; r
 
   // TODO expand object only if there are no other union types
   if (node.types.has("object")) {
-    const interfaceRows: [key: string, value: string][] = [];
+    const interfaceRows: [key: string, value: string, optional?: boolean][] = [];
     const childEntries = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
     childEntries.forEach(([key, child]) => {
       const keyedChildType = renderItemShallow([...path, key], child);
-      interfaceRows.push([key, inlineUnion(keyedChildType.inlineTypes)]);
+      const requiredTypes = keyedChildType.inlineTypes.filter((type) => type !== "undefined");
+      const optional = requiredTypes.length !== keyedChildType.inlineTypes.length;
+      interfaceRows.push([key, inlineUnion(requiredTypes), optional]);
       referencedNodes.push(...(keyedChildType.referencedNodes ?? []));
     });
 
-    types.push(interfaceRows.length ? `{\n${interfaceRows.map(([key, value]) => `  ${key}: ${value}`).join("\n")}\n}` : `any`);
+    types.push(interfaceRows.length ? `{\n${interfaceRows.map(([key, value, optional]) => `  ${key}${optional ? "?" : ""}: ${value};`).join("\n")}\n}` : `any`);
+    if (types.length === 1 && interfaceRows.length) useInterface = true;
   }
 
-  return { inlineTypes: types, referencedNodes };
+  return { useInterface, inlineTypes: types, referencedNodes };
 }
 
 function renderItemShallow(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes?: LocatedNode[] } {
