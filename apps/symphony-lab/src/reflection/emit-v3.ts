@@ -13,6 +13,18 @@ type IRoot = {
   a: number;
 };`
 );
+assertEmitter(
+  { a: { x: 1 } },
+  `
+type IRoot = {
+  a: IRootA;
+};
+
+type IRootA {
+  x: number;
+}
+`
+);
 
 function getDeclarations(node: JsonTypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
@@ -20,13 +32,8 @@ function getDeclarations(node: JsonTypeNode, rootName?: string): string {
 }
 
 function getObjectDeclarations(path: Path, node: JsonTypeNode): string[] {
-  const { identifiers, declarations } = getIdentifiers(path, node);
-  const primaryDeclaration = renderDeclaration({
-    lValue: pathToName(path),
-    rValue: renderIdentifiers(identifiers),
-  });
-
-  return [primaryDeclaration, ...declarations];
+  const { declarations } = getIdentifiers(path, node);
+  return declarations;
 }
 
 function getIdentifiers(path: Path, node: JsonTypeNode): { identifiers: string[]; declarations: string[] } {
@@ -47,30 +54,53 @@ function getIdentifiers(path: Path, node: JsonTypeNode): { identifiers: string[]
     irreducibles.push("any[]");
   }
 
-  const indexedChildIdentifiers = indexedChildren.map(([key, childNode]) => {
-    const childPath = [...path, key];
-    const { identifiers, declarations } = getIdentifiers(childPath, childNode);
-    return {
-      identifiers: identifiers.map((identifier) => `${identifier}[]`),
-      declarations,
-    };
+  const { indexedChildIndentifiers, indexedChildDeclarations } = indexedChildren.reduce(
+    (result, item) => {
+      const [key, childNode] = item;
+      const childPath = [...path, key];
+      const { identifiers, declarations } = getIdentifiers(childPath, childNode);
+
+      result.indexedChildIndentifiers.push(...identifiers.map((identifier) => `${identifier}[]`));
+      result.indexedChildDeclarations.push(...declarations);
+
+      return result;
+    },
+    {
+      indexedChildIndentifiers: [] as string[],
+      indexedChildDeclarations: [] as string[],
+    }
+  );
+
+  const { keyedChildEntries, keyedChildDeclarations } = keyedChildren.reduce(
+    (result, item) => {
+      const [key, childNode] = item;
+      const childPath = [...path, key];
+      const { identifiers, declarations } = getIdentifiers(childPath, childNode);
+      result.keyedChildEntries.push([key as string, inlineUnion(identifiers)]);
+      result.keyedChildDeclarations.push(...declarations);
+
+      return result;
+    },
+    {
+      keyedChildEntries: [] as [key: string, value: string][],
+      keyedChildDeclarations: [] as string[],
+    }
+  );
+
+  const keyedChildIdentifiers = keyedChildEntries.length ? [`{\n${keyedChildEntries.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`] : [];
+
+  const childIrreducibles = [...indexedChildIndentifiers, ...keyedChildIdentifiers];
+  const childDeclarations = [...indexedChildDeclarations, ...keyedChildDeclarations];
+
+  // render self declaration
+  const declaration = renderDeclaration({
+    lValue: pathToName(path),
+    rValue: renderIdentifiers([...irreducibles, ...childIrreducibles]),
   });
-
-  // recursively get children inline types
-  const keyedChildIdentifiers = keyedChildren.map(([key, childNode]) => {
-    const childPath = [...path, key];
-    return getIdentifiers(childPath, childNode);
-  });
-
-  // TODO keyed children and reducible arrays lead to declarations
-  const declarations: string[] = [];
-
-  const childIrreducibles = [...indexedChildIdentifiers, ...keyedChildIdentifiers].flatMap((child) => child.identifiers);
-  const childDeclarations = [...indexedChildIdentifiers, ...keyedChildIdentifiers].flatMap((child) => child.declarations);
 
   return {
     identifiers: [...irreducibles, ...childIrreducibles],
-    declarations: [...declarations, ...childDeclarations],
+    declarations: [declaration, ...childDeclarations],
   };
 }
 
