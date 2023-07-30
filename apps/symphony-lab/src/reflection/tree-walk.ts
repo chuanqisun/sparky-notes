@@ -5,7 +5,8 @@ export interface TreeWalkEvent {
   eventType: "openObject" | "closeObject" | "visitLeaf";
   key: string | number;
   value: any;
-  valueType: string; // primitive for leaf node, `object` or `array` for parent node
+  /** `null`, `array`, `object`, `number`, `string`, `boolean` */
+  valueType: string;
 }
 
 export function* jsonTreeWalk(root: any, key: string | number = "root"): Generator<TreeWalkEvent> {

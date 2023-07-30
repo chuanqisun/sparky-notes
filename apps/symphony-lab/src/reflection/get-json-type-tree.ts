@@ -42,10 +42,13 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
         const openedNode = currentNode?.children?.get(key) ?? { types: new Set() };
         openedNode.children ??= new Map();
         openedNode.types.add(event.valueType);
+        const isOpenObject = event.valueType === "object";
 
-        // start tracking required re-visits
-        const requiredKeysForNode = requiredRevisitKeys.get(openedNode);
-        if (requiredKeysForNode) missedRevisitKeys.set(openedNode, new Set(requiredKeysForNode));
+        // start tracking required re-visits on object
+        if (isOpenObject) {
+          const requiredKeysForNode = requiredRevisitKeys.get(openedNode);
+          if (requiredKeysForNode) missedRevisitKeys.set(openedNode, new Set(requiredKeysForNode));
+        }
 
         currentNode?.children?.set(key, openedNode);
         stack.push(openedNode);
@@ -53,21 +56,26 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
       }
       case "closeObject": {
         const closedNode = (currentNode = stack.pop()!);
+        const isCloseObject = event.valueType === "object";
 
-        // // add `undefined` to newly introduced keys
-        const previousRequiredKeys = requiredRevisitKeys.get(closedNode);
-        if (previousRequiredKeys) {
-          const newlyIntroducedKeys = [...closedNode.children!.keys()].filter((key) => !previousRequiredKeys.has(key));
-          newlyIntroducedKeys.forEach((key) => closedNode.children!.get(key)!.types?.add("undefined"));
+        if (isCloseObject) {
+          // add `undefined` to newly introduced keys
+          const previousRequiredKeys = requiredRevisitKeys.get(closedNode);
+          if (previousRequiredKeys) {
+            const newlyIntroducedKeys = [...closedNode.children!.keys()].filter((key) => !previousRequiredKeys.has(key));
+            newlyIntroducedKeys.forEach((key) => closedNode.children!.get(key)!.types?.add("undefined"));
+          }
+
+          // add `undefined` to the missedKeys
+          const missedKeys = missedRevisitKeys.get(closedNode);
+          missedKeys?.forEach((key) => closedNode.children!.get(key)!.types?.add("undefined"));
+
+          // infer required keys from children type
+          const requiredKeys = [...closedNode.children!.entries()]
+            .filter(([_, child]) => child.types?.size && !child.types.has("undefined"))
+            .map(([key]) => key);
+          requiredRevisitKeys.set(closedNode, new Set(requiredKeys));
         }
-
-        // add `undefined` to the missedKeys
-        const missedKeys = missedRevisitKeys.get(closedNode);
-        missedKeys?.forEach((key) => closedNode.children!.get(key)!.types?.add("undefined"));
-
-        // infer required keys from children type
-        const requiredKeys = [...closedNode.children!.entries()].filter(([_, child]) => child.types?.size && !child.types.has("undefined")).map(([key]) => key);
-        requiredRevisitKeys.set(closedNode, new Set(requiredKeys));
         break;
       }
     }
