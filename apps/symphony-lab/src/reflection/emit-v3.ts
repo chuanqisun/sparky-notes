@@ -22,9 +22,9 @@ type IRoot = {
   a: IRootA;
 };
 
-type IRootA {
+type IRootA = {
   x: number;
-}
+};
 `
 );
 
@@ -40,23 +40,14 @@ interface GetIdentifiersConfig {
   inlineObject?: boolean;
 }
 function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
-  const irreducibles = [...node.types].filter(isPrimitive);
+  const declarations: string[] = [];
+  const identifiers = [...node.types].filter(isPrimitive);
   const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string");
   const indexedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "number");
-  const hasArray = node.types.has("array");
-  const hasObject = node.types.has("object");
+  const hasEmptyArray = node.types.has("array") && !indexedChildren.length;
+  const hasEmptyObject = node.types.has("object") && !keyedChildren.length;
 
   // irreducible types: all primitives, {}, [], and array of irreducible types
-
-  // move empty {} and [] to primitives
-  // TOOD consolidate into child hanlder
-  if (hasObject && !keyedChildren.length) {
-    irreducibles.push("any");
-  }
-
-  if (hasArray && !indexedChildren.length) {
-    irreducibles.push("any[]");
-  }
 
   const { indexedChildIndentifiers, indexedChildDeclarations } = indexedChildren.reduce(
     (result, item) => {
@@ -74,6 +65,9 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
       indexedChildDeclarations: [] as string[],
     }
   );
+  if (hasEmptyArray) identifiers.push("any[]");
+  identifiers.push(...indexedChildIndentifiers);
+  declarations.push(...indexedChildDeclarations);
 
   const { keyedChildEntries, keyedChildDeclarations } = keyedChildren.reduce(
     (result, item) => {
@@ -90,15 +84,14 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
       keyedChildDeclarations: [] as string[],
     }
   );
+  declarations.push(...keyedChildDeclarations);
 
-  irreducibles.push(...indexedChildIndentifiers);
-  const declarations = [...indexedChildDeclarations, ...keyedChildDeclarations];
-
-  if (keyedChildEntries.length) {
-    const keyedChildIdentifiers = `{\n${keyedChildEntries.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`;
-    if (config?.inlineObject) {
-      irreducibles.push(keyedChildIdentifiers);
+  if (hasEmptyObject || keyedChildEntries.length) {
+    const keyedChildIdentifiers = hasEmptyObject ? "any" : `{\n${keyedChildEntries.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`;
+    if (hasEmptyObject || config?.inlineObject) {
+      identifiers.push(keyedChildIdentifiers);
     } else {
+      identifiers.push(pathToName(path));
       const declaration = renderDeclaration({
         lValue: pathToName(path),
         rValue: renderIdentifiers([keyedChildIdentifiers]),
@@ -108,18 +101,18 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
     }
   }
 
-  if (irreducibles.length > 0) {
+  if (identifiers.length > 0 && config?.declarePrimitive) {
     const declaration = renderDeclaration({
       lValue: pathToName(path),
-      rValue: renderIdentifiers(irreducibles),
+      rValue: renderIdentifiers(identifiers),
     });
 
     declarations.unshift(declaration);
   }
 
   return {
-    identifiers: [...irreducibles],
-    declarations: [...declarations],
+    identifiers,
+    declarations,
   };
 }
 
@@ -180,6 +173,9 @@ function assertEmitter(input: any, expected: string) {
   } catch (error) {
     console.error((error as any).name);
     console.log(`
+=== Input ===
+${JSON.stringify(input, null, 2)}
+
 === Expected ===
 ${expected.trim()}
 
