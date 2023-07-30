@@ -1,41 +1,70 @@
+import assert from "node:assert";
 import { getJsonTypeTree, type JsonTypeNode } from "./get-json-type-tree";
-
-export function jsonTypeToTypescript(jsonNode: JsonTypeNode) {}
 
 type Path = (0 | string)[];
 
-console.log("---");
-print(1);
-console.log("---");
-print({});
-console.log("---");
-print([]);
-console.log("---");
-print([1]);
-console.log("---");
-print({ a: 1 });
-console.log("---");
-print([{ a: [{}, {}, {}] }]);
-console.log("---");
-print([[], [], []]);
+assertEmitter(1, `type IRoot = number;`);
+assertEmitter({}, `type IRoot = any;`);
+assertEmitter([], `type IRoot = any[];`);
+assertEmitter([1], `type IRoot = number[];`);
+assertEmitter(
+  { a: 1 },
+  `
+interface IRoot {
+  a: number;
+}
+`
+);
+assertEmitter(
+  [{ a: [{}, {}, {}] }],
+  `
+type IRoot = IRootItem[];
 
-interface ObjectDeclaration {
-  statement: string;
+interface IRootItem {
+  a: IRootItemA;
 }
 
-function getDeclarations(node: JsonTypeNode, rootName?: string): ObjectDeclaration[] {
+type IRootItemA = IRootItemAItem[];
+
+type IRootItemAItem = any;
+`
+);
+assertEmitter(
+  [[], [], []],
+  `
+type IRoot = IRootItem[];
+
+type IRootItem = any[];`
+);
+
+function assertEmitter(input: any, expected: string) {
+  const jsonTypeNode = getJsonTypeTree(input);
+  const declarations = getDeclarations(jsonTypeNode);
+
+  try {
+    assert.equal(declarations.trim(), expected.trim());
+  } catch (error) {
+    console.error((error as any).name);
+    console.log(`
+=== Expected ===
+${expected}
+----------------
+
+=== Actual ===
+${declarations}
+----------------`);
+  }
+}
+
+function getDeclarations(node: JsonTypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
-  return getObjectDeclarations([rootName ?? "Root"], node);
+  return getObjectDeclarations([rootName ?? "Root"], node).join("\n\n");
 }
 
-function getObjectDeclarations(path: Path, node: JsonTypeNode): ObjectDeclaration[] {
+function getObjectDeclarations(path: Path, node: JsonTypeNode): string[] {
   const { useInterface, inlineTypes, referencedNodes } = renderTypes(path, node);
 
-  const self = [
-    useInterface
-      ? { statement: `interface ${pathToName(path)} ${inlineTypes.at(0)}` }
-      : { statement: `type ${pathToName(path)} = ${inlineTypes.join(" | ")};` },
-  ];
+  const self = [useInterface ? `interface ${pathToName(path)} ${inlineTypes.at(0)}` : `type ${pathToName(path)} = ${inlineTypes.join(" | ")};`];
   const dependencies = referencedNodes.flatMap(({ path, node }) => getObjectDeclarations(path, node));
 
   return [...self, ...dependencies];
@@ -122,7 +151,7 @@ function print(data: any) {
   const jsonTypeNode = getJsonTypeTree(data);
   const declarations = getDeclarations(jsonTypeNode);
 
-  console.log(declarations.map((d) => d.statement).join("\n\n"));
+  console.log(declarations);
 }
 
 function groupedUnion(items: string[]): string {
