@@ -18,7 +18,9 @@ console.log("---");
 print([
   { name: "tom", age: 32, tags: ["cool", "bad"] },
   { name: "", age: null, tags: [] },
-  { name: "", tags: "best" },
+  { name: "", tags: "best", 'How do you hear " from us? Tell \\ a story in 500 words': "I don't know" },
+  { name: "", tags: "best", "'\"\\!!!": "I don't know" },
+  { name: "", tags: "best", "   ": "I don't know" },
 ]);
 
 interface ObjectDeclaration {
@@ -79,7 +81,11 @@ function renderTypes(path: Path, node: JsonTypeNode): { useInterface?: boolean; 
       referencedNodes.push(...(keyedChildType.referencedNodes ?? []));
     });
 
-    types.push(interfaceRows.length ? `{\n${interfaceRows.map(([key, value, optional]) => `  ${key}${optional ? "?" : ""}: ${value};`).join("\n")}\n}` : `any`);
+    types.push(
+      interfaceRows.length
+        ? `{\n${interfaceRows.map(([key, value, optional]) => `  ${escapeIdentifier(key)}${optional ? "?" : ""}: ${value};`).join("\n")}\n}`
+        : `any`
+    );
     if (types.length === 1 && interfaceRows.length) useInterface = true;
   }
 
@@ -129,4 +135,12 @@ function groupedUnion(items: string[]): string {
 }
 function inlineUnion(items: string[]): string {
   return items.join(" | ");
+}
+
+function escapeIdentifier(key: string): string {
+  const stringifedKey = JSON.stringify(key);
+  const unquotedStringiedKey = stringifedKey.slice(1, -1);
+  const isEscaped = unquotedStringiedKey.length !== key.length || key.length !== key.trim().length;
+
+  return isEscaped ? stringifedKey : key;
 }
