@@ -6,7 +6,7 @@ assertEmitter(1, `type IRoot = number;`);
 assertEmitter({}, `type IRoot = any;`);
 assertEmitter([], `type IRoot = any[];`);
 assertEmitter([1], `type IRoot = number[];`);
-assertEmitter([1, true, "string"], `type IRoot = number[];`);
+assertEmitter([1, true, "string"], `type IRoot = (number | boolean | string)[];`);
 
 assertEmitter(
   { a: 1 },
@@ -49,8 +49,8 @@ interface IRootItem {
 }`
 );
 
-// TODO: union of arrays should be array of unions
-// TODO: optional parameters
+// TODO: escape identifiers
+// TODO: escape type names
 function getDeclarations(node: JsonTypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
   const path = [rootName ?? "Root"];
@@ -77,7 +77,7 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
       const childPath = [...path, key];
       const { identifiers, declarations } = getIdentifiers(childPath, childNode);
 
-      result.indexedChildIndentifiers.push(...identifiers.map((identifier) => `${identifier}[]`));
+      result.indexedChildIndentifiers.push(`${groupedUnion(identifiers)}[]`);
       result.indexedChildDeclarations.push(...declarations);
 
       return result;
@@ -109,7 +109,9 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
   declarations.push(...keyedChildDeclarations);
 
   if (hasEmptyObject || keyedChildEntries.length) {
-    const keyedChildIdentifiers = hasEmptyObject ? "any" : `{\n${keyedChildEntries.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`;
+    const keyedChildIdentifiers = hasEmptyObject
+      ? "any"
+      : `{\n${keyedChildEntries.map(([k, v]) => `  ${k}${node.requiredKeys?.has(k) ? "" : "?"}: ${v};`).join("\n")}\n}`;
     if (hasEmptyObject || config?.inlineObject) {
       identifiers.push(keyedChildIdentifiers);
     } else {
