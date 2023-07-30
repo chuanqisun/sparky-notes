@@ -36,6 +36,15 @@ type IRoot = IRootItem[];
 
 type IRootItem = any[];`
 );
+assertEmitter(
+  [{ a: 1 }, {}, {}],
+  `
+type IRoot = IRootItem[];
+
+interface IRootItem {
+  a?: number;
+}`
+);
 
 function assertEmitter(input: any, expected: string) {
   const jsonTypeNode = getJsonTypeTree(input);
@@ -97,9 +106,9 @@ function renderTypes(path: Path, node: JsonTypeNode): { useInterface?: boolean; 
     const childEntries = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
     childEntries.forEach(([key, child]) => {
       const keyedChildType = renderItemShallow([...path, key], child);
-      const requiredTypes = keyedChildType.inlineTypes.filter((type) => type !== "undefined");
-      const optional = requiredTypes.length !== keyedChildType.inlineTypes.length;
-      interfaceRows.push([key, inlineUnion(requiredTypes), optional]);
+      const definedTypes = keyedChildType.inlineTypes.filter((type) => type !== "undefined");
+      const optional = !node.requiredKeys?.has(key);
+      interfaceRows.push([key, inlineUnion(definedTypes), optional]);
       referencedNodes.push(...(keyedChildType.referencedNodes ?? []));
     });
 
