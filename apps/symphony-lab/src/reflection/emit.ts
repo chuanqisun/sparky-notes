@@ -16,6 +16,7 @@ export function emitType(typeNode: JsonTypeNode, rootName = "Root") {
 // use ? for undefined
 // when in union, object type should refer to a child type
 // use ; for type, omit for interface
+// use the shortest path name possible
 
 export function emitArrayItemType(typeNode: JsonTypeNode, rootName = "Item") {
   const displayTypeNode = getDisplayTypeNode(typeNode, []);
