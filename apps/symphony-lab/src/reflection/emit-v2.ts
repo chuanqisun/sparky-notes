@@ -53,7 +53,6 @@ interface LocatedNode {
 // TODO
 // recursive hoisting non-object types
 // Do not expand object when it's part of a union
-// use the shortest path name possible
 // handle "item" keyword collision
 
 function renderTypes(path: Path, node: JsonTypeNode): { useInterface?: boolean; inlineTypes: string[]; referencedNodes: LocatedNode[] } {
