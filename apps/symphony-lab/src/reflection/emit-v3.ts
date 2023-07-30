@@ -6,6 +6,7 @@ assertEmitter(1, `type IRoot = number;`);
 assertEmitter({}, `type IRoot = any;`);
 assertEmitter([], `type IRoot = any[];`);
 assertEmitter([1], `type IRoot = number[];`);
+
 assertEmitter(
   { a: 1 },
   `
@@ -13,6 +14,7 @@ type IRoot = {
   a: number;
 };`
 );
+
 assertEmitter(
   { a: { x: 1 } },
   `
@@ -28,15 +30,16 @@ type IRootA {
 
 function getDeclarations(node: JsonTypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
-  return getObjectDeclarations([rootName ?? "Root"], node).join("\n\n");
+  const path = [rootName ?? "Root"];
+  const { declarations } = getIdentifiers(path, node, { declarePrimitive: true, inlineObject: true });
+  return declarations.join("\n\n");
 }
 
-function getObjectDeclarations(path: Path, node: JsonTypeNode): string[] {
-  const { declarations } = getIdentifiers(path, node);
-  return declarations;
+interface GetIdentifiersConfig {
+  declarePrimitive?: boolean;
+  inlineObject?: boolean;
 }
-
-function getIdentifiers(path: Path, node: JsonTypeNode): { identifiers: string[]; declarations: string[] } {
+function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
   const irreducibles = [...node.types].filter(isPrimitive);
   const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string");
   const indexedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "number");
@@ -46,6 +49,7 @@ function getIdentifiers(path: Path, node: JsonTypeNode): { identifiers: string[]
   // irreducible types: all primitives, {}, [], and array of irreducible types
 
   // move empty {} and [] to primitives
+  // TOOD consolidate into child hanlder
   if (hasObject && !keyedChildren.length) {
     irreducibles.push("any");
   }
@@ -87,20 +91,35 @@ function getIdentifiers(path: Path, node: JsonTypeNode): { identifiers: string[]
     }
   );
 
-  const keyedChildIdentifiers = keyedChildEntries.length ? [`{\n${keyedChildEntries.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`] : [];
+  irreducibles.push(...indexedChildIndentifiers);
+  const declarations = [...indexedChildDeclarations, ...keyedChildDeclarations];
 
-  const childIrreducibles = [...indexedChildIndentifiers, ...keyedChildIdentifiers];
-  const childDeclarations = [...indexedChildDeclarations, ...keyedChildDeclarations];
+  if (keyedChildEntries.length) {
+    const keyedChildIdentifiers = `{\n${keyedChildEntries.map(([k, v]) => `  ${k}: ${v};`).join("\n")}\n}`;
+    if (config?.inlineObject) {
+      irreducibles.push(keyedChildIdentifiers);
+    } else {
+      const declaration = renderDeclaration({
+        lValue: pathToName(path),
+        rValue: renderIdentifiers([keyedChildIdentifiers]),
+      });
 
-  // render self declaration
-  const declaration = renderDeclaration({
-    lValue: pathToName(path),
-    rValue: renderIdentifiers([...irreducibles, ...childIrreducibles]),
-  });
+      declarations.unshift(declaration);
+    }
+  }
+
+  if (irreducibles.length > 0) {
+    const declaration = renderDeclaration({
+      lValue: pathToName(path),
+      rValue: renderIdentifiers(irreducibles),
+    });
+
+    declarations.unshift(declaration);
+  }
 
   return {
-    identifiers: [...irreducibles, ...childIrreducibles],
-    declarations: [declaration, ...childDeclarations],
+    identifiers: [...irreducibles],
+    declarations: [...declarations],
   };
 }
 
