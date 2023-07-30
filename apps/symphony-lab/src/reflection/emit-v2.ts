@@ -15,7 +15,11 @@ print([1]);
 console.log("---");
 print({ a: 1 });
 console.log("---");
-print([{}, [], { x: true }]);
+print([
+  { name: "tom", age: 32, tags: ["cool", "bad"] },
+  { name: "", age: null, tags: [] },
+  { name: "", tags: "best" },
+]);
 
 interface ObjectDeclaration {
   statement: string;
@@ -40,6 +44,8 @@ interface LocatedNode {
   node: JsonTypeNode;
 }
 
+// FIXME recursive hoisting non-object types
+
 function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes: LocatedNode[] } {
   const types = [...node.types].filter((type) => type !== "object" && type !== "array");
 
@@ -48,30 +54,21 @@ function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; r
   if (node.types.has("array")) {
     const indexedChild = node.children?.get(0);
     const indexedChildType = indexedChild ? renderItemShallow([...path, 0], indexedChild) : undefined;
-    types.push(`${unionGroup(indexedChildType?.inlineTypes ?? ["any"])}[]`);
+    types.push(`${groupedUnion(indexedChildType?.inlineTypes ?? ["any"])}[]`);
     referencedNodes.push(...(indexedChildType?.referencedNodes ?? []));
   }
 
+  // TODO expand object only if there are no other union types
   if (node.types.has("object")) {
-    // expand object only if there are no other union types
-    if (!types.length) {
-      const interfaceRows: [key: string, value: string][] = [];
-      const childEntries = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
-      childEntries.forEach(([key, child]) => {
-        const keyedChildType = renderItemShallow([...path, key], child);
-        interfaceRows.push([key, unionGroup(keyedChildType.inlineTypes)]);
-        referencedNodes.push(...(keyedChildType.referencedNodes ?? []));
-      });
+    const interfaceRows: [key: string, value: string][] = [];
+    const childEntries = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
+    childEntries.forEach(([key, child]) => {
+      const keyedChildType = renderItemShallow([...path, key], child);
+      interfaceRows.push([key, inlineUnion(keyedChildType.inlineTypes)]);
+      referencedNodes.push(...(keyedChildType.referencedNodes ?? []));
+    });
 
-      types.push(interfaceRows.length ? `{\n${interfaceRows.map(([key, value]) => `  ${key}: ${value}`)}\n}` : `any`);
-    } else {
-      // push the name only
-      types.push(`${pathToName(path)}Object`);
-
-      // reference just the object part of the current node
-      const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string") as [string, JsonTypeNode][];
-      referencedNodes.push({ path, node: { types: new Set(["object"]), children: new Map(keyedChildren) } });
-    }
+    types.push(interfaceRows.length ? `{\n${interfaceRows.map(([key, value]) => `  ${key}: ${value}`).join("\n")}\n}` : `any`);
   }
 
   return { inlineTypes: types, referencedNodes };
@@ -115,6 +112,9 @@ function print(data: any) {
   console.log(declarations.map((d) => d.statement).join("\n\n"));
 }
 
-function unionGroup(items: string[]): string {
+function groupedUnion(items: string[]): string {
   return items.length > 1 ? `(${items.join(" | ")})` : items[0];
+}
+function inlineUnion(items: string[]): string {
+  return items.join(" | ");
 }
