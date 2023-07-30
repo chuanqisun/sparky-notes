@@ -15,13 +15,9 @@ print([1]);
 console.log("---");
 print({ a: 1 });
 console.log("---");
-print([
-  { name: "tom", age: 32, tags: ["cool", "bad"] },
-  { name: "", age: null, tags: [] },
-  { name: "", tags: "best", 'How do you hear " from us? Tell \\ a story in 500 words': "I don't know" },
-  { name: "", tags: "best", "'\"\\!!!": "I don't know" },
-  { name: "", tags: "best", "   ": "I don't know" },
-]);
+print([{ a: [{}, {}, {}] }]);
+console.log("---");
+print([[], [], []]);
 
 interface ObjectDeclaration {
   statement: string;
