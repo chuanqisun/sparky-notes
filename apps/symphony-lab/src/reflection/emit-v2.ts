@@ -86,6 +86,7 @@ interface LocatedNode {
 // recursive hoisting non-object types
 // Do not expand object when it's part of a union
 // handle "item" keyword collision
+// Escaped items cannot be type names
 
 function renderTypes(path: Path, node: JsonTypeNode): { useInterface?: boolean; inlineTypes: string[]; referencedNodes: LocatedNode[] } {
   const types = [...node.types].filter((type) => type !== "object" && type !== "array");
