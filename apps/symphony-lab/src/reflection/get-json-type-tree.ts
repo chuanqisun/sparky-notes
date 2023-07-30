@@ -4,16 +4,13 @@ export interface JsonTypeNode {
   children?: Map<string | 0, JsonTypeNode>;
   /** `undefined`, `null`, `array`, `object`, `number`, `string`, `boolean` */
   types: Set<string>;
+  /** Based on prescence of the key. `undefined` will be considered required too */
+  requiredKeys?: Set<string>;
 }
 
-// TODO issues discovered by the emitter
-// 1. `undefined` should be handled separately between indexed and keyed children
-// 2. types and children are implicitly coupled, creating a lot of complexity
-//    - We can track primitive type only, and use indexedChildren and keyedChildren to track children
-
 export function getJsonTypeTree(data: any): JsonTypeNode {
-  const requiredRevisitKeys = new Map<JsonTypeNode, Set<string | 0>>();
-  const missedRevisitKeys = new Map<JsonTypeNode, Set<string | 0>>();
+  const missedRevisitKeys = new Map<JsonTypeNode, Set<string>>();
+  const visitedNodes = new Set<JsonTypeNode>();
 
   const stack: JsonTypeNode[] = [];
   let currentNode: JsonTypeNode;
@@ -33,7 +30,7 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
         childNode.types.add(event.valueType);
 
         // mark key as visited, if we are re-visiting
-        missedRevisitKeys.get(currentNode)?.delete(key);
+        if (key !== 0) missedRevisitKeys.get(currentNode)?.delete(key);
 
         currentNode.children!.set(key, childNode);
         break;
@@ -46,10 +43,7 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
         const isOpenObject = event.valueType === "object";
 
         // start tracking required re-visits on object
-        if (isOpenObject) {
-          const requiredKeysForNode = requiredRevisitKeys.get(openedNode);
-          if (requiredKeysForNode) missedRevisitKeys.set(openedNode, new Set(requiredKeysForNode));
-        }
+        if (isOpenObject) missedRevisitKeys.set(openedNode, new Set(openedNode.requiredKeys));
 
         currentNode?.children?.set(key, openedNode);
         stack.push(openedNode);
@@ -60,22 +54,22 @@ export function getJsonTypeTree(data: any): JsonTypeNode {
         const isCloseObject = event.valueType === "object";
 
         if (isCloseObject) {
-          // add `undefined` to newly introduced keys
-          const previousRequiredKeys = requiredRevisitKeys.get(closedNode);
-          if (previousRequiredKeys) {
-            const newlyIntroducedKeys = [...closedNode.children!.keys()].filter((key) => !previousRequiredKeys.has(key));
-            newlyIntroducedKeys.forEach((key) => closedNode.children!.get(key)!.types?.add("undefined"));
-          }
-
-          // add `undefined` to the missedKeys
+          // Delete missed keys from required keys
           const missedKeys = missedRevisitKeys.get(closedNode);
-          missedKeys?.forEach((key) => closedNode.children!.get(key)!.types?.add("undefined"));
+          missedKeys?.forEach((key) => {
+            closedNode.requiredKeys?.delete(key);
+            if (!closedNode.requiredKeys?.size) delete closedNode.requiredKeys;
+          });
 
+          // create required keys if closed object first time
           // infer required keys from children type
-          const requiredKeys = [...closedNode.children!.entries()]
-            .filter(([_, child]) => child.types?.size && !child.types.has("undefined"))
-            .map(([key]) => key);
-          requiredRevisitKeys.set(closedNode, new Set(requiredKeys));
+          if (!visitedNodes.has(closedNode)) {
+            visitedNodes.add(closedNode);
+            const requiredKeys = [...closedNode.children!.entries()].filter(([key, child]) => key !== 0 && child.types?.size).map(([key]) => key as string);
+            if (requiredKeys.length) {
+              closedNode.requiredKeys = new Set(requiredKeys);
+            }
+          }
         }
         break;
       }

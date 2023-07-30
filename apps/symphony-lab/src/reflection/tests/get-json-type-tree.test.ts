@@ -1,47 +1,207 @@
 import assert from "node:assert";
 import { getJsonTypeTree, type JsonTypeNode } from "../get-json-type-tree";
 
-assert.deepEqual(getJsonTypeTree(undefined), mockNode("undefined")); // normally, json would not have undefined
-assert.deepEqual(getJsonTypeTree(null), mockNode("null"));
-assert.deepEqual(getJsonTypeTree(1), mockNode("number"));
-assert.deepEqual(getJsonTypeTree("test"), mockNode("string"));
+assertTypeTree(undefined, `root: undefined`); // normally, json would not have undefined
+assertTypeTree(null, `root: null`);
+assertTypeTree(1, `root: number`);
+assertTypeTree("test", `root: string`);
 
-assert.deepEqual(getJsonTypeTree({}), mockNode("object", {}));
-assert.deepEqual(getJsonTypeTree([]), mockNode("array", {}));
+assertTypeTree({}, `root: object`);
+assertTypeTree([], `root: array`);
 
-assert.deepEqual(getJsonTypeTree({ a: 1, b: "" }), mockNode("object", { a: mockNode("number"), b: mockNode("string") }));
-assert.deepEqual(getJsonTypeTree([1, ""]), mockNode("array", { 0: mockNode(["number", "string"]) }));
-
-assert.deepEqual(getJsonTypeTree([{}]), mockNode("array", { 0: mockNode("object", {}) }));
-assert.deepEqual(getJsonTypeTree([[]]), mockNode("array", { 0: mockNode("array", {}) }));
-assert.deepEqual(getJsonTypeTree([{}, []]), mockNode("array", { 0: mockNode(["object", "array"], {}) }));
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, []]), mockNode("array", { 0: mockNode(["object", "array"], { a: mockNode(["number"]) }) }));
-assert.deepEqual(getJsonTypeTree([{}, [1]]), mockNode("array", { 0: mockNode(["object", "array"], { 0: mockNode(["number"]) }) }));
-assert.deepEqual(getJsonTypeTree([1, "", {}, []]), mockNode("array", { 0: mockNode(["number", "string", "object", "array"], {}) }));
-assert.deepEqual(
-  getJsonTypeTree([{ a: 1 }, ["test"]]),
-  mockNode("array", { 0: mockNode(["object", "array"], { a: mockNode(["number"]), 0: mockNode(["string"]) }) })
+assertTypeTree(
+  { a: 1, b: "" },
+  `
+root: object
+requiredKeys: a, b
+  a: number
+  b: string
+`
 );
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: 2 }]), mockNode("array", { 0: mockNode("object", { a: mockNode("number") }) }));
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, { a: "" }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "string"]) }) }));
-assert.deepEqual(getJsonTypeTree([{ a: 1 }, {}]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
-assert.deepEqual(getJsonTypeTree([{}, { a: 1 }]), mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]) }) }));
-assert.deepEqual(
-  getJsonTypeTree([{ a: 1 }, { b: 1 }]),
-  mockNode("array", { 0: mockNode("object", { a: mockNode(["number", "undefined"]), b: mockNode(["number", "undefined"]) }) })
-);
-assert.deepEqual(
-  getJsonTypeTree([{ a: { x: 1 } }, { a: {} }]),
-  mockNode("array", { 0: mockNode("object", { a: mockNode(["object", "undefined"], { x: mockNode(["number", "undefined"]) }) }) })
-);
-assert.deepEqual(
-  getJsonTypeTree([{ a: { x: 1 } }, {}]),
-  mockNode("array", { 0: mockNode(["object"], { a: mockNode(["object", "undefined"], { x: mockNode("number") }) }) })
+assertTypeTree(
+  [1, ""],
+  `
+root: array
+  0: number, string
+`
 );
 
-function mockNode(types: string | string[], children?: Record<string | number, JsonTypeNode>): JsonTypeNode {
+assertTypeTree(
+  [{}],
+  `
+root: array
+  0: object
+`
+);
+assertTypeTree(
+  [[]],
+  `
+root: array
+  0: array
+`
+);
+assertTypeTree(
+  [{}, []],
+  `
+root: array
+  0: object, array
+`
+);
+assertTypeTree(
+  [{ a: 1 }, []],
+  `
+root: array
+  0: object, array
+  requiredKeys: a
+    a: number
+`
+);
+assertTypeTree(
+  [{}, [1]],
+  `
+root: array
+  0: object, array
+    0: number
+`
+);
+assertTypeTree(
+  [1, "", {}, []],
+  `
+root: array
+  0: number, string, object, array
+`
+);
+assertTypeTree(
+  [{ a: 1 }, ["test"]],
+  `
+root: array
+  0: object, array
+  requiredKeys: a
+    a: number
+    0: string
+  `
+);
+assertTypeTree(
+  [{ a: 1 }, { a: 2 }],
+  `
+root: array
+  0: object
+  requiredKeys: a
+    a: number
+  `
+);
+assertTypeTree(
+  [{ a: 1 }, { a: "" }],
+  `
+root: array
+  0: object
+  requiredKeys: a
+    a: number, string
+  `
+);
+assertTypeTree(
+  [{ a: 1 }, {}],
+  `
+root: array
+  0: object
+    a: number
+  `
+);
+assertTypeTree(
+  [{ a: 1 }, { a: undefined }],
+  `
+root: array
+  0: object
+  requiredKeys: a
+    a: number, undefined
+  `
+);
+
+assertTypeTree(
+  [{}, { a: 1 }],
+  `
+root: array
+  0: object
+    a: number
+  `
+);
+assertTypeTree(
+  [{ a: 1 }, { b: 1 }],
+  `
+root: array
+  0: object
+    a: number
+    b: number
+`
+);
+assertTypeTree(
+  [{ a: 1 }, {}, { a: 1 }],
+  `
+root: array
+  0: object
+    a: number
+  `
+);
+assertTypeTree(
+  [{}, { a: 1 }, {}],
+  `
+root: array
+  0: object
+    a: number
+  `
+);
+assertTypeTree(
+  [{ a: { x: 1 } }, { a: {} }],
+  `
+root: array
+  0: object
+    a: object
+      x: number
+  `
+);
+assertTypeTree(
+  [{ a: { x: 1 } }, {}],
+  `
+root: array
+  0: object
+    a: object
+    requiredKeys: x
+      x: number
+  `
+);
+
+function assertTypeTree(input: any, expected: string) {
+  const actual = prettyPrintNodeLine(getJsonTypeTree(input)).join("\n");
+  try {
+    assert.strictEqual(actual, expected.trim());
+  } catch (error) {
+    console.error((error as any).name);
+    console.log(`
+=== Expected ===
+${expected.trim()}
+
+=== Actual ===
+${actual}`);
+  }
+}
+
+function mockNode(types: string | string[], children?: Record<string | number, JsonTypeNode>, requiredKeys?: string[]): JsonTypeNode {
   const node: JsonTypeNode = { types: new Set() };
   node.types = new Set(Array.isArray(types) ? types : [types]);
   if (children) node.children = new Map(Object.entries(children)) as any;
+  if (requiredKeys) node.requiredKeys = new Set(requiredKeys);
   return node;
+}
+
+function prettyPrintNodeLine(node: JsonTypeNode, indent = 2, key: string | 0 = "root"): string[] {
+  const selfOutput = [
+    `${key}: ${Array.from(node.types).join(", ")}`,
+    node.requiredKeys ? `requiredKeys: ${Array.from(node.requiredKeys ?? []).join(", ")}` : "",
+  ].filter(Boolean) as string[];
+
+  const childrenOutput = Array.from(node.children ?? []).flatMap(([key, childNode]) => {
+    return [...prettyPrintNodeLine(childNode, indent, key)];
+  });
+
+  return [...selfOutput, ...childrenOutput.map((line) => `${" ".repeat(indent)}${line}`)];
 }

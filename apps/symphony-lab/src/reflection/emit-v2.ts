@@ -42,17 +42,15 @@ function assertEmitter(input: any, expected: string) {
   const declarations = getDeclarations(jsonTypeNode);
 
   try {
-    assert.equal(declarations.trim(), expected.trim());
+    assert.deepEqual(declarations.trim(), expected.trim());
   } catch (error) {
     console.error((error as any).name);
     console.log(`
 === Expected ===
 ${expected}
-----------------
 
 === Actual ===
-${declarations}
-----------------`);
+${declarations}`);
   }
 }
 
