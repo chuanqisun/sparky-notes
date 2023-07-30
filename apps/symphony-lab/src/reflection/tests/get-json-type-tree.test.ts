@@ -185,14 +185,6 @@ ${actual}`);
   }
 }
 
-function mockNode(types: string | string[], children?: Record<string | number, JsonTypeNode>, requiredKeys?: string[]): JsonTypeNode {
-  const node: JsonTypeNode = { types: new Set() };
-  node.types = new Set(Array.isArray(types) ? types : [types]);
-  if (children) node.children = new Map(Object.entries(children)) as any;
-  if (requiredKeys) node.requiredKeys = new Set(requiredKeys);
-  return node;
-}
-
 function prettyPrintNodeLine(node: JsonTypeNode, indent = 2, key: string | 0 = "root"): string[] {
   const selfOutput = [
     `${key}: ${Array.from(node.types).join(", ")}`,
