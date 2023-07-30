@@ -2,7 +2,8 @@ import { jsonTreeWalk } from "./tree-walk";
 
 export interface JsonTypeNode {
   children?: Map<string | 0, JsonTypeNode>;
-  types: Set<string>; // primitive for leaf node, `object` or `array` for parent node
+  /** `undefined`, `null`, `array`, `object`, `number`, `string`, `boolean` */
+  types: Set<string>;
 }
 
 // TODO issues discovered by the emitter

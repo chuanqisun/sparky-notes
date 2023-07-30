@@ -51,6 +51,7 @@ interface LocatedNode {
 // Do not expand object when it's part of a union
 // use ; for type, omit for interface
 // use the shortest path name possible
+// handle "item" keyword collision
 
 function renderTypes(path: Path, node: JsonTypeNode): { inlineTypes: string[]; referencedNodes: LocatedNode[] } {
   const types = [...node.types].filter((type) => type !== "object" && type !== "array");
