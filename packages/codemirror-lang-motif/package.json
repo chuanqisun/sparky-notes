@@ -1,0 +1,17 @@
+{
+  "name": "@h20/codemirror-lang-motif",
+  "description": "CodeMirror language support package for motif",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@lezer/generator": "^1.0.0"
+  },
+  "dependencies": {
+    "@lezer/lr": "^1.0.0"
+  },
+  "scripts": {
+    "generate": "lezer-generator src/motif.grammar -o src/parser.js"
+  }
+}

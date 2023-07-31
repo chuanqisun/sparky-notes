@@ -1,3 +1,4 @@
+import { motif } from "@h20/codemirror-lang-motif";
 import { ChatManager, ChatWorker, getOpenAIWorkerProxy } from "@h20/plex-chat";
 import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
@@ -248,6 +249,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
             value={activeState.source}
             style={{ display: "grid" }}
             basicSetup={{ lineNumbers: false, autocompletion: true }}
+            extensions={[motif()]}
             onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
             maxHeight="200px"
             minHeight="80px"
