@@ -13,6 +13,7 @@ import { getSemanticSearchProxy } from "../hits/search-claims";
 import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
 import { coreEachPlugin } from "../motif/plugins/core/each";
+import { coreInferPlugin } from "../motif/plugins/core/infer";
 import { fileImportPlugin } from "../motif/plugins/file/import";
 import { hitsSearchPlugin } from "../motif/plugins/hits/search";
 import { useWorkspace } from "../motif/workspace/use-workspace";
@@ -144,7 +145,10 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const h20Proxy = getH20Proxy(accessToken);
   const semanticSearchProxy = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
 
-  const plugins = useMemo(() => [hitsSearchPlugin(fnCall, semanticSearchProxy), fileImportPlugin(), coreEachPlugin(fnCall)], [fnCall, semanticSearchProxy]);
+  const plugins = useMemo(
+    () => [coreEachPlugin(fnCall), coreInferPlugin(fnCall), fileImportPlugin(), hitsSearchPlugin(fnCall, semanticSearchProxy)],
+    [fnCall, semanticSearchProxy]
+  );
 
   const handleSubmit = useCallback(
     async (newTab: boolean) => {

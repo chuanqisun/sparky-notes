@@ -4,7 +4,7 @@ import type { RuntimePlugin } from "../../lang/runtime";
 
 export function hitsSearchPlugin(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): RuntimePlugin {
   return {
-    operator: "/hits/search",
+    operator: "/search",
     description: "Search HITS for UX insights",
     run: async (_data, operand, context) => {
       context.setStatus("Interpreting...");

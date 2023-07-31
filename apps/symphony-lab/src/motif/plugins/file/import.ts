@@ -3,7 +3,7 @@ import type { RuntimePlugin } from "../../lang/runtime";
 
 export function fileImportPlugin(): RuntimePlugin {
   return {
-    operator: "/file/import",
+    operator: "/import",
     description: "Import a file",
     run: async (_data, _operand, context) => {
       context.setStatus("Open file picker...");

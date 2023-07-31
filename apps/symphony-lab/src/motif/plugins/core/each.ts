@@ -5,7 +5,7 @@ import { parseFunction } from "../../plugin-sdk/parse-function";
 
 export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
   return {
-    operator: "/core/each",
+    operator: "/each",
     description: "Work on one item at a time, with an optional focus on specific fields",
     run: async (data, operand, context) => {
       context.setStatus("Interpreting...");
