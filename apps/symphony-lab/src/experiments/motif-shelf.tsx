@@ -12,6 +12,7 @@ import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
+import { coreCodePlugin } from "../motif/plugins/core/code";
 import { coreEachPlugin } from "../motif/plugins/core/each";
 import { coreInferPlugin } from "../motif/plugins/core/infer";
 import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/core/shelf";
@@ -151,6 +152,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
   const plugins = useMemo(
     () => [
+      coreCodePlugin(fnCall),
       coreEachPlugin(fnCall),
       coreInferPlugin(fnCall),
       coreRenameShelfPlugin(),
@@ -201,8 +203,9 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   );
 
   const handleAbort = useCallback(() => {
+    setStatus(`Aborted ${Date.now()}`);
     console.log("aborted", Date.now());
-  }, []);
+  }, [setStatus]);
 
   useEffect(() => {
     const abortController = new AbortController();
