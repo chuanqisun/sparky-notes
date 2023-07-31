@@ -16,6 +16,7 @@ import { coreCodePlugin } from "../motif/plugins/core/code";
 import { coreEachPlugin } from "../motif/plugins/core/each";
 import { coreInferPlugin } from "../motif/plugins/core/infer";
 import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/core/shelf";
+import { coreSummarizePlugin } from "../motif/plugins/core/summarize";
 import { fileImportPlugin } from "../motif/plugins/file/import";
 import { hitsSearchPlugin } from "../motif/plugins/hits/search";
 import { useWorkspace } from "../motif/workspace/use-workspace";
@@ -157,6 +158,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       coreInferPlugin(fnCall),
       coreRenameShelfPlugin(),
       coreDeleteShelfPlugin(),
+      coreSummarizePlugin(fnCall),
       fileImportPlugin(),
       hitsSearchPlugin(fnCall, semanticSearchProxy),
     ],
