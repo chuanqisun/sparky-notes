@@ -3,6 +3,8 @@ import type { MotifProgram } from "./compiler";
 export interface Runtime {
   setItems: (items: any[]) => void;
   setShelfName: (title: string) => void;
+  getShelfName: () => string;
+  deleteShelf: () => void;
   setStatus: (status: string) => void;
   signal: AbortSignal;
 }

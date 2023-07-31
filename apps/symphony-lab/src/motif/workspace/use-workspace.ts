@@ -32,6 +32,25 @@ export function useWorkspace<T>(initialState: T) {
     });
   };
 
+  /**
+   * Delete the active tab and select the next tab
+   * If no tab left after the deletion, create a new tab
+   */
+  const deleteActiveTab = () => {
+    setAppState((appState) => {
+      const mutableTabs = appState.tabs.slice();
+      mutableTabs.splice(appState.activeTabIndex, 1);
+      const newActiveTabIndex = Math.max(0, Math.min(appState.activeTabIndex, mutableTabs.length - 1));
+      if (mutableTabs.length === 0) {
+        mutableTabs.push({
+          states: [initialState],
+          activeStateIndex: 0,
+        });
+      }
+      return { ...appState, tabs: mutableTabs, activeTabIndex: newActiveTabIndex };
+    });
+  };
+
   const insertAfterActiveTab = (updateFn: (activeTab: Tab<T>) => Tab<T>) => {
     setAppState((appState) => {
       const mutableTabs = appState.tabs.slice();
@@ -114,6 +133,7 @@ export function useWorkspace<T>(initialState: T) {
 
   return {
     appendTab,
+    deleteActiveTab,
     duplicateActiveTab,
     openTab,
     pushState,

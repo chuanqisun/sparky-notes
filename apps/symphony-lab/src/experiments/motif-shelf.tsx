@@ -14,7 +14,7 @@ import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
 import { coreEachPlugin } from "../motif/plugins/core/each";
 import { coreInferPlugin } from "../motif/plugins/core/infer";
-import { coreRenamePlugin } from "../motif/plugins/core/rename";
+import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/core/shelf";
 import { fileImportPlugin } from "../motif/plugins/file/import";
 import { hitsSearchPlugin } from "../motif/plugins/hits/search";
 import { useWorkspace } from "../motif/workspace/use-workspace";
@@ -77,6 +77,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
     duplicateActiveTab,
     openTab,
     appendTab,
+    deleteActiveTab,
     replaceState,
     openPrevState,
     openNextState,
@@ -149,7 +150,14 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const semanticSearchProxy = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
 
   const plugins = useMemo(
-    () => [coreEachPlugin(fnCall), coreInferPlugin(fnCall), coreRenamePlugin(), fileImportPlugin(), hitsSearchPlugin(fnCall, semanticSearchProxy)],
+    () => [
+      coreEachPlugin(fnCall),
+      coreInferPlugin(fnCall),
+      coreRenameShelfPlugin(),
+      coreDeleteShelfPlugin(),
+      fileImportPlugin(),
+      hitsSearchPlugin(fnCall, semanticSearchProxy),
+    ],
     [fnCall, semanticSearchProxy]
   );
 
@@ -158,6 +166,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       console.log("submitted", activeState.source);
 
       if (newTab) duplicateActiveTab();
+      if (!activeState.source) return;
 
       pushState((prev) => ({
         title: prev.title,
@@ -172,6 +181,8 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
         const runtime: Runtime = {
           signal: new AbortController().signal,
           setShelfName: (name) => replaceState((prev) => ({ ...prev, title: name })),
+          getShelfName: () => activeState.title,
+          deleteShelf: () => deleteActiveTab(),
           setItems: (items) => replaceState((prev) => ({ ...prev, data: items })),
           setStatus,
         };
