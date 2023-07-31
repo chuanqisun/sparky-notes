@@ -14,6 +14,7 @@ import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
 import { coreEachPlugin } from "../motif/plugins/core/each";
 import { coreInferPlugin } from "../motif/plugins/core/infer";
+import { coreRenamePlugin } from "../motif/plugins/core/rename";
 import { fileImportPlugin } from "../motif/plugins/file/import";
 import { hitsSearchPlugin } from "../motif/plugins/hits/search";
 import { useWorkspace } from "../motif/workspace/use-workspace";
@@ -61,6 +62,7 @@ const modelIdToTokenLimit = (modelId: string) => {
 };
 
 interface Shelf {
+  title: string;
   source: string;
   data: any[];
 }
@@ -80,6 +82,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
     openNextState,
     pushState,
   } = useWorkspace<Shelf>({
+    title: "New shelf",
     source: "",
     data: [],
   });
@@ -146,7 +149,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
   const semanticSearchProxy = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
 
   const plugins = useMemo(
-    () => [coreEachPlugin(fnCall), coreInferPlugin(fnCall), fileImportPlugin(), hitsSearchPlugin(fnCall, semanticSearchProxy)],
+    () => [coreEachPlugin(fnCall), coreInferPlugin(fnCall), coreRenamePlugin(), fileImportPlugin(), hitsSearchPlugin(fnCall, semanticSearchProxy)],
     [fnCall, semanticSearchProxy]
   );
 
@@ -156,7 +159,8 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
       if (newTab) duplicateActiveTab();
 
-      pushState(() => ({
+      pushState((prev) => ({
+        title: prev.title,
         source: "",
         data: activeState.data,
       }));
@@ -167,6 +171,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
 
         const runtime: Runtime = {
           signal: new AbortController().signal,
+          setShelfName: (name) => replaceState((prev) => ({ ...prev, title: name })),
           setItems: (items) => replaceState((prev) => ({ ...prev, data: items })),
           setStatus,
         };
@@ -216,10 +221,10 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
         {tabs.map((tab, index) => (
           <button key={index} onClick={() => openTab(index)}>
             {tab === activeTab ? "*" : ""}
-            {index}
+            {tab.states[tab.activeStateIndex].title}
           </button>
         ))}
-        <button onClick={() => appendTab({ source: "", data: [] })}>+</button>
+        <button onClick={() => appendTab({ title: "New shelf", source: "", data: [] })}>+</button>
       </div>
       <ChatWidget>
         <div>
