@@ -208,9 +208,9 @@ interface MySpecialType {
   });
 });
 
-function assertEmitter(input: any, expected: string, config?: EmitConfig) {
+function assertEmitter(input: any, expected: string, config?: Partial<EmitConfig>) {
   const jsonTypeNode = parse(input);
-  const declarations = emit(jsonTypeNode, config);
+  const declarations = emit(jsonTypeNode, { rootName: "Root", interfacePrefix: "I", ...config });
 
   try {
     assert.deepEqual(declarations.trim(), expected.trim());

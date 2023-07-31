@@ -1,6 +1,7 @@
 import { getType } from "@h20/json-reflection";
 import type { FnCallProxy } from "../../../openai/chat";
 import type { RuntimePlugin } from "../../lang/runtime";
+import { parseFunction } from "../../plugin-sdk/parse-function";
 
 export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
   return {
@@ -13,17 +14,20 @@ export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
         throw new Error("Expected an array");
       }
 
-      const itemType = getType(data);
-      debugger;
+      const itemType = getType(data, { typeName: "ItemType", scope: "root-item" });
 
       const paramsText = await fnCallProxy(
         [
           {
             role: "system",
             content: `
-Design a mapper function based on the provided instruction for each item. Respond a javascript function with the following signature:
+Design a transform function based on the provided instruction for each item. It will called like this: someArray.map(transform)
 
-function mapper(item: ItemType): Record<string, any>
+Write the transform function in plain javascript with the following signature:
+
+function transform(item: ItemType): Record<string, any>
+
+${itemType}
             `.trim(),
           },
           {
@@ -32,27 +36,40 @@ function mapper(item: ItemType): Record<string, any>
           },
         ],
         {
-          function_call: { name: "write_mapper_fn" },
+          models: ["gpt-4", "gpt-4-32k"],
+          max_tokens: 600,
+          function_call: { name: "write_transform_fn" },
           functions: [
             {
-              name: "write_mapper_fn",
+              name: "write_transform_fn",
               description: "Write a javascript function for Array.prototype.map",
               parameters: {
                 type: "object",
                 properties: {
-                  mapperSourceCode: {
+                  serializedSourceCode: {
                     type: "string",
-                    description: "Javascript source code for the function",
+                    description: "Single-line valid JSON string of the source code",
                   },
                 },
-                required: ["write_mapper_fn"],
+                required: ["write_transform_fn"],
               },
             },
           ],
         }
       );
 
-      context.setItems(data);
+      try {
+        const parsedFunctionCall = JSON.parse(paramsText.arguments);
+        if (!parsedFunctionCall.serializedSourceCode) throw new Error("Function call did not return `serializedSourceCode`");
+        const transformFn = parseFunction(parsedFunctionCall.serializedSourceCode);
+        console.log(`Function parsed: ${transformFn}`);
+        const newData = data.map(transformFn) as any[];
+        // merge with existing data
+        // const merged = newData.map((item, index) => ({ ...data[index], ...item }));
+        context.setItems(newData);
+      } catch (e) {
+        context.setStatus(`Error: ${(e as any).message}`);
+      }
     },
   };
 }

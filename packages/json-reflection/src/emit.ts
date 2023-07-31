@@ -1,10 +1,8 @@
 import { type TypeNode } from "./parse";
 
 export interface EmitConfig {
-  /** @default "Root" */
-  rootName?: string;
-  /** @default "I" */
-  interfacePrefix?: string;
+  rootName: string;
+  interfacePrefix: string;
 }
 
 /**
@@ -16,10 +14,10 @@ export interface EmitConfig {
  * 5. Customize semicolon
  */
 
-export function emit(node: TypeNode, config?: EmitConfig): string {
+export function emit(node: TypeNode, config: EmitConfig): string {
   if (!node.types.size) throw new Error("Root node is missing type");
 
-  const { rootName, interfacePrefix } = { rootName: "Root", interfacePrefix: "I", ...config };
+  const { rootName, interfacePrefix } = config;
   const pathNameGenerator = memoize(getPathNameGenerator(new Set()));
 
   const { declarations } = getIdentifiers([rootName], node, { isRoot: true, interfacePrefix, pathNameGenerator });
