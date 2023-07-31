@@ -1,4 +1,4 @@
-import { getType, sample } from "@h20/json-reflection";
+import { getSample, getType } from "@h20/json-reflection";
 import type { FnCallProxy } from "../../../openai/chat";
 import type { RuntimePlugin } from "../../lang/runtime";
 import { parseFunction } from "../../plugin-sdk/parse-function";
@@ -27,7 +27,7 @@ Serialize the source code as a single-line JSON string with newline and quotes e
           },
           {
             role: "user",
-            content: `Goal or instruction: ${operand}\n\nSample data:\n\n${JSON.stringify(sample(data), null, 2)}`,
+            content: `Goal or instruction: ${operand}\n\nSample data:\n\n${getSample(data)}`,
           },
         ],
         {
