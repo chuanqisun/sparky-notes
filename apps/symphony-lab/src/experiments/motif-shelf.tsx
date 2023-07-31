@@ -246,6 +246,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
         <div>
           <CodeMirror
             value={activeState.source}
+            style={{ display: "grid" }}
             basicSetup={{ lineNumbers: false, autocompletion: true }}
             onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
             maxHeight="200px"
