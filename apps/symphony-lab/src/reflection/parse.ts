@@ -1,19 +1,19 @@
 import { jsonTreeWalk } from "./tree-walk";
 
-export interface JsonTypeNode {
-  children?: Map<string | 0, JsonTypeNode>;
+export interface TypeNode {
+  children?: Map<string | 0, TypeNode>;
   /** `undefined`, `null`, `array`, `object`, `number`, `string`, `boolean` */
   types: Set<string>;
   /** Based on prescence of the key. `undefined` will be considered required too */
   requiredKeys?: Set<string>;
 }
 
-export function getJsonTypeTree(data: any): JsonTypeNode {
-  const missedRevisitKeys = new Map<JsonTypeNode, Set<string>>();
-  const visitedNodes = new Set<JsonTypeNode>();
+export function parse(data: any): TypeNode {
+  const missedRevisitKeys = new Map<TypeNode, Set<string>>();
+  const visitedNodes = new Set<TypeNode>();
 
-  const stack: JsonTypeNode[] = [];
-  let currentNode: JsonTypeNode;
+  const stack: TypeNode[] = [];
+  let currentNode: TypeNode;
 
   // This guarantees that
   // 1. "visitLeaf" events will always be preceded by "openObject" events

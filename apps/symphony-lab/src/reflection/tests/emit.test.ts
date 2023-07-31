@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { getDeclarations } from "../emit-v3";
-import { getJsonTypeTree } from "../get-json-type-tree";
+import { emit } from "../emit-v3";
+import { parse } from "../parse";
 
 assertEmitter(1, `type IRoot = number;`);
 assertEmitter({}, `type IRoot = any;`);
@@ -127,8 +127,8 @@ interface IRootField6 {
 );
 
 function assertEmitter(input: any, expected: string) {
-  const jsonTypeNode = getJsonTypeTree(input);
-  const declarations = getDeclarations(jsonTypeNode);
+  const jsonTypeNode = parse(input);
+  const declarations = emit(jsonTypeNode);
 
   try {
     assert.deepEqual(declarations.trim(), expected.trim());

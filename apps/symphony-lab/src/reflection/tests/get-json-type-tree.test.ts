@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { getJsonTypeTree, type JsonTypeNode } from "../get-json-type-tree";
+import { parse, type TypeNode } from "../parse";
 
 assertTypeTree(undefined, `root: undefined`); // normally, json would not have undefined
 assertTypeTree(null, `root: null`);
@@ -171,7 +171,7 @@ root: array
 );
 
 function assertTypeTree(input: any, expected: string) {
-  const actual = prettyPrintNodeLine(getJsonTypeTree(input)).join("\n");
+  const actual = prettyPrintNodeLine(parse(input)).join("\n");
   try {
     assert.strictEqual(actual, expected.trim());
   } catch (error) {
@@ -185,7 +185,7 @@ ${actual}`);
   }
 }
 
-function prettyPrintNodeLine(node: JsonTypeNode, indent = 2, key: string | 0 = "root"): string[] {
+function prettyPrintNodeLine(node: TypeNode, indent = 2, key: string | 0 = "root"): string[] {
   const selfOutput = [
     `${key}: ${Array.from(node.types).join(", ")}`,
     node.requiredKeys ? `requiredKeys: ${Array.from(node.requiredKeys ?? []).join(", ")}` : "",

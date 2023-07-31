@@ -1,6 +1,6 @@
-import { type JsonTypeNode } from "./get-json-type-tree";
+import { type TypeNode } from "./parse";
 
-export function getDeclarations(node: JsonTypeNode, rootName?: string): string {
+export function emit(node: TypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
   const path = [rootName ?? "Root"];
   const { declarations } = getIdentifiers(path, node, { declarePrimitive: true, inlineObject: true });
@@ -13,7 +13,7 @@ interface GetIdentifiersConfig {
   inlineObject?: boolean;
   pathNameGenerator?: (path: Path) => string;
 }
-function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
+function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
   // identifiers are primitives, arrays, or empty objects: all primitives, {}, [], and array of irreducible types
   const pathNameGenerator = memoize(config?.pathNameGenerator ?? getPathNameGenerator(new Set()));
   const identifiers = [...node.types].filter(isPrimitive);
@@ -100,7 +100,7 @@ interface DeclarationConfig {
   rValue: string;
   isInterface?: boolean;
 }
-function renderDeclaration(config: DeclarationConfig): string {
+export function renderDeclaration(config: DeclarationConfig): string {
   return config.isInterface ? `interface ${config.lValue} ${config.rValue}` : `type ${config.lValue} = ${config.rValue};`;
 }
 
@@ -148,7 +148,7 @@ function getPathNameGenerator(usedNames: Set<string>) {
   };
 }
 
-function pathToName(path: (string | 0)[]) {
+export function pathToName(path: (string | 0)[]) {
   return `I${path.map(indexToItemKey).join("")}`;
 }
 
