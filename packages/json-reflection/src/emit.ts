@@ -9,42 +9,58 @@ export interface EmitConfig {
 
 /**
  * Future improvements:
- * 1. When there is `any` in the union, remove all other types and declarations
- * 2. Deduplicate declarations for different fields
+ * 1. Deduplicate declarations for different fields
+ * 2. Customize {} and [] types
+ * 3. Customize export: none|root|all
+ * 4. Customize type vs interface
+ * 5. Customize semicolon
  */
 
 export function emit(node: TypeNode, config?: EmitConfig): string {
   if (!node.types.size) throw new Error("Root node is missing type");
 
   const { rootName, interfacePrefix } = { rootName: "Root", interfacePrefix: "I", ...config };
-  const { declarations } = getIdentifiers([rootName], node, { declarePrimitive: true, inlineObject: true, interfacePrefix });
+  const pathNameGenerator = memoize(getPathNameGenerator(new Set()));
+
+  const { declarations } = getIdentifiers([rootName], node, { isRoot: true, interfacePrefix, pathNameGenerator });
 
   return declarations.join("\n\n");
 }
 
 type Path = (0 | string)[];
 interface GetIdentifiersConfig {
-  declarePrimitive?: boolean;
-  inlineObject?: boolean;
-  pathNameGenerator?: (path: Path, prefix?: string) => string;
-  rootPrefix?: string;
-  interfacePrefix?: string;
+  isRoot?: boolean;
+  pathNameGenerator: (path: Path, prefix?: string) => string;
+  interfacePrefix: string;
 }
-function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
-  // identifiers are primitives, arrays, or empty objects: all primitives, {}, [], and array of irreducible types
-  const pathNameGenerator = memoize(config?.pathNameGenerator ?? getPathNameGenerator(new Set()));
+
+/**
+ * Get identifiers and dependencies declarations
+ *
+ * A rough grammar (might contain bugs):
+ *
+ * Identifier ::= Primitives | Arrays | EmptyObjects | Unions
+ * Unions: Identifier ("|" Identifier)*
+ * GroupedUnions: "("Unions")"
+ * Primitives ::= "string" | "number" | "boolean" | "null" | "undefined"
+ * Arrays ::= Primitives"[]" | Arrays"[]" | EmptyObject"[]" | GroupedUnions"[]"
+ * EmptyObject ::= "{}" | "[]"
+ */
+function getIdentifiers(path: Path, node: TypeNode, config: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
   const identifiers = [...node.types].filter(isPrimitive);
   const declarations: string[] = [];
   const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string");
   const indexedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "number");
   const hasEmptyArray = node.types.has("array") && !indexedChildren.length;
-  const hasEmptyObject = node.types.has("object") && !keyedChildren.length;
+  const hasObject = node.types.has("object");
+  const hasEmptyObject = hasObject && !keyedChildren.length;
+  const { isRoot, ...childConfig } = config;
 
   const { indexedChildIndentifiers, indexedChildDeclarations } = indexedChildren.reduce(
     (result, item) => {
       const [key, childNode] = item;
       const childPath = [...path, key];
-      const { identifiers, declarations } = getIdentifiers(childPath, childNode, { pathNameGenerator });
+      const { identifiers, declarations } = getIdentifiers(childPath, childNode, childConfig);
 
       result.indexedChildIndentifiers.push(`${groupedUnion(identifiers)}[]`);
       result.indexedChildDeclarations.push(...declarations);
@@ -56,7 +72,10 @@ function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfi
       indexedChildDeclarations: [] as string[],
     }
   );
+
+  if (hasEmptyObject) identifiers.push("Record<string, any>");
   if (hasEmptyArray) identifiers.push("any[]");
+
   identifiers.push(...indexedChildIndentifiers);
   declarations.push(...indexedChildDeclarations);
 
@@ -64,7 +83,7 @@ function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfi
     (result, item) => {
       const [key, childNode] = item;
       const childPath = [...path, key];
-      const { identifiers, declarations } = getIdentifiers(childPath, childNode, { pathNameGenerator });
+      const { identifiers, declarations } = getIdentifiers(childPath, childNode, childConfig);
       result.keyedChildEntries.push([key as string, inlineUnion(identifiers)]);
       result.keyedChildDeclarations.push(...declarations);
 
@@ -77,29 +96,24 @@ function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfi
   );
   declarations.push(...keyedChildDeclarations);
 
-  if (hasEmptyObject || keyedChildEntries.length) {
-    const keyedChildIdentifiers = hasEmptyObject
-      ? "any"
-      : `{\n${keyedChildEntries.map(([k, v]) => `  ${renderKey(k)}${node.requiredKeys?.has(k) ? "" : "?"}: ${v};`).join("\n")}\n}`;
-    if (hasEmptyObject || config?.inlineObject) {
-      identifiers.push(keyedChildIdentifiers);
-    } else {
-      identifiers.push(pathNameGenerator(path, "I"));
-      const declaration = renderDeclaration({
-        lValue: pathNameGenerator(path, "I"),
-        rValue: renderIdentifiers([keyedChildIdentifiers]),
-        isInterface: true,
-      });
+  if (keyedChildEntries.length) {
+    // render objects as identifer + declaration
+    const objectLiteral = `{\n${keyedChildEntries.map(([k, v]) => `  ${renderKey(k)}${node.requiredKeys?.has(k) ? "" : "?"}: ${v};`).join("\n")}\n}`;
 
-      declarations.unshift(declaration);
-    }
-  }
+    const declaration = renderDeclaration({
+      lValue: config.pathNameGenerator(path, config.interfacePrefix),
+      rValue: renderIdentifiers([objectLiteral]),
+      isInterface: true,
+    });
 
-  if (identifiers.length > 0 && config?.declarePrimitive) {
+    identifiers.push(config.pathNameGenerator(path, config.interfacePrefix));
+    declarations.unshift(declaration);
+  } else if (identifiers.length > 0 && isRoot) {
+    // Root needs to collect and render any identifiers from any child level
     // HACK: render interface if and only if identifer is a single object
     const isInterface = identifiers.length === 1 && identifiers[0].startsWith("{");
     const declaration = renderDeclaration({
-      lValue: pathNameGenerator(path, isInterface ? "I" : ""),
+      lValue: config.pathNameGenerator(path, isInterface ? config.interfacePrefix : ""),
       rValue: renderIdentifiers(identifiers),
       isInterface,
     });
@@ -118,7 +132,7 @@ interface DeclarationConfig {
   rValue: string;
   isInterface?: boolean;
 }
-export function renderDeclaration(config: DeclarationConfig): string {
+function renderDeclaration(config: DeclarationConfig): string {
   return config.isInterface ? `interface ${config.lValue} ${config.rValue}` : `type ${config.lValue} = ${config.rValue};`;
 }
 
@@ -166,7 +180,7 @@ function getPathNameGenerator(usedNames: Set<string>) {
   };
 }
 
-export function pathToName(path: (string | 0)[], prefix?: string) {
+function pathToName(path: (string | 0)[], prefix?: string) {
   return `${prefix ?? ""}${path.map(indexToItemKey).join("")}`;
 }
 
@@ -196,7 +210,7 @@ function inlineUnion(items: string[]): string {
 }
 
 /**
- * Wrapper the inner function. Call once and return its result for all subsequent calls until the args have changed
+ * Wrap the inner function. Call once and return its result for all subsequent calls until the args have changed
  */
 function memoize<T extends any[], R>(fn: (...args: T) => R) {
   let lastArgs: T | undefined;

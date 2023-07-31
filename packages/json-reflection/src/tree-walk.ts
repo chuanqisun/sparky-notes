@@ -9,7 +9,7 @@ export interface TreeWalkEvent {
   valueType: string;
 }
 
-export function* jsonTreeWalk(root: any, key: string | number = "root"): Generator<TreeWalkEvent> {
+export function* treeWalk(root: any, key: string | number = "root"): Generator<TreeWalkEvent> {
   const type = typeof root;
   switch (type) {
     case "object":
@@ -18,13 +18,13 @@ export function* jsonTreeWalk(root: any, key: string | number = "root"): Generat
       } else if (Array.isArray(root)) {
         yield { eventType: "openObject", key, value: root, valueType: "array" };
         for (let i = 0; i < root.length; i++) {
-          yield* jsonTreeWalk(root[i], i);
+          yield* treeWalk(root[i], i);
         }
         yield { eventType: "closeObject", key, value: root, valueType: "array" };
       } else {
         yield { eventType: "openObject", key, value: root, valueType: "object" };
         for (const [key, value] of Object.entries(root)) {
-          yield* jsonTreeWalk(value, key);
+          yield* treeWalk(value, key);
         }
         yield { eventType: "closeObject", key, value: root, valueType: "object" };
       }

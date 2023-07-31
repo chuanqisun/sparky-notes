@@ -1,5 +1,5 @@
+import { getType } from "@h20/json-reflection";
 import type { FnCallProxy } from "../../../openai/chat";
-import { getType } from "../../../reflection";
 import type { RuntimePlugin } from "../../lang/runtime";
 
 export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
