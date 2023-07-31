@@ -1,69 +1,21 @@
-import assert from "node:assert";
-import { getJsonTypeTree, type JsonTypeNode } from "./get-json-type-tree";
+import { type JsonTypeNode } from "./get-json-type-tree";
 
-type Path = (0 | string)[];
-assertEmitter(1, `type IRoot = number;`);
-assertEmitter({}, `type IRoot = any;`);
-assertEmitter([], `type IRoot = any[];`);
-assertEmitter([1], `type IRoot = number[];`);
-assertEmitter([1, true, "string"], `type IRoot = (number | boolean | string)[];`);
-
-assertEmitter(
-  { a: 1 },
-  `
-interface IRoot {
-  a: number;
-}`
-);
-
-assertEmitter(
-  { a: { x: 1 } },
-  `
-interface IRoot {
-  a: IRootA;
-}
-
-interface IRootA {
-  x: number;
-}
-`
-);
-assertEmitter(
-  [{ a: [{}, {}, {}] }],
-  `
-type IRoot = IRootItem[];
-
-interface IRootItem {
-  a: any[];
-}
-`
-);
-assertEmitter([[], [], []], `type IRoot = any[][];`);
-assertEmitter(
-  [{ a: 1 }, {}, {}],
-  `
-type IRoot = IRootItem[];
-
-interface IRootItem {
-  a?: number;
-}`
-);
-
-// TODO: escape identifiers
-// TODO: escape type names
-function getDeclarations(node: JsonTypeNode, rootName?: string): string {
+export function getDeclarations(node: JsonTypeNode, rootName?: string): string {
   if (!node.types.size) throw new Error("Root node is missing type");
   const path = [rootName ?? "Root"];
   const { declarations } = getIdentifiers(path, node, { declarePrimitive: true, inlineObject: true });
   return declarations.join("\n\n");
 }
 
+type Path = (0 | string)[];
 interface GetIdentifiersConfig {
   declarePrimitive?: boolean;
   inlineObject?: boolean;
+  pathNameGenerator?: (path: Path) => string;
 }
 function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
   // identifiers are primitives, arrays, or empty objects: all primitives, {}, [], and array of irreducible types
+  const pathNameGenerator = memoize(config?.pathNameGenerator ?? getPathNameGenerator(new Set()));
   const identifiers = [...node.types].filter(isPrimitive);
   const declarations: string[] = [];
   const keyedChildren = [...(node.children?.entries() ?? [])].filter(([key]) => typeof key === "string");
@@ -75,7 +27,7 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
     (result, item) => {
       const [key, childNode] = item;
       const childPath = [...path, key];
-      const { identifiers, declarations } = getIdentifiers(childPath, childNode);
+      const { identifiers, declarations } = getIdentifiers(childPath, childNode, { pathNameGenerator });
 
       result.indexedChildIndentifiers.push(`${groupedUnion(identifiers)}[]`);
       result.indexedChildDeclarations.push(...declarations);
@@ -95,7 +47,7 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
     (result, item) => {
       const [key, childNode] = item;
       const childPath = [...path, key];
-      const { identifiers, declarations } = getIdentifiers(childPath, childNode);
+      const { identifiers, declarations } = getIdentifiers(childPath, childNode, { pathNameGenerator });
       result.keyedChildEntries.push([key as string, inlineUnion(identifiers)]);
       result.keyedChildDeclarations.push(...declarations);
 
@@ -111,13 +63,13 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
   if (hasEmptyObject || keyedChildEntries.length) {
     const keyedChildIdentifiers = hasEmptyObject
       ? "any"
-      : `{\n${keyedChildEntries.map(([k, v]) => `  ${k}${node.requiredKeys?.has(k) ? "" : "?"}: ${v};`).join("\n")}\n}`;
+      : `{\n${keyedChildEntries.map(([k, v]) => `  ${renderKey(k)}${node.requiredKeys?.has(k) ? "" : "?"}: ${v};`).join("\n")}\n}`;
     if (hasEmptyObject || config?.inlineObject) {
       identifiers.push(keyedChildIdentifiers);
     } else {
-      identifiers.push(pathToName(path));
+      identifiers.push(pathNameGenerator(path));
       const declaration = renderDeclaration({
-        lValue: pathToName(path),
+        lValue: pathNameGenerator(path),
         rValue: renderIdentifiers([keyedChildIdentifiers]),
         isInterface: true,
       });
@@ -128,7 +80,7 @@ function getIdentifiers(path: Path, node: JsonTypeNode, config?: GetIdentifiersC
 
   if (identifiers.length > 0 && config?.declarePrimitive) {
     const declaration = renderDeclaration({
-      lValue: pathToName(path),
+      lValue: pathNameGenerator(path),
       rValue: renderIdentifiers(identifiers),
       // HACK: render interface if and only if identifer is a single object
       isInterface: identifiers.length === 1 && identifiers[0].startsWith("{"),
@@ -156,19 +108,61 @@ function renderIdentifiers(types: string[]): string {
   return inlineUnion(types);
 }
 
+function renderKey(key: string): string {
+  if (isJsIdentifier(key)) return key;
+
+  const stringifedKey = JSON.stringify(key);
+  return stringifedKey;
+}
+
+function isJsIdentifier(text: string): boolean {
+  return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(text);
+}
+
+function toAlphaNumericParts(text: string): string[] {
+  const chunks = text
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .split(" ");
+  return chunks;
+}
+
 function isPrimitive(type: string) {
   return type !== "object" && type !== "array";
 }
 
+function getPathNameGenerator(usedNames: Set<string>) {
+  return (path: (string | 0)[]) => {
+    const name = pathToName(path);
+    if (usedNames.has(name)) {
+      let i = 2;
+      while (usedNames.has(`${name}${i}`)) {
+        i++;
+      }
+      usedNames.add(`${name}${i}`);
+      return `${name}${i}`;
+    } else {
+      usedNames.add(name);
+      return name;
+    }
+  };
+}
+
 function pathToName(path: (string | 0)[]) {
-  return `I${path
-    .map(indexToItemKey)
-    .map((key) => capitalizeFirstChar(key))
-    .join("")}`;
+  return `I${path.map(indexToItemKey).join("")}`;
 }
 
 function indexToItemKey(key: string | number): string {
-  return typeof key === "string" ? key : `item`;
+  if (typeof key === "string") {
+    const normalizedKey = toAlphaNumericParts(key)
+      .map((part) => capitalizeFirstChar(part))
+      .join("");
+
+    if (!normalizedKey) return "Field";
+    return normalizedKey;
+  } else {
+    return "Item";
+  }
 }
 
 function capitalizeFirstChar(text: string): any {
@@ -183,30 +177,18 @@ function inlineUnion(items: string[]): string {
   return items.join(" | ");
 }
 
-function escapeIdentifier(key: string): string {
-  const stringifedKey = JSON.stringify(key);
-  const unquotedStringiedKey = stringifedKey.slice(1, -1);
-  const isEscaped = unquotedStringiedKey.length !== key.length || key.length !== key.trim().length;
-
-  return isEscaped ? stringifedKey : key;
-}
-
-function assertEmitter(input: any, expected: string) {
-  const jsonTypeNode = getJsonTypeTree(input);
-  const declarations = getDeclarations(jsonTypeNode);
-
-  try {
-    assert.deepEqual(declarations.trim(), expected.trim());
-  } catch (error) {
-    console.error((error as any).name);
-    console.log(`
-=== Input ===
-${JSON.stringify(input, null, 2)}
-
-=== Expected ===
-${expected.trim()}
-
-=== Actual ===
-${declarations}`);
-  }
+/**
+ * Wrapper the inner function. Call once and return its result for all subsequent calls until the args have changed
+ */
+function memoize<T extends any[], R>(fn: (...args: T) => R) {
+  let lastArgs: T | undefined;
+  let lastResult: R | undefined;
+  return (...args: T): R => {
+    if (lastArgs && args.every((arg, i) => arg === lastArgs![i])) {
+      return lastResult!;
+    }
+    lastArgs = args;
+    lastResult = fn(...args);
+    return lastResult;
+  };
 }
