@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@trpc/client": "^10.25.0",
+    "@uiw/react-codemirror": "^4.21.9",
     "cozo-lib-wasm": "^0.7.2",
     "d3": "^7.8.5",
     "gpt-tokenizer": "^2.1.1",

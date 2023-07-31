@@ -1,13 +1,13 @@
 import { ChatManager, ChatWorker, getOpenAIWorkerProxy } from "@h20/plex-chat";
 import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
+import CodeMirror from "@uiw/react-codemirror";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
 import { useAuthContext } from "../account/auth-context";
 import { useModelSelector } from "../account/model-selector";
-import { AutoResize } from "../form/auto-resize";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
 import { parseProgram } from "../motif/lang/compiler";
@@ -244,13 +244,14 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
       </div>
       <ChatWidget>
         <div>
-          <AutoResize data-resize-textarea-content={activeState.source}>
-            <textarea
-              value={activeState.source}
-              onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
-              onChange={(e) => replaceState((prev) => ({ ...prev, source: e.target.value }))}
-            />
-          </AutoResize>
+          <CodeMirror
+            value={activeState.source}
+            basicSetup={{ lineNumbers: false, autocompletion: true }}
+            onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
+            maxHeight="200px"
+            minHeight="80px"
+            onChange={(e) => replaceState((prev) => ({ ...prev, source: e }))}
+          />
         </div>
       </ChatWidget>
       <StatusDisplay>{status}</StatusDisplay>

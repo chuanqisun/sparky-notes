@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "concurrently npm:dev:*",
+    "dev": "concurrently npm:dev:symphony-lab npm:dev:server",
     "build": "concurrently npm:build:*",
+    "dev-all": "concurrently npm:dev:*",
     "dev:assistant-plugin": "npm run dev -w apps/assistant-plugin",
     "dev:assistant-web": "npm run dev -w apps/assistant-web",
     "dev:server": "npm run dev -w apps/server",
