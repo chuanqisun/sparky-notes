@@ -1,5 +1,5 @@
-import { completeFromList } from "@codemirror/autocomplete";
-import { LRLanguage, LanguageSupport, foldInside, foldNodeProp, indentNodeProp } from "@codemirror/language";
+import { completeFromList, type Completion } from "@codemirror/autocomplete";
+import { foldInside, foldNodeProp, indentNodeProp, LanguageSupport, LRLanguage } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
 import { parser } from "./parser";
 
@@ -28,7 +28,7 @@ export const motifLanguage = LRLanguage.define({
   },
 });
 
-export const motifCompletion = motifLanguage.data.of({
+export const motifBuiltinCompletion = motifLanguage.data.of({
   autocomplete: completeFromList([
     { label: "defun", type: "keyword" },
     { label: "defvar", type: "keyword" },
@@ -39,6 +39,15 @@ export const motifCompletion = motifLanguage.data.of({
   ]),
 });
 
-export function motif() {
-  return new LanguageSupport(motifLanguage, [motifCompletion]);
+export function motifRuntimeCompletion(list: Completion[]) {
+  return motifLanguage.data.of({
+    autocomplete: completeFromList(list),
+  });
+}
+
+export interface MotifOptions {
+  runtimeCompletions: Completion[];
+}
+export function motif(options: MotifOptions) {
+  return new LanguageSupport(motifLanguage, [motifBuiltinCompletion, motifRuntimeCompletion(options.runtimeCompletions)]);
 }

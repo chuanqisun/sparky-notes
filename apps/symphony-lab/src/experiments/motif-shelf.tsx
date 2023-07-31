@@ -166,6 +166,14 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
     [fnCall, semanticSearchProxy]
   );
 
+  const runtimeCompletions = useMemo(() => {
+    return plugins.map((plugin) => ({
+      label: plugin.operator,
+      info: plugin.description,
+      type: "function",
+    }));
+  }, [plugins]);
+
   const handleSubmit = useCallback(
     async (newTab: boolean) => {
       console.log("submitted", activeState.source);
@@ -249,7 +257,11 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
             value={activeState.source}
             style={{ display: "grid" }}
             basicSetup={{ lineNumbers: false, autocompletion: true }}
-            extensions={[motif()]}
+            extensions={[
+              motif({
+                runtimeCompletions,
+              }),
+            ]}
             onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
             maxHeight="200px"
             minHeight="80px"
