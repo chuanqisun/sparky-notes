@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { emit } from "../emit-v3";
+import { emit } from "../emit";
 import { parse } from "../parse";
 
 assertEmitter(1, `type IRoot = number;`);

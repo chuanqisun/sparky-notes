@@ -1,4 +1,4 @@
-import { emit, pathToName, renderDeclaration } from "./emit-v3";
+import { emit, pathToName, renderDeclaration } from "./emit";
 import { parse } from "./parse";
 
 export function getType(input: any, rootName = "Root"): string {
@@ -21,5 +21,3 @@ export function getArrayItemType(input: any[], rootName = "Item"): string {
   const code = emit(itemRoot, rootName);
   return code;
 }
-
-console.log(getArrayItemType([1, 2]));
