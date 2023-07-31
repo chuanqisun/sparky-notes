@@ -1,5 +1,5 @@
 import type { FnCallProxy } from "../../../openai/chat";
-import { jsonArrayToItemTyping } from "../../../reflection/json-reflection";
+import { getType } from "../../../reflection";
 import type { RuntimePlugin } from "../../lang/runtime";
 
 export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
@@ -13,8 +13,8 @@ export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
         throw new Error("Expected an array");
       }
 
-      // TODO, need to make a full reflection to handle inconsistent data shapes
-      const itemType = jsonArrayToItemTyping(data);
+      const itemType = getType(data);
+      debugger;
 
       const paramsText = await fnCallProxy(
         [
