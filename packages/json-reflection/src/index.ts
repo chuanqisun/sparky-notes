@@ -1,9 +1,14 @@
 import { emit } from "./emit";
 import { parse } from "./parse";
+import { sample } from "./sample";
 
 export * from "./emit";
 export * from "./parse";
 export * from "./sample";
+
+export function getSample(input: any): string {
+  return JSON.stringify(sample(input), null, 2);
+}
 
 export interface Options {
   typeName?: string;
