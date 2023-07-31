@@ -1,9 +1,24 @@
 import { type TypeNode } from "./parse";
 
-export function emit(node: TypeNode, rootName?: string): string {
+export interface EmitConfig {
+  /** @default "Root" */
+  rootName?: string;
+  /** @default "I" */
+  interfacePrefix?: string;
+}
+
+/**
+ * Future improvements:
+ * 1. When there is `any` in the union, remove all other types and declarations
+ * 2. Deduplicate declarations for different fields
+ */
+
+export function emit(node: TypeNode, config?: EmitConfig): string {
   if (!node.types.size) throw new Error("Root node is missing type");
-  const path = [rootName ?? "Root"];
-  const { declarations } = getIdentifiers(path, node, { declarePrimitive: true, inlineObject: true });
+
+  const { rootName, interfacePrefix } = { rootName: "Root", interfacePrefix: "I", ...config };
+  const { declarations } = getIdentifiers([rootName], node, { declarePrimitive: true, inlineObject: true, interfacePrefix });
+
   return declarations.join("\n\n");
 }
 
@@ -11,7 +26,9 @@ type Path = (0 | string)[];
 interface GetIdentifiersConfig {
   declarePrimitive?: boolean;
   inlineObject?: boolean;
-  pathNameGenerator?: (path: Path) => string;
+  pathNameGenerator?: (path: Path, prefix?: string) => string;
+  rootPrefix?: string;
+  interfacePrefix?: string;
 }
 function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfig): { identifiers: string[]; declarations: string[] } {
   // identifiers are primitives, arrays, or empty objects: all primitives, {}, [], and array of irreducible types
@@ -67,9 +84,9 @@ function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfi
     if (hasEmptyObject || config?.inlineObject) {
       identifiers.push(keyedChildIdentifiers);
     } else {
-      identifiers.push(pathNameGenerator(path));
+      identifiers.push(pathNameGenerator(path, "I"));
       const declaration = renderDeclaration({
-        lValue: pathNameGenerator(path),
+        lValue: pathNameGenerator(path, "I"),
         rValue: renderIdentifiers([keyedChildIdentifiers]),
         isInterface: true,
       });
@@ -79,11 +96,12 @@ function getIdentifiers(path: Path, node: TypeNode, config?: GetIdentifiersConfi
   }
 
   if (identifiers.length > 0 && config?.declarePrimitive) {
+    // HACK: render interface if and only if identifer is a single object
+    const isInterface = identifiers.length === 1 && identifiers[0].startsWith("{");
     const declaration = renderDeclaration({
-      lValue: pathNameGenerator(path),
+      lValue: pathNameGenerator(path, isInterface ? "I" : ""),
       rValue: renderIdentifiers(identifiers),
-      // HACK: render interface if and only if identifer is a single object
-      isInterface: identifiers.length === 1 && identifiers[0].startsWith("{"),
+      isInterface,
     });
 
     declarations.unshift(declaration);
@@ -132,8 +150,8 @@ function isPrimitive(type: string) {
 }
 
 function getPathNameGenerator(usedNames: Set<string>) {
-  return (path: (string | 0)[]) => {
-    const name = pathToName(path);
+  return (path: (string | 0)[], prefix?: string) => {
+    const name = pathToName(path, prefix);
     if (usedNames.has(name)) {
       let i = 2;
       while (usedNames.has(`${name}${i}`)) {
@@ -148,8 +166,8 @@ function getPathNameGenerator(usedNames: Set<string>) {
   };
 }
 
-export function pathToName(path: (string | 0)[]) {
-  return `I${path.map(indexToItemKey).join("")}`;
+export function pathToName(path: (string | 0)[], prefix?: string) {
+  return `${prefix ?? ""}${path.map(indexToItemKey).join("")}`;
 }
 
 function indexToItemKey(key: string | number): string {

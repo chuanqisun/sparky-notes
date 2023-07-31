@@ -2,11 +2,11 @@ import assert from "node:assert";
 import { emit } from "../emit";
 import { parse } from "../parse";
 
-assertEmitter(1, `type IRoot = number;`);
-assertEmitter({}, `type IRoot = any;`);
-assertEmitter([], `type IRoot = any[];`);
-assertEmitter([1], `type IRoot = number[];`);
-assertEmitter([1, true, "string"], `type IRoot = (number | boolean | string)[];`);
+assertEmitter(1, `type Root = number;`);
+assertEmitter({}, `type Root = any;`);
+assertEmitter([], `type Root = any[];`);
+assertEmitter([1], `type Root = number[];`);
+assertEmitter([1, true, "string"], `type Root = (number | boolean | string)[];`);
 
 assertEmitter(
   { a: 1 },
@@ -31,18 +31,18 @@ interface IRootA {
 assertEmitter(
   [{ a: [{}, {}, {}] }],
   `
-type IRoot = IRootItem[];
+type Root = IRootItem[];
 
 interface IRootItem {
   a: any[];
 }
 `
 );
-assertEmitter([[], [], []], `type IRoot = any[][];`);
+assertEmitter([[], [], []], `type Root = any[][];`);
 assertEmitter(
   [{ a: 1 }, {}, {}],
   `
-type IRoot = IRootItem[];
+type Root = IRootItem[];
 
 interface IRootItem {
   a?: number;
