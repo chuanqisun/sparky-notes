@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "concurrently npm:dev:symphony-lab npm:dev:server",
+    "dev": "concurrently npm:dev:*",
+    "dev-shelf": "concurrently npm:dev:symphony-lab npm:dev:server",
+    "dev-figma": "concurrently npm:dev:assistant-plugin npm:dev:assistant-web npm:dev:server",
     "build": "concurrently npm:build:*",
-    "dev-all": "concurrently npm:dev:*",
     "dev:assistant-plugin": "npm run dev -w apps/assistant-plugin",
     "dev:assistant-web": "npm run dev -w apps/assistant-web",
     "dev:server": "npm run dev -w apps/server",

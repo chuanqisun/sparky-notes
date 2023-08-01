@@ -111,6 +111,7 @@ export function getSearchPayloadV2(config: { query: string; count: boolean; top:
       "Id",
       "EntityType",
       "Title",
+      "Outline",
       "UpdatedOn",
       "Children/Id",
       "Children/EntityType",

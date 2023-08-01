@@ -1,7 +1,7 @@
 import { getUniqueFilter } from "../../utils/get-unique-filter";
 import { EntityType } from "../hits/entity";
 import { getHighlightHtml, getHighlightWords } from "../hits/highlight";
-import type { SearchResultDocument, SearchResultItem } from "../hits/hits";
+import type { SearchResultDocument, SearchResultItem, SearchResultOutline, SearchResultOutlineChild } from "../hits/hits";
 
 export interface HitsDisplayNode {
   children: HitsDisplayChildNode[];
@@ -16,6 +16,7 @@ export interface HitsDisplayNode {
   titleHtml: string;
   researchersHtml: string;
   updatedOn: Date;
+  showAllChildren?: boolean;
 }
 export interface HitsDisplayChildNode {
   entityType: number;
@@ -27,7 +28,11 @@ export interface HitsDisplayChildNode {
   titleHtml: string;
 }
 
-export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNode {
+export interface DisplayOptions {
+  renderAllChildren?: boolean;
+}
+
+export function formatDisplayNode(searchResult: SearchResultItem, options?: DisplayOptions): HitsDisplayNode {
   const { document, highlights } = searchResult;
 
   const idHighlightWords = [...new Set([...(highlights?.id ?? []), ...(highlights?.["children/Id"] ?? [])]?.flatMap(extractBoldElements))];
@@ -40,6 +45,8 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
   const researchersHtml = getHighlightHtml(researcherWords, ["<mark>", "</mark>"], researchersString) ?? escapeHtml(researchersString);
   const idHtml = getHighlightHtml(idHighlightWords, ["<mark>", "</mark>"], document.id) ?? document.id;
 
+  const childrenIds = options?.renderAllChildren ? outlineChildrenIds(document.outline) : [];
+
   return {
     title,
     titleHtml: getHighlightHtml(titleHighlightWords, ["<mark>", "</mark>"], document.title) ?? escapeHtml(title),
@@ -49,9 +56,11 @@ export function formatDisplayNode(searchResult: SearchResultItem): HitsDisplayNo
     updatedOn: getUpdatedOn(document),
     researchers,
     researchersHtml,
+    showAllChildren: options?.renderAllChildren,
     children: searchResult.document.children
       .filter(isClaimType)
       .filter((claim) => Boolean(claim.title))
+      .sort((a, b) => childrenIds.indexOf(a.id) - childrenIds.indexOf(b.id))
       .map((claim) => {
         const childTitle = claim.title?.trim()?.length ? claim.title.trim() : "Untitled";
         const childTitleHtml = getHighlightHtml(childTitleHighlightWords, ["<mark>", "</mark>"], childTitle) ?? escapeHtml(childTitle);
@@ -95,4 +104,22 @@ function withDisplayName(namedEntity: { id: number; name: string }) {
     id: namedEntity.id,
     displayName: namedEntity.name,
   };
+}
+
+function outlineChildrenIds(outline: string): string[] {
+  try {
+    const children = (JSON.parse(outline) as SearchResultOutline).children;
+    console.log("Outline", children);
+    return children
+      .filter((c) => c.id)
+      .flatMap(getPreorderTraversalIds)
+      .map((id) => id.toString());
+  } catch (e) {
+    console.error(`Error parsing outline`, e);
+    return [];
+  }
+}
+
+function getPreorderTraversalIds(node: SearchResultOutlineChild): number[] {
+  return [node.id, ...(node.children || []).flatMap(getPreorderTraversalIds)];
 }

@@ -46,7 +46,7 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
       </li>
       {isParent &&
         node.children.map((childNode) =>
-          childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onClick={onClick} /> : null
+          node.showAllChildren || childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onClick={onClick} /> : null
         )}
     </>
   );

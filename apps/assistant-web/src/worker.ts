@@ -43,7 +43,9 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
   const proxy = getAuthenticatedProxy(req.accessToken);
 
   const response = await proxy(getSearchPayloadV2({ query: req.query, count: false, top: req.top, skip: req.skip, filter: {} }));
-  const nodes = response.results.map(formatDisplayNode);
+
+  // if user is directly matching the id of a report, we want render its children unconditionally
+  const nodes = response.results.map((result) => formatDisplayNode(result, { renderAllChildren: result.document.id === req.query }));
 
   return {
     nodes,
@@ -58,7 +60,7 @@ const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
   const response = await proxy(
     getSearchPayloadV2({ query: "*", count: false, top: req.top, skip: req.skip, filter: {}, orderBy: getOrderBy(getOrderByPublishDateClause()) })
   );
-  const nodes = response.results.map(formatDisplayNode);
+  const nodes = response.results.map((result) => formatDisplayNode(result));
 
   return {
     nodes: nodes,

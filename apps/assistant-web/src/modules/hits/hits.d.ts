@@ -60,9 +60,19 @@ export interface SearchResultDocument {
   };
   children: SearchResultChild[];
   /**
-   * stringified version of {@link Outline}
+   * stringified version of {@link SearchResultOutline}
    */
   outline: string;
+}
+
+export interface SearchResultOutline {
+  children: SearchResultOutlineChild[];
+}
+
+export interface SearchResultOutlineChild {
+  id: number;
+  entityType: number;
+  children: SearchResultOutlineChild[];
 }
 
 export interface SearchResultChild {
