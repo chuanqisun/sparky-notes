@@ -15,6 +15,7 @@ import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
 import { coreCodePlugin } from "../motif/plugins/core/code";
 import { coreEachPlugin } from "../motif/plugins/core/each";
+import { coreFilterPlugin } from "../motif/plugins/core/filter";
 import { coreInferPlugin } from "../motif/plugins/core/infer";
 import { coreInferManyPlugin } from "../motif/plugins/core/inferMany";
 import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/core/shelf";
@@ -157,6 +158,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
     () => [
       coreCodePlugin(fnCall),
       coreEachPlugin(fnCall),
+      coreFilterPlugin(fnCall),
       coreInferPlugin(fnCall),
       coreInferManyPlugin(fnCall),
       coreRenameShelfPlugin(),
