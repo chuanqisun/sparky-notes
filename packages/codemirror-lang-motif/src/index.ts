@@ -1,20 +1,14 @@
 import { completeFromList, type Completion } from "@codemirror/autocomplete";
-import { foldInside, foldNodeProp, indentNodeProp, LanguageSupport, LRLanguage } from "@codemirror/language";
+import { LanguageSupport, LRLanguage } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
 import { parser } from "./parser";
 
 const parserWithMetadata = parser.configure({
   props: [
     styleTags({
-      Identifier: t.keyword,
-      String: t.string,
+      "Path/Segment": t.keyword,
+      Char: t.string,
       Number: t.number,
-    }),
-    indentNodeProp.add({
-      Application: (context) => context.column(context.node.from) + context.unit,
-    }),
-    foldNodeProp.add({
-      Application: foldInside,
     }),
   ],
 });
