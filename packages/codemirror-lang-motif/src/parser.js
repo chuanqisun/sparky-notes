@@ -2,15 +2,15 @@
 import {LRParser} from "@lezer/lr"
 export const parser = LRParser.deserialize({
   version: 14,
-  states: "hOVQPOOOOQO'#Ca'#CaQVQPOOOOQO-E6_-E6_",
-  stateData: "b~OWOS~OQPORPOSPO~O",
-  goto: "]UPPPPPVQQORRQ",
-  nodeNames: "⚠ File Identifier Number String",
-  maxTerm: 8,
+  states: "#SOQOPOOOVOPO'#C_O[OPO'#C^OOOO'#Ce'#CeQQOPOOOaOPO,58yOiOQO,58xOOOO-E6c-E6cOzOPO'#CfO!POPO1G.eOOOO'#Cb'#CbOOOO'#Cg'#CgO!XOQO1G.dOOOO,59Q,59QOOOO-E6d-E6dOOOO-E6e-E6e",
+  stateData: "!j~O]PO~OSTO~OTUO~O]WOTRa~OTYOVYOWYO[Qa]Qa~OS]O~O]WOTRi~OTYOVYOWYO[Qi]Qi~O",
+  goto: "{[PP]aPPePPiouTROSTQOSTZU[QSORVSQXTR^XQ[UR_[",
+  nodeNames: "⚠ File Statement Path Segment Space Text Number Char",
+  maxTerm: 13,
   skippedNodes: [0],
-  repeatNodeCount: 1,
-  tokenData: "$Q~R]X^zpqzrs!o!P!Q#^!Q![#x#y#zz$f$gz#BY#BZz$IS$I_z$I|$JOz$JT$JUz$KV$KWz&FU&FVz~!PYW~X^zpqz#y#zz$f$gz#BY#BZz$IS$I_z$I|$JOz$JT$JUz$KV$KWz&FU&FVz~!rTOr!ors#Rs;'S!o;'S;=`#W<%lO!o~#WOS~~#ZP;=`<%l!o~#aR!c!}#j#R#S#j#T#o#j~#oRQ~!c!}#j#R#S#j#T#o#j~#}PR~!Q![#x",
-  tokenizers: [0],
+  repeatNodeCount: 3,
+  tokenData: "#r~R_X^!Qpq!Q!P!Q!u!Q![!z!c!}#S#R#S#d#T#o#S#y#z!Q$f$g!Q#BY#BZ!Q$IS$I_!Q$I|$JO!Q$JT$JU!Q$KV$KW!Q&FU&FV!Q~!VYT~X^!Qpq!Q#y#z!Q$f$g!Q#BY#BZ!Q$IS$I_!Q$I|$JO!Q$JT$JU!Q$KV$KW!Q&FU&FV!Q~!zO]~~#PPV~!Q![!zR#ZRWQSP!c!}#S#R#S#d#T#o#SP#iRSP!c!}#d#R#S#d#T#o#d",
+  tokenizers: [0, 1],
   topRules: {"File":[0,1]},
   tokenPrec: 0
 })
