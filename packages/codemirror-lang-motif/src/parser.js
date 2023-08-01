@@ -2,9 +2,9 @@
 import {LRParser} from "@lezer/lr"
 export const parser = LRParser.deserialize({
   version: 14,
-  states: "#SOQOPOOOVOPO'#C_O[OPO'#C^OOOO'#Cg'#CgQQOPOOOaOPO,58yOiOQO,58xOOOO-E6e-E6eO}OPO'#ChO!SOPO1G.eOOOO'#Cc'#CcOOOO'#Ci'#CiO![OQO1G.dOOOO,59S,59SOOOO-E6f-E6fOOOO-E6g-E6g",
-  stateData: "!s~OSPO~OTTO~OUUO~OSWOURa~OUYOWYOXYOYYOSQa^Qa~OT]O~OSWOURi~OUYOWYOXYOYYOSQi^Qi~OUY~",
-  goto: "}^PP_cPPPgPPPkqwTROSTQOSTZU[QSORVSQXTR^XQ[UR_[",
+  states: "!vOQOPOOOVOPO'#ChO[OPO'#C_OdOPO'#C^OOOO'#Cg'#CgQQOPOOOOOO,59S,59SOOOO-E6f-E6fOiOQO,58xOOOO-E6e-E6eOOOO'#Cc'#CcOOOO'#Ci'#CiO}OQO1G.dOOOO-E6g-E6g",
+  stateData: "!f~OSPO~OTUO~OSPOURX~OUWO~OUYOWYOXYOYYOSQa^Qa~OUYOWYOXYOYYOSQi^Qi~OUY~",
+  goto: "!O^PP_cPPPgPPPkqxTSOTTROTTZW[QTORXTSQOTRVQQ[WR][",
   nodeNames: "⚠ File Statement Path Divider Segment Space Text Number Char Symbol",
   maxTerm: 14,
   skippedNodes: [0],
@@ -12,5 +12,5 @@ export const parser = LRParser.deserialize({
   tokenData: "&p~RpOX#VX^#w^p#Vpq#wq!P#V!P!Q%s!Q![%x![!c#V!c!}&Q!}#R#V#R#S&b#S#T#V#T#o&Q#o#y#V#y#z#w#z$f#V$f$g#w$g#BY#V#BY#BZ#w#BZ$IS#V$IS$I_#w$I_$I|#V$I|$JO#w$JO$JT#V$JT$JU#w$JU$KV#V$KV$KW#w$KW&FU#V&FU&FV#w&FV;'S#V;'S;=`#q<%lO#V~#[VY~O!P#V![!c#V!}#R#V#S#T#V#o;'S#V;'S;=`#q<%lO#V~#tP;=`<%l#V~$OkU~Y~OX#VX^#w^p#Vpq#wq!P#V![!c#V!}#R#V#S#T#V#o#y#V#y#z#w#z$f#V$f$g#w$g#BY#V#BY#BZ#w#BZ$IS#V$IS$I_#w$I_$I|#V$I|$JO#w$JO$JT#V$JT$JU#w$JU$KV#V$KV$KW#w$KW&FU#V&FU&FV#w&FV;'S#V;'S;=`#q<%lO#V~%xOS~~%}PW~!Q![%xR&XRXQTP!c!}&Q#R#S&b#T#o&QP&gRTP!c!}&b#R#S&b#T#o&b",
   tokenizers: [0, 1],
   topRules: {"File":[0,1]},
-  tokenPrec: 78
+  tokenPrec: 65
 })
