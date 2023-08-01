@@ -3,8 +3,10 @@ export const
   File = 1,
   Statement = 2,
   Path = 3,
-  Segment = 4,
-  Space = 5,
-  Text = 6,
-  Number = 7,
-  Char = 8
+  Divider = 4,
+  Segment = 5,
+  Space = 6,
+  Text = 7,
+  Number = 8,
+  Char = 9,
+  Symbol = 10

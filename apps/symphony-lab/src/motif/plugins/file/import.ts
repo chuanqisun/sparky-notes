@@ -4,7 +4,7 @@ import type { RuntimePlugin } from "../../lang/runtime";
 export function fileImportPlugin(): RuntimePlugin {
   return {
     operator: "/import",
-    description: "Import a file",
+    description: "Import a file with one of the supported formats: json, xlsx",
     run: async (_data, _operand, context) => {
       context.setStatus("Open file picker...");
 

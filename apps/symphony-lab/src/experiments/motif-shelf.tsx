@@ -256,7 +256,7 @@ export const MotifShelf: React.FC<MotifShelfProps> = () => {
           <CodeMirror
             value={activeState.source}
             style={{ display: "grid" }}
-            basicSetup={{ lineNumbers: false, autocompletion: true }}
+            basicSetup={{ lineNumbers: false, autocompletion: true, foldGutter: false, bracketMatching: false, closeBrackets: false }}
             extensions={[
               motif({
                 runtimeCompletions,

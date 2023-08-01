@@ -5,16 +5,19 @@ Statement {
 }
 
 Path {
-  "/" Segment ("/" Segment)*
+  Divider Segment (Divider Segment)*
 }
 
 Text {
-  Space | Number | Char
+  Space | Number | Char | Symbol
 }
 
 @tokens {
   Space { @whitespace+ }
+  Divider { "/" }
   Segment { $[A-Za-z_]+ }
   Number { $[0-9]+ }
   Char { @asciiLetter+ }
+  Symbol { ![0-9A-Za-z_/]+ }
+  @precedence { Space, Symbol }
 }

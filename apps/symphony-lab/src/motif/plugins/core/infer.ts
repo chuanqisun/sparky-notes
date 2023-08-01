@@ -64,7 +64,7 @@ export function coreInferPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
               return "";
             })
             .finally(() => {
-              context.setStatus(`Infering... (${progress.success + progress.error}/${progress.total}, ${progress.error} errors)`);
+              context.setStatus(`Inferring... (${progress.success + progress.error}/${progress.total}, ${progress.error} errors)`);
             });
         };
       });
