@@ -6,11 +6,9 @@ import { parser } from "./parser";
 const parserWithMetadata = parser.configure({
   props: [
     styleTags({
-      Identifier: t.variableName,
-      Boolean: t.bool,
+      Identifier: t.keyword,
       String: t.string,
-      LineComment: t.lineComment,
-      "( )": t.paren,
+      Number: t.number,
     }),
     indentNodeProp.add({
       Application: (context) => context.column(context.node.from) + context.unit,
@@ -23,20 +21,11 @@ const parserWithMetadata = parser.configure({
 
 export const motifLanguage = LRLanguage.define({
   parser: parserWithMetadata,
-  languageData: {
-    commentTokens: { line: ";" },
-  },
+  languageData: {},
 });
 
 export const motifBuiltinCompletion = motifLanguage.data.of({
-  autocomplete: completeFromList([
-    { label: "defun", type: "keyword" },
-    { label: "defvar", type: "keyword" },
-    { label: "let", type: "keyword" },
-    { label: "cons", type: "function" },
-    { label: "car", type: "function" },
-    { label: "cdr", type: "function" },
-  ]),
+  autocomplete: completeFromList([]),
 });
 
 export function motifRuntimeCompletion(list: Completion[]) {
