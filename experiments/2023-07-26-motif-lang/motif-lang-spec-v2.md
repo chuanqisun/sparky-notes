@@ -13,6 +13,7 @@ Modular Object Transform and Inference Formula
   - Inserting tabs is easy, maintaining tabs on multiple rows is hard
 - Inspirations
   - Literate programming
+  - Smalltalk: dynamic function argument encapsulated as object
   - Haskell
   - TOML
   - Lisp
