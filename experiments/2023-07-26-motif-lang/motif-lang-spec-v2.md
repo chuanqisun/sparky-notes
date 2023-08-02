@@ -12,6 +12,7 @@ Modular Object Transform and Inference Formula
   - Whitespace appear frequently in natrual language
   - Inserting tabs is easy, maintaining tabs on multiple rows is hard
 - Inspirations
+  - Literate programming
   - Haskell
   - TOML
   - Lisp
@@ -20,6 +21,7 @@ Modular Object Transform and Inference Formula
 
 ## Ideas for v2
 
+- Use literate blocks for goal declaration
 - Use `!<identifier>` for directives
 - Use `$(<shelf>)` for variables
 - Use `@<identifier>` for functions
