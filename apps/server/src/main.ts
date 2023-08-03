@@ -14,7 +14,9 @@ import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { chat } from "./modules/openai/chat";
 import { completions } from "./modules/openai/completion";
+import { getGpt35ProdSpecs } from "./modules/openai/default-spects";
 import { embedding } from "./modules/openai/embedding";
+import { plexChat } from "./modules/openai/plex-chat";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
 import { webCrawl } from "./modules/web/crawl";
 import { webSearch } from "./modules/web/search";
@@ -27,7 +29,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/openai/plexchat", [validateHitsToken]);
+app.post("/openai/plexchat", [validateHitsToken, plexChat({ endpoints: [{ endpoint: "", key: "", ...getGpt35ProdSpecs() }] })]);
 app.post("/openai/completions", [
   rateLimit(120),
   validateHitsToken,
