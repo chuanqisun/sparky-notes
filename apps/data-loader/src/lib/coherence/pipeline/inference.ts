@@ -1,4 +1,5 @@
-import type { ChatMessage, SimpleChatProxy } from "../../azure/chat";
+import type { ChatMessage } from "@h20/plex-chat";
+import type { SimpleChatProxy } from "../../azure/chat";
 import { responseToList } from "../../hits/format";
 
 import { arrayToBulletList } from "../../hits/format";

@@ -1,4 +1,5 @@
-import { ChatManager, ChatWorker, getOpenAIJsonProxy, type ChatInput } from "@h20/plex-chat";
+import { ChatManager, ChatWorker, getOpenAIWorkerProxy, type ChatInput } from "@h20/plex-chat";
+import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
 import { assert } from "console";
 import { appendFile, mkdir, readFile, readdir, writeFile } from "fs/promises";
@@ -31,35 +32,45 @@ export async function analyzeDocument(dir: string, outDir: string) {
       endpoint: process.env.OPENAI_CHAT_ENDPOINT!,
       model: "gpt-35-turbo",
       contextWindow: 8_192,
+      rpm: 720,
       tpm: 120_000,
+      timeout: getTimeoutFunction(3_000, 25),
     },
     {
       apiKey: process.env.OPENAI_DEV_API_KEY!,
       endpoint: process.env.OPENAI_CHAT_ENDPOINT_V35!,
       model: "gpt-35-turbo",
       contextWindow: 8_192,
+      rpm: 720,
       tpm: 120_000,
+      timeout: getTimeoutFunction(3_000, 25),
     },
     {
       apiKey: process.env.OPENAI_DEV_API_KEY!,
       endpoint: process.env.OPENAI_CHAT_ENDPOINT_V35_16K!,
       model: "gpt-35-turbo-16k",
       contextWindow: 16_384,
+      rpm: 522,
       tpm: 87_000,
+      timeout: getTimeoutFunction(3_000, 25),
     },
     {
       apiKey: process.env.OPENAI_DEV_API_KEY!,
       endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!,
       model: "gpt-4",
       contextWindow: 8_192,
+      rpm: 60,
       tpm: 10_000,
+      timeout: getTimeoutFunction(5_000, 30),
     },
     {
       apiKey: process.env.OPENAI_DEV_API_KEY!,
       endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!,
       model: "gpt-4-32k",
       contextWindow: 32_768,
+      rpm: 180,
       tpm: 30_000,
+      timeout: getTimeoutFunction(5_000, 30),
     },
   ];
   assert(
@@ -79,10 +90,12 @@ export async function analyzeDocument(dir: string, outDir: string) {
   const workers: ChatWorker[] = endpoints.map(
     (endpoint) =>
       new ChatWorker({
-        proxy: getOpenAIJsonProxy({
+        proxy: getOpenAIWorkerProxy({
           apiKey: endpoint.apiKey,
           endpoint: endpoint.endpoint,
         }),
+        requestsPerMinute: endpoint.rpm,
+        timeout: endpoint.timeout,
         contextWindow: endpoint.contextWindow,
         models: [endpoint.model],
         concurrency: 10,
