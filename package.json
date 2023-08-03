@@ -36,7 +36,7 @@
   },
   "homepage": "https://github.com/hits-open/hits-assistant-for-figma#readme",
   "workspaces": [
-    "apps/*",
+    "apps/**/*",
     "packages/*"
   ],
   "devDependencies": {
