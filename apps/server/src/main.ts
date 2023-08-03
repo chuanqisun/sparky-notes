@@ -27,6 +27,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+app.post("/openai/plexchat", [validateHitsToken]);
 app.post("/openai/completions", [
   rateLimit(120),
   validateHitsToken,
