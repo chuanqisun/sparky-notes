@@ -1,4 +1,3 @@
-import { motif } from "@h20/codemirror-lang-motif";
 import { ChatManager, ChatWorker, getOpenAIWorkerProxy } from "@h20/plex-chat";
 import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
@@ -11,6 +10,7 @@ import { useAuthContext } from "../account/auth-context";
 import { useModelSelector } from "../account/model-selector";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";
+import { motif } from "../motif/codemirror";
 import { parseProgram } from "../motif/lang/compiler";
 import { run, type Runtime } from "../motif/lang/runtime";
 import { coreCodePlugin } from "../motif/plugins/core/code";

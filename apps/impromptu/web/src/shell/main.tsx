@@ -1,6 +1,7 @@
 import { proxyToFigma } from "@h20/figma-relay";
 import { MessageToFigma, MessageToWeb } from "@impromptu/types";
-import { useMemo } from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { useCallback, useMemo, useState } from "react";
 import { styled } from "styled-components";
 import { useAuthContext } from "../account/use-auth-context";
 
@@ -8,12 +9,33 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   const { isConnected, signOut, signIn } = useAuthContext();
   const proxy = useMemo(() => proxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID), []);
 
+  // code editor
+  const [editorState, setEditorState] = useState({ source: "" });
+
+  const handleSubmit = useCallback(
+    (shiftKey: boolean) => {
+      proxy.notify({ createStep: { source: editorState.source, shiftKey } });
+      setEditorState((prev) => ({ ...prev, source: "" }));
+    },
+    [proxy]
+  );
+
   return (
     <StyledMain>
       {isConnected ? (
         <fieldset>
           <legend>Builder</legend>
-          <button onClick={() => proxy.notify({ createStep: {} })}>Create step</button>
+          <CodeMirror
+            value={editorState.source}
+            style={{ display: "grid" }}
+            basicSetup={{ lineNumbers: false, autocompletion: true, foldGutter: false, bracketMatching: false, closeBrackets: false }}
+            extensions={[]}
+            onKeyDown={(e) => (e.ctrlKey && e.key === "Enter" ? handleSubmit(e.shiftKey) : null)}
+            maxHeight="200px"
+            minHeight="80px"
+            onChange={(e) => setEditorState((prev) => ({ ...prev, source: e }))}
+          />
+          <button onClick={() => proxy.notify({ createStep: {} })}>Submit</button>
         </fieldset>
       ) : null}
       <fieldset>

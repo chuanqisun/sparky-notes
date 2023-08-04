@@ -1,5 +1,5 @@
 {
-  "name": "@h20/codemirror-lang-motif",
+  "name": "@h20/motif-lang",
   "description": "CodeMirror language support package for motif",
   "version": "0.1.0",
   "main": "src/index.ts",
@@ -12,6 +12,6 @@
     "@lezer/lr": "^1.0.0"
   },
   "scripts": {
-    "generate": "lezer-generator src/motif.grammar -o src/parser.js"
+    "generate": "lezer-generator src/codemirror/motif.grammar -o src/codemirror/parser.js"
   }
 }
