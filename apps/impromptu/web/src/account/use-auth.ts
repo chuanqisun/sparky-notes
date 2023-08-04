@@ -37,7 +37,7 @@ export function useAuth() {
     refreshToken();
 
     return () => clearInterval(interval);
-  }, [hitsConfig.value.email, hitsConfig.value.idToken, hitsConfig.value.userClientId, timedToken]);
+  }, [hitsConfig.value.idToken]);
 
   const signIn = useCallback(() => {
     setIsConnected(undefined);
@@ -45,7 +45,7 @@ export function useAuth() {
       hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
       location.reload();
     });
-  }, [hitsConfig]);
+  }, []);
 
   const signOut = useCallback(() => {
     localStorage.clear();
@@ -53,7 +53,7 @@ export function useAuth() {
     signOutRemote({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId }).then(() => {
       hitsConfig.reset();
     });
-  }, [hitsConfig]);
+  }, [hitsConfig.value]);
 
   return {
     accessToken: timedToken.value.token,
