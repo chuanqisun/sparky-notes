@@ -20,6 +20,7 @@ import { plexChat } from "./modules/openai/plex-chat";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
 import { webCrawl } from "./modules/web/crawl";
 import { webSearch } from "./modules/web/search";
+import { withGracefulShutdown } from "./utils/graceful-shutdown";
 
 dotenv.config();
 
@@ -87,5 +88,8 @@ app.use("/hits/search/claims", [validateHitsToken, hitsUATSearch("/indexes/hits-
 app.use(logRoute);
 app.use(logError);
 
-app.listen(port);
+const server = app.listen(port);
+
 console.log(`[auth-server] Listening at port ${port}`);
+
+withGracefulShutdown(server);

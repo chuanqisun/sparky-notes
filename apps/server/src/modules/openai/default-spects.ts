@@ -3,7 +3,7 @@ import type { PlexChatEndpoint } from "./plex-chat";
 export type Specs = Omit<PlexChatEndpoint, "endpoint" | "key">;
 export function getGpt35ProdSpecs(override?: Partial<PlexChatEndpoint>): Specs {
   return {
-    models: ["gpt-3.5-turbo"],
+    models: ["gpt-3.5-turbo-textonly"],
     rpm: 720,
     tpm: 120_000,
     minTimeoutMs: 3_000,
@@ -17,7 +17,7 @@ export function getGpt35ProdSpecs(override?: Partial<PlexChatEndpoint>): Specs {
 
 export function getGpt35DevSpecs(override?: Partial<PlexChatEndpoint>): Specs {
   return {
-    models: ["gpt-3.5-turbo"],
+    models: ["gpt-3.5-turbo", "gpt-3.5-turbo-textonly"],
     rpm: 720,
     tpm: 120_000,
     minTimeoutMs: 3_000,

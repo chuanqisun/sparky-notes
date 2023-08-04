@@ -24,7 +24,7 @@ export interface PlexChatEndpoint {
   fnCall?: boolean;
 }
 
-export type PlexChatModels = "gpt-3.5-turbo-textonly" | "gpt-3.5-turbo-16k-textonly" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "gpt-4" | "gpt-4-32k";
+export type PlexChatModels = "gpt-3.5-turbo-textonly" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "gpt-4" | "gpt-4-32k";
 
 export interface PlexChatInput extends ChatInput {
   models: PlexChatModels[];
