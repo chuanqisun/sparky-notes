@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export function setJson(key: string, value: any) {
   localStorage.setItem(key, JSON.stringify(value));
 }
