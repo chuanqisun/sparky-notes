@@ -4,12 +4,14 @@ import type { Socket } from "net";
 // Ref: https://stackoverflow.com/questions/43003870/how-do-i-shut-down-my-express-server-gracefully-when-its-process-is-killed
 
 export function withGracefulShutdown(server: Server) {
-  process.on("SIGTERM", shutDown);
-  process.on("SIGINT", shutDown);
-
+  const shutdownOnce = memoize(() => shutDown());
   let connections: Socket[] = [];
   const logConnectionCountChange = memoize((count: number) => console.log(`Connection count changed: ${count}`));
-  setInterval(() => server.getConnections((err, connections) => logConnectionCountChange(connections)), 1000);
+
+  process.on("SIGTERM", shutdownOnce);
+  process.on("SIGINT", shutdownOnce);
+
+  setInterval(() => server.getConnections((err, connections) => logConnectionCountChange(connections)), 3000);
 
   server.on("connection", (connection) => {
     connections.push(connection);
