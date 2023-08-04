@@ -1,5 +1,5 @@
 import { styled } from "styled-components";
-import { useAuthContext } from "../account/auth-context";
+import { useAuthContext } from "../account/use-auth-context";
 
 export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   const { isConnected } = useAuthContext();

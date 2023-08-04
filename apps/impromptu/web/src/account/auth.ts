@@ -2,7 +2,7 @@ import { authConfig } from "@h20/auth";
 import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/server";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "./crypto";
 
-const HITS_AUTH_ENDPOINT = import.meta.env.VITE_HITS_AUTH_ENDPIONT;
+const VITE_H20_SERVER_ENDPOINT = import.meta.env.VITE_H20_SERVER_ENDPOINT;
 const WEB_HOST = import.meta.env.VITE_WEB_HOST;
 
 export async function embeddedSignIn() {
@@ -11,7 +11,7 @@ export async function embeddedSignIn() {
   // TODO, directly navigate to AAD portal. No need to open sign-in.html
   window.open(`${WEB_HOST}/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result: SignInStatusOutput = await fetch(`${HITS_AUTH_ENDPOINT}/signinstatus`, {
+  const result: SignInStatusOutput = await fetch(`${VITE_H20_SERVER_ENDPOINT}/hits/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -57,7 +57,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
     code_verifier,
   };
 
-  const result: SignInOutput = await fetch(`${HITS_AUTH_ENDPOINT}/signin`, {
+  const result: SignInOutput = await fetch(`${VITE_H20_SERVER_ENDPOINT}/hits/signin`, {
     headers: {
       "content-type": "application/json",
     },
@@ -74,7 +74,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
 }
 
 export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutput> {
-  const result = await fetch(`${HITS_AUTH_ENDPOINT}/token`, {
+  const result = await fetch(`${VITE_H20_SERVER_ENDPOINT}/hits/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -88,7 +88,7 @@ export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutp
 }
 
 export async function signOutRemote(input: SignOutInput): Promise<SignOutOutput> {
-  const result = await fetch(`${HITS_AUTH_ENDPOINT}/signout`, {
+  const result = await fetch(`${VITE_H20_SERVER_ENDPOINT}/hits/signout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
