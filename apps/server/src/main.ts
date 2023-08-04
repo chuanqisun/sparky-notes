@@ -14,7 +14,7 @@ import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { chat } from "./modules/openai/chat";
 import { completions } from "./modules/openai/completion";
-import { getGpt35ProdSpecs } from "./modules/openai/default-spects";
+import { getGpt35Dev16kSpecs, getGpt35DevSpecs, getGpt35ProdSpecs, getGpt4Dev32kSpecs, getGpt4Dev8kSpecs } from "./modules/openai/default-spects";
 import { embedding } from "./modules/openai/embedding";
 import { plexChat } from "./modules/openai/plex-chat";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
@@ -29,7 +29,18 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/openai/plexchat", [validateHitsToken, plexChat({ endpoints: [{ endpoint: "", key: "", ...getGpt35ProdSpecs() }] })]);
+app.post("/openai/plexchat", [
+  validateHitsToken,
+  plexChat({
+    endpoints: [
+      { endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY!, ...getGpt35ProdSpecs() },
+      { endpoint: process.env.OPENAI_CHAT_ENDPOINT_V35!, key: process.env.OPENAI_API_DEV_KEY!, ...getGpt35DevSpecs() },
+      { endpoint: process.env.OPENAI_CHAT_ENDPOINT_V35_16K!, key: process.env.OPENAI_API_DEV_KEY!, ...getGpt35Dev16kSpecs() },
+      { endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!, key: process.env.OPENAI_API_DEV_KEY!, ...getGpt4Dev8kSpecs() },
+      { endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_DEV_KEY!, ...getGpt4Dev32kSpecs() },
+    ],
+  }),
+]);
 app.post("/openai/completions", [
   rateLimit(120),
   validateHitsToken,

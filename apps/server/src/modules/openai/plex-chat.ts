@@ -29,6 +29,7 @@ export interface PlexChatInput extends ChatInput {
 }
 
 export const plexChat: (config: PlexChatConfig) => RequestHandler = (config: PlexChatConfig) => {
+  console.log(config.endpoints.map((item) => ({ ...item, key: "<REDACTED>" })));
   const workers = config.endpoints.map((endpoint) => {
     return new ChatWorker({
       proxy: getOpenAIWorkerProxy({
