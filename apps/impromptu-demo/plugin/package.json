@@ -1,5 +1,5 @@
 {
-  "name": "@impromptu/plugin",
+  "name": "@impromptu-demo/figma",
   "version": "1.0.0",
   "description": "Your Figma Plugin",
   "scripts": {
@@ -8,9 +8,12 @@
   },
   "license": "",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.72.0",
+    "@figma/plugin-typings": "^1.58.0",
     "@figma/widget-typings": "^1.5.0",
-    "dotenv": "^16.3.1",
-    "esbuild": "^0.18.17"
+    "dotenv": "^16.0.3",
+    "esbuild": "^0.17.8"
+  },
+  "dependencies": {
+    "acs-expression-builder": "^0.0.2"
   }
 }

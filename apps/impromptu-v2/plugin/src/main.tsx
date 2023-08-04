@@ -1,5 +1,5 @@
 import { getWebProxy } from "@h20/figma-relay";
-import type { MessageToFigma, MessageToWeb } from "@symphony/types";
+import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
 import { ensureFont } from "./utils/font";
 import { showUI } from "./utils/show-ui";
 
