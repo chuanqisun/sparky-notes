@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "concurrently npm:dev:*",
+    "dev": "npm run dev-impromptu",
+    "dev-all": "concurrently npm:dev:*",
     "dev-impromptu": "concurrently npm:dev:impromptu-plugin npm:dev:impromptu-web npm:dev:server",
     "dev-impromptu-demo": "concurrently npm:dev:impromptu-demo-plugin npm:dev:impromptu-demo-web npm:dev:server",
     "dev-shelf": "concurrently npm:dev:symphony-lab npm:dev:server",

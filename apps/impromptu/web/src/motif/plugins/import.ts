@@ -8,19 +8,20 @@ export function fileImportPlugin(): RuntimePlugin {
     run: async (_data, _operand, context) => {
       context.setStatus("Open file picker...");
 
-      const [fileHandle] = (await (window as any).showOpenFilePicker({
-        types: [
-          {
-            description: "Tabular data",
-            accept: {
-              "application/json": [".json"],
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-            },
-          },
-        ],
-      })) as FileSystemFileHandle[];
+      const files = await new Promise<FileList | null>((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        input.addEventListener("change", (e) => {
+          resolve((e.target as HTMLInputElement).files!);
+          input.remove();
+        });
+        input.click();
+      });
 
-      const file = await fileHandle.getFile();
+      if (files === null) return;
+
+      const file = files[0];
       const ext = file.name.split(".").pop();
 
       let data: any;
