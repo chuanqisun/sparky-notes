@@ -1,9 +1,11 @@
-import { ChatManager, ChatWorker, getOpenAIWorkerProxy, type ChatInput } from "@h20/plex-chat";
+import { ChatManager, ChatWorker, getOpenAIWorkerProxy, type ChatInput, type ChatOutput } from "@h20/plex-chat";
 import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
 import { assert } from "console";
 import type { RequestHandler } from "express";
 import { estimateChatTokenDemand } from "./tokens";
+
+export type { ChatInput, ChatMessage, ChatOutput } from "@h20/plex-chat";
 
 export interface PlexChatConfig {
   endpoints: PlexChatEndpoint[];
@@ -27,6 +29,7 @@ export type PlexChatModels = "gpt-3.5-turbo-textonly" | "gpt-3.5-turbo-16k-texto
 export interface PlexChatInput extends ChatInput {
   models: PlexChatModels[];
 }
+export type PlexChatOutput = ChatOutput;
 
 export const plexChat: (config: PlexChatConfig) => RequestHandler = (config: PlexChatConfig) => {
   console.log(config.endpoints.map((item) => ({ ...item, key: "<REDACTED>" })));

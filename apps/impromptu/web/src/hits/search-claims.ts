@@ -1,5 +1,5 @@
 import { type CognitiveSearchInput, type CognitiveSearchOutput } from "../azure/cognitive-search";
-import { type H20Proxy } from "./proxy";
+import { type H20Proxy } from "../h20/proxy";
 
 export function getClaimCountInput(filter: string): CognitiveSearchInput {
   return {

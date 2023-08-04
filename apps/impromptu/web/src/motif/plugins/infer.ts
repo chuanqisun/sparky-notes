@@ -1,5 +1,5 @@
 import { type RuntimePlugin } from "@h20/motif-lang";
-import { type FnCallProxy } from "../sdk";
+import type { FnCallProxy } from "../../openai/proxy";
 
 export function coreInferPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
   return {

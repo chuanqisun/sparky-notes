@@ -1,4 +1,4 @@
-export type H20Proxy = <T, K>(endpoint: string, payload: T) => Promise<K>;
+export type H20Proxy = <T, K>(/** Format: `/path/to/api...` */ endpoint: string, payload: T) => Promise<K>;
 
 export function getH20Proxy(accessToken: string): H20Proxy {
   return async <T, K>(endpoint: string, payload: T) => {

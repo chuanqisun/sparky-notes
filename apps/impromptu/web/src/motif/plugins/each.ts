@@ -1,7 +1,7 @@
 import { getType } from "@h20/json-reflection";
 import { type RuntimePlugin } from "@h20/motif-lang";
 import { parseFunctionDeclaration } from "../../openai/format";
-import { type FnCallProxy } from "../sdk";
+import type { FnCallProxy } from "../../openai/proxy";
 
 export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
   return {

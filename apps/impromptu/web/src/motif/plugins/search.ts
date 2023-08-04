@@ -1,6 +1,6 @@
 import { type RuntimePlugin } from "@h20/motif-lang";
 import { getSemanticSearchInput, type SemanticSearchProxy } from "../../hits/search-claims";
-import { type FnCallProxy } from "../sdk";
+import type { FnCallProxy } from "../../openai/proxy";
 
 export function hitsSearchPlugin(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): RuntimePlugin {
   return {
