@@ -88,8 +88,6 @@ app.use("/hits/search/claims", [validateHitsToken, hitsUATSearch("/indexes/hits-
 app.use(logRoute);
 app.use(logError);
 
-const server = app.listen(port);
+withGracefulShutdown(app.listen(port));
 
 console.log(`[auth-server] Listening at port ${port}`);
-
-withGracefulShutdown(server);

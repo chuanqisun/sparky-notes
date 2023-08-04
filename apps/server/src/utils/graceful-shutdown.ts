@@ -33,6 +33,8 @@ export function withGracefulShutdown(server: Server) {
     connections.forEach((curr) => curr.end());
     setTimeout(() => connections.forEach((curr) => curr.destroy()), 5000);
   }
+
+  return server;
 }
 
 function memoize<T extends any[], R>(fn: (...args: T) => R) {
