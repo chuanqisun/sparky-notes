@@ -189,7 +189,7 @@ export class FigmaQuery {
     // candidate node should be lowest-left-most node
     const target = getBoundingNodes(getBoundingNodes(nodes).bottom).left[0];
 
-    const existingNextNodes = $([target]).graphDownstream().toNodes();
+    const existingNextNodes = FigmaQuery.createFromNodes([target]).graphDownstream().toNodes();
 
     if (!existingNextNodes.length) {
       return this.hangBottomLeft(target, verticalGap);
@@ -212,7 +212,7 @@ export class FigmaQuery {
 
     switch (direction) {
       case "Up": {
-        const existingNodes = $([essentialAnchor])
+        const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
           .graphUpstream(matchConnectors({ end: { magnet: "TOP" } }))
           .toNodes();
 
@@ -228,7 +228,7 @@ export class FigmaQuery {
         }
       }
       case "Down": {
-        const existingNodes = $([essentialAnchor])
+        const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
           .graphDownstream(matchConnectors({ start: { magnet: "BOTTOM" } }))
           .toNodes();
 
@@ -244,7 +244,7 @@ export class FigmaQuery {
         }
       }
       case "Left": {
-        const existingNodes = $([essentialAnchor])
+        const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
           .graphUpstream(matchConnectors({ end: { magnet: "LEFT" } }))
           .toNodes();
 
@@ -260,7 +260,7 @@ export class FigmaQuery {
         }
       }
       case "Right": {
-        const existingNodes = $([essentialAnchor])
+        const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
           .graphDownstream(matchConnectors({ start: { magnet: "RIGHT" } }))
           .toNodes();
 
@@ -396,4 +396,4 @@ export class FigmaQuery {
   }
 }
 
-export const $ = FigmaQuery.createFromNodes;
+export const fq = FigmaQuery.createFromNodes;

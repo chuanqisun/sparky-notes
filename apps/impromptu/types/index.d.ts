@@ -1,7 +1,8 @@
 export interface MessageToWeb {}
 
-// messages starting with "request" must be handled with "respond"
+// Convention: messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
+  createStep?: {};
   selectionChanged?: true;
   showNotification?: {
     message: string;
