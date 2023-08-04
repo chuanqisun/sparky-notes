@@ -2,8 +2,8 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "importsNotUsedAsValues": "error",
     "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
     "target": "es6",
     "lib": ["es6", "DOM"],
     "strict": true,
