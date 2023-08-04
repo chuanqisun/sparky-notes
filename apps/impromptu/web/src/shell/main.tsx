@@ -87,7 +87,7 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
         figmaProxy.notify({ showNotification: { message: (e as any).message, config: { error: true } } });
       }
     },
-    [figmaProxy]
+    [editorState, plugins, figmaProxy]
   );
 
   return (
