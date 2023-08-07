@@ -2,7 +2,8 @@ import { getProxyToFigma } from "@h20/figma-relay";
 import { motif, parse, run, type Runtime } from "@h20/motif-lang";
 import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
 import CodeMirror from "@uiw/react-codemirror";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { JSONTree } from "react-json-tree";
 import { styled } from "styled-components";
 import { useAuthContext } from "../account/use-auth-context";
 import { getH20Proxy } from "../h20/proxy";
@@ -17,6 +18,7 @@ import { hitsSearchPlugin } from "../motif/plugins/search";
 import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/shelf";
 import { coreSummarizePlugin } from "../motif/plugins/summarize";
 import { getChatProxy, getFnCallProxy } from "../openai/proxy";
+import { theme } from "./theme";
 
 export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   const { isConnected, signOut, signIn, accessToken } = useAuthContext();
@@ -102,6 +104,23 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
     [editorState, plugins, proxy]
   );
 
+  // inspector
+  const [selectedData, setSelectedData] = useState<any>(null);
+
+  // message handlers
+  useEffect(() => {
+    const handleMessageToWeb = async (e: MessageEvent) => {
+      const message = e.data.pluginMessage as MessageToWeb;
+
+      if (message.selectionChanged) {
+        setSelectedData(JSON.parse(message.selectionChanged.data));
+      }
+    };
+
+    window.addEventListener("message", handleMessageToWeb);
+    return () => window.removeEventListener("message", handleMessageToWeb);
+  }, []);
+
   return (
     <StyledMain>
       {isConnected ? (
@@ -120,6 +139,14 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
           <button onClick={() => handleSubmit(false)}>Submit</button>
         </fieldset>
       ) : null}
+      {isConnected ? (
+        <fieldset>
+          <legend>Inspector</legend>
+          <StyledOutput>
+            <JSONTree theme={theme} hideRoot={true} data={selectedData} />
+          </StyledOutput>
+        </fieldset>
+      ) : null}
       <fieldset>
         <legend>Account</legend>
         {isConnected === undefined ? <p>Authenticating...</p> : null}
@@ -132,3 +159,17 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
 };
 
 const StyledMain = styled.main``;
+
+const StyledOutput = styled.div`
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: scroll;
+  color-scheme: dark;
+  padding: 0 4px;
+  background-color: ${theme.base00};
+
+  & > ul {
+    margin: 0 !important;
+    height: 100%;
+  }
+`;

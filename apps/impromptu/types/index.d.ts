@@ -1,5 +1,8 @@
 export interface MessageToWeb {
   createStepRes?: string; // created node id
+  selectionChanged?: {
+    data: string; // stringified data
+  };
 }
 
 // Convention: messages starting with "request" must be handled with "respond"

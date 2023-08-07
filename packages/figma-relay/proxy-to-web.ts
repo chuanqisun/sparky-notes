@@ -1,10 +1,10 @@
-export interface WebProxy<MessageToWeb, MessageToFigma> {
+export interface ProxyToWeb<MessageToWeb, MessageToFigma> {
   notify(message: MessageToWeb): void;
   request(request: MessageToWeb): Promise<MessageToFigma>;
   respond(request: MessageToFigma, response: MessageToWeb): void;
 }
 
-export function getProxyToWeb<MessageToWeb, MessageToFigma>(): WebProxy<MessageToWeb, MessageToFigma> {
+export function getProxyToWeb<MessageToWeb, MessageToFigma>(): ProxyToWeb<MessageToWeb, MessageToFigma> {
   function notify(message: MessageToWeb) {
     figma.ui.postMessage(message);
   }

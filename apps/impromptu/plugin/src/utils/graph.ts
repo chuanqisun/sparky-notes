@@ -19,6 +19,14 @@ export function collectAllExcept(excludeNodes: readonly SceneNode[], results: Sc
   };
 }
 
+export function collectUnique(results: SceneNode[]) {
+  return (candidate: SceneNode) => {
+    if (!results.some((node) => node.id === candidate.id)) {
+      results.push(candidate);
+    }
+  };
+}
+
 export function selectOutConnectors() {
   return (connector: AttachedConnector, sourceNode: SceneNode) => connector.connectorStart.endpointNodeId === sourceNode.id;
 }

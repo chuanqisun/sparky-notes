@@ -1,10 +1,10 @@
-export interface FigmaProxy<MessageToFigma, MessageToWeb> {
+export interface ProxyToFigma<MessageToFigma, MessageToWeb> {
   notify(message: MessageToFigma): void;
   request(request: MessageToFigma): Promise<MessageToWeb>;
   respond(request: MessageToWeb, response: MessageToFigma): void;
 }
 
-export function getProxyToFigma<MessageToFigma, MessageToWeb>(pluginId: string): FigmaProxy<MessageToFigma, MessageToWeb> {
+export function getProxyToFigma<MessageToFigma, MessageToWeb>(pluginId: string): ProxyToFigma<MessageToFigma, MessageToWeb> {
   const notify = (message: MessageToFigma) => sendMessage(pluginId, message);
 
   async function request(message: MessageToFigma) {

@@ -1,5 +1,6 @@
 import {
   collectAllExcept,
+  collectUnique,
   connect,
   filterToAttachedMagnetConnector,
   matchConnectors,
@@ -12,6 +13,7 @@ import {
 import { graphHorizonalDefaultGap, graphVerticalDefaultGap } from "./layout";
 import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, getEssentialAnchorNode, getNextTilePosition, isInnerOuter } from "./query";
 import { doesRectIntersect } from "./range";
+import { walk } from "./tree";
 
 export type Direction = "Up" | "Down" | "Left" | "Right";
 
@@ -115,7 +117,19 @@ export class FigmaQuery {
     return new FigmaQuery(this.nodes.slice(0, 1));
   }
 
-  graphUpstream(connectorPredicate?: (connector: AttachedConnector) => boolean) {
+  /** all reachable nodes below the selected nodes */
+  graphBelow() {
+    const results: SceneNode[] = [];
+
+    traverse(this.nodes, {
+      onPreVisit: collectAllExcept(this.nodes, results),
+      onConnector: selectOutEdgesBelowStartNodes(this.nodes),
+    });
+
+    return new FigmaQuery(results);
+  }
+
+  graphPreviousNodes(connectorPredicate?: (connector: AttachedConnector) => boolean) {
     if (!this.nodes.length) return new FigmaQuery([]);
 
     const prevNodes = this.nodes.flatMap((refNode) =>
@@ -130,7 +144,7 @@ export class FigmaQuery {
     return new FigmaQuery(prevNodes);
   }
 
-  graphDownstream(connectorPredicate?: (connector: AttachedConnector) => boolean) {
+  graphNextNodes(connectorPredicate?: (connector: AttachedConnector) => boolean) {
     if (!this.nodes.length) return new FigmaQuery([]);
 
     const nextNodes = this.nodes.flatMap((refNode) =>
@@ -206,7 +220,7 @@ export class FigmaQuery {
     // candidate node should be lowest-left-most node
     const target = getBoundingNodes(getBoundingNodes(nodes).bottom).left[0];
 
-    const existingNextNodes = FigmaQuery.createFromNodes([target]).graphDownstream().toNodes();
+    const existingNextNodes = FigmaQuery.createFromNodes([target]).graphNextNodes().toNodes();
 
     if (!existingNextNodes.length) {
       return this.hangBottomLeft(target, verticalGap);
@@ -230,7 +244,7 @@ export class FigmaQuery {
     switch (direction) {
       case "Up": {
         const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
-          .graphUpstream(matchConnectors({ end: { magnet: "TOP" } }))
+          .graphPreviousNodes(matchConnectors({ end: { magnet: "TOP" } }))
           .toNodes();
 
         if (!existingNodes.length) {
@@ -246,7 +260,7 @@ export class FigmaQuery {
       }
       case "Down": {
         const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
-          .graphDownstream(matchConnectors({ start: { magnet: "BOTTOM" } }))
+          .graphNextNodes(matchConnectors({ start: { magnet: "BOTTOM" } }))
           .toNodes();
 
         if (!existingNodes.length) {
@@ -262,7 +276,7 @@ export class FigmaQuery {
       }
       case "Left": {
         const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
-          .graphUpstream(matchConnectors({ end: { magnet: "LEFT" } }))
+          .graphPreviousNodes(matchConnectors({ end: { magnet: "LEFT" } }))
           .toNodes();
 
         if (!existingNodes.length) {
@@ -278,7 +292,7 @@ export class FigmaQuery {
       }
       case "Right": {
         const existingNodes = FigmaQuery.createFromNodes([essentialAnchor])
-          .graphDownstream(matchConnectors({ start: { magnet: "RIGHT" } }))
+          .graphNextNodes(matchConnectors({ start: { magnet: "RIGHT" } }))
           .toNodes();
 
         if (!existingNodes.length) {
@@ -384,18 +398,6 @@ export class FigmaQuery {
     return this;
   }
 
-  /** all reachable nodes below the selected nodes */
-  subtree() {
-    const results: SceneNode[] = [];
-
-    traverse(this.nodes, {
-      onPreVisit: collectAllExcept(this.nodes, results),
-      onConnector: selectOutEdgesBelowStartNodes(this.nodes),
-    });
-
-    return new FigmaQuery(results);
-  }
-
   toNodes<T extends SceneNode>() {
     return [...this.nodes] as T[];
   }
@@ -406,6 +408,16 @@ export class FigmaQuery {
       node.y += y;
     });
     return this;
+  }
+
+  treeReachable(filter?: (child: SceneNode, parent: SceneNode) => boolean) {
+    const results: SceneNode[] = [];
+    walk(this.nodes, {
+      onPreVisit: collectUnique(results),
+      onChild: filter,
+    });
+
+    return new FigmaQuery(results);
   }
 
   // filter to nodes that intersects the viewport
