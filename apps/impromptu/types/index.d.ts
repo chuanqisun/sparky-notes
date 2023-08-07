@@ -5,6 +5,13 @@ export interface MessageToWeb {
 // Convention: messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
   createStepReq?: {};
+  addStickies?: {
+    parentId: string;
+    items: {
+      text: string;
+      data?: any;
+    }[];
+  };
   selectionChanged?: true;
   showNotification?: {
     message: string;

@@ -3,7 +3,7 @@ import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
 import type { WebMessageHandler } from "../main";
 import { fq } from "../utils/fq";
 
-export function createStepHandler(proxy: WebProxy<MessageToWeb, MessageToFigma>): WebMessageHandler {
+export function createStep(proxy: WebProxy<MessageToWeb, MessageToFigma>): WebMessageHandler {
   return (message: MessageToFigma) => {
     if (!message.createStepReq) return;
 

@@ -20,7 +20,7 @@ import { getChatProxy, getFnCallProxy } from "../openai/proxy";
 
 export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   const { isConnected, signOut, signIn, accessToken } = useAuthContext();
-  const figmaProxy = useMemo(() => getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID), []);
+  const proxy = useMemo(() => getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID), []);
 
   const { fnCallProxy, semanticSearchProxy } = useMemo(() => {
     const h20Proxy = getH20Proxy(accessToken);
@@ -61,7 +61,7 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
 
   const handleSubmit = useCallback(
     async (shiftKey: boolean) => {
-      const res = await figmaProxy.request({ createStepReq: { source: editorState.source, shiftKey } });
+      const res = await proxy.request({ createStepReq: { source: editorState.source, shiftKey } });
       console.log(res.createStepRes);
       setEditorState((prev) => ({ ...prev, source: "" }));
 
@@ -71,13 +71,22 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
 
         const runtime: Runtime = {
           signal: new AbortController().signal,
-          setShelfName: (name) => figmaProxy.notify({ showNotification: { message: `Renaming shelf to ${name}` } }),
+          setShelfName: (name) => proxy.notify({ showNotification: { message: `Renaming shelf to ${name}` } }),
           getShelfName: () => "TBD",
           deleteShelf: () => "TBD",
           setItems: (items) => {
-            figmaProxy.notify({ showNotification: { message: `Setting ${items.length} items` } });
+            proxy.notify({
+              addStickies: {
+                parentId: res.createStepRes!,
+                items: items.map((item, index) => ({
+                  text: `Item ${index + 1}`,
+                  data: item,
+                })),
+              },
+            }),
+              proxy.notify({ showNotification: { message: `Setting ${items.length} items` } });
           },
-          setStatus: (status) => figmaProxy.notify({ showNotification: { message: status } }),
+          setStatus: (status) => proxy.notify({ showNotification: { message: status } }),
         };
 
         await run({
@@ -87,10 +96,10 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
           runtime,
         });
       } catch (e) {
-        figmaProxy.notify({ showNotification: { message: (e as any).message, config: { error: true } } });
+        proxy.notify({ showNotification: { message: (e as any).message, config: { error: true } } });
       }
     },
-    [editorState, plugins, figmaProxy]
+    [editorState, plugins, proxy]
   );
 
   return (

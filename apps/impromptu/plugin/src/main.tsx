@@ -1,6 +1,7 @@
 import { getProxyToWeb } from "@h20/figma-relay";
 import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
-import { createStepHandler } from "./handlers/create-step";
+import { addStickies } from "./handlers/add-stickies";
+import { createStep } from "./handlers/create-step";
 import { ensureFont } from "./utils/font";
 import { showUI } from "./utils/show-ui";
 
@@ -8,7 +9,7 @@ const fontReady = ensureFont(); // HACK: preload the font for the entire session
 const proxy = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
 async function main() {
-  const handleMessageWithHandlers = handleMessage.bind(null, [createStepHandler(proxy)]);
+  const handleMessageWithHandlers = handleMessage.bind(null, [addStickies(), createStep(proxy)]);
 
   figma.on("selectionchange", () => handleMessageWithHandlers({ selectionChanged: true })); // cast figma event to message
   figma.ui.on("message", handleMessageWithHandlers);
