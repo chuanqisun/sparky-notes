@@ -4,7 +4,7 @@ export interface WebProxy<MessageToWeb, MessageToFigma> {
   respond(request: MessageToFigma, response: MessageToWeb): void;
 }
 
-export function proxyToWeb<MessageToWeb, MessageToFigma>(): WebProxy<MessageToWeb, MessageToFigma> {
+export function getProxyToWeb<MessageToWeb, MessageToFigma>(): WebProxy<MessageToWeb, MessageToFigma> {
   function notify(message: MessageToWeb) {
     figma.ui.postMessage(message);
   }

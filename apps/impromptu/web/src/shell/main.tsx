@@ -1,4 +1,4 @@
-import { proxyToFigma } from "@h20/figma-relay";
+import { getProxyToFigma } from "@h20/figma-relay";
 import { motif, parse, run, type Runtime } from "@h20/motif-lang";
 import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
 import CodeMirror from "@uiw/react-codemirror";
@@ -20,7 +20,7 @@ import { getChatProxy, getFnCallProxy } from "../openai/proxy";
 
 export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   const { isConnected, signOut, signIn, accessToken } = useAuthContext();
-  const figmaProxy = useMemo(() => proxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID), []);
+  const figmaProxy = useMemo(() => getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID), []);
 
   const { fnCallProxy, semanticSearchProxy } = useMemo(() => {
     const h20Proxy = getH20Proxy(accessToken);
@@ -61,7 +61,8 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
 
   const handleSubmit = useCallback(
     async (shiftKey: boolean) => {
-      figmaProxy.notify({ createStep: { source: editorState.source, shiftKey } });
+      const res = await figmaProxy.request({ createStepReq: { source: editorState.source, shiftKey } });
+      console.log(res.createStepRes);
       setEditorState((prev) => ({ ...prev, source: "" }));
 
       try {
@@ -73,7 +74,9 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
           setShelfName: (name) => figmaProxy.notify({ showNotification: { message: `Renaming shelf to ${name}` } }),
           getShelfName: () => "TBD",
           deleteShelf: () => "TBD",
-          setItems: (items) => figmaProxy.notify({ showNotification: { message: `Setting ${items.length} items` } }),
+          setItems: (items) => {
+            figmaProxy.notify({ showNotification: { message: `Setting ${items.length} items` } });
+          },
           setStatus: (status) => figmaProxy.notify({ showNotification: { message: status } }),
         };
 
@@ -105,7 +108,7 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
             minHeight="80px"
             onChange={(e) => setEditorState((prev) => ({ ...prev, source: e }))}
           />
-          <button onClick={() => figmaProxy.notify({ createStep: {} })}>Submit</button>
+          <button onClick={() => handleSubmit(false)}>Submit</button>
         </fieldset>
       ) : null}
       <fieldset>

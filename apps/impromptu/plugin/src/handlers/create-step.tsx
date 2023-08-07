@@ -1,12 +1,13 @@
-import type { MessageToFigma } from "@impromptu/types";
+import type { WebProxy } from "@h20/figma-relay";
+import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
 import type { WebMessageHandler } from "../main";
 import { fq } from "../utils/fq";
 
-export function createStepHandler(): WebMessageHandler {
+export function createStepHandler(proxy: WebProxy<MessageToWeb, MessageToFigma>): WebMessageHandler {
   return (message: MessageToFigma) => {
-    if (!message.createStep) return;
+    if (!message.createStepReq) return;
 
-    console.log("Will create");
-    fq([figma.createSection()]).moveToViewCenter();
+    const createdNode = fq([figma.createSection()]).moveToViewCenter().toNodes()[0];
+    proxy.respond(message, { createStepRes: createdNode.id });
   };
 }

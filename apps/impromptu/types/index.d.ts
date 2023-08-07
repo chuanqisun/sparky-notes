@@ -1,8 +1,10 @@
-export interface MessageToWeb {}
+export interface MessageToWeb {
+  createStepRes?: string; // created node id
+}
 
 // Convention: messages starting with "request" must be handled with "respond"
 export interface MessageToFigma {
-  createStep?: {};
+  createStepReq?: {};
   selectionChanged?: true;
   showNotification?: {
     message: string;
