@@ -10,7 +10,7 @@ import {
   type MagnetPosition,
 } from "./graph";
 import { graphHorizonalDefaultGap, graphVerticalDefaultGap } from "./layout";
-import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, getEssentialAnchorNode, isInnerOuter } from "./query";
+import { canBeInnerOuter, closest, getAbsoluteBoundingBox, getBoundingNodes, getEssentialAnchorNode, getNextTilePosition, isInnerOuter } from "./query";
 import { doesRectIntersect } from "./range";
 
 export type Direction = "Up" | "Down" | "Left" | "Right";
@@ -48,6 +48,23 @@ export class FigmaQuery {
 
   appendTo(parent: ChildrenMixin) {
     this.nodes.forEach((node) => parent.appendChild(node));
+    return this;
+  }
+
+  appendTilesIn(parent: SectionNode) {
+    const parentQuery = FigmaQuery.createFromNodes([parent]);
+
+    this.nodes.forEach((node) => {
+      const { x, y } = getNextTilePosition(node, parent);
+
+      parent.appendChild(node);
+
+      node.x = x;
+      node.y = y;
+
+      parentQuery.resizeToHugContent();
+    });
+
     return this;
   }
 
@@ -302,6 +319,21 @@ export class FigmaQuery {
   remove() {
     this.nodes.forEach((node) => node.remove());
     return new FigmaQuery([]);
+  }
+
+  resizeToHugContent(layout?: { padding?: number; minHeight?: number; minWidth?: number }) {
+    const { padding = 40, minWidth = 0, minHeight = 0 } = layout ?? {};
+
+    this.nodes
+      .filter((node) => (node as SectionNode)?.children && (node as SectionNode).resizeWithoutConstraints)
+      .forEach((targetNode) => {
+        const childMaxX = Math.max(0, ...(targetNode as ChildrenMixin).children.map((child) => child.x + child.width));
+        const childMaxY = Math.max(0, ...(targetNode as ChildrenMixin).children.map((child) => child.y + child.height));
+
+        (targetNode as SectionNode).resizeWithoutConstraints(Math.max(minWidth, childMaxX + padding), Math.max(minHeight, childMaxY + padding));
+      });
+
+    return this;
   }
 
   // Scroll the least distance to fit the selection. If impossible, zoom out to fit

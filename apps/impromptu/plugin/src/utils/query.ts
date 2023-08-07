@@ -1,4 +1,4 @@
-import type { SpatialDirection } from "@symphony/types";
+export type SpatialDirection = "Up" | "Down" | "Left" | "Right";
 
 export function closest<T extends SceneNode>(predicate: (node: SceneNode) => Boolean, node: SceneNode): null | T {
   if (predicate(node)) {
@@ -124,4 +124,25 @@ export function sortByDistance<T extends SceneNode>(nodes: readonly T[], center:
     })
     .sort((a, b) => a.distance - b.distance)
     .map((item) => item.node);
+}
+
+export interface Layout {
+  padding?: number;
+  gap?: number;
+}
+
+export function getNextTilePosition(tile: SceneNode, container: SectionNode, layout: Layout = {}): { x: number; y: number } {
+  const epsilon = 5;
+  const { gap = 16, padding = 40 } = layout;
+
+  const lastRowTopEdge = Math.max(Math.max(...container.children.map((child) => child.y)), padding);
+  const lastRowMaxX = Math.max(
+    Math.max(...container.children.filter((child) => Math.abs(child.y - lastRowTopEdge) < epsilon).map((child) => child.x + child.width)),
+    padding - gap
+  );
+
+  return {
+    x: lastRowMaxX + gap,
+    y: lastRowTopEdge,
+  };
 }

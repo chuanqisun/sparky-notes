@@ -14,6 +14,6 @@ export function addStickies(): WebMessageHandler {
       sticky.setPluginData("data", JSON.stringify(item.data));
       return sticky;
     });
-    fq(newStickies).appendTo(figma.getNodeById(parentId)! as SectionNode);
+    fq(newStickies).appendTilesIn(figma.getNodeById(parentId)! as SectionNode);
   };
 }
