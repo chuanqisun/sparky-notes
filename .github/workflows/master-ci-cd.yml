@@ -54,7 +54,7 @@ jobs:
         with:
           inlineScript: |
             az storage blob delete-batch --account-name impromptuweb  --auth-mode key --source '$web'
-            az storage blob upload-batch --account-name impromptuweb  --auth-mode key -d '$web' -s ./apps/impromptu-web/dist
+            az storage blob upload-batch --account-name impromptuweb  --auth-mode key -d '$web' -s ./apps/impromptu-demo/web/dist
 
       - name: azure logout
         run: az logout
