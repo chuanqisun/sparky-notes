@@ -18,6 +18,7 @@ import { hitsSearchPlugin } from "../motif/plugins/search";
 import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/shelf";
 import { coreSummarizePlugin } from "../motif/plugins/summarize";
 import { getChatProxy, getFnCallProxy } from "../openai/proxy";
+import { coerceArray } from "../utils/array";
 import { theme } from "./theme";
 
 export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
@@ -59,7 +60,7 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   }, [plugins]);
 
   // code editor
-  const [editorState, setEditorState] = useState({ source: "" });
+  const [editorState, setEditorState] = useState({ source: "", selectedData: [] as any[] });
 
   const handleSubmit = useCallback(
     async (shiftKey: boolean) => {
@@ -94,7 +95,7 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
         await run({
           program,
           plugins,
-          data: [], // TODO load data
+          data: coerceArray(editorState.selectedData) ?? [],
           runtime,
         });
       } catch (e) {
@@ -104,16 +105,13 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
     [editorState, plugins, proxy]
   );
 
-  // inspector
-  const [selectedData, setSelectedData] = useState<any>(null);
-
   // message handlers
   useEffect(() => {
     const handleMessageToWeb = async (e: MessageEvent) => {
       const message = e.data.pluginMessage as MessageToWeb;
 
       if (message.selectionChanged) {
-        setSelectedData(JSON.parse(message.selectionChanged.data));
+        setEditorState((prev) => ({ ...prev, selectedData: JSON.parse(message.selectionChanged?.data ?? "[]") }));
       }
     };
 
@@ -136,14 +134,15 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
             minHeight="80px"
             onChange={(e) => setEditorState((prev) => ({ ...prev, source: e }))}
           />
-          <button onClick={() => handleSubmit(false)}>Submit</button>
+          <button onClick={() => handleSubmit(false)}>Continue</button>
+          <button onClick={() => handleSubmit(false)}>Re-run</button>
         </fieldset>
       ) : null}
       {isConnected ? (
         <fieldset>
           <legend>Inspector</legend>
           <StyledOutput>
-            <JSONTree theme={theme} hideRoot={true} data={selectedData} />
+            <JSONTree theme={theme} hideRoot={true} data={coerceArray(editorState.selectedData)} />
           </StyledOutput>
         </fieldset>
       ) : null}
