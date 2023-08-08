@@ -1,9 +1,9 @@
+import { useAuth } from "@h20/auth";
 import type { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu-demo/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { read, utils } from "xlsx";
 import "./main.css";
-import { useAuth } from "./modules/account/use-auth";
 import { useInvitieCode } from "./modules/account/use-invite-code";
 import { notifyFigma } from "./modules/figma/rpc";
 import { DraftViewV2 } from "./modules/hits/draft-view";
@@ -13,7 +13,11 @@ import { formatLargeNumber } from "./modules/usage/format";
 import { useTokenMeter } from "./modules/usage/usage";
 
 function App() {
-  const { isConnected, signIn, signOut, accessToken } = useAuth();
+  const { isConnected, signIn, signOut, accessToken } = useAuth({
+    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPIONT,
+    webHost: import.meta.env.VITE_WEB_HOST,
+  });
+
   const [isRunning, setIsRunning] = useState(false);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [selectionSummary, setSelectionSummary] = useState<SelectionSummary | null>(null);
