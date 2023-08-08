@@ -41,7 +41,13 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/node": "^18.14.6",
-    "concurrently": "^7.6.0"
+    "@figma/plugin-typings": "^1.72.0",
+    "@figma/widget-typings": "^1.5.0",
+    "@types/node": "^20.4.9",
+    "concurrently": "^8.2.0",
+    "dotenv": "^16.0.3",
+    "esbuild": "^0.19.0",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.9"
   }
 }
