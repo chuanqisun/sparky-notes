@@ -15,7 +15,6 @@ import { fileImportPlugin } from "../motif/plugins/import";
 import { coreInferPlugin } from "../motif/plugins/infer";
 import { coreInferManyPlugin } from "../motif/plugins/inferMany";
 import { hitsSearchPlugin } from "../motif/plugins/search";
-import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/shelf";
 import { coreSummarizePlugin } from "../motif/plugins/summarize";
 import type { ShelfRuntime } from "../motif/runtime";
 import { getChatProxy, getFnCallProxy } from "../openai/proxy";
@@ -43,8 +42,6 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
       coreFilterPlugin(fnCallProxy),
       coreInferPlugin(fnCallProxy),
       coreInferManyPlugin(fnCallProxy),
-      coreRenameShelfPlugin(),
-      coreDeleteShelfPlugin(),
       coreSummarizePlugin(fnCallProxy),
       fileImportPlugin(),
       hitsSearchPlugin(fnCallProxy, semanticSearchProxy),
@@ -73,11 +70,11 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
         const program = parse(editorState.source);
         console.log(program);
 
+        const data = coerceArray(editorState.selectedData) ?? [];
+
         const runtime: ShelfRuntime = {
           signal: new AbortController().signal,
-          setShelfName: (name) => proxy.notify({ showNotification: { message: `Renaming shelf to ${name}` } }),
-          getShelfName: () => "TBD",
-          deleteShelf: () => "TBD",
+          getItems: () => data,
           setItems: (items) => {
             proxy.notify({
               addStickies: {
@@ -96,7 +93,6 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
         await run({
           program,
           plugins,
-          data: coerceArray(editorState.selectedData) ?? [],
           runtime,
         });
       } catch (e) {
