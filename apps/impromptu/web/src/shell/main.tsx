@@ -79,9 +79,9 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
             proxy.notify({
               addStickies: {
                 parentId: res.createStepRes!,
-                items: items.map((item, index) => ({
-                  text: `Item ${index + 1}`,
-                  data: item,
+                items: items.map((item) => ({
+                  text: item.displayName,
+                  data: item.data,
                 })),
               },
             }),
