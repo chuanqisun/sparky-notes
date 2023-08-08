@@ -1,21 +1,21 @@
-import { type RuntimePlugin } from "@h20/motif-lang";
+import type { ShelfPlugin } from "../runtime";
 
-export function coreRenameShelfPlugin(): RuntimePlugin {
+export function coreRenameShelfPlugin(): ShelfPlugin {
   return {
     operator: "/rename",
     description: "Rename the current shelf",
-    run: async (_data, operand, context) => {
+    run: async (operand, context) => {
       context.setShelfName(operand);
       context.setStatus(`Renamed to "${operand}"`);
     },
   };
 }
 
-export function coreDeleteShelfPlugin(): RuntimePlugin {
+export function coreDeleteShelfPlugin(): ShelfPlugin {
   return {
     operator: "/delete",
     description: "Delete the current shelf",
-    run: async (_data, _operand, context) => {
+    run: async (_operand, context) => {
       const currentTitle = context.getShelfName();
       context.deleteShelf();
       context.setStatus(`Deleted "${currentTitle}"`);

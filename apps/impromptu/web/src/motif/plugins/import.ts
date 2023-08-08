@@ -1,11 +1,11 @@
-import { type RuntimePlugin } from "@h20/motif-lang";
 import { read, utils } from "xlsx";
+import type { ShelfPlugin } from "../runtime";
 
-export function fileImportPlugin(): RuntimePlugin {
+export function fileImportPlugin(): ShelfPlugin {
   return {
     operator: "/import",
     description: "Import a file with one of the supported formats: json, xlsx",
-    run: async (_data, _operand, context) => {
+    run: async (_operand, context) => {
       context.setStatus("Open file picker...");
 
       const files = await new Promise<FileList | null>((resolve) => {
@@ -36,7 +36,7 @@ export function fileImportPlugin(): RuntimePlugin {
           throw new Error(`Unsupported file type: ${ext}`);
       }
 
-      context.setItems(data);
+      context.setItems([{ displayName: file.name, data }]);
       context.setStatus(`Imported: ${file.name}`);
     },
   };

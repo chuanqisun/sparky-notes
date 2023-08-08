@@ -1,14 +1,15 @@
 import { getType } from "@h20/json-reflection";
-import { type RuntimePlugin } from "@h20/motif-lang";
 import { parseFunctionDeclaration } from "../../openai/format";
 import type { FnCallProxy } from "../../openai/proxy";
+import type { ShelfPlugin } from "../runtime";
 
-export function coreEachPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
+export function coreEachPlugin(fnCallProxy: FnCallProxy): ShelfPlugin {
   return {
     operator: "/each",
     description: "Work on one item at a time, with an optional focus on specific fields",
-    run: async (data, operand, context) => {
+    run: async (operand, context) => {
       context.setStatus("Interpreting...");
+      const data = context.getItems;
 
       if (!Array.isArray(data)) {
         throw new Error("Expected an array");
@@ -66,7 +67,7 @@ ${itemType}
         const newData = data.map(transformFn) as any[];
         // merge with existing data
         // const merged = newData.map((item, index) => ({ ...data[index], ...item }));
-        context.setItems(newData);
+        context.setItems(newData.map((item) => ({ displayName: "", data: item })));
       } catch (e) {
         context.setStatus(`Error: ${(e as any).message}`);
       }

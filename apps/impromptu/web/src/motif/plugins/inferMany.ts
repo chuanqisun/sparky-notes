@@ -1,12 +1,13 @@
-import { type RuntimePlugin } from "@h20/motif-lang";
 import type { FnCallProxy } from "../../openai/proxy";
+import type { ShelfPlugin } from "../runtime";
 
-export function coreInferManyPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
+export function coreInferManyPlugin(fnCallProxy: FnCallProxy): ShelfPlugin {
   return {
     operator: "/inferMany",
     description: "Infer multiple conclusions based on text",
-    run: async (data, operand, context) => {
+    run: async (operand, context) => {
       context.setStatus("Interpreting...");
+      const data = context.getItems;
 
       if (!Array.isArray(data)) {
         throw new Error("Expected an array");
@@ -74,7 +75,7 @@ export function coreInferManyPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
 
       try {
         const results = await Promise.all(tasks.map((task) => task()));
-        context.setItems(results);
+        context.setItems(results.map((item) => ({ displayName: "", data: item })));
         context.setStatus(`Done (${progress.success} successes, ${progress.error} errors, ${progress.total} total)`);
       } catch (e) {
         context.setStatus(`Error: ${(e as any).message}`);

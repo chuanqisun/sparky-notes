@@ -1,12 +1,12 @@
-import { type RuntimePlugin } from "@h20/motif-lang";
 import { getSemanticSearchInput, type SemanticSearchProxy } from "../../hits/search-claims";
 import type { FnCallProxy } from "../../openai/proxy";
+import type { ShelfPlugin } from "../runtime";
 
-export function hitsSearchPlugin(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): RuntimePlugin {
+export function hitsSearchPlugin(fnCallProxy: FnCallProxy, semanticSearchProxy: SemanticSearchProxy): ShelfPlugin {
   return {
     operator: "/search",
     description: "Search HITS for UX insights",
-    run: async (_data, operand, context) => {
+    run: async (operand, context) => {
       context.setStatus("Interpreting...");
 
       const paramsText = await fnCallProxy(
@@ -51,7 +51,12 @@ export function hitsSearchPlugin(fnCallProxy: FnCallProxy, semanticSearchProxy: 
 
       context.setStatus(`Done. Top ${searchResults.value?.length ?? 0} of ${searchResults["@odata.count"]}`);
 
-      context.setItems(searchResults.value ?? []);
+      context.setItems(
+        (searchResults.value ?? []).map((item) => ({
+          displayName: "",
+          data: item,
+        }))
+      );
     },
   };
 }

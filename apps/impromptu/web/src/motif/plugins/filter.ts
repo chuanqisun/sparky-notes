@@ -1,12 +1,13 @@
-import { type RuntimePlugin } from "@h20/motif-lang";
 import type { FnCallProxy } from "../../openai/proxy";
+import type { ShelfPlugin } from "../runtime";
 
-export function coreFilterPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
+export function coreFilterPlugin(fnCallProxy: FnCallProxy): ShelfPlugin {
   return {
     operator: "/filter",
     description: "Keep any data that meets the provided condition",
-    run: async (data, operand, context) => {
+    run: async (operand, context) => {
       context.setStatus("Interpreting...");
+      const data = context.getItems;
 
       if (!Array.isArray(data)) {
         throw new Error("Expected an array");
@@ -78,7 +79,7 @@ export function coreFilterPlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
       try {
         const results = await Promise.all(tasks.map((task) => task()));
         const filteredData = data.filter((_, index) => results[index]);
-        context.setItems(filteredData);
+        context.setItems(filteredData.map((item) => ({ displayName: "", data: item })));
         context.setStatus(`Done (${progress.keep} keep, ${progress.reject} reject ${progress.error} error, ${progress.total} total)`);
       } catch (e) {
         context.setStatus(`Error: ${(e as any).message}`);

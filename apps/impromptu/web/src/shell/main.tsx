@@ -1,5 +1,5 @@
 import { getProxyToFigma } from "@h20/figma-relay";
-import { motif, parse, run, type Runtime } from "@h20/motif-lang";
+import { motif, parse, run } from "@h20/motif-lang";
 import type { MessageToFigma, MessageToWeb } from "@impromptu/types";
 import CodeMirror from "@uiw/react-codemirror";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -17,6 +17,7 @@ import { coreInferManyPlugin } from "../motif/plugins/inferMany";
 import { hitsSearchPlugin } from "../motif/plugins/search";
 import { coreDeleteShelfPlugin, coreRenameShelfPlugin } from "../motif/plugins/shelf";
 import { coreSummarizePlugin } from "../motif/plugins/summarize";
+import type { ShelfRuntime } from "../motif/runtime";
 import { getChatProxy, getFnCallProxy } from "../openai/proxy";
 import { coerceArray } from "../utils/array";
 import { theme } from "./theme";
@@ -72,7 +73,7 @@ export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
         const program = parse(editorState.source);
         console.log(program);
 
-        const runtime: Runtime = {
+        const runtime: ShelfRuntime = {
           signal: new AbortController().signal,
           setShelfName: (name) => proxy.notify({ showNotification: { message: `Renaming shelf to ${name}` } }),
           getShelfName: () => "TBD",

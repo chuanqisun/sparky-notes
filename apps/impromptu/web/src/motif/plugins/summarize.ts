@@ -1,12 +1,13 @@
-import { type RuntimePlugin } from "@h20/motif-lang";
 import type { FnCallProxy } from "../../openai/proxy";
+import type { ShelfPlugin } from "../runtime";
 
-export function coreSummarizePlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
+export function coreSummarizePlugin(fnCallProxy: FnCallProxy): ShelfPlugin {
   return {
     operator: "/summarize",
     description: "Summarize tabular data into a list of key points",
-    run: async (data, operand, context) => {
+    run: async (operand, context) => {
       context.setStatus("Summarizing...");
+      const data = context.getItems;
 
       fnCallProxy(
         [

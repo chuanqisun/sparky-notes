@@ -1,14 +1,15 @@
 import { getSample, getType } from "@h20/json-reflection";
-import { type RuntimePlugin } from "@h20/motif-lang";
 import { parseFunctionDeclaration } from "../../openai/format";
 import type { FnCallProxy } from "../../openai/proxy";
+import type { ShelfPlugin } from "../runtime";
 
-export function coreCodePlugin(fnCallProxy: FnCallProxy): RuntimePlugin {
+export function coreCodePlugin(fnCallProxy: FnCallProxy): ShelfPlugin {
   return {
     operator: "/code",
     description: "Write code to deterministically change the shelf",
-    run: async (data, operand, context) => {
+    run: async (operand, context) => {
       context.setStatus("Interpreting...");
+      const data = context.getItems;
 
       fnCallProxy(
         [
@@ -59,7 +60,7 @@ Serialize the source code as a single-line JSON string with newline and quotes e
 
           context.setStatus("Executing...");
           const transformedData = transformFn(data);
-          context.setItems(transformedData as any[]);
+          context.setItems((transformedData as any[]).map((item) => ({ displayName: "", data: item })));
           context.setStatus("Done");
         })
         .catch((e) => {
