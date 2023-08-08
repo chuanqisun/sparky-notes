@@ -31,7 +31,6 @@
     "gpt-tokenizer": "^2.1.1",
     "node-jq": "^2.3.5",
     "promised-sqlite3": "^2.0.1",
-    "sqlite3": "^5.1.6",
-    "tsx": "^3.12.6"
+    "sqlite3": "^5.1.6"
   }
 }
