@@ -1,5 +1,5 @@
+import { useAuthContext } from "@h20/auth/react-hooks";
 import { styled } from "styled-components";
-import { useAuthContext } from "../account/auth-context";
 
 export const Main: React.FC<{ children?: React.ReactNode }> = (props) => {
   const { isConnected } = useAuthContext();

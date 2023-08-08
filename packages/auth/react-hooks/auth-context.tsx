@@ -21,7 +21,7 @@ export const AuthContext = createContext<AuthContextType>(defaultContext);
 export interface AuthContextProviderProps {
   hitsAuthEndpoint: string;
   webHost: string;
-  children?: any[];
+  children?: JSX.Element | JSX.Element[] | null;
 }
 export const AuthContextProvider = (props: AuthContextProviderProps) => {
   const authProps = useAuth({

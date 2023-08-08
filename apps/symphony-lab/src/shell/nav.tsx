@@ -1,6 +1,6 @@
+import { useAuthContext } from "@h20/auth/react-hooks";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { useAuthContext } from "../account/auth-context";
 import { ConnectionSetupDialog } from "../account/connection-setup-form";
 import { BasicFormButton } from "../form/form";
 import { useDialog } from "../utils/use-dialog";

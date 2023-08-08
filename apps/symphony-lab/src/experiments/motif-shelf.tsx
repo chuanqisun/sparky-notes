@@ -1,3 +1,4 @@
+import { useAuthContext } from "@h20/auth/react-hooks";
 import { ChatManager, ChatWorker, getOpenAIWorkerProxy } from "@h20/plex-chat";
 import { getTimeoutFunction } from "@h20/plex-chat/src/controller/timeout";
 import { LogLevel } from "@h20/plex-chat/src/scheduler/logger";
@@ -6,7 +7,6 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { JSONTree } from "react-json-tree";
 import styled from "styled-components";
-import { useAuthContext } from "../account/auth-context";
 import { useModelSelector } from "../account/model-selector";
 import { getH20Proxy } from "../hits/proxy";
 import { getSemanticSearchProxy } from "../hits/search-claims";

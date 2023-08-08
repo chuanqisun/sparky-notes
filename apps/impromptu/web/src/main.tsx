@@ -1,4 +1,4 @@
-import { useAuth } from "@h20/auth";
+import { useAuth } from "@h20/auth/preact-hooks";
 import type { CompletionInfoItem, LogEntry, MessageToUI, SelectionSummary } from "@impromptu-demo/types";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";

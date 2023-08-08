@@ -1,5 +1,6 @@
 import type { MessageToUI } from "@h20/assistant-types";
-import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, useAuth, validateConfig, validateToken } from "@h20/auth";
+import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, validateConfig, validateToken } from "@h20/auth";
+import { useAuth } from "@h20/auth/preact-hooks";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/display/display-node";

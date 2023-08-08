@@ -1,9 +1,9 @@
+import { AuthContextProvider } from "@h20/auth/react-hooks";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Link, Outlet, RouterProvider, createBrowserRouter, type NonIndexRouteObject } from "react-router-dom";
 import { styled } from "styled-components";
 import { AccountContextProvider } from "./account/account-context";
-import { AuthContextProvider } from "./account/auth-context";
 import { Cozo, createDb } from "./cozo/cozo";
 import { SCHEMA, getGraphOutputs, setGraphOutput } from "./flow/db/db";
 import "./index.css";
@@ -118,7 +118,7 @@ const StyledNav = styled.nav`
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <AuthContextProvider>
+    <AuthContextProvider hitsAuthEndpoint={import.meta.env.VITE_HITS_AUTH_ENDPIONT} webHost={import.meta.env.VITE_WEB_HOST}>
       <AccountContextProvider>
         <RouterProvider router={router} />
       </AccountContextProvider>

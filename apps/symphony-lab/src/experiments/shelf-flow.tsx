@@ -15,9 +15,9 @@ import ReactFlow, {
   type OnNodesChange,
 } from "reactflow";
 
+import { useAuth } from "@h20/auth/react-hooks";
 import "reactflow/dist/style.css";
 import { useModelSelector } from "../account/model-selector";
-import { useAuth } from "../account/use-auth";
 import { Cozo } from "../cozo/cozo";
 import { ChatNode, chatViewModel } from "../flow/custom-node/chat";
 import { ClaimSearchNode, claimSearchLens, claimSearchViewModel } from "../flow/custom-node/claim-search";
@@ -62,7 +62,7 @@ export interface ShelfFlowProps {
 export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
   const { graph } = props;
   const { chat, ModelSelectorElement } = useModelSelector();
-  const { accessToken } = useAuth();
+  const { accessToken } = useAuth({ hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPOINT, webHost: import.meta.env.VITE_WEB_HOST });
 
   const h20Proxy = useMemo(() => getH20Proxy(accessToken), [accessToken]);
   const searchClaims = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
