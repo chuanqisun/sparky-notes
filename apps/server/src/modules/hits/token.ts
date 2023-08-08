@@ -1,4 +1,3 @@
-import { identity } from "@h20/auth";
 import assert from "assert";
 import axios from "axios";
 import type { Request, RequestHandler } from "express";
@@ -44,10 +43,14 @@ export async function getToken(req: Request): AsyncResponse<GetTokenOutput | str
     };
   }
 
+  assert(typeof process.env.AAD_CLIENT_ID === "string");
+  assert(typeof process.env.OAUTH_SCOPES === "string");
+  assert(typeof process.env.AAD_CLIENT_SECRET === "string");
+
   // try get access token
   const params = new URLSearchParams({
-    client_id: identity.AAD_CLIENT_ID,
-    scope: identity.OAUTH_SCOPES,
+    client_id: process.env.AAD_CLIENT_ID as string,
+    scope: process.env.OAUTH_SCOPES as string,
     refresh_token: user.refresh_token,
     grant_type: "refresh_token",
     client_secret: process.env.AAD_CLIENT_SECRET as string,
@@ -55,7 +58,7 @@ export async function getToken(req: Request): AsyncResponse<GetTokenOutput | str
 
   const response = await axios({
     method: "post",
-    url: `https://login.microsoftonline.com/${identity.AAD_TENANT_ID}/oauth2/v2.0/token`,
+    url: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}/oauth2/v2.0/token`,
     headers: { "Content-Type": "application/x-www-form-urlencoded", Host: "" },
     data: params.toString(),
   });
