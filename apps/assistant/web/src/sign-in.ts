@@ -8,7 +8,13 @@ async function main() {
     return;
   }
 
-  interactiveSignIn({ codeVerifier, aadTenentId: authConfig.AAD_TENANT_ID, webHost: import.meta.env.VITE_WEB_HOST });
+  interactiveSignIn({
+    aadClientId: authConfig.AAD_CLIENT_ID,
+    codeVerifier,
+    aadTenentId: authConfig.AAD_TENANT_ID,
+    oauthScopes: authConfig.OAUTH_SCOPES,
+    webHost: import.meta.env.VITE_WEB_HOST,
+  });
 }
 
 main();

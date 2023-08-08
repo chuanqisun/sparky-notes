@@ -68,7 +68,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;
-  const { isConnected, signIn, accessToken, isTokenExpired } = useAuth();
+  const { isConnected, signIn, accessToken, isTokenExpired } = useAuth({
+    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPOINT,
+    webHost: import.meta.env.VITE_WEB_HOST,
+  });
 
   const [cardData, setCardData] = useState<CardData | null | undefined>(undefined);
 

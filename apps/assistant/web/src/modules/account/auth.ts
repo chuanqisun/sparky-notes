@@ -1,4 +1,3 @@
-import { authConfig } from "@h20/auth";
 import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/server/src/interface";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
@@ -28,16 +27,18 @@ export async function embeddedSignIn({ hitsAuthEndpoint, webHost }: EmbeddedSign
 
 export interface InteractiveSignInOptions {
   codeVerifier: string;
+  aadClientId: string;
+  oauthScopes: string;
   aadTenentId: string;
   webHost: string; // where `auth-reidrect.html` is
 }
-export async function interactiveSignIn({ codeVerifier, aadTenentId, webHost }: InteractiveSignInOptions) {
+export async function interactiveSignIn({ aadClientId, codeVerifier, aadTenentId, oauthScopes, webHost }: InteractiveSignInOptions) {
   const challenge = await generateCodeChallengeFromVerifier(codeVerifier);
   const params = new URLSearchParams({
-    client_id: authConfig.AAD_CLIENT_ID,
+    client_id: aadClientId,
     response_type: "code",
     redirect_uri: `${webHost}/auth-redirect.html`,
-    scope: authConfig.OAUTH_SCOPES,
+    scope: oauthScopes,
     code_challenge: challenge,
     code_challenge_method: "S256",
   });
