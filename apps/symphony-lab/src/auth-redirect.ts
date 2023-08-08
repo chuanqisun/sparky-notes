@@ -1,6 +1,6 @@
-import { handleOAuthRedirect } from "./account/auth";
+import { handleOAuthRedirect } from "@h20/auth";
 
-handleOAuthRedirect().then((res) => {
+handleOAuthRedirect({ hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPIONT }).then((res) => {
   setTimeout(() => {
     document.getElementById("output")!.innerHTML = res?.email ? `Successfully signed in as ${res.email}. You may close the window now.` : "Error signing in";
   }, 3000); // match the polling rate

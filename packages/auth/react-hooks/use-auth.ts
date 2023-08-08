@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TOKEN_CACHE_KEY, getInitialToken } from "../client/access-token";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "../client/auth";
+import { useLocalStorage } from "../preact-hooks/use-local-storage";
 import { useConfig } from "./use-config";
-import { useLocalStorage } from "./use-local-storage";
 
 export interface UseAuthConfig {
   hitsAuthEndpoint: string;

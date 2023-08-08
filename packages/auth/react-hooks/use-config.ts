@@ -1,5 +1,5 @@
 import { CONFIG_CACHE_KEY, getInitialConfig } from "../client/config";
-import { useLocalStorage } from "./use-local-storage";
+import { useLocalStorage } from "../preact-hooks/use-local-storage";
 
 export function useConfig() {
   const hitsConfig = useLocalStorage({
