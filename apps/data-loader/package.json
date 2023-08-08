@@ -28,7 +28,6 @@
     "axios-retry": "^3.4.0",
     "cors": "^2.8.5",
     "cozo-node": "^0.7.0",
-    "dotenv": "^16.0.3",
     "gpt-tokenizer": "^2.1.1",
     "node-jq": "^2.3.5",
     "promised-sqlite3": "^2.0.1",
