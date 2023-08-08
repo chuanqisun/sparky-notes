@@ -1,4 +1,4 @@
-import { identity, interactiveSignIn } from "@h20/auth";
+import { interactiveSignIn } from "@h20/auth";
 
 async function main() {
   const codeVerifier = new URLSearchParams(location.search).get("code_verifier");
@@ -8,10 +8,10 @@ async function main() {
   }
 
   interactiveSignIn({
-    aadClientId: identity.AAD_CLIENT_ID,
+    aadClientId: import.meta.env.VITE_AAD_CLIENT_ID,
     codeVerifier,
-    aadTenentId: identity.AAD_TENANT_ID,
-    oauthScopes: identity.OAUTH_SCOPES,
+    aadTenentId: import.meta.env.VITE_AAD_TENANT_ID,
+    oauthScopes: import.meta.env.VITE_OAUTH_SCOPES,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 }
