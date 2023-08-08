@@ -1,4 +1,4 @@
-import { authConfig } from "@h20/auth";
+import { identity } from "@h20/auth";
 import assert from "assert";
 import axios from "axios";
 import crypto from "crypto";
@@ -38,8 +38,8 @@ export async function signIn(req: Request): AsyncResponse<SignInOutput> {
   const { code, code_verifier } = input;
 
   const params = new URLSearchParams({
-    client_id: authConfig.AAD_CLIENT_ID,
-    scope: authConfig.OAUTH_SCOPES,
+    client_id: identity.AAD_CLIENT_ID,
+    scope: identity.OAUTH_SCOPES,
     code: code as string,
     redirect_uri: `${redirectHost}/auth-redirect.html`,
     grant_type: "authorization_code",
@@ -49,7 +49,7 @@ export async function signIn(req: Request): AsyncResponse<SignInOutput> {
 
   const response = await axios({
     method: "post",
-    url: `https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/token`,
+    url: `https://login.microsoftonline.com/${identity.AAD_TENANT_ID}/oauth2/v2.0/token`,
     headers: { "Content-Type": "application/x-www-form-urlencoded", Host: "" },
     data: params.toString(),
   });

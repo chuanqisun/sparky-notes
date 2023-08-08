@@ -1,4 +1,4 @@
-import { authConfig } from "@h20/auth";
+import { identity } from "@h20/auth";
 import { interactiveSignIn } from "./modules/account/auth";
 
 async function main() {
@@ -9,10 +9,10 @@ async function main() {
   }
 
   interactiveSignIn({
-    aadClientId: authConfig.AAD_CLIENT_ID,
+    aadClientId: identity.AAD_CLIENT_ID,
     codeVerifier,
-    aadTenentId: authConfig.AAD_TENANT_ID,
-    oauthScopes: authConfig.OAUTH_SCOPES,
+    aadTenentId: identity.AAD_TENANT_ID,
+    oauthScopes: identity.OAUTH_SCOPES,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 }
