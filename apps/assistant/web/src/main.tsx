@@ -1,4 +1,4 @@
-import type { CardData, MessageToUI } from "@h20/types";
+import type { CardData, MessageToUI } from "@h20/assistant-types";
 import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { TOKEN_CACHE_KEY, getInitialToken, validateToken } from "./modules/account/access-token";

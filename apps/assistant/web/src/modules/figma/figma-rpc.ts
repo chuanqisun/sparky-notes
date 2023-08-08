@@ -1,4 +1,4 @@
-import type { MessageToMain } from "@h20/types";
+import type { MessageToMain } from "@h20/assistant-types";
 
 const ALLOWED_ORIGINS = ["https://www.figma.com", import.meta.env.VITE_WEB_HOST];
 

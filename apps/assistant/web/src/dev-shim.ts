@@ -1,4 +1,4 @@
-import type { MessageToMain, MessageToUI } from "@h20/types";
+import type { MessageToMain, MessageToUI } from "@h20/assistant-types";
 
 export default {};
 console.log("[debug-shim] ready");

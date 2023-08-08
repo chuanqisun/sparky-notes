@@ -1,5 +1,5 @@
 {
-  "name": "@h20/types",
+  "name": "@h20/assistant-types",
   "version": "1.0.0",
   "description": "",
   "main": "index.d.ts",

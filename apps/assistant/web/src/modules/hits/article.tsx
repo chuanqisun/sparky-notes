@@ -1,4 +1,4 @@
-import type { CardData } from "@h20/types";
+import type { CardData } from "@h20/assistant-types";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityBackgroundColor, EntityDisplayName, EntityIconComponent, EntityName } from "./entity";

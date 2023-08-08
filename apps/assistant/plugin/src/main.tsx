@@ -1,7 +1,7 @@
-import { CardData, MessageToMain, MessageToUI } from "@h20/types";
+import { CardData, MessageToMain, MessageToUI } from "@h20/assistant-types";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
-import figmaPalette from "./assets/figma-palette.json";
 import Plus from "./assets/FigmaPlus.svg";
+import figmaPalette from "./assets/figma-palette.json";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
