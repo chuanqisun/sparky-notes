@@ -1,5 +1,5 @@
 {
-  "name": "@h20/figma-plugin",
+  "name": "@h20/assistant-plugin",
   "version": "1.0.0",
   "description": "Your Figma Plugin",
   "main": "code.js",

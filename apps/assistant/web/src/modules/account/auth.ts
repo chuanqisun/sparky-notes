@@ -1,13 +1,5 @@
 import { authConfig } from "@h20/auth";
-import type {
-  GetTokenInput,
-  GetTokenOutput,
-  SignInInput,
-  SignInOutput,
-  SignInStatusOutput,
-  SignOutInput,
-  SignOutOutput,
-} from "../../../../server/src/interface";
+import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/server/src/interface";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
 const HITS_AUTH_ENDPOINT = import.meta.env.VITE_HITS_AUTH_ENDPIONT;

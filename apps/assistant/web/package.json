@@ -1,5 +1,5 @@
 {
-  "name": "@h20/web",
+  "name": "@h20/assistant-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
