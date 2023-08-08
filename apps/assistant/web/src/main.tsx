@@ -48,7 +48,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;
-  const { isConnected, signIn, signOut, accessToken, isTokenExpired } = useAuth();
+  const { isConnected, signIn, signOut, accessToken, isTokenExpired } = useAuth({
+    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPIONT,
+    webHost: import.meta.env.VITE_WEB_HOST,
+  });
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);

@@ -2,16 +2,17 @@ import { authConfig } from "@h20/auth";
 import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/server/src/interface";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../../utils/crypto";
 
-const HITS_AUTH_ENDPOINT = import.meta.env.VITE_HITS_AUTH_ENDPIONT;
-const WEB_HOST = import.meta.env.VITE_WEB_HOST;
-
-export async function embeddedSignIn() {
+export interface EmbeddedSignInOptions {
+  hitsAuthEndpoint: string;
+  webHost: string; // where `sign-in.html` is
+}
+export async function embeddedSignIn({ hitsAuthEndpoint, webHost }: EmbeddedSignInOptions) {
   const code_verifier = generateCodeVerifier();
 
   // TODO, directly navigate to AAD portal. No need to open sign-in.html
-  window.open(`${WEB_HOST}/sign-in.html?code_verifier=${code_verifier}`);
+  window.open(`${webHost}/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result: SignInStatusOutput = await fetch(`${HITS_AUTH_ENDPOINT}/signinstatus`, {
+  const result: SignInStatusOutput = await fetch(`${hitsAuthEndpoint}/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -25,26 +26,35 @@ export async function embeddedSignIn() {
   return result;
 }
 
-export async function interactiveSignIn(code_verifier: string) {
-  const challenge = await generateCodeChallengeFromVerifier(code_verifier);
+export interface InteractiveSignInOptions {
+  codeVerifier: string;
+  aadTenentId: string;
+  webHost: string; // where `auth-reidrect.html` is
+}
+export async function interactiveSignIn({ codeVerifier, aadTenentId, webHost }: InteractiveSignInOptions) {
+  const challenge = await generateCodeChallengeFromVerifier(codeVerifier);
   const params = new URLSearchParams({
     client_id: authConfig.AAD_CLIENT_ID,
     response_type: "code",
-    redirect_uri: `${WEB_HOST}/auth-redirect.html`,
+    redirect_uri: `${webHost}/auth-redirect.html`,
     scope: authConfig.OAUTH_SCOPES,
     code_challenge: challenge,
     code_challenge_method: "S256",
   });
 
-  sessionStorage.setItem("aad-last-verifier", code_verifier);
-  location.replace(`https://login.microsoftonline.com/${authConfig.AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
+  sessionStorage.setItem("aad-last-verifier", codeVerifier);
+  location.replace(`https://login.microsoftonline.com/${aadTenentId}/oauth2/v2.0/authorize?${params}`);
 }
 
 export interface AuthRedirectResult {
   email: string;
   idToken: string;
 }
-export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
+
+export interface HandleOAuthRedirectOptions {
+  hitsAuthEndpoint: string;
+}
+export async function handleOAuthRedirect({ hitsAuthEndpoint }: HandleOAuthRedirectOptions): Promise<SignInOutput | null> {
   const code_verifier = sessionStorage.getItem("aad-last-verifier");
   const code = new URLSearchParams(location.search).get("code");
   if (!code_verifier || !code) {
@@ -57,7 +67,7 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
     code_verifier,
   };
 
-  const result: SignInOutput = await fetch(`${HITS_AUTH_ENDPOINT}/signin`, {
+  const result: SignInOutput = await fetch(`${hitsAuthEndpoint}/signin`, {
     headers: {
       "content-type": "application/json",
     },
@@ -73,8 +83,13 @@ export async function handleOAuthRedirect(): Promise<SignInOutput | null> {
   return result;
 }
 
-export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutput> {
-  const result = await fetch(`${HITS_AUTH_ENDPOINT}/token`, {
+export interface GetAccessTokenOptions {
+  input: GetTokenInput;
+  hitsAuthEndpoint: string;
+}
+
+export async function getAccessToken({ input, hitsAuthEndpoint }: GetAccessTokenOptions): Promise<GetTokenOutput> {
+  const result = await fetch(`${hitsAuthEndpoint}/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -87,8 +102,13 @@ export async function getAccessToken(input: GetTokenInput): Promise<GetTokenOutp
   return result.json();
 }
 
-export async function signOutRemote(input: SignOutInput): Promise<SignOutOutput> {
-  const result = await fetch(`${HITS_AUTH_ENDPOINT}/signout`, {
+export interface SignOutRemoteOptions {
+  input: SignOutInput;
+  hitsAuthEndpoint: string;
+}
+
+export async function signOutRemote({ input, hitsAuthEndpoint }: SignOutRemoteOptions): Promise<SignOutOutput> {
+  const result = await fetch(`${hitsAuthEndpoint}/signout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

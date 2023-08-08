@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useLocalStorage } from "../../utils/use-local-storage";
-import { getInitialToken, TOKEN_CACHE_KEY } from "./access-token";
+import { TOKEN_CACHE_KEY, getInitialToken } from "./access-token";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "./auth";
 import { useConfig } from "./use-config";
 
-export function useAuth() {
+export interface UseAuthConfig {
+  hitsAuthEndpoint: string;
+  webHost: string;
+}
+export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);
 
   const hitsConfig = useConfig();
@@ -19,7 +23,10 @@ export function useAuth() {
 
   useEffect(() => {
     const refreshToken = () =>
-      getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId })
+      getAccessToken({
+        input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
+        hitsAuthEndpoint,
+      })
         .then((token) => {
           timedToken.update(token);
           setIsConnected(true);
@@ -27,7 +34,10 @@ export function useAuth() {
         .catch(() => setIsConnected(false));
 
     const interval = setInterval(() => {
-      getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId })
+      getAccessToken({
+        input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
+        hitsAuthEndpoint,
+      })
         .then((token) => {
           timedToken.update(token);
           setIsConnected(true);
@@ -41,7 +51,7 @@ export function useAuth() {
 
   const signIn = useCallback(() => {
     setIsConnected(undefined);
-    embeddedSignIn().then((result) => {
+    embeddedSignIn({ hitsAuthEndpoint, webHost }).then((result) => {
       hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
       location.reload();
     });
@@ -50,7 +60,10 @@ export function useAuth() {
   const signOut = useCallback(() => {
     localStorage.clear();
 
-    signOutRemote({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId }).then(() => {
+    signOutRemote({
+      input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
+      hitsAuthEndpoint,
+    }).then(() => {
       hitsConfig.reset();
     });
   }, [hitsConfig.value]);
