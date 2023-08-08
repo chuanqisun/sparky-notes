@@ -1,5 +1,4 @@
-import { identity } from "@h20/auth";
-import { interactiveSignIn } from "./modules/account/auth";
+import { identity, interactiveSignIn } from "@h20/auth";
 
 async function main() {
   const codeVerifier = new URLSearchParams(location.search).get("code_verifier");

@@ -1,6 +1,6 @@
+import { CONFIG_CACHE_KEY, type HitsConfig } from "@h20/auth";
 import { ApplicationInsights, type ITelemetryItem } from "@microsoft/applicationinsights-web";
 import { getJson } from "../../utils/local-storage";
-import { CONFIG_CACHE_KEY, type HitsConfig } from "../account/config";
 
 export const appInsights = new ApplicationInsights({
   config: {

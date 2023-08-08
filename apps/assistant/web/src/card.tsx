@@ -1,9 +1,7 @@
 import type { MessageToUI } from "@h20/assistant-types";
+import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, useAuth, validateConfig, validateToken } from "@h20/auth";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
-import { TOKEN_CACHE_KEY, getInitialToken, validateToken } from "./modules/account/access-token";
-import { CONFIG_CACHE_KEY, getInitialConfig, validateConfig } from "./modules/account/config";
-import { useAuth } from "./modules/account/use-auth";
 import { isClaimType } from "./modules/display/display-node";
 import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";

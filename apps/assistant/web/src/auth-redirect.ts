@@ -1,4 +1,4 @@
-import { handleOAuthRedirect } from "./modules/account/auth";
+import { handleOAuthRedirect } from "@h20/auth";
 
 handleOAuthRedirect({ hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPIONT }).then((res) => {
   setTimeout(() => {
