@@ -1,4 +1,3 @@
-import { identity } from "@h20/auth";
 import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInStatusOutput, SignOutInput, SignOutOutput } from "@h20/server/src/interface";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "./crypto";
 
@@ -28,16 +27,16 @@ export async function embeddedSignIn() {
 export async function interactiveSignIn(code_verifier: string) {
   const challenge = await generateCodeChallengeFromVerifier(code_verifier);
   const params = new URLSearchParams({
-    client_id: identity.AAD_CLIENT_ID,
+    client_id: import.meta.env.VITE_AAD_CLIENT_ID,
     response_type: "code",
     redirect_uri: `${WEB_HOST}/auth-redirect.html`,
-    scope: identity.OAUTH_SCOPES,
+    scope: import.meta.env.VITE_OAUTH_SCOPES,
     code_challenge: challenge,
     code_challenge_method: "S256",
   });
 
   sessionStorage.setItem("aad-last-verifier", code_verifier);
-  location.replace(`https://login.microsoftonline.com/${identity.AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
+  location.replace(`https://login.microsoftonline.com/${import.meta.env.VITE_AAD_TENANT_ID}/oauth2/v2.0/authorize?${params}`);
 }
 
 export interface AuthRedirectResult {
