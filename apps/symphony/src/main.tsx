@@ -118,7 +118,7 @@ const StyledNav = styled.nav`
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <AuthContextProvider hitsAuthEndpoint={import.meta.env.VITE_HITS_AUTH_ENDPIONT} webHost={import.meta.env.VITE_WEB_HOST}>
+    <AuthContextProvider hitsAuthEndpoint={import.meta.env.VITE_HITS_AUTH_ENDPOINT} webHost={import.meta.env.VITE_WEB_HOST}>
       <AccountContextProvider>
         <RouterProvider router={router} />
       </AccountContextProvider>

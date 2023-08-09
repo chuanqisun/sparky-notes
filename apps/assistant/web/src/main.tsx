@@ -39,7 +39,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const { worker } = props;
   const { isConnected, signIn, signOut, accessToken, isTokenExpired } = useAuth({
-    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPIONT,
+    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPOINT,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 

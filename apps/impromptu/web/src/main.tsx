@@ -14,7 +14,7 @@ import { useTokenMeter } from "./modules/usage/usage";
 
 function App() {
   const { isConnected, signIn, signOut, accessToken } = useAuth({
-    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPIONT,
+    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPOINT,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 

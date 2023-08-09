@@ -10,7 +10,7 @@ import type {
 } from "../../../../../apps/server/src/interface";
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "./crypto";
 
-const HITS_AUTH_ENDPOINT = import.meta.env.VITE_HITS_AUTH_ENDPIONT;
+const HITS_AUTH_ENDPOINT = import.meta.env.VITE_HITS_AUTH_ENDPOINT;
 const WEB_HOST = import.meta.env.VITE_WEB_HOST;
 
 export async function embeddedSignIn() {
