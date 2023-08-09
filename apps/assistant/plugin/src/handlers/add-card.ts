@@ -1,5 +1,5 @@
 import { loadFonts } from "@h20/figma-tools";
-import { HandlerContext } from "../main";
+import type { HandlerContext } from "../main";
 
 export async function addCard({ message, widgetId }: HandlerContext) {
   if (!message.addCard) return;

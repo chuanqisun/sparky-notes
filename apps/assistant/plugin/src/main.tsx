@@ -1,10 +1,9 @@
-import { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { ProxyToWeb, getProxyToWeb } from "@h20/figma-relay";
+import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { useCard } from "./card/use-card";
 import { addCard } from "./handlers/add-card";
 import { openCardPage, openIndexPage } from "./router/router";
-import { cssPadding } from "./utils/css-padding";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;

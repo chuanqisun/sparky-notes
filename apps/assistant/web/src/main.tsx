@@ -1,10 +1,10 @@
-import type { CardData, MessageToUI } from "@h20/assistant-types";
+import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, validateConfig, validateToken } from "@h20/auth";
 import { useAuth } from "@h20/auth/preact-hooks";
+import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { HitsDisplayNode } from "./modules/display/display-node";
-import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
 import { appInsights } from "./modules/telemetry/app-insights";
@@ -28,14 +28,14 @@ window.focus();
 ensureJson(CONFIG_CACHE_KEY, validateConfig, getInitialConfig);
 ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
 
+const proxy = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
+
 appInsights.trackPageView();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   useEffect(() => {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
-
-  const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;
   const { isConnected, signIn, signOut, accessToken, isTokenExpired } = useAuth({
@@ -49,13 +49,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Figma RPC
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
-      const pluginMessage = e.data.pluginMessage as MessageToUI;
+      const pluginMessage = e.data.pluginMessage as MessageToWeb;
       console.log(`[ipc] Main -> UI`, pluginMessage);
-
-      if (pluginMessage.reset) {
-        localStorage.clear();
-        location.reload();
-      }
     };
 
     window.addEventListener("message", handleMainMessage);
@@ -94,13 +89,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   );
 
   // handle send card to figma
-  const handleAddCard = useCallback(
-    (cardData: CardData) => {
-      appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType });
-      notifyFigma({ addCard: cardData });
-    },
-    [notifyFigma]
-  );
+  const handleAddCard = useCallback((cardData: CardData) => {
+    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType });
+    proxy.notify({ addCard: cardData });
+  }, []);
 
   const { queue, add } = useConcurrentTasks<SearchRes>();
 

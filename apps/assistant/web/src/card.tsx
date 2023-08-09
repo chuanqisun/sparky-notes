@@ -1,10 +1,9 @@
-import type { MessageToUI } from "@h20/assistant-types";
+import type { MessageToWeb } from "@h20/assistant-types";
 import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, validateConfig, validateToken } from "@h20/auth";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/display/display-node";
-import { getParentOrigin, sendMessage } from "./modules/figma/figma-rpc";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { ErrorMessage } from "./modules/hits/error";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
@@ -64,8 +63,6 @@ const bodyTextOverflowThreshold = 100;
 appInsights.trackPageView();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
-  const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
-
   const { worker } = props;
   const { isConnected, signIn, accessToken, isTokenExpired } = useAuth({
     hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPOINT,
@@ -77,7 +74,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Figma RPC
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
-      const pluginMessage = e.data.pluginMessage as MessageToUI;
+      const pluginMessage = e.data.pluginMessage as MessageToWeb;
       console.log(`[ipc] Main -> UI`, pluginMessage);
       // TBD
     };

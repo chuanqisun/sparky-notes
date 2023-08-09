@@ -1,4 +1,4 @@
-import type { MessageToMain, MessageToUI } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 
 export default {};
 console.log("[debug-shim] ready");
@@ -12,7 +12,7 @@ mainIframe.src = import.meta.env.VITE_WEB_HOST;
 cardIframe.src = import.meta.env.VITE_WEB_HOST + "/card.html";
 
 window.addEventListener("message", (e) => {
-  const message = e.data?.pluginMessage as MessageToMain;
+  const message = e.data?.pluginMessage as MessageToFigma;
   console.log(`[debug] UI -> Main`, message);
 
   if (message.addCard) {
@@ -43,6 +43,6 @@ window.addEventListener("click", (e) => {
   }
 });
 
-function sendMessageFromMockMain(message: MessageToUI) {
+function sendMessageFromMockMain(message: MessageToWeb) {
   document.querySelector("iframe")!.contentWindow!.postMessage({ pluginMessage: message }, "*");
 }
