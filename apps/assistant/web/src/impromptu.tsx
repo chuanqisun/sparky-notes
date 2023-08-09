@@ -3,6 +3,7 @@ import { useAuth } from "@h20/auth/preact-hooks";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getH20Proxy } from "./modules/h20/proxy";
+import { filter } from "./modules/inference/filter";
 import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -20,7 +21,7 @@ appInsights.trackPageView();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { worker } = props;
-  const { isConnected, signIn, accessToken, isTokenExpired } = useAuth({
+  const { isConnected, signIn, accessToken } = useAuth({
     serverHost: import.meta.env.VITE_H20_SERVER_HOST,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
@@ -57,6 +58,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     console.log(response);
   }, [chatProxy, selection]);
 
+  const handleFilter = useCallback(async () => {
+    const response = await filter(fnCallProxy, "does it raise a question?", selection?.stickies ?? []);
+    console.log(response);
+  }, [fnCallProxy, selection]);
+
   return (
     <>
       {isConnected === undefined && <div class="c-progress-bar" />}
@@ -74,7 +80,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         <>
           <fieldset>
             <legend>Shelf</legend>
-            <ul>
+            <ul class="c-shelf">
               {selection?.stickies.map((sticky) => (
                 <li key={sticky.id}>{JSON.stringify(sticky)}</li>
               ))}
@@ -82,6 +88,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </fieldset>
           <fieldset>
             <legend>Action</legend>
+            <button onClick={handleFilter}>Filter</button>
             <button onClick={handleGroup}>Group</button>
           </fieldset>
           <fieldset>
