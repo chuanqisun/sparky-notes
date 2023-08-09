@@ -1,17 +1,10 @@
-export interface MessageToUI {
-  reset?: boolean;
+export interface MessageToWeb {
   ping?: string;
 }
 
-export interface MessageToMain {
+export interface MessageToFigma {
   ping?: string;
-  importResult?: {
-    isInProgress?: boolean;
-    isSuccess?: boolean;
-    isError?: boolean;
-  };
   addCard?: CardData;
-  requestClose?: boolean;
 }
 
 export interface CardData {

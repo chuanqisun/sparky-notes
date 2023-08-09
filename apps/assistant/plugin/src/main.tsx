@@ -1,87 +1,32 @@
-import { CardData, MessageToMain, MessageToUI } from "@h20/assistant-types";
+import { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import { ProxyToWeb, getProxyToWeb } from "@h20/figma-relay";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
-import Plus from "./assets/FigmaPlus.svg";
-import figmaPalette from "./assets/figma-palette.json";
-import { showUI } from "./utils/show-ui";
+import { useCard } from "./card/use-card";
+import { addCard } from "./handlers/add-card";
+import { openCardPage, openIndexPage } from "./router/router";
+import { cssPadding } from "./utils/css-padding";
 
 const { widget } = figma;
-const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
+const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
 
-const openIndexPage = () => showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 800, width: 420 });
-const openCardPage = (entityId: number | string, entityType: number | string) =>
-  showUI(`${process.env.VITE_WEB_HOST}/card.html?entityId=${entityId}&entityType=${entityType}`, { height: 800, width: 420 });
-
-const sendToUI = (message: MessageToUI) => {
-  figma.ui.postMessage(message);
-};
+const webProxy = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
 function Widget() {
   const widgetId = useWidgetId();
 
-  const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
-
-  usePropertyMenu(
-    cardData
-      ? [
-          {
-            icon: Plus,
-            itemType: "action",
-            propertyName: "add",
-            tooltip: "New",
-          },
-          {
-            itemType: "separator",
-          },
-          {
-            itemType: "color-selector",
-            propertyName: "backgroundColor",
-            tooltip: "Background",
-            selectedOption: cardData.backgroundColor,
-            options: figmaPalette,
-          },
-        ]
-      : [],
-    ({ propertyName, propertyValue }) => {
-      switch (propertyName) {
-        case "backgroundColor":
-          setCardData({ ...cardData!, backgroundColor: propertyValue! });
-          break;
-        case "add":
-          return new Promise((_resolve) => openIndexPage());
-      }
-    }
-  );
+  const { cardData } = useCard({ openIndexPage });
 
   useEffect(() => {
-    figma.ui.onmessage = async (msg: MessageToMain) => {
-      console.log(msg);
+    figma.ui.onmessage = async (message: MessageToFigma) => {
+      const context: HandlerContext = {
+        message,
+        widgetId,
+        webProxy,
+      };
 
-      if (msg.importResult) {
-        if (msg.importResult.isSuccess) {
-          figma.notify("Importing... Success");
-        } else if (msg.importResult.isError) {
-          figma.notify("Importing... Failed", { error: true });
-        } else if (msg.importResult.isInProgress) {
-          figma.notify("Importing...");
-        }
-      }
+      console.log(message);
 
-      if (msg.addCard) {
-        await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-
-        const widgetNode = figma.getNodeById(widgetId) as WidgetNode;
-        const clonedWidget = widgetNode.cloneWidget({ cardData: msg.addCard });
-
-        clonedWidget.x = widgetNode.x;
-        clonedWidget.y = widgetNode.y + widgetNode.height + 32;
-        figma.currentPage.appendChild(clonedWidget);
-
-        figma.notify(`✅ Card added to canvas`);
-      }
-
-      if (msg.requestClose) {
-        figma.closePlugin();
-      }
+      addCard(context);
     };
   });
 
@@ -96,12 +41,12 @@ function Widget() {
       strokeWidth={4}
       onClick={() => new Promise((_resolve) => openCardPage(cardData.entityId, cardData.entityType))}
     >
-      <AutoLayout padding={cssPad(20, 24, 6, 24)}>
+      <AutoLayout padding={cssPadding(20, 24, 6, 24)}>
         <Text width={500} fontSize={20} fontWeight={600} lineHeight={26}>
           {cardData.title}
         </Text>
       </AutoLayout>
-      <AutoLayout padding={cssPad(4, 24, 20, 24)}>
+      <AutoLayout padding={cssPadding(4, 24, 20, 24)}>
         <Text opacity={0.7} width={500} fontSize={18} lineHeight={20} href={cardData!.url}>
           {cardData!.url.replace("https://", "")}
         </Text>
@@ -112,11 +57,8 @@ function Widget() {
 
 widget.register(Widget);
 
-function cssPad(top: number, right: number, bottom: number, left: number) {
-  return {
-    top,
-    right,
-    bottom,
-    left,
-  };
+export interface HandlerContext {
+  message: MessageToFigma;
+  widgetId: string;
+  webProxy: ProxyToWeb<MessageToWeb, MessageToFigma>;
 }
