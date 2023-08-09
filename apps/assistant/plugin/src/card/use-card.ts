@@ -6,9 +6,10 @@ const { usePropertyMenu, useSyncedState } = figma.widget;
 
 export interface UseCardMenuProps {
   openIndexPage: () => void;
+  openImpromptuPage: () => void;
 }
 
-export function useCard({ openIndexPage }: UseCardMenuProps) {
+export function useCard({ openIndexPage, openImpromptuPage }: UseCardMenuProps) {
   const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
 
   usePropertyMenu(
@@ -31,7 +32,13 @@ export function useCard({ openIndexPage }: UseCardMenuProps) {
             options: figmaPalette,
           },
         ]
-      : [],
+      : [
+          {
+            itemType: "action",
+            propertyName: "impromptu",
+            tooltip: "Open Impromptu",
+          },
+        ],
     ({ propertyName, propertyValue }) => {
       switch (propertyName) {
         case "backgroundColor":
@@ -39,6 +46,8 @@ export function useCard({ openIndexPage }: UseCardMenuProps) {
           break;
         case "add":
           return new Promise((_resolve) => openIndexPage());
+        case "impromptu":
+          return new Promise((_resolve) => openImpromptuPage());
       }
     }
   );

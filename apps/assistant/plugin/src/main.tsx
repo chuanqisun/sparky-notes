@@ -3,7 +3,7 @@ import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { useCard } from "./card/use-card";
 import { addCard } from "./handlers/add-card";
-import { openCardPage, openIndexPage } from "./router/router";
+import { openCardPage, openImpromptuPage, openIndexPage } from "./router/router";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
@@ -13,7 +13,7 @@ const webProxy = getProxyToWeb<MessageToWeb, MessageToFigma>();
 function Widget() {
   const widgetId = useWidgetId();
 
-  const { cardData } = useCard({ openIndexPage });
+  const { cardData } = useCard({ openIndexPage, openImpromptuPage });
 
   useEffect(() => {
     figma.ui.onmessage = async (message: MessageToFigma) => {
