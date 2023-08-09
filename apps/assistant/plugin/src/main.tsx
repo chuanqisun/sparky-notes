@@ -3,6 +3,7 @@ import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCard } from "./handlers/handle-add-card";
+import { handleDisableImpromptu } from "./handlers/handle-disable-impromptu";
 import { handleEnableImpromptu } from "./handlers/handle-enable-impromptu";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openImpromptuPage, openIndexPage } from "./router/router";
@@ -18,7 +19,7 @@ function Widget() {
   const widgetId = useWidgetId();
 
   const { cardData } = useWidgetState({ openIndexPage });
-  const { isImpromptuEnabled, enableImpromptu } = useImpromptuSwitch();
+  const { isImpromptuEnabled, enableImpromptu, disableImpromptu } = useImpromptuSwitch();
 
   useEffect(() => {
     const convertSelectionChangeToMessage = () => {
@@ -31,6 +32,7 @@ function Widget() {
       handleSelectionChange(message, proxyToWeb);
       handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleEnableImpromptu(message, enableImpromptu, openImpromptuPage);
+      handleDisableImpromptu(message, disableImpromptu, openIndexPage);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;

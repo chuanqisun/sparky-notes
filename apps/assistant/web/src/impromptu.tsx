@@ -1,5 +1,6 @@
-import type { MessageToWeb, SelectionSummary } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, SelectionSummary } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
+import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getH20Proxy } from "./modules/h20/proxy";
@@ -13,6 +14,8 @@ import WebWorker from "./worker?worker";
 
 // start worker ASAP
 const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).start();
+
+const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
@@ -129,6 +132,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             <legend>Output</legend>
             <pre class="c-output">{JSON.stringify(output, null, 2)}</pre>
           </fieldset>
+          <button onClick={() => proxyToFigma.notify({ disableImpromptu: true })}>Exit</button>
         </>
       )}
     </>

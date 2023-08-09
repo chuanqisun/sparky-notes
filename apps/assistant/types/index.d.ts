@@ -7,6 +7,7 @@ export interface MessageToFigma {
   ping?: string;
   addCard?: CardData;
   enableImpromptu?: boolean;
+  disableImpromptu?: boolean;
   selectionChange?: boolean;
 }
 

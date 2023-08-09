@@ -4,5 +4,6 @@ export function useImpromptuSwitch() {
   const [isImpromptuEnabled, setIsImpromptuEnabled] = useSyncedState<boolean>("isImpromptuEnabled", false);
 
   const enableImpromptu = () => setIsImpromptuEnabled(true);
-  return { isImpromptuEnabled, enableImpromptu };
+  const disableImpromptu = () => setIsImpromptuEnabled(false);
+  return { isImpromptuEnabled, enableImpromptu, disableImpromptu };
 }
