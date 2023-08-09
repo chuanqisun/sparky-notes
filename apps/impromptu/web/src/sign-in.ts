@@ -11,7 +11,7 @@ async function main() {
     aadClientId: import.meta.env.VITE_AAD_CLIENT_ID,
     codeVerifier,
     aadTenentId: import.meta.env.VITE_AAD_TENANT_ID,
-    oauthScopes: import.meta.env.VITE_OAUTH_SCOPES,
+    oauthScopes: import.meta.env.VITE_AAD_OAUTH_SCOPES,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 }

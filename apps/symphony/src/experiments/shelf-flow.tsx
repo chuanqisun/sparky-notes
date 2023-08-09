@@ -62,7 +62,7 @@ export interface ShelfFlowProps {
 export const ShelfFlow: React.FC<ShelfFlowProps> = (props) => {
   const { graph } = props;
   const { chat, ModelSelectorElement } = useModelSelector();
-  const { accessToken } = useAuth({ serverHost: import.meta.env.VITE_H20_SERVER_ENDPOINT, webHost: import.meta.env.VITE_WEB_HOST });
+  const { accessToken } = useAuth({ serverHost: import.meta.env.VITE_H20_SERVER_HOST, webHost: import.meta.env.VITE_WEB_HOST });
 
   const h20Proxy = useMemo(() => getH20Proxy(accessToken), [accessToken]);
   const searchClaims = useMemo(() => getSemanticSearchProxy(h20Proxy), [h20Proxy]);
