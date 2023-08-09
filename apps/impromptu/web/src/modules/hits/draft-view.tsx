@@ -2,9 +2,9 @@ import { type PrimaryDataNodeSummary } from "@impromptu-demo/types";
 import MarkdownIt from "markdown-it";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { notifyFigma, requestFigma } from "../figma/rpc";
+import { getH20Proxy } from "../h20/proxy";
 import { createReport } from "./create-report";
 import "./draft-view.css";
-import { getHITSApiProxy } from "./proxy";
 
 const md = new MarkdownIt();
 
@@ -29,7 +29,7 @@ export interface StickyConfig {
 
 export function DraftViewV2(props: DraftViewProps) {
   const { primaryDataNode, accessToken } = props;
-  const hitsApi = useMemo(() => getHITSApiProxy(accessToken), [accessToken]);
+  const hitsApi = useMemo(() => getH20Proxy(accessToken), [accessToken]);
 
   const [isCreating, setIsCreating] = useState(false);
   const [creationResults, setCreationResults] = useState<CreationResult[]>([]);

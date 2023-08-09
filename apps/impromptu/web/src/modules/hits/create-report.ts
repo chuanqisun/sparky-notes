@@ -1,4 +1,4 @@
-import type { HitsApiProxy } from "./proxy";
+import type { H20Proxy } from "../h20/proxy";
 
 export interface CreateReportConfig {
   report: {
@@ -13,8 +13,8 @@ export interface CreateReportResponse {
   url: string;
 }
 
-export async function createReport(proxy: HitsApiProxy, { report }: CreateReportConfig): Promise<CreateReportResponse> {
-  const response = await proxy<any, CreateReportResponse>("/document/create", {
+export async function createReport(proxy: H20Proxy, { report }: CreateReportConfig): Promise<CreateReportResponse> {
+  const response = await proxy<any, CreateReportResponse>("/hits/document/create", {
     Title: report.title,
     Contents: report.markdown,
     DocumentType: 0 /** study */,
