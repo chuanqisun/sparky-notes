@@ -4,6 +4,7 @@ import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { filter } from "./modules/inference/filter";
+import { group } from "./modules/inference/group";
 import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -36,6 +37,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [accessToken]);
 
   const [selection, setSelection] = useState<SelectionSummary | null>(null);
+  const [output, setOutput] = useState<any>(null);
 
   // Figma RPC
   useEffect(() => {
@@ -53,15 +55,36 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  const handleGroup = useCallback(async () => {
-    const response = await chatProxy([{ role: "user", content: "Hello AI!" }]);
-    console.log(response);
-  }, [chatProxy, selection]);
+  const handleGroup = useCallback(
+    async (input: string) => {
+      const response = await group(fnCallProxy, input, selection?.stickies ?? []);
+      console.log(response);
+      setOutput(response);
+    },
+    [chatProxy, selection]
+  );
 
-  const handleFilter = useCallback(async () => {
-    const response = await filter(fnCallProxy, "does it raise a question?", selection?.stickies ?? []);
-    console.log(response);
-  }, [fnCallProxy, selection]);
+  const handleFilter = useCallback(
+    async (input: string) => {
+      const response = await filter(fnCallProxy, input, selection?.stickies ?? []);
+      console.log(response);
+      setOutput(response);
+    },
+    [fnCallProxy, selection]
+  );
+
+  const [tool, setTool] = useState<{ name: string; input: string }>({ name: "filter", input: "" });
+
+  const handleRun = useCallback(async () => {
+    switch (tool.name) {
+      case "group":
+        await handleGroup(tool.input);
+        break;
+      case "filter":
+        await handleFilter(tool.input);
+        break;
+    }
+  }, [handleFilter, handleGroup, tool]);
 
   return (
     <>
@@ -88,11 +111,23 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </fieldset>
           <fieldset>
             <legend>Tools</legend>
-            <button onClick={handleFilter}>Filter</button>
-            <button onClick={handleGroup}>Group</button>
+            <div>
+              <select onChange={(e) => setTool((prev) => ({ ...prev, name: (e.target as HTMLSelectElement).value }))}>
+                <option value={"filter"}>Filter</option>
+                <option value={"group"}>Group</option>
+              </select>
+              <br />
+              <textarea onChange={(e) => setTool((prev) => ({ ...prev, input: (e.target as HTMLTextAreaElement).value }))} placeholder={"Tool input"}>
+                {tool.input}
+              </textarea>
+              <br />
+              <button onClick={handleRun}>Run</button>
+              <button onClick={() => {}}>Cancel</button>
+            </div>
           </fieldset>
           <fieldset>
             <legend>Output</legend>
+            <pre class="c-output">{JSON.stringify(output, null, 2)}</pre>
           </fieldset>
         </>
       )}
