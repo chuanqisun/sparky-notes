@@ -4,6 +4,7 @@ import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCard } from "./handlers/handle-add-card";
 import { handleEnableImpromptu } from "./handlers/handle-enable-impromptu";
+import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openImpromptuPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
 import { useImpromptuSwitch } from "./widget/use-impromptu-switch";
@@ -11,7 +12,7 @@ import { useImpromptuSwitch } from "./widget/use-impromptu-switch";
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
 
-const webProxy = getProxyToWeb<MessageToWeb, MessageToFigma>();
+const proxyToWeb = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
 function Widget() {
   const widgetId = useWidgetId();
@@ -20,11 +21,24 @@ function Widget() {
   const { isImpromptuEnabled, enableImpromptu } = useImpromptuSwitch();
 
   useEffect(() => {
-    figma.ui.onmessage = async (message: MessageToFigma) => {
+    const convertSelectionChangeToMessage = () => {
+      handleMessageFromWeb({ selectionChange: true });
+    };
+
+    const handleMessageFromWeb = async (message: MessageToFigma) => {
       console.log(message);
 
+      handleSelectionChange(message, proxyToWeb);
       handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleEnableImpromptu(message, enableImpromptu, openImpromptuPage);
+    };
+
+    figma.ui.onmessage = handleMessageFromWeb;
+
+    figma.on("selectionchange", convertSelectionChangeToMessage);
+
+    return () => {
+      figma.off("selectionchange", convertSelectionChangeToMessage);
     };
   });
 

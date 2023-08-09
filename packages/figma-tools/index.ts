@@ -7,3 +7,4 @@ export * from "./lib/notify";
 export * from "./lib/proxy-to-figma";
 export * from "./lib/proxy-to-web";
 export * from "./lib/show-ui";
+export * from "./lib/tree";

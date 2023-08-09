@@ -1,7 +1,9 @@
-import type { MessageToWeb } from "@h20/assistant-types";
+import type { MessageToWeb, SelectionSummary } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { render } from "preact";
-import { useEffect } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { getH20Proxy } from "./modules/h20/proxy";
+import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -23,18 +25,37 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 
+  const { chatProxy, fnCallProxy } = useMemo(() => {
+    const h20Proxy = getH20Proxy(accessToken);
+
+    return {
+      chatProxy: getChatProxy(h20Proxy),
+      fnCallProxy: getFnCallProxy(h20Proxy),
+    };
+  }, [accessToken]);
+
+  const [selection, setSelection] = useState<SelectionSummary | null>(null);
+
   // Figma RPC
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
       const pluginMessage = e.data.pluginMessage as MessageToWeb;
       console.log(`[ipc] Main -> UI`, pluginMessage);
-      // TBD
+
+      if (pluginMessage.selectionChanged) {
+        setSelection(pluginMessage.selectionChanged);
+      }
     };
 
     window.addEventListener("message", handleMainMessage);
 
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
+
+  const handleGroup = useCallback(async () => {
+    const response = await chatProxy([{ role: "user", content: "Hello AI!" }]);
+    console.log(response);
+  }, [chatProxy, selection]);
 
   return (
     <>
@@ -48,6 +69,25 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </button>
           </div>
         </section>
+      )}
+      {isConnected === true && (
+        <>
+          <fieldset>
+            <legend>Shelf</legend>
+            <ul>
+              {selection?.stickies.map((sticky) => (
+                <li key={sticky.id}>{JSON.stringify(sticky)}</li>
+              ))}
+            </ul>
+          </fieldset>
+          <fieldset>
+            <legend>Action</legend>
+            <button onClick={handleGroup}>Group</button>
+          </fieldset>
+          <fieldset>
+            <legend>Output</legend>
+          </fieldset>
+        </>
       )}
     </>
   );
