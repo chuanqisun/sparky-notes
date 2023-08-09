@@ -21,7 +21,7 @@ appInsights.trackPageView();
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const { worker } = props;
   const { isConnected, signIn, accessToken, isTokenExpired } = useAuth({
-    hitsAuthEndpoint: import.meta.env.VITE_HITS_AUTH_ENDPOINT,
+    serverHost: import.meta.env.VITE_H20_SERVER_ENDPOINT,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 

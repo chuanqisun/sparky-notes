@@ -19,13 +19,13 @@ const defaultContext: AuthContextType = {
 export const AuthContext = createContext<AuthContextType>(defaultContext);
 
 export interface AuthContextProviderProps {
-  hitsAuthEndpoint: string;
+  serverHost: string;
   webHost: string;
   children?: any[];
 }
 export const AuthContextProvider = (props: AuthContextProviderProps) => {
   const authProps = useAuth({
-    hitsAuthEndpoint: props.hitsAuthEndpoint,
+    serverHost: props.serverHost,
     webHost: props.webHost,
   });
 

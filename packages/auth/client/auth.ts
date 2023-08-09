@@ -2,16 +2,16 @@ import type { GetTokenInput, GetTokenOutput, SignInInput, SignInOutput, SignInSt
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "../utils/crypto";
 
 export interface EmbeddedSignInOptions {
-  hitsAuthEndpoint: string;
+  serverHost: string;
   webHost: string; // where `sign-in.html` is
 }
-export async function embeddedSignIn({ hitsAuthEndpoint, webHost }: EmbeddedSignInOptions) {
+export async function embeddedSignIn({ serverHost, webHost }: EmbeddedSignInOptions) {
   const code_verifier = generateCodeVerifier();
 
   // TODO, directly navigate to AAD portal. No need to open sign-in.html
   window.open(`${webHost}/sign-in.html?code_verifier=${code_verifier}`);
 
-  const result: SignInStatusOutput = await fetch(`${hitsAuthEndpoint}/signinstatus`, {
+  const result: SignInStatusOutput = await fetch(`${serverHost}/hits/signinstatus`, {
     headers: {
       "content-type": "application/json",
     },
@@ -53,9 +53,9 @@ export interface AuthRedirectResult {
 }
 
 export interface HandleOAuthRedirectOptions {
-  hitsAuthEndpoint: string;
+  serverHost: string;
 }
-export async function handleOAuthRedirect({ hitsAuthEndpoint }: HandleOAuthRedirectOptions): Promise<SignInOutput | null> {
+export async function handleOAuthRedirect({ serverHost }: HandleOAuthRedirectOptions): Promise<SignInOutput | null> {
   const code_verifier = sessionStorage.getItem("aad-last-verifier");
   const code = new URLSearchParams(location.search).get("code");
   if (!code_verifier || !code) {
@@ -68,7 +68,7 @@ export async function handleOAuthRedirect({ hitsAuthEndpoint }: HandleOAuthRedir
     code_verifier,
   };
 
-  const result: SignInOutput = await fetch(`${hitsAuthEndpoint}/signin`, {
+  const result: SignInOutput = await fetch(`${serverHost}/hits/signin`, {
     headers: {
       "content-type": "application/json",
     },
@@ -86,11 +86,11 @@ export async function handleOAuthRedirect({ hitsAuthEndpoint }: HandleOAuthRedir
 
 export interface GetAccessTokenOptions {
   input: GetTokenInput;
-  hitsAuthEndpoint: string;
+  serverHost: string;
 }
 
-export async function getAccessToken({ input, hitsAuthEndpoint }: GetAccessTokenOptions): Promise<GetTokenOutput> {
-  const result = await fetch(`${hitsAuthEndpoint}/token`, {
+export async function getAccessToken({ input, serverHost }: GetAccessTokenOptions): Promise<GetTokenOutput> {
+  const result = await fetch(`${serverHost}/hits/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -105,11 +105,11 @@ export async function getAccessToken({ input, hitsAuthEndpoint }: GetAccessToken
 
 export interface SignOutRemoteOptions {
   input: SignOutInput;
-  hitsAuthEndpoint: string;
+  serverHost: string;
 }
 
-export async function signOutRemote({ input, hitsAuthEndpoint }: SignOutRemoteOptions): Promise<SignOutOutput> {
-  const result = await fetch(`${hitsAuthEndpoint}/signout`, {
+export async function signOutRemote({ input, serverHost }: SignOutRemoteOptions): Promise<SignOutOutput> {
+  const result = await fetch(`${serverHost}/hits/signout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

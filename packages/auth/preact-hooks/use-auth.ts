@@ -6,10 +6,10 @@ import { useConfig } from "./use-config";
 import { useLocalStorage } from "./use-local-storage";
 
 export interface UseAuthConfig {
-  hitsAuthEndpoint: string;
+  serverHost: string;
   webHost: string;
 }
-export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
+export function useAuth({ serverHost, webHost }: UseAuthConfig) {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);
 
   useEffect(initAuthClient, []);
@@ -28,7 +28,7 @@ export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
     const refreshToken = () =>
       getAccessToken({
         input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
-        hitsAuthEndpoint,
+        serverHost: serverHost,
       })
         .then((token) => {
           timedToken.update(token);
@@ -39,7 +39,7 @@ export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
     const interval = setInterval(() => {
       getAccessToken({
         input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
-        hitsAuthEndpoint,
+        serverHost: serverHost,
       })
         .then((token) => {
           timedToken.update(token);
@@ -54,7 +54,7 @@ export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
 
   const signIn = useCallback(() => {
     setIsConnected(undefined);
-    embeddedSignIn({ hitsAuthEndpoint, webHost }).then((result) => {
+    embeddedSignIn({ serverHost: serverHost, webHost }).then((result) => {
       hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
       location.reload();
     });
@@ -65,7 +65,7 @@ export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
 
     signOutRemote({
       input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
-      hitsAuthEndpoint,
+      serverHost: serverHost,
     }).then(() => {
       hitsConfig.reset();
     });
