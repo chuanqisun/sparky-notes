@@ -3,16 +3,7 @@
 @import url("./styles/utils.css");
 @import url("./styles/components.css");
 @import url("./styles/progress-bar.css");
-
-body {
-  height: 100vh;
-  font-size: 16px;
-  border: 2px solid black;
-}
-
-#app {
-  height: 100%;
-}
+@import url("./styles/body.css");
 
 article {
   height: 100%;

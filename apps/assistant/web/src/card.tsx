@@ -1,5 +1,4 @@
 import type { MessageToWeb } from "@h20/assistant-types";
-import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, validateConfig, validateToken } from "@h20/auth";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
@@ -10,7 +9,6 @@ import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
-import { ensureJson } from "./utils/local-storage";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -20,9 +18,6 @@ const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).sta
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
 window.focus();
-
-ensureJson(CONFIG_CACHE_KEY, validateConfig, getInitialConfig);
-ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
 
 // extract entityId as first step
 const entityId = new URLSearchParams(location.search).get("entityId");

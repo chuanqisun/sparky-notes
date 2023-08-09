@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { TOKEN_CACHE_KEY, getInitialToken } from "../client/access-token";
 import { embeddedSignIn, getAccessToken, signOutRemote } from "../client/auth";
+import { initAuthClient } from "../client/init";
 import { useConfig } from "./use-config";
 import { useLocalStorage } from "./use-local-storage";
 
@@ -10,6 +11,8 @@ export interface UseAuthConfig {
 }
 export function useAuth({ hitsAuthEndpoint, webHost }: UseAuthConfig) {
   const [isConnected, setIsConnected] = useState<boolean | undefined>(undefined);
+
+  useEffect(initAuthClient, []);
 
   const hitsConfig = useConfig();
 

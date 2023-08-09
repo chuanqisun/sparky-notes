@@ -1,5 +1,4 @@
 import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { CONFIG_CACHE_KEY, TOKEN_CACHE_KEY, getInitialConfig, getInitialToken, validateConfig, validateToken } from "@h20/auth";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
@@ -11,7 +10,6 @@ import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { debounce } from "./utils/debounce";
 import { getUniqueFilter } from "./utils/get-unique-filter";
-import { ensureJson } from "./utils/local-storage";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useInfiniteScroll } from "./utils/use-infinite-scroll";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -24,9 +22,6 @@ const PAGE_SIZE = 20;
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
 window.focus();
-
-ensureJson(CONFIG_CACHE_KEY, validateConfig, getInitialConfig);
-ensureJson(TOKEN_CACHE_KEY, validateToken, getInitialToken);
 
 const proxy = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
