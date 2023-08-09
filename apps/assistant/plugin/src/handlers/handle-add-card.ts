@@ -1,17 +1,34 @@
 import type { MessageToFigma } from "@h20/assistant-types";
-import { loadFonts } from "@h20/figma-tools";
+import { loadFonts, replaceNotification } from "@h20/figma-tools";
 
-export async function handleAddCard(message: MessageToFigma, widgetId: string) {
+export async function handleAddCard(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
   if (!message.addCard) return;
 
   await loadFonts({ family: "Inter", style: "Medium" }, { family: "Inter", style: "Semi Bold" });
 
-  const widgetNode = figma.getNodeById(widgetId) as WidgetNode;
-  const clonedWidget = widgetNode.cloneWidget({ cardData: message.addCard });
+  let cloneFromNode = figma.getNodeById(currentNodeId) as WidgetNode;
 
-  clonedWidget.x = widgetNode.x;
-  clonedWidget.y = widgetNode.y + widgetNode.height + 32;
+  if (!cloneFromNode) {
+    cloneFromNode = figma.currentPage
+      .findAllWithCriteria({ types: ["WIDGET"] })
+      .filter((node) => node.widgetId === widgetManifestId)
+      .pop() as WidgetNode;
+
+    if (!cloneFromNode) {
+      replaceNotification("Widget no longer exists", { error: true });
+    }
+  }
+
+  const clonedWidget = cloneFromNode.cloneWidget({ cardData: message.addCard });
+
+  clonedWidget.x = cloneFromNode.x;
+  clonedWidget.y = cloneFromNode.y + cloneFromNode.height + 32;
   figma.currentPage.appendChild(clonedWidget);
 
-  figma.notify(`✅ Card added to canvas`);
+  replaceNotification(`✅ Card added to canvas`, {
+    button: {
+      text: "Locate it",
+      action: () => figma.viewport.scrollAndZoomIntoView([clonedWidget]),
+    },
+  });
 }

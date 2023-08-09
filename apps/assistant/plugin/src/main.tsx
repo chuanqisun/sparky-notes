@@ -23,7 +23,7 @@ function Widget() {
     figma.ui.onmessage = async (message: MessageToFigma) => {
       console.log(message);
 
-      handleAddCard(message, widgetId);
+      handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleEnableImpromptu(message, enableImpromptu, openImpromptuPage);
     };
   });
