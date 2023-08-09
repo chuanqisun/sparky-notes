@@ -1,7 +1,7 @@
+import type { MessageToFigma } from "@h20/assistant-types";
 import { loadFonts } from "@h20/figma-tools";
-import type { HandlerContext } from "../main";
 
-export async function addCard({ message, widgetId }: HandlerContext) {
+export async function handleAddCard(message: MessageToFigma, widgetId: string) {
   if (!message.addCard) return;
 
   await loadFonts({ family: "Inter", style: "Medium" }, { family: "Inter", style: "Semi Bold" });

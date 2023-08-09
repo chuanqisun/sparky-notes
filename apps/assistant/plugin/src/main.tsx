@@ -1,9 +1,12 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
+import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
-import { useCard } from "./card/use-card";
-import { addCard } from "./handlers/add-card";
+import { handleAddCard } from "./handlers/handle-add-card";
+import { handleEnableImpromptu } from "./handlers/handle-enable-impromptu";
 import { openCardPage, openImpromptuPage, openIndexPage } from "./router/router";
+import { useWidgetState } from "./widget/use-card";
+import { useImpromptuSwitch } from "./widget/use-impromptu-switch";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
@@ -13,24 +16,25 @@ const webProxy = getProxyToWeb<MessageToWeb, MessageToFigma>();
 function Widget() {
   const widgetId = useWidgetId();
 
-  const { cardData } = useCard({ openIndexPage, openImpromptuPage });
+  const { cardData } = useWidgetState({ openIndexPage });
+  const { isImpromptuEnabled, enableImpromptu } = useImpromptuSwitch();
 
   useEffect(() => {
     figma.ui.onmessage = async (message: MessageToFigma) => {
-      const context: HandlerContext = {
-        message,
-        widgetId,
-        webProxy,
-      };
-
       console.log(message);
 
-      addCard(context);
+      handleAddCard(message, widgetId);
+      handleEnableImpromptu(message, enableImpromptu, openImpromptuPage);
     };
   });
 
   return cardData === null ? (
-    <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((_resolve) => openIndexPage())} />
+    <SVG
+      src={isImpromptuEnabled ? BadgeDarkSvg : BadgeLightSvg}
+      width={436}
+      height={436}
+      onClick={() => new Promise((_resolve) => (isImpromptuEnabled ? openImpromptuPage() : openIndexPage()))}
+    />
   ) : (
     <AutoLayout
       padding={0}

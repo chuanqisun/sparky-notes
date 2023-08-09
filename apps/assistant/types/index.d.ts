@@ -5,6 +5,7 @@ export interface MessageToWeb {
 export interface MessageToFigma {
   ping?: string;
   addCard?: CardData;
+  enableImpromptu?: boolean;
 }
 
 export interface CardData {
@@ -14,13 +15,4 @@ export interface CardData {
   entityType: number;
   url: string;
   backgroundColor: string;
-}
-
-export interface CardMenuOptions {
-  backgroundColors: ColorOption[];
-}
-
-export interface ColorOption {
-  option: string;
-  tooltip: string;
 }

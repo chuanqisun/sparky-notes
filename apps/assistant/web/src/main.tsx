@@ -23,7 +23,7 @@ const PAGE_SIZE = 20;
 document.getElementById("app")!.innerHTML = "";
 window.focus();
 
-const proxy = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
+const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
 appInsights.trackPageView();
 
@@ -86,7 +86,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // handle send card to figma
   const handleAddCard = useCallback((cardData: CardData) => {
     appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType });
-    proxy.notify({ addCard: cardData });
+    proxyToFigma.notify({ addCard: cardData });
   }, []);
 
   const { queue, add } = useConcurrentTasks<SearchRes>();
@@ -155,6 +155,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             )}
             {isConnected && (
               <>
+                {query === "legendaryshit" ? (
+                  <button class="u-reset c-app-menu--btn" onClick={() => proxyToFigma.notify({ enableImpromptu: true })}>
+                    Let’s do it!
+                  </button>
+                ) : null}
                 <button class="u-reset c-app-menu--btn" onClick={signOut}>
                   Sign out
                 </button>

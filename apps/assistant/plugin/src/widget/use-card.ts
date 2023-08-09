@@ -4,13 +4,13 @@ import figmaPalette from "../assets/figma-palette.json";
 
 const { usePropertyMenu, useSyncedState } = figma.widget;
 
-export interface UseCardMenuProps {
+export interface UseWidgetStateProps {
   openIndexPage: () => void;
-  openImpromptuPage: () => void;
 }
 
-export function useCard({ openIndexPage, openImpromptuPage }: UseCardMenuProps) {
+export function useWidgetState({ openIndexPage }: UseWidgetStateProps) {
   const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
+  const [isImpromptuEnabled, setIsImpromptuEnabled] = useSyncedState<boolean>("isImpromptuEnabled", false);
 
   usePropertyMenu(
     cardData
@@ -32,13 +32,7 @@ export function useCard({ openIndexPage, openImpromptuPage }: UseCardMenuProps) 
             options: figmaPalette,
           },
         ]
-      : [
-          {
-            itemType: "action",
-            propertyName: "impromptu",
-            tooltip: "Open Impromptu",
-          },
-        ],
+      : [],
     ({ propertyName, propertyValue }) => {
       switch (propertyName) {
         case "backgroundColor":
@@ -46,11 +40,9 @@ export function useCard({ openIndexPage, openImpromptuPage }: UseCardMenuProps) 
           break;
         case "add":
           return new Promise((_resolve) => openIndexPage());
-        case "impromptu":
-          return new Promise((_resolve) => openImpromptuPage());
       }
     }
   );
 
-  return { cardData };
+  return { cardData, isImpromptuEnabled, setIsImpromptuEnabled };
 }
