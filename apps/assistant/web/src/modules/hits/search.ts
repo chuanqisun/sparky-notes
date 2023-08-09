@@ -1,8 +1,9 @@
 import { field, ifAll, ifAny } from "acs-expression-builder";
+import type { H20Proxy } from "../h20/proxy";
 import type { FilterConfig, SearchOutput, SearchResultItem } from "./hits";
 
 export interface FindConfig {
-  proxy: (payload: any) => Promise<SearchOutput>;
+  proxy: H20Proxy;
   filter: FindFilter;
 }
 
@@ -13,7 +14,7 @@ export interface FindFilter {
 
 export async function searchFirst({ proxy, filter }: FindConfig): Promise<SearchResultItem | null> {
   const payload = getFindPayload({ filter });
-  const { results } = await proxy(payload);
+  const { results } = await proxy<any, SearchOutput>("/hits/api/search/index", payload);
   return results[0] ?? null;
 }
 

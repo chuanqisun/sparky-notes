@@ -5,7 +5,4 @@ export const hitsApi = createProxyMiddleware({
   target: "https://hits.microsoft.com",
   changeOrigin: true,
   pathRewrite: { "^/hits/api": "/api" },
-  headers: {
-    "Content-Type": "application/json",
-  },
 });

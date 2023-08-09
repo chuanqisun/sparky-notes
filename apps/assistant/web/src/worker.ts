@@ -1,7 +1,8 @@
 /// <reference lib="WebWorker" />
 
 import { formatDisplayNode } from "./modules/display/display-node";
-import { getAuthenticatedProxy } from "./modules/hits/proxy";
+import { getH20Proxy } from "./modules/h20/proxy";
+import type { SearchOutput } from "./modules/hits/hits";
 import { getOrderBy, getOrderByPublishDateClause, getSearchPayloadV2, searchFirst } from "./modules/hits/search";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { WorkerServer } from "./utils/worker-rpc";
@@ -20,7 +21,7 @@ async function main() {
 const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.message });
 
 const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
-  const proxy = getAuthenticatedProxy(req.accessToken);
+  const proxy = getH20Proxy(req.accessToken);
 
   performance.mark("start");
   try {
@@ -40,9 +41,12 @@ const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
 };
 
 const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
-  const proxy = getAuthenticatedProxy(req.accessToken);
+  const proxy = getH20Proxy(req.accessToken);
 
-  const response = await proxy(getSearchPayloadV2({ query: req.query, count: false, top: req.top, skip: req.skip, filter: {} }));
+  const response = await proxy<any, SearchOutput>(
+    "/hits/api/search/index",
+    getSearchPayloadV2({ query: req.query, count: false, top: req.top, skip: req.skip, filter: {} })
+  );
 
   // if user is directly matching the id of a report, we want render its children unconditionally
   const nodes = response.results.map((result) => formatDisplayNode(result, { renderAllChildren: result.document.id === req.query }));
@@ -55,9 +59,10 @@ const handleLiveSearch: WorkerRoutes["search"] = async ({ req, emit }) => {
 };
 
 const handleRecentV2: WorkerRoutes["recent"] = async ({ req }) => {
-  const proxy = getAuthenticatedProxy(req.accessToken);
+  const proxy = getH20Proxy(req.accessToken);
 
-  const response = await proxy(
+  const response = await proxy<any, SearchOutput>(
+    "/hits/api/search/index",
     getSearchPayloadV2({ query: "*", count: false, top: req.top, skip: req.skip, filter: {}, orderBy: getOrderBy(getOrderByPublishDateClause()) })
   );
   const nodes = response.results.map((result) => formatDisplayNode(result));
