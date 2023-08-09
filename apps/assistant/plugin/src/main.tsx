@@ -2,17 +2,14 @@ import { CardData, MessageToMain, MessageToUI } from "@h20/assistant-types";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import Plus from "./assets/FigmaPlus.svg";
 import figmaPalette from "./assets/figma-palette.json";
+import { showUI } from "./utils/show-ui";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useSyncedState, usePropertyMenu, useWidgetId, SVG, Text, Input } = widget;
 
-const appendCacheBustingString = (url: string) => `${url}${url.includes("?") ? `&` : `?`}t=${Date.now()}}`;
-
-const showUI = (urlSuffix: string = "") =>
-  figma.showUI(`<script>window.location.href="${process.env.WEB_URL + appendCacheBustingString(urlSuffix)}"</script>`, {
-    height: 800,
-    width: 420,
-  });
+const openIndexPage = () => showUI(`${process.env.VITE_WEB_HOST}/index.html?t=${Date.now()}`, { height: 800, width: 420 });
+const openCardPage = (entityId: number | string, entityType: number | string) =>
+  showUI(`${process.env.VITE_WEB_HOST}/card.html?entityId=${entityId}&entityType=${entityType}`, { height: 800, width: 420 });
 
 const sendToUI = (message: MessageToUI) => {
   figma.ui.postMessage(message);
@@ -50,11 +47,7 @@ function Widget() {
           setCardData({ ...cardData!, backgroundColor: propertyValue! });
           break;
         case "add":
-          return new Promise((_resolve) => showUI());
-        case "openInBrowser":
-          return new Promise((_resolve) => {
-            showUI(`?openUrl=${cardData!.url}`);
-          });
+          return new Promise((_resolve) => openIndexPage());
       }
     }
   );
@@ -93,7 +86,7 @@ function Widget() {
   });
 
   return cardData === null ? (
-    <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((resolve) => showUI())} />
+    <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((_resolve) => openIndexPage())} />
   ) : (
     <AutoLayout
       padding={0}
@@ -101,11 +94,7 @@ function Widget() {
       fill={cardData.backgroundColor}
       cornerRadius={6}
       strokeWidth={4}
-      onClick={() =>
-        new Promise((_resolve) => {
-          showUI(`/card.html?entityId=${cardData.entityId}&entityType=${cardData.entityType}`);
-        })
-      }
+      onClick={() => new Promise((_resolve) => openCardPage(cardData.entityId, cardData.entityType))}
     >
       <AutoLayout padding={cssPad(20, 24, 6, 24)}>
         <Text width={500} fontSize={20} fontWeight={600} lineHeight={26}>

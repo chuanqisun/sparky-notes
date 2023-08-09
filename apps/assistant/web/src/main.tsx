@@ -35,15 +35,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     document.querySelector<HTMLInputElement>(`input[type="search"]`)?.focus();
   }, []);
 
-  // Handle URL redirect
-  useEffect(() => {
-    const openUrl = new URLSearchParams(location.search).get("openUrl");
-    if (openUrl) {
-      window.open(openUrl, "_blank");
-      notifyFigma({ requestClose: true });
-    }
-  }, []);
-
   const notifyFigma = useCallback(sendMessage.bind(null, getParentOrigin(), import.meta.env.VITE_PLUGIN_ID), []);
 
   const { worker } = props;

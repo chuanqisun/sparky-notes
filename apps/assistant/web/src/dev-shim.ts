@@ -31,13 +31,6 @@ window.addEventListener("click", (e) => {
         ping: new Date().toLocaleString(),
       });
       break;
-    case "openUrl":
-      const iframe = document.querySelector("iframe")!;
-      const mutableUrl = new URL(iframe.src);
-      mutableUrl.searchParams.set("openUrl", "https://bing.com");
-      mutableUrl.search = mutableUrl.searchParams.toString();
-      iframe.src = mutableUrl.toString();
-      break;
     case "loadCard":
       cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
       break;

@@ -20,6 +20,12 @@ async function main() {
     },
   ];
 
+  const safeEnvDefines = Object.fromEntries(
+    Object.entries(process.env)
+      .filter(([key, _value]) => key.startsWith("VITE_"))
+      .map(([key, value]) => [`process.env.${key}`, `"${value}"`])
+  );
+
   const context = await esbuild.context({
     entryPoints: ["src/main.tsx"],
     bundle: true,
@@ -30,9 +36,7 @@ async function main() {
     loader: {
       ".svg": "text",
     },
-    define: {
-      "process.env.WEB_URL": `"${process.env.WEB_URL}"`,
-    },
+    define: safeEnvDefines,
     outdir: "dist",
     plugins,
   });
