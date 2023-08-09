@@ -79,7 +79,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       {isConnected === true && (
         <>
           <fieldset>
-            <legend>Shelf</legend>
+            <legend>Input</legend>
             <ul class="c-shelf">
               {selection?.stickies.map((sticky) => (
                 <li key={sticky.id}>{JSON.stringify(sticky)}</li>
@@ -87,7 +87,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </ul>
           </fieldset>
           <fieldset>
-            <legend>Action</legend>
+            <legend>Tools</legend>
             <button onClick={handleFilter}>Filter</button>
             <button onClick={handleGroup}>Group</button>
           </fieldset>
