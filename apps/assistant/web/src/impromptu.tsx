@@ -132,7 +132,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             <legend>Output</legend>
             <pre class="c-output">{JSON.stringify(output, null, 2)}</pre>
           </fieldset>
-          <button onClick={() => proxyToFigma.notify({ disableImpromptu: true })}>Exit</button>
+          <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit</button>
         </>
       )}
     </>

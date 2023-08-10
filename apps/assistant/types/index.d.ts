@@ -6,8 +6,8 @@ export interface MessageToWeb {
 export interface MessageToFigma {
   ping?: string;
   addCard?: CardData;
-  enableImpromptu?: boolean;
-  disableImpromptu?: boolean;
+  enableCopilot?: boolean;
+  disableCopilot?: boolean;
   selectionChange?: boolean;
 }
 

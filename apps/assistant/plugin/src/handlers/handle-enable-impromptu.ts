@@ -1,8 +1,8 @@
 import type { MessageToFigma } from "@h20/assistant-types";
 
-export async function handleEnableImpromptu(message: MessageToFigma, enableImpromptu: () => void, openImpromptu: () => void) {
-  if (!message.enableImpromptu) return;
+export async function handleEnableCopilot(message: MessageToFigma, enableCopilot: () => void, openCopilot: () => void) {
+  if (!message.enableCopilot) return;
 
-  enableImpromptu();
-  openImpromptu();
+  enableCopilot();
+  openCopilot();
 }

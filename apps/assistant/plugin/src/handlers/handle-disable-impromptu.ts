@@ -1,8 +1,8 @@
 import type { MessageToFigma } from "@h20/assistant-types";
 
-export async function handleDisableImpromptu(message: MessageToFigma, disableImpromptu: () => void, openIndexPage: () => void) {
-  if (!message.disableImpromptu) return;
+export async function handleDisableCopilot(message: MessageToFigma, disableCopilot: () => void, openIndexPage: () => void) {
+  if (!message.disableCopilot) return;
 
-  disableImpromptu();
+  disableCopilot();
   openIndexPage();
 }

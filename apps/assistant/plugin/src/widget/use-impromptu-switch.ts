@@ -1,9 +1,9 @@
 const { useSyncedState } = figma.widget;
 
-export function useImpromptuSwitch() {
-  const [isImpromptuEnabled, setIsImpromptuEnabled] = useSyncedState<boolean>("isImpromptuEnabled", false);
+export function useCopilotSwitch() {
+  const [isCopilotEnabled, setIsCopilotEnabled] = useSyncedState<boolean>("isImpromptuEnabled", false);
 
-  const enableImpromptu = () => setIsImpromptuEnabled(true);
-  const disableImpromptu = () => setIsImpromptuEnabled(false);
-  return { isImpromptuEnabled, enableImpromptu, disableImpromptu };
+  const enableCopilot = () => setIsCopilotEnabled(true);
+  const disableCopilot = () => setIsCopilotEnabled(false);
+  return { isCopilotEnabled, enableCopilot, disableCopilot };
 }

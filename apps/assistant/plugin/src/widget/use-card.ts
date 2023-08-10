@@ -10,7 +10,7 @@ export interface UseWidgetStateProps {
 
 export function useWidgetState({ openIndexPage }: UseWidgetStateProps) {
   const [cardData, setCardData] = useSyncedState<CardData | null>("cardData", null);
-  const [isImpromptuEnabled, setIsImpromptuEnabled] = useSyncedState<boolean>("isImpromptuEnabled", false);
+  const [isCopilotEnabled, setIsCopilotEnabled] = useSyncedState<boolean>("isImpromptuEnabled", false);
 
   usePropertyMenu(
     cardData
@@ -44,5 +44,5 @@ export function useWidgetState({ openIndexPage }: UseWidgetStateProps) {
     }
   );
 
-  return { cardData, isImpromptuEnabled, setIsImpromptuEnabled };
+  return { cardData, isCopilotEnabled, setIsCopilotEnabled };
 }

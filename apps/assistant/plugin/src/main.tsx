@@ -3,12 +3,12 @@ import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCard } from "./handlers/handle-add-card";
-import { handleDisableImpromptu } from "./handlers/handle-disable-impromptu";
-import { handleEnableImpromptu } from "./handlers/handle-enable-impromptu";
+import { handleDisableCopilot } from "./handlers/handle-disable-impromptu";
+import { handleEnableCopilot } from "./handlers/handle-enable-impromptu";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
-import { openCardPage, openImpromptuPage, openIndexPage } from "./router/router";
+import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
-import { useImpromptuSwitch } from "./widget/use-impromptu-switch";
+import { useCopilotSwitch } from "./widget/use-impromptu-switch";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
@@ -19,7 +19,7 @@ function Widget() {
   const widgetId = useWidgetId();
 
   const { cardData } = useWidgetState({ openIndexPage });
-  const { isImpromptuEnabled, enableImpromptu, disableImpromptu } = useImpromptuSwitch();
+  const { isCopilotEnabled, enableCopilot, disableCopilot } = useCopilotSwitch();
 
   useEffect(() => {
     const convertSelectionChangeToMessage = () => {
@@ -31,8 +31,8 @@ function Widget() {
 
       handleSelectionChange(message, proxyToWeb);
       handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
-      handleEnableImpromptu(message, enableImpromptu, openImpromptuPage);
-      handleDisableImpromptu(message, disableImpromptu, openIndexPage);
+      handleEnableCopilot(message, enableCopilot, openCopilotPage);
+      handleDisableCopilot(message, disableCopilot, openIndexPage);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
@@ -46,10 +46,10 @@ function Widget() {
 
   return cardData === null ? (
     <SVG
-      src={isImpromptuEnabled ? BadgeDarkSvg : BadgeLightSvg}
+      src={isCopilotEnabled ? BadgeDarkSvg : BadgeLightSvg}
       width={436}
       height={436}
-      onClick={() => new Promise((_resolve) => (isImpromptuEnabled ? openImpromptuPage() : openIndexPage()))}
+      onClick={() => new Promise((_resolve) => (isCopilotEnabled ? openCopilotPage() : openIndexPage()))}
     />
   ) : (
     <AutoLayout
