@@ -6,6 +6,7 @@ export interface MessageToWeb {
 export interface MessageToFigma {
   ping?: string;
   addCard?: CardData;
+  dropCards?: DropCardsSummary;
   enableCopilot?: boolean;
   disableCopilot?: boolean;
   selectionChange?: boolean;
@@ -29,4 +30,9 @@ export interface CardData {
   entityType: number;
   url: string;
   backgroundColor: string;
+}
+
+export interface DropCardsSummary {
+  cards: CardData[];
+  dropEvent: DropEvent;
 }

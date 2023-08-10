@@ -9,23 +9,26 @@ export interface HitsCardProps {
   onClick: (cardData: CardData) => void;
 }
 export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
+  const cardData: CardData = {
+    category: EntityDisplayName[node.entityType],
+    title: node.title,
+    entityId: node.id,
+    entityType: node.entityType,
+    backgroundColor: EntityBackgroundColor[node.entityType],
+    url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
+  };
+
+  const handleDragStart = (e: DragEvent) => {
+    if (!e.dataTransfer || !e.target) return;
+    e.dataTransfer.setData("application/x.hits.claim-card", JSON.stringify(cardData));
+  };
+
   return (
     <>
-      <li class={`c-list__item`} key={node.id}>
+      <li class={`c-list__item`} key={node.id} draggable={true} onDragStart={handleDragStart}>
         <button
           class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
-          onClick={(e) =>
-            e.ctrlKey
-              ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank")
-              : onClick({
-                  category: EntityDisplayName[node.entityType],
-                  title: node.title,
-                  entityId: node.id,
-                  entityType: node.entityType,
-                  backgroundColor: EntityBackgroundColor[node.entityType],
-                  url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
-                })
-          }
+          onClick={(e) => (e.ctrlKey ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank") : onClick(cardData))}
         >
           <article class="hits-item">
             {EntityIconComponent[node.entityType]()}
