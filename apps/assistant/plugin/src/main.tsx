@@ -3,12 +3,12 @@ import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCard } from "./handlers/handle-add-card";
-import { handleDisableCopilot } from "./handlers/handle-disable-impromptu";
-import { handleEnableCopilot } from "./handlers/handle-enable-impromptu";
+import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
+import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
-import { useCopilotSwitch } from "./widget/use-impromptu-switch";
+import { useCopilotSwitch } from "./widget/use-copilot-switch";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;

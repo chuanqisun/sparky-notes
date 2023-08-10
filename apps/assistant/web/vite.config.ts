@@ -12,7 +12,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         card: resolve(__dirname, "card.html"),
-        impromptu: resolve(__dirname, "impromptu.html"),
+        copilot: resolve(__dirname, "copilot.html"),
         debug: resolve(__dirname, "debug.html"),
         signIn: resolve(__dirname, "sign-in.html"),
         authRedirect: resolve(__dirname, "auth-redirect.html"),
