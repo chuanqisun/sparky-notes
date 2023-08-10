@@ -1,9 +1,7 @@
-import type { MessageToFigma } from "@h20/assistant-types";
+import type { DropCardSummary } from "@h20/assistant-types";
 import { loadFonts, replaceNotification } from "@h20/figma-tools";
 
-export async function handleDropCards(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
-  if (!message.dropCards) return;
-
+export async function handleDropCards(summary: DropCardSummary, event: DropEvent, currentNodeId: string, widgetManifestId: string) {
   await loadFonts({ family: "Inter", style: "Medium" }, { family: "Inter", style: "Semi Bold" });
 
   let cloneFromNode = figma.getNodeById(currentNodeId) as WidgetNode;
@@ -19,24 +17,24 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
     }
   }
 
-  // currently only support one card
-  const clonedWidget = cloneFromNode.cloneWidget({ cardData: message.dropCards.cards[0] });
-  const parentNode = figma.getNodeById(message.dropCards.dropEvent.node.id);
+  const clonedWidget = cloneFromNode.cloneWidget({ cardData: summary.data });
+  const parentNode = figma.getNodeById(event.node.id);
 
   if (Array.isArray((parentNode as ChildrenMixin)?.children)) {
     (parentNode as ChildrenMixin).appendChild(clonedWidget);
-    clonedWidget.x = message.dropCards.dropEvent.x;
-    clonedWidget.y = message.dropCards.dropEvent.y;
+    clonedWidget.x = event.x;
+    clonedWidget.y = event.y;
+
+    clonedWidget.setWidgetSyncedState({
+      cardData: summary.data,
+      pendingNudge: {
+        xPercent: -(summary.dragEvent.offsetX / summary.dragEvent.nodeWidth),
+        yPercent: -(summary.dragEvent.offsetY / summary.dragEvent.nodeHeight),
+      },
+    });
   } else {
     figma.currentPage.appendChild(clonedWidget);
     clonedWidget.x = cloneFromNode.x;
     clonedWidget.y = cloneFromNode.y + cloneFromNode.height + 32;
   }
-
-  replaceNotification(`✅ Card added to canvas`, {
-    button: {
-      text: "Locate it",
-      action: () => figma.viewport.scrollAndZoomIntoView([clonedWidget]),
-    },
-  });
 }

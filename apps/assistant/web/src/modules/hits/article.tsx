@@ -20,7 +20,18 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
 
   const handleDragStart = (e: DragEvent) => {
     if (!e.dataTransfer || !e.target) return;
-    e.dataTransfer.setData("application/x.hits.claim-card", JSON.stringify(cardData));
+    e.dataTransfer.setData(
+      "application/x.hits.drop-card",
+      JSON.stringify({
+        data: cardData,
+        dragEvent: {
+          offsetX: e.offsetX,
+          offsetY: e.offsetY,
+          nodeWidth: (e.target as HTMLElement).offsetWidth,
+          nodeHeight: (e.target as HTMLElement).offsetHeight,
+        },
+      })
+    );
   };
 
   return (

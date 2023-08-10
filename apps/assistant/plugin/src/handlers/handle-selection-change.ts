@@ -1,9 +1,7 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { walk, type ProxyToWeb } from "@h20/figma-tools";
 
-export function handleSelectionChange(message: MessageToFigma, proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
-  if (!message.selectionChange) return;
-
+export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
   const ids = figma.currentPage.selection.map((node) => node.id);
 
   const stickyNodes: StickyNode[] = [];

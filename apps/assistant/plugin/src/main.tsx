@@ -1,4 +1,4 @@
-import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { DropCardSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
@@ -10,9 +10,10 @@ import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
 import { useCopilotSwitch } from "./widget/use-copilot-switch";
+import { useDropPositionNudge } from "./widget/use-drop-position-nudge";
 
 const { widget } = figma;
-const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
+const { useSyncedState, useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
 
 const proxyToWeb = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
@@ -22,35 +23,41 @@ function Widget() {
   const { cardData } = useWidgetState({ openIndexPage });
   const { isCopilotEnabled, enableCopilot, disableCopilot } = useCopilotSwitch();
 
+  useDropPositionNudge(cardData, widgetId);
+
   useEffect(() => {
-    const convertSelectionChangeToMessage = () => {
-      handleMessageFromWeb({ selectionChange: true });
+    const wrappedHandleSelectionChange = () => {
+      handleSelectionChange(proxyToWeb);
     };
 
-    const convertDropToMessage = (event: DropEvent) => {
-      const cards = event.items.filter((item) => item.type === "application/x.hits.claim-card").map((item) => JSON.parse(item.data) as CardData);
-      handleMessageFromWeb({ dropCards: { cards, dropEvent: event } });
+    const wrappedHandleDrop = (event: DropEvent) => {
+      const card = event.items
+        .filter((item) => item.type === "application/x.hits.drop-card")
+        .map((item) => JSON.parse(item.data) as DropCardSummary)
+        .pop();
+
+      if (!card) return false;
+
+      handleDropCards(card, event, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       return false;
     };
 
     const handleMessageFromWeb = async (message: MessageToFigma) => {
       console.log(message);
 
-      handleSelectionChange(message, proxyToWeb);
       handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
-      handleDropCards(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleEnableCopilot(message, enableCopilot, openCopilotPage);
       handleDisableCopilot(message, disableCopilot, openIndexPage);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
 
-    figma.on("selectionchange", convertSelectionChangeToMessage);
-    figma.on("drop", convertDropToMessage);
+    figma.on("selectionchange", wrappedHandleSelectionChange);
+    figma.on("drop", wrappedHandleDrop);
 
     return () => {
-      figma.off("selectionchange", convertSelectionChangeToMessage);
-      figma.off("drop", convertDropToMessage);
+      figma.off("selectionchange", wrappedHandleSelectionChange);
+      figma.off("drop", wrappedHandleDrop);
     };
   });
 
