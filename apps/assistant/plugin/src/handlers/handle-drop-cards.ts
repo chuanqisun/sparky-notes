@@ -1,5 +1,7 @@
 import type { MessageToFigma } from "@h20/assistant-types";
 import { loadFonts, replaceNotification } from "@h20/figma-tools";
+import { startLayoutDraftFrame } from "../utils/layout";
+import type { LayoutDraft } from "../widget/use-layout-draft";
 
 export async function handleDropCards(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
   if (!message.createCards) return;
@@ -22,12 +24,9 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
     }
   }
 
-  // TODO handle multiple
-
-  const primaryCard = summary.cards[0]!;
-  const clonedWidget = cloneFromNode.cloneWidget({ cardData: primaryCard });
-
   if (!figmaDropContext) {
+    const primaryCard = summary.cards[0]!;
+    const clonedWidget = cloneFromNode.cloneWidget({ cardData: primaryCard });
     replaceNotification(`✅ Card added to canvas`, {
       button: {
         text: "Locate it",
@@ -42,19 +41,31 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
   }
 
   const parentNode = figma.getNodeById(figmaDropContext.parentNodeId);
-  if (Array.isArray((parentNode as ChildrenMixin)?.children)) {
-    (parentNode as ChildrenMixin).appendChild(clonedWidget);
-    clonedWidget.x = figmaDropContext.x;
-    clonedWidget.y = figmaDropContext.y;
+  if (!Array.isArray((parentNode as ChildrenMixin)?.children)) return;
 
-    if (webDragContext) {
+  const frame = startLayoutDraftFrame({ layoutMode: "VERTICAL", itemSpacing: 32 });
+
+  (parentNode as ChildrenMixin).appendChild(frame);
+
+  frame.x = figmaDropContext.x;
+  frame.y = figmaDropContext.y;
+
+  summary.cards.forEach((card, index) => {
+    const clonedWidget = cloneFromNode.cloneWidget({ cardData: card });
+    frame.appendChild(clonedWidget);
+
+    if (index === summary.cards.length - 1) {
+      const layoutDraft: LayoutDraft = webDragContext
+        ? {
+            xOffsetPercent: -(webDragContext.offsetX / webDragContext.nodeWidth),
+            yOffsetPercent: -(webDragContext.offsetY / webDragContext.nodeHeight),
+          }
+        : {};
+
       clonedWidget.setWidgetSyncedState({
-        cardData: primaryCard,
-        pendingOffset: {
-          xPercent: -(webDragContext.offsetX / webDragContext.nodeWidth),
-          yPercent: -(webDragContext.offsetY / webDragContext.nodeHeight),
-        },
+        cardData: card,
+        layoutDraft,
       });
     }
-  }
+  });
 }

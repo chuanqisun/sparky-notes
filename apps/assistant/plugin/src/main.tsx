@@ -11,7 +11,7 @@ import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
 import { getFigmaDropContext } from "./utils/drag-and-drop";
 import { useWidgetState } from "./widget/use-card";
 import { useCopilotSwitch } from "./widget/use-copilot-switch";
-import { useDropOffset } from "./widget/use-drop-offset";
+import { useLayoutDraft } from "./widget/use-layout-draft";
 
 const { widget } = figma;
 const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
@@ -24,7 +24,7 @@ function Widget() {
   const { cardData } = useWidgetState({ openIndexPage });
   const { isCopilotEnabled, enableCopilot, disableCopilot } = useCopilotSwitch();
 
-  useDropOffset(cardData, widgetId);
+  useLayoutDraft(cardData, widgetId);
 
   useEffect(() => {
     const wrappedHandleSelectionChange = () => {
