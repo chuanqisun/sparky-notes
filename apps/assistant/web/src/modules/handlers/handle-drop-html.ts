@@ -24,16 +24,16 @@ export function handleDropHtml(message: MessageToWeb, proxyToFigma: ProxyToFigma
         return { title, url } as ParsedLink;
       });
 
-    // TODO handle multiple items
-    links
+    const cards = links
       .filter((link) => hasTitle(link) && hasHitsHost(link.url) && hasEntityPath(link.url))
       .map((link) => ({
         ...link,
         url: shortenToLeafEntityPath(toLowercase(removeFragment(removeSearchParams(link.url)))),
       }))
       .filter((link, index, self) => self.findIndex((l) => l.url === link.url) === index) // ensure unique
-      .map(linkToCard)
-      .forEach((card) => proxyToFigma.notify({ createCards: { cards: [card], figmaDropContext, webDragContext } }));
+      .map(linkToCard);
+
+    proxyToFigma.notify({ createCards: { cards, figmaDropContext, webDragContext } });
   });
 }
 
