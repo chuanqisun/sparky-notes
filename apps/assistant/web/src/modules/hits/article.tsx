@@ -1,4 +1,4 @@
-import type { CardData } from "@h20/assistant-types";
+import type { CardData, CreateCardSummary } from "@h20/assistant-types";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityIconComponent, EntityName } from "./entity";
@@ -14,18 +14,18 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
 
   const handleDragStart = (e: DragEvent) => {
     if (!e.dataTransfer || !e.target) return;
-    e.dataTransfer.setData(
-      "application/x.hits.drop-card",
-      JSON.stringify({
-        data: cardData,
-        dragEvent: {
-          offsetX: e.offsetX,
-          offsetY: e.offsetY,
-          nodeWidth: (e.target as HTMLElement).offsetWidth,
-          nodeHeight: (e.target as HTMLElement).offsetHeight,
-        },
-      })
-    );
+
+    const createCardSummary: CreateCardSummary = {
+      data: cardData,
+      webDragContext: {
+        offsetX: e.offsetX,
+        offsetY: e.offsetY,
+        nodeWidth: (e.target as HTMLElement).offsetWidth,
+        nodeHeight: (e.target as HTMLElement).offsetHeight,
+      },
+    };
+
+    e.dataTransfer.setData("application/x.hits.drop-card", JSON.stringify(createCardSummary));
   };
 
   return (

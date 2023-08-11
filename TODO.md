@@ -1,15 +1,15 @@
 ## Assistant
 
-- BUG: when last insight was deleted, new insights cannot be added
+- Handle multi-item drag and drop
+- Hoist article handlers to main
+- Text underline hover effect for url on the card
 - In-figma button/card hover effect: toggle shadow
-- In-app click to browse without adding to canvas
+- Better In-app mechanism to view all claims under a report
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
-- New card positioning improvements
-- Auto push code update to Figma Widget instance
+- Detect outdated widget version and prompt for upgrade
 - Auth | Timestamp last access token usage
 - Auth | Sign out from all HITS Assistants
-- Progressively disclose more non-highlight items
 
 ## Impromptu
 

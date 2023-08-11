@@ -6,7 +6,7 @@ import { entityToCard } from "../hits/entity-to-card";
 export function handleDropHtml(message: MessageToWeb, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>) {
   if (!message.dropHtml) return;
 
-  const { items, context } = message.dropHtml;
+  const { items, figmaDropContext, webDragContext } = message.dropHtml;
 
   items.map((item) => {
     const container = document.createElement("template");
@@ -32,9 +32,7 @@ export function handleDropHtml(message: MessageToWeb, proxyToFigma: ProxyToFigma
       }))
       .filter((link, index, self) => self.findIndex((l) => l.url === link.url) === index) // ensure unique
       .map(linkToCard)
-      .forEach((card) => proxyToFigma.notify({ addCard: card }));
-
-    // TODO use context to inform drop position
+      .forEach((card) => proxyToFigma.notify({ createCard: { data: card, figmaDropContext, webDragContext } }));
   });
 }
 

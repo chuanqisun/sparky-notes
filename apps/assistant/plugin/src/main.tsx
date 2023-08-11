@@ -1,4 +1,4 @@
-import type { DropCardSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { CreateCardSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
@@ -9,12 +9,13 @@ import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
+import { getFigmaDropContext } from "./utils/drag-and-drop";
 import { useWidgetState } from "./widget/use-card";
 import { useCopilotSwitch } from "./widget/use-copilot-switch";
-import { useDropPositionNudge } from "./widget/use-drop-position-nudge";
+import { useDropOffset } from "./widget/use-drop-offset";
 
 const { widget } = figma;
-const { useSyncedState, useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
+const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
 
 const proxyToWeb = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
@@ -24,7 +25,7 @@ function Widget() {
   const { cardData } = useWidgetState({ openIndexPage });
   const { isCopilotEnabled, enableCopilot, disableCopilot } = useCopilotSwitch();
 
-  useDropPositionNudge(cardData, widgetId);
+  useDropOffset(cardData, widgetId);
 
   useEffect(() => {
     const wrappedHandleSelectionChange = () => {
@@ -32,12 +33,21 @@ function Widget() {
     };
 
     const wrappedHandleDrop = (event: DropEvent) => {
+      console.log(event);
+      // TOO refactor into add card
       const card = event.items
         .filter((item) => item.type === "application/x.hits.drop-card")
-        .map((item) => JSON.parse(item.data) as DropCardSummary)
+        .map((item) => JSON.parse(item.data) as CreateCardSummary)
         .pop();
+
       if (card) {
-        handleDropCards(card, event, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
+        // Forward as message to itself
+        handleMessageFromWeb({
+          createCard: {
+            ...card,
+            figmaDropContext: getFigmaDropContext(event),
+          },
+        });
       }
 
       handleDropLinks(event, proxyToWeb);
@@ -51,6 +61,7 @@ function Widget() {
       handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleEnableCopilot(message, enableCopilot, openCopilotPage);
       handleDisableCopilot(message, disableCopilot, openIndexPage);
+      handleDropCards(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
