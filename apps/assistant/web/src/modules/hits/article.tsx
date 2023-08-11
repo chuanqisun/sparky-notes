@@ -1,7 +1,8 @@
 import type { CardData } from "@h20/assistant-types";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
-import { EntityBackgroundColor, EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
+import { EntityIconComponent, EntityName } from "./entity";
+import { entityToCard } from "./entity-to-card";
 
 export interface HitsCardProps {
   node: HitsDisplayNode;
@@ -9,14 +10,7 @@ export interface HitsCardProps {
   onClick: (cardData: CardData) => void;
 }
 export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
-  const cardData: CardData = {
-    category: EntityDisplayName[node.entityType],
-    title: node.title,
-    entityId: node.id,
-    entityType: node.entityType,
-    backgroundColor: EntityBackgroundColor[node.entityType],
-    url: `https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`,
-  };
+  const cardData = entityToCard(node.id, node.entityType, node.title);
 
   const handleDragStart = (e: DragEvent) => {
     if (!e.dataTransfer || !e.target) return;

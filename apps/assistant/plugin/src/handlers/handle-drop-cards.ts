@@ -28,8 +28,8 @@ export async function handleDropCards(summary: DropCardSummary, event: DropEvent
     clonedWidget.setWidgetSyncedState({
       cardData: summary.data,
       pendingNudge: {
-        xPercent: -(summary.dragEvent.offsetX / summary.dragEvent.nodeWidth),
-        yPercent: -(summary.dragEvent.offsetY / summary.dragEvent.nodeHeight),
+        xPercent: -(summary.context.offsetX / summary.context.nodeWidth),
+        yPercent: -(summary.context.offsetY / summary.context.nodeHeight),
       },
     });
   } else {

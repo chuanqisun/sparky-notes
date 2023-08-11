@@ -5,6 +5,7 @@ import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCard } from "./handlers/handle-add-card";
 import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
 import { handleDropCards } from "./handlers/handle-drop-cards";
+import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
@@ -35,10 +36,12 @@ function Widget() {
         .filter((item) => item.type === "application/x.hits.drop-card")
         .map((item) => JSON.parse(item.data) as DropCardSummary)
         .pop();
+      if (card) {
+        handleDropCards(card, event, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
+      }
 
-      if (!card) return false;
+      handleDropLinks(event, proxyToWeb);
 
-      handleDropCards(card, event, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       return false;
     };
 

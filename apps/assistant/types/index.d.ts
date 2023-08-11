@@ -1,14 +1,19 @@
 export interface MessageToWeb {
   ping?: string;
   selectionChanged?: SelectionSummary;
+  dropHtml?: {
+    items: string[];
+    context: FigmaDropContext;
+  };
 }
 
 export interface MessageToFigma {
-  ping?: string;
   addCard?: CardData;
+  disableCopilot?: boolean;
   dropCard?: DropCardSummary;
   enableCopilot?: boolean;
-  disableCopilot?: boolean;
+  parseHtmlLinksRes?: ParsedLink[];
+  ping?: string;
   selectionChange?: boolean;
 }
 
@@ -34,12 +39,25 @@ export interface CardData {
 
 export interface DropCardSummary {
   data: CardData;
-  dragEvent: SyntheticDragEvent;
+  context: WebDragContext;
 }
 
-export interface SyntheticDragEvent {
+export interface ParsedLink {
+  title: string;
+  url: string;
+}
+
+export interface WebDragContext {
   offsetX: number;
   offsetY: number;
   nodeWidth: number;
   nodeHeight: number;
+}
+
+export interface FigmaDropContext {
+  parentNodeId: string;
+  x: number;
+  y: number;
+  absoluteX: number;
+  absoluteY: number;
 }

@@ -4,6 +4,7 @@ import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { HitsDisplayNode } from "./modules/display/display-node";
+import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
 import { appInsights } from "./modules/telemetry/app-insights";
@@ -44,8 +45,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Figma RPC
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
-      const pluginMessage = e.data.pluginMessage as MessageToWeb;
-      console.log(`[ipc] Main -> UI`, pluginMessage);
+      const message = e.data.pluginMessage as MessageToWeb;
+      console.log(`[ipc] Figma -> Web`, message);
+
+      handleDropHtml(message, proxyToFigma);
     };
 
     window.addEventListener("message", handleMainMessage);
