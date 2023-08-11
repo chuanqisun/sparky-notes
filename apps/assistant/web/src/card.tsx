@@ -1,8 +1,10 @@
-import type { MessageToWeb } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
+import { getProxyToFigma } from "@h20/figma-tools";
 import { Fragment, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/display/display-node";
+import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { ErrorMessage } from "./modules/hits/error";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
@@ -14,6 +16,8 @@ import WebWorker from "./worker?worker";
 
 // start worker ASAP
 const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).start();
+
+const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
 // remove loading placeholder
 document.getElementById("app")!.innerHTML = "";
@@ -69,9 +73,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // Figma RPC
   useEffect(() => {
     const handleMainMessage = (e: MessageEvent) => {
-      const pluginMessage = e.data.pluginMessage as MessageToWeb;
-      console.log(`[ipc] Main -> UI`, pluginMessage);
-      // TBD
+      const message = e.data.pluginMessage as MessageToWeb;
+      console.log(`[ipc] Figma -> Web`, message);
+
+      handleDropHtml(message, proxyToFigma);
     };
 
     window.addEventListener("message", handleMainMessage);

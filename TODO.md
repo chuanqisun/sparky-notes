@@ -1,6 +1,7 @@
 ## Assistant
 
 - Hoist article handlers to main
+- Allow edit
 - Text underline hover effect for url on the card
 - In-figma button/card hover effect: toggle shadow
 - Better In-app mechanism to view all claims under a report
