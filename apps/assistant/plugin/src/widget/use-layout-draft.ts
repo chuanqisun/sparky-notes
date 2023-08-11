@@ -6,6 +6,8 @@ const { useEffect, useSyncedState } = figma.widget;
 export interface LayoutDraft {
   xOffsetPercent?: number;
   yOffsetPercent?: number;
+  xOffset?: number;
+  yOffset?: number;
 }
 
 export function useLayoutDraft(cardData: null | CardData, widgetId: string) {
@@ -21,8 +23,8 @@ export function useLayoutDraft(cardData: null | CardData, widgetId: string) {
       const parentFrame = widgetNode.parent as FrameNode;
       if (parentFrame?.type !== "FRAME") return;
 
-      parentFrame.x += widgetNode.width * (layoutDraft.xOffsetPercent ?? 0);
-      parentFrame.y += widgetNode.height * (layoutDraft.yOffsetPercent ?? 0);
+      parentFrame.x += widgetNode.width * (layoutDraft.xOffsetPercent ?? 0) + (layoutDraft.xOffset ?? 0);
+      parentFrame.y += widgetNode.height * (layoutDraft.yOffsetPercent ?? 0) + (layoutDraft.yOffset ?? 0);
 
       finishLayoutDraftFrame(parentFrame);
 

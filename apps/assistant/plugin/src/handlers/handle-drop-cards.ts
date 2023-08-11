@@ -21,7 +21,7 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
 
   const frame = startLayoutDraftFrame({ layoutMode: "VERTICAL", itemSpacing: VERTICAL_GAP });
   frame.x = figmaDropContext?.x ?? cloneFromNode.x;
-  frame.y = figmaDropContext?.y ?? cloneFromNode.y + cloneFromNode.height + VERTICAL_GAP;
+  frame.y = figmaDropContext?.y ?? cloneFromNode.y;
 
   const parentNode = figmaDropContext ? figma.getNodeById(figmaDropContext.parentNodeId) : figma.currentPage;
   if (!Array.isArray((parentNode as ChildrenMixin)?.children)) {
@@ -35,13 +35,20 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
     const clonedWidget = cloneFromNode.cloneWidget({ cardData: card });
     frame.appendChild(clonedWidget);
 
+    // the last card will be annotated with layout draft for the entire frame
     if (index === summary.cards.length - 1) {
       const layoutDraft: LayoutDraft = webDragContext
         ? {
             xOffsetPercent: -(webDragContext.offsetX / webDragContext.nodeWidth),
             yOffsetPercent: -(webDragContext.offsetY / webDragContext.nodeHeight),
           }
-        : {};
+        : {
+            // without drag context, we use last card as a reference and center align with it
+            xOffsetPercent: -0.5,
+            yOffsetPercent: 0,
+            xOffset: clonedWidget.width / 2,
+            yOffset: cloneFromNode.height + VERTICAL_GAP,
+          };
 
       clonedWidget.setWidgetSyncedState({
         cardData: card,

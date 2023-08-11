@@ -1,6 +1,5 @@
 ## Assistant
 
-- Handle multi-item drag and drop
 - Hoist article handlers to main
 - Text underline hover effect for url on the card
 - In-figma button/card hover effect: toggle shadow
