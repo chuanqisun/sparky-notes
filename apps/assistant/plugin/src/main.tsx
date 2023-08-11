@@ -2,7 +2,6 @@ import type { CreateCardSummary, MessageToFigma, MessageToWeb } from "@h20/assis
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
-import { handleAddCard } from "./handlers/handle-add-card";
 import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
 import { handleDropCards } from "./handlers/handle-drop-cards";
 import { handleDropLinks } from "./handlers/handle-drop-links";
@@ -58,7 +57,6 @@ function Widget() {
     const handleMessageFromWeb = async (message: MessageToFigma) => {
       console.log(message);
 
-      handleAddCard(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleEnableCopilot(message, enableCopilot, openCopilotPage);
       handleDisableCopilot(message, disableCopilot, openIndexPage);
       handleDropCards(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
