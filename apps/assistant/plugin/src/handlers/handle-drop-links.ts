@@ -10,7 +10,7 @@ export function handleDropLinks(event: DropEvent, proxyToWeb: ProxyToWeb<Message
   if (htmlChunks.length === 0) return;
 
   proxyToWeb.notify({
-    dropHtml: {
+    parseDropHtml: {
       items: htmlChunks,
       figmaDropContext: getFigmaDropContext(event),
       webDragContext: getSyntheticDragContext(),

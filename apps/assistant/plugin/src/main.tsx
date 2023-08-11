@@ -1,4 +1,4 @@
-import type { CreateCardSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { CreateCardsSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
@@ -34,16 +34,16 @@ function Widget() {
     const wrappedHandleDrop = (event: DropEvent) => {
       console.log(event);
       // TOO refactor into add card
-      const card = event.items
+      const createCardsSummary = event.items
         .filter((item) => item.type === "application/x.hits.drop-card")
-        .map((item) => JSON.parse(item.data) as CreateCardSummary)
+        .map((item) => JSON.parse(item.data) as CreateCardsSummary)
         .pop();
 
-      if (card) {
+      if (createCardsSummary) {
         // Forward as message to itself
         handleMessageFromWeb({
-          createCard: {
-            ...card,
+          createCards: {
+            ...createCardsSummary,
             figmaDropContext: getFigmaDropContext(event),
           },
         });

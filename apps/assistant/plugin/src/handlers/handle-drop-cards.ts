@@ -2,11 +2,9 @@ import type { MessageToFigma } from "@h20/assistant-types";
 import { loadFonts, replaceNotification } from "@h20/figma-tools";
 
 export async function handleDropCards(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
-  if (!message.createCard) return;
+  if (!message.createCards) return;
 
-  console.log("drop card", message);
-
-  const summary = message.createCard;
+  const summary = message.createCards;
   const { figmaDropContext, webDragContext } = summary;
 
   await loadFonts({ family: "Inter", style: "Medium" }, { family: "Inter", style: "Semi Bold" });
@@ -24,7 +22,10 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
     }
   }
 
-  const clonedWidget = cloneFromNode.cloneWidget({ cardData: summary.data });
+  // TODO handle multiple
+
+  const primaryCard = summary.cards[0]!;
+  const clonedWidget = cloneFromNode.cloneWidget({ cardData: primaryCard });
 
   if (!figmaDropContext) {
     replaceNotification(`✅ Card added to canvas`, {
@@ -48,7 +49,7 @@ export async function handleDropCards(message: MessageToFigma, currentNodeId: st
 
     if (webDragContext) {
       clonedWidget.setWidgetSyncedState({
-        cardData: summary.data,
+        cardData: primaryCard,
         pendingOffset: {
           xPercent: -(webDragContext.offsetX / webDragContext.nodeWidth),
           yPercent: -(webDragContext.offsetY / webDragContext.nodeHeight),

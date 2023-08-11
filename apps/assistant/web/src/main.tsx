@@ -89,7 +89,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   // handle send card to figma
   const handleAddCard = useCallback((cardData: CardData) => {
     appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType });
-    proxyToFigma.notify({ createCard: { data: cardData } });
+    proxyToFigma.notify({ createCards: { cards: [cardData] } });
   }, []);
 
   const { queue, add } = useConcurrentTasks<SearchRes>();

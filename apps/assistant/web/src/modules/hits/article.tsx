@@ -1,4 +1,4 @@
-import type { CardData, CreateCardSummary } from "@h20/assistant-types";
+import type { CardData, CreateCardsSummary } from "@h20/assistant-types";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityIconComponent, EntityName } from "./entity";
@@ -15,8 +15,8 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
   const handleDragStart = (e: DragEvent) => {
     if (!e.dataTransfer || !e.target) return;
 
-    const createCardSummary: CreateCardSummary = {
-      data: cardData,
+    const createCardSummary: CreateCardsSummary = {
+      cards: [cardData],
       webDragContext: {
         offsetX: e.offsetX,
         offsetY: e.offsetY,

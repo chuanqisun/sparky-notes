@@ -1,7 +1,7 @@
 export interface MessageToWeb {
   ping?: string;
   selectionChanged?: SelectionSummary;
-  dropHtml?: {
+  parseDropHtml?: {
     items: string[];
     figmaDropContext: FigmaDropContext;
     webDragContext?: WebDragContext;
@@ -9,7 +9,7 @@ export interface MessageToWeb {
 }
 
 export interface MessageToFigma {
-  createCard?: CreateCardSummary;
+  createCards?: CreateCardsSummary;
   disableCopilot?: boolean;
   enableCopilot?: boolean;
   parseHtmlLinksRes?: ParsedLink[];
@@ -37,8 +37,8 @@ export interface CardData {
   backgroundColor: string;
 }
 
-export interface CreateCardSummary {
-  data: CardData;
+export interface CreateCardsSummary {
+  cards: CardData[];
   webDragContext?: WebDragContext;
   figmaDropContext?: FigmaDropContext;
 }
