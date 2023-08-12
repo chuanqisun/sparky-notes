@@ -1,10 +1,11 @@
 ## Assistant
 
 - Hoist article handlers to main
-- Allow edit
+- Better In-app mechanism to view all claims under a report
+  - Render Card page as a component inside Main page
+- Edit card title
 - Text underline hover effect for url on the card
 - In-figma button/card hover effect: toggle shadow
-- Better In-app mechanism to view all claims under a report
 - Provide feedback menu action
 - Handle permission errors when loading other people's work
 - Detect outdated widget version and prompt for upgrade
