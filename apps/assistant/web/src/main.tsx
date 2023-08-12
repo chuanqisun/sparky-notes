@@ -1,4 +1,4 @@
-import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { CardData, CreateCardsSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
@@ -10,6 +10,7 @@ import { ErrorMessage } from "./modules/hits/error";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { debounce } from "./utils/debounce";
+import { getDragContext } from "./utils/drag-and-drop";
 import { getUniqueFilter } from "./utils/get-unique-filter";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
 import { useInfiniteScroll } from "./utils/use-infinite-scroll";
@@ -88,8 +89,17 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // handle send card to figma
   const handleAddCard = useCallback((cardData: CardData) => {
-    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType });
+    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType, gesture: "click" });
     proxyToFigma.notify({ createCards: { cards: [cardData] } });
+  }, []);
+
+  const handleDragStart = useCallback((cardData: CardData, e: DragEvent) => {
+    if (!e.dataTransfer || !e.target) return;
+
+    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType, gesture: "drag" });
+    const createCardSummary: CreateCardsSummary = { cards: [cardData], webDragContext: getDragContext(e) };
+
+    e.dataTransfer.setData("application/x.hits.drop-card", JSON.stringify(createCardSummary));
   }, []);
 
   const { queue, add } = useConcurrentTasks<SearchRes>();
@@ -191,7 +201,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         {isConnected && (
           <ul class="c-list">
             {outputState.nodes.map((parentNode, index) => (
-              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onClick={handleAddCard} />
+              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onClick={handleAddCard} onDragStart={handleDragStart} />
             ))}
           </ul>
         )}

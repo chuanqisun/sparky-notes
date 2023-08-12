@@ -1,4 +1,4 @@
-import type { CardData, CreateCardsSummary } from "@h20/assistant-types";
+import type { CardData } from "@h20/assistant-types";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityIconComponent, EntityName } from "./entity";
@@ -8,29 +8,14 @@ export interface HitsCardProps {
   node: HitsDisplayNode;
   isParent?: boolean;
   onClick: (cardData: CardData) => void;
+  onDragStart: (cardData: CardData, e: DragEvent) => void;
 }
-export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
+export function HitsArticle({ node, onClick, onDragStart, isParent }: HitsCardProps) {
   const cardData = entityToCard(node.id, node.entityType, node.title);
-
-  const handleDragStart = (e: DragEvent) => {
-    if (!e.dataTransfer || !e.target) return;
-
-    const createCardSummary: CreateCardsSummary = {
-      cards: [cardData],
-      webDragContext: {
-        offsetX: e.offsetX,
-        offsetY: e.offsetY,
-        nodeWidth: (e.target as HTMLElement).offsetWidth,
-        nodeHeight: (e.target as HTMLElement).offsetHeight,
-      },
-    };
-
-    e.dataTransfer.setData("application/x.hits.drop-card", JSON.stringify(createCardSummary));
-  };
 
   return (
     <>
-      <li class={`c-list__item`} key={node.id} draggable={true} onDragStart={handleDragStart}>
+      <li class={`c-list__item`} key={node.id} draggable={true} onDragStart={(e) => onDragStart(cardData, e)}>
         <button
           class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
           onClick={(e) => (e.ctrlKey ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank") : onClick(cardData))}
@@ -54,7 +39,9 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
       </li>
       {isParent &&
         node.children.map((childNode) =>
-          node.showAllChildren || childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onClick={onClick} /> : null
+          node.showAllChildren || childNode.hasHighlight ? (
+            <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onClick={onClick} onDragStart={onDragStart} />
+          ) : null
         )}
     </>
   );

@@ -1,6 +1,5 @@
 ## Assistant
 
-- Hoist article handlers to main
 - Better In-app mechanism to view all claims under a report
   - Render Card page as a component inside Main page
 - Edit card title
