@@ -91,14 +91,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // handle send card to figma
   const handleAddCard = useCallback((cardData: CardData) => {
-    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType, gesture: "click" });
+    appInsights.trackEvent({ name: "add-card" }, { gesture: "click" });
     proxyToFigma.notify({ createCards: { cards: [cardData] } });
+  }, []);
+  const handleAddCards = useCallback((cardData: CardData[]) => {
+    appInsights.trackEvent({ name: "add-card" }, { gesture: "click" });
+    proxyToFigma.notify({ createCards: { cards: cardData } });
   }, []);
 
   const handleDragStart = useCallback((cardData: CardData, e: DragEvent) => {
     if (!e.dataTransfer || !e.target) return;
 
-    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType, gesture: "drag" });
+    appInsights.trackEvent({ name: "add-card" }, { gesture: "drag" });
     const createCardSummary: CreateCardsSummary = { cards: [cardData], webDragContext: getDragContext(e) };
 
     e.dataTransfer.setData("application/x.hits.drop-card", JSON.stringify(createCardSummary));
@@ -224,7 +228,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </header>
             <div class="c-app-layout__main u-scroll">
               {isReportDetailsLoading && <div class="c-progress-bar" />}
-              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCard={handleAddCard} />}
+              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCards={handleAddCards} />}
             </div>
           </dialog>
         ) : null}

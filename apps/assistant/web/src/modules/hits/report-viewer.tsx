@@ -9,7 +9,7 @@ import type { ReportDetails } from "./use-report-details";
 export interface ReportViewerProps {
   className?: string;
   report: ReportDetails;
-  onAddCard: (cardData: CardData) => void;
+  onAddCards: (cardData: CardData[]) => void;
 }
 
 export function ReportViewer(props: ReportViewerProps) {
@@ -57,8 +57,24 @@ export function ReportViewer(props: ReportViewerProps) {
           </a>
         </h1>
         <div class="c-action-bar">
-          <button class="u-reset c-action-bar__button" onClick={() => props.onAddCard(entityToCard(report.entityId, report.entityType, report.title))}>
+          <button
+            title="Add report to Figma"
+            class="u-reset c-action-bar__button"
+            onClick={() => props.onAddCards([entityToCard(report.entityId, report.entityType, report.title)])}
+          >
             Add
+          </button>
+          <button
+            title="Add report and its insights and recommendations to Figma"
+            class="u-reset c-action-bar__button"
+            onClick={() =>
+              props.onAddCards([
+                entityToCard(report.entityId, report.entityType, report.title),
+                ...report.children.map((child) => entityToCard(child.entityId, child.entityType, child.title)),
+              ])
+            }
+          >
+            Add all
           </button>
         </div>
         <p class="c-card-byline">
@@ -113,7 +129,11 @@ export function ReportViewer(props: ReportViewerProps) {
                 </div>
 
                 <div class="c-action-bar c-action-bar--indented">
-                  <button class="u-reset c-action-bar__button" onClick={() => props.onAddCard(entityToCard(child.entityId, child.entityType, child.title))}>
+                  <button
+                    class="u-reset c-action-bar__button"
+                    title="Add to Figma"
+                    onClick={() => props.onAddCards([entityToCard(child.entityId, child.entityType, child.title)])}
+                  >
                     Add
                   </button>
                   {child.body.length ? (
