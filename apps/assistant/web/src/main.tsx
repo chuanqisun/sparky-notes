@@ -7,6 +7,8 @@ import type { HitsDisplayNode } from "./modules/display/display-node";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
+import { ReportViewer } from "./modules/hits/report-viewer";
+import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
 import { debounce } from "./utils/debounce";
@@ -151,6 +153,21 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     }
   }, [hasMore, shouldLoadMore, isSearchPending]);
 
+  const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
+  useEffect(() => {
+    if (selectedCard) {
+      (document.getElementById("report-viewer-dialog") as HTMLDialogElement)?.showModal();
+    }
+  }, [selectedCard]);
+
+  const { report, isLoading: isReportDetailsLoading } = useReportDetails({
+    isTokenExpired,
+    accessToken,
+    entityId: selectedCard?.entityId,
+    entityType: selectedCard?.entityType,
+    worker,
+  });
+
   return (
     <>
       <header class="c-app-header">
@@ -198,10 +215,23 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </div>
           </section>
         )}
+        {selectedCard ? (
+          <dialog id="report-viewer-dialog" class="c-app-layout c-report-viewer-overlay">
+            <header class="c-app-header">
+              <button class="u-reset c-back-button c-bottom-divider" onClick={() => setSelectedCard(null)}>
+                Back to search results
+              </button>
+            </header>
+            <div class="c-app-layout__main u-scroll">
+              {isReportDetailsLoading && <div class="c-progress-bar" />}
+              {!isReportDetailsLoading && report && <ReportViewer entityId={report.entityId} reportDetails={report} />}
+            </div>
+          </dialog>
+        ) : null}
         {isConnected && (
           <ul class="c-list">
             {outputState.nodes.map((parentNode, index) => (
-              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onClick={handleAddCard} onDragStart={handleDragStart} />
+              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onClick={setSelectedCard} onDragStart={handleDragStart} />
             ))}
           </ul>
         )}

@@ -70,6 +70,22 @@
   padding: 16px;
 }
 
+.c-back-button {
+  color: black;
+  background: white;
+  width: 100%;
+  display: flex;
+  font-weight: 600;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+
+  &:where(:hover, :focus-visible) {
+    color: white;
+    background-color: black;
+  }
+}
+
 .c-jumbo-button__progress {
   display: inline-block;
   font-variant-numeric: tabular-nums;
@@ -97,14 +113,15 @@
   align-items: center;
   justify-content: center;
   border: none;
-  color: white;
-  background-color: black;
-  border-left: 2px solid black;
-  border-bottom: 2px solid black;
-}
-.c-menu-trigger-button[data-active="true"] {
   color: black;
   background-color: white;
+  border-left: 2px solid black;
+  border-bottom: 2px solid black;
+
+  &:where(:hover, :focus-visible) {
+    background-color: black;
+    color: white;
+  }
 }
 
 .c-search-input {

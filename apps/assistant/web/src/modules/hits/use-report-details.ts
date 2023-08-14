@@ -10,8 +10,8 @@ export interface UseReportDetailsProps {
   worker: WorkerClient<WorkerRoutes, WorkerEvents>;
   accessToken: string;
   isTokenExpired: boolean;
-  entityId: string;
-  entityType: number;
+  entityId?: string;
+  entityType?: number;
 }
 
 export interface ReportDetails {
@@ -45,14 +45,19 @@ const bodyTextOverflowThreshold = 100;
 
 export function useReportDetails({ isTokenExpired, accessToken, entityId, entityType, worker }: UseReportDetailsProps) {
   const [report, setReport] = useState<ReportDetails | null | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
   const normalizeWhitespace = useCallback((text: string) => text.trim().replace(/\s+/g, " "), []);
 
   useEffect(() => {
+    setIsLoading(true);
+
     // We skip data fetching until token has valid expiry.
     // Note it is still possible for client to believe token is valid while the server has revoked it.
     // The background token request will hopefully fetch a valid token for the next round
     // In that case, we will set the data to null and give user a link to reload the page
     if (isTokenExpired) return;
+
+    if (!entityId || !entityType) return;
 
     worker.request("getCardData", { accessToken, entityId, entityType }).then((result) => {
       const { cardData } = result;
@@ -67,6 +72,8 @@ export function useReportDetails({ isTokenExpired, accessToken, entityId, entity
         .map((item) => item.id.toString());
 
       const normalizedBodyWords = normalizeWhitespace(cardData.contents ?? "").split(" ");
+
+      setIsLoading(false);
 
       setReport({
         entityId: cardData.id,
@@ -95,10 +102,11 @@ export function useReportDetails({ isTokenExpired, accessToken, entityId, entity
         tags: [...cardData.products.map(getDisplayTagMapper("product")), ...cardData.topics.map(getDisplayTagMapper("topic"))],
       });
     });
-  }, [isTokenExpired]);
+  }, [isTokenExpired, entityId, entityType]);
 
   return {
     report,
+    isLoading,
   };
 }
 
