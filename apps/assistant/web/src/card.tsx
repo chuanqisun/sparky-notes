@@ -147,18 +147,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     });
   }, [isTokenExpired]);
 
-  // Auto expand highlighted child entity
-  useEffect(() => {
-    if (!cardData) return;
-    const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
-    if (!accordion) return;
-
-    accordion.open = true;
-    accordion.querySelector("summary")!.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [cardData]);
-
-  const [isBodyExpanded, setIsBodyExpanded] = useState(false);
-
   return (
     <>
       {isConnected !== false && cardData === undefined && <div class="c-progress-bar" />}

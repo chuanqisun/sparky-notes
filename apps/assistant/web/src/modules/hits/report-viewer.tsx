@@ -1,5 +1,5 @@
 import { Fragment } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
 import "./report-viewer.css";
 
@@ -40,6 +40,15 @@ export function ReportViewer(props: ReportViewerProps) {
   const { report, entityId } = props;
 
   const [isBodyExpanded, setIsBodyExpanded] = useState(false);
+
+  // // Auto expand highlighted child entity
+  useEffect(() => {
+    const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
+    if (!accordion) return;
+
+    accordion.open = true;
+    accordion.querySelector("summary")!.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [entityId]);
 
   return (
     <article class={`${props.class} c-card-article`}>
