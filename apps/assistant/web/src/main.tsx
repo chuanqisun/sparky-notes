@@ -4,8 +4,7 @@ import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { HitsDisplayNode } from "./modules/display/display-node";
-import { handleAddedCards } from "./modules/handlers/handle-added-cards";
-import { handleDropHtml } from "./modules/handlers/handle-drop-html";
+import { useSharedFigmaEventHandlers } from "./modules/handlers/use-shared-figma-event-handlers";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
@@ -47,19 +46,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
 
   // Figma RPC
-  useEffect(() => {
-    const handleMainMessage = (e: MessageEvent) => {
-      const message = e.data.pluginMessage as MessageToWeb;
-      console.log(`[ipc] Figma -> Web`, message);
-
-      handleDropHtml(message, proxyToFigma);
-      handleAddedCards(message, appInsights);
-    };
-
-    window.addEventListener("message", handleMainMessage);
-
-    return () => window.removeEventListener("message", handleMainMessage);
-  }, []);
+  useSharedFigmaEventHandlers({ proxyToFigma, appInsights });
 
   const [query, setQuery] = useState("");
   const [inputState, setInputState] = useState({ effectiveQuery: "", skip: 0 });
@@ -217,7 +204,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </header>
             <div class="c-app-layout__main u-scroll">
               {isReportDetailsLoading && <div class="c-progress-bar" />}
-              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCards={handleAddCards} />}
+              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCards={handleAddCards} onOpenCard={handleOpenCard} />}
             </div>
           </dialog>
         ) : null}

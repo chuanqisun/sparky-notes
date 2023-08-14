@@ -11,6 +11,7 @@ export interface ReportViewerProps {
   className?: string;
   report: ReportDetails;
   onAddCards: (cardData: CardData[]) => void;
+  onOpenCard: (cardData: CardData) => void;
 }
 
 export function ReportViewer(props: ReportViewerProps) {
@@ -38,6 +39,11 @@ export function ReportViewer(props: ReportViewerProps) {
     accordion?.removeAttribute("data-open");
   };
 
+  const handleOpenCard = (entityId: string, entityType: number, title: string) => {
+    const cardData = entityToCard(entityId, entityType, title);
+    props.onOpenCard(cardData);
+  };
+
   return (
     <>
       <article class={`${props.className} c-card-article`}>
@@ -53,7 +59,12 @@ export function ReportViewer(props: ReportViewerProps) {
           </ul>
         ) : null}
         <h1 class="c-card-title" data-highlight={report.isHighlighted}>
-          <a class="u-reset" target="_blank" href={getEntityUrl(report.entityType, report.entityId)}>
+          <a
+            class="u-reset"
+            target="_blank"
+            href={getEntityUrl(report.entityType, report.entityId)}
+            onClick={() => handleOpenCard(report.entityId, report.entityType, report.title)}
+          >
             {report.title}
           </a>
         </h1>
@@ -123,7 +134,12 @@ export function ReportViewer(props: ReportViewerProps) {
                 <div class="c-child-accordion__title">
                   {EntityIconComponent[child.entityType]()}
                   <span class="js-accordion-scroll-center c-child-title" data-highlight={child.isHighlighted}>
-                    <a class="u-reset" target="_blank" href={getEntityUrl(child.entityType, child.entityId)}>
+                    <a
+                      class="u-reset"
+                      target="_blank"
+                      href={getEntityUrl(child.entityType, child.entityId)}
+                      onClick={() => handleOpenCard(child.entityId, child.entityType, child.title)}
+                    >
                       {child.title}
                     </a>
                   </span>

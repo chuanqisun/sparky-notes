@@ -1,10 +1,8 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
-import { useEffect } from "preact/hooks";
-import { handleAddedCards } from "./modules/handlers/handle-added-cards";
-import { handleDropHtml } from "./modules/handlers/handle-drop-html";
+import { useSharedFigmaEventHandlers } from "./modules/handlers/use-shared-figma-event-handlers";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
 import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
@@ -40,22 +38,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 
-  // handle send card to figma
+  // handle figma events
+  useSharedFigmaEventHandlers({ proxyToFigma, appInsights });
+
+  // handle ui events
   const handleAddCards = useHandleAddCards(proxyToFigma);
-
-  // Figma RPC
-  useEffect(() => {
-    const handleMainMessage = (e: MessageEvent) => {
-      const message = e.data.pluginMessage as MessageToWeb;
-      console.log(`[ipc] Figma -> Web`, message);
-      handleDropHtml(message, proxyToFigma);
-      handleAddedCards(message, appInsights);
-    };
-
-    window.addEventListener("message", handleMainMessage);
-
-    return () => window.removeEventListener("message", handleMainMessage);
-  }, []);
+  const handleOpenCard = (cardData: CardData) => {
+    appInsights.trackEvent({ name: "opened-card" }, { cardData });
+  };
 
   const { report } = useReportDetails({
     isTokenExpired,
@@ -83,7 +73,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <ErrorMessage />
         </article>
       )}
-      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} onAddCards={handleAddCards} />}
+      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} onAddCards={handleAddCards} onOpenCard={handleOpenCard} />}
     </>
   );
 }
