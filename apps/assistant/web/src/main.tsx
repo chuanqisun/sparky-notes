@@ -132,10 +132,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const handleSelectCard = (cardData: CardData) => {
-    appInsights.trackEvent({ name: "selected-card" }, { cardData });
     setSelectedCard(cardData);
     (document.getElementById("report-viewer-dialog") as HTMLDialogElement)?.showModal();
+
+    appInsights.trackEvent({ name: "selected-card" }, { cardData });
   };
+
   const handleOpenCard = (cardData: CardData) => {
     appInsights.trackEvent({ name: "opened-card" }, { cardData });
   };
