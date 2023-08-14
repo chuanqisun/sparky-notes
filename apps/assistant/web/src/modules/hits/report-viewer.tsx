@@ -1,12 +1,15 @@
+import type { CardData } from "@h20/assistant-types";
 import { Fragment } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
+import { entityToCard } from "./entity-to-card";
 import "./report-viewer.css";
 import type { ReportDetails } from "./use-report-details";
 
 export interface ReportViewerProps {
   className?: string;
   report: ReportDetails;
+  onAddCard: (cardData: CardData) => void;
 }
 
 export function ReportViewer(props: ReportViewerProps) {
@@ -53,6 +56,11 @@ export function ReportViewer(props: ReportViewerProps) {
             {report.title}
           </a>
         </h1>
+        <div class="c-action-bar">
+          <button class="u-reset c-action-bar__button" onClick={() => props.onAddCard(entityToCard(report.entityId, report.entityType, report.title))}>
+            Add
+          </button>
+        </div>
         <p class="c-card-byline">
           {EntityDisplayName[report.entityType]} ·{" "}
           <a class="c-card-meta-link" href={report.group.url} target="_blank">
@@ -69,11 +77,6 @@ export function ReportViewer(props: ReportViewerProps) {
           ))}{" "}
           · {report.updatedOn.toLocaleString()}
         </p>
-        <div class="c-action-bar">
-          <button class="u-reset c-action-bar__button" onClick={() => handleExpand(report.entityId)}>
-            Add to Figma
-          </button>
-        </div>
         <p class="c-card-body">
           <span class="c-card-body__visible" data-overflow={!isBodyExpanded && !!report.bodyOverflow}>
             {report.body}
@@ -110,8 +113,8 @@ export function ReportViewer(props: ReportViewerProps) {
                 </div>
 
                 <div class="c-action-bar c-action-bar--indented">
-                  <button class="u-reset c-action-bar__button" onClick={() => handleExpand(child.entityId)}>
-                    Add to Figma
+                  <button class="u-reset c-action-bar__button" onClick={() => props.onAddCard(entityToCard(child.entityId, child.entityType, child.title))}>
+                    Add
                   </button>
                   {child.body.length ? (
                     <button class="u-reset c-action-bar__button c-child-accordion__collapsed-only" onClick={() => handleExpand(child.entityId)}>

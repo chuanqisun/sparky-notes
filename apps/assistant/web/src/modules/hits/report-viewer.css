@@ -14,12 +14,12 @@
   white-space: pre-line;
 }
 
-.c-child-accordion__container[data-has-details="true"]:not([data-open]) .c-child-title::after,
-.c-card-body__visible[data-overflow="true"]::after {
+.c-child-accordion__container {
+  display: grid;
+  gap: 4px;
 }
 
 .c-action-bar {
-  margin-block-start: 4px;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -91,7 +91,6 @@
 
 .c-child-details {
   padding-left: 24px;
-  margin-block: 0px 8px;
 }
 
 .c-child-entity-list {

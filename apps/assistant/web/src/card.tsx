@@ -1,8 +1,8 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
-import { useEffect } from "preact/hooks";
+import { useCallback, useEffect } from "preact/hooks";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
@@ -37,6 +37,12 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     serverHost: import.meta.env.VITE_H20_SERVER_HOST,
     webHost: import.meta.env.VITE_WEB_HOST,
   });
+
+  // handle send card to figma
+  const handleAddCard = useCallback((cardData: CardData) => {
+    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType, gesture: "click" });
+    proxyToFigma.notify({ createCards: { cards: [cardData] } });
+  }, []);
 
   // Figma RPC
   useEffect(() => {
@@ -77,7 +83,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <ErrorMessage />
         </article>
       )}
-      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} />}
+      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} onAddCard={handleAddCard} />}
     </>
   );
 }

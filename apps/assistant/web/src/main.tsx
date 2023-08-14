@@ -224,7 +224,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </header>
             <div class="c-app-layout__main u-scroll">
               {isReportDetailsLoading && <div class="c-progress-bar" />}
-              {!isReportDetailsLoading && report && <ReportViewer report={report} />}
+              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCard={handleAddCard} />}
             </div>
           </dialog>
         ) : null}
