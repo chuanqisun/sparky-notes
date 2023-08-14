@@ -1,4 +1,4 @@
-import type { CreateCardsSummary, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
@@ -8,7 +8,6 @@ import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
-import { getFigmaDropContext } from "./utils/drag-and-drop";
 import { useWidgetState } from "./widget/use-card";
 import { useCopilotSwitch } from "./widget/use-copilot-switch";
 import { useLayoutDraft } from "./widget/use-layout-draft";
@@ -33,22 +32,6 @@ function Widget() {
 
     const wrappedHandleDrop = (event: DropEvent) => {
       console.log(event);
-      // TOO refactor into add card
-      const createCardsSummary = event.items
-        .filter((item) => item.type === "application/x.hits.drop-card")
-        .map((item) => JSON.parse(item.data) as CreateCardsSummary)
-        .pop();
-
-      if (createCardsSummary) {
-        // Forward as message to itself
-        handleMessageFromWeb({
-          createCards: {
-            ...createCardsSummary,
-            figmaDropContext: getFigmaDropContext(event),
-          },
-        });
-      }
-
       handleDropLinks(event, proxyToWeb);
 
       return false;
