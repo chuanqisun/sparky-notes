@@ -9,15 +9,15 @@ const typePreview = document.querySelector<HTMLInputElement>(`[data-preview="typ
 const idPreview = document.querySelector<HTMLInputElement>(`[data-preview="id"]`)!;
 
 mainIframe.src = import.meta.env.VITE_WEB_HOST;
-cardIframe.src = import.meta.env.VITE_WEB_HOST + "/card.html";
+cardIframe.src = import.meta.env.VITE_WEB_HOST + "/report.html";
 
 window.addEventListener("message", (e) => {
   const message = e.data?.pluginMessage as MessageToFigma;
   console.log(`[debug] UI -> Main`, message);
 
-  if (message.addCard) {
-    typePreview.value = message.addCard.entityType.toString();
-    idPreview.value = message.addCard.entityId;
+  if (message.createCards) {
+    typePreview.value = message.createCards.cards.at(0)!.entityType.toString();
+    idPreview.value = message.createCards.cards.at(0)!.entityId;
   }
 });
 
@@ -26,13 +26,8 @@ window.addEventListener("click", (e) => {
   const action = target?.closest("[data-action]")?.getAttribute("data-action");
 
   switch (action) {
-    case "ping":
-      sendMessageFromMockMain({
-        ping: new Date().toLocaleString(),
-      });
-      break;
     case "loadCard":
-      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
+      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/report.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
       break;
     case "rotate":
       // select the last iframe on the page and prepend it to the first iframe

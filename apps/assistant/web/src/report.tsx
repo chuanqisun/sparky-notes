@@ -29,33 +29,6 @@ if (!entityId || Number.isNaN(entityType)) {
   throw new Error("Missing Type or Id in the URL");
 }
 
-interface CardData {
-  title: string;
-  body: string;
-  bodyOverflow: string;
-  entityId: string;
-  entityType: number;
-  updatedOn: Date;
-  tags: {
-    displayName: string;
-    url: string;
-  }[];
-  children: {
-    entityId: string;
-    entityType: number;
-    title: string;
-    body: string;
-  }[];
-  group: {
-    displayName: string;
-    url: string;
-  };
-  researchers: {
-    displayName: string;
-    url: string;
-  }[];
-}
-
 appInsights.trackPageView();
 
 function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {

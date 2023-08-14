@@ -11,7 +11,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        card: resolve(__dirname, "card.html"),
+        report: resolve(__dirname, "report.html"),
         copilot: resolve(__dirname, "copilot.html"),
         debug: resolve(__dirname, "debug.html"),
         signIn: resolve(__dirname, "sign-in.html"),
