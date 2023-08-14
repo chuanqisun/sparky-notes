@@ -3,6 +3,10 @@
   grid-template-rows: auto 1fr auto;
 }
 
+.c-app-layout--headless {
+  grid-template-rows: 1fr;
+}
+
 .c-app-layout__main {
   min-height: 0;
 }

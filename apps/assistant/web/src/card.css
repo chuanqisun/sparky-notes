@@ -13,3 +13,8 @@
 .c-top-divider {
   border-top: 2px solid black;
 }
+
+.c-card-scroll-action-container {
+  display: flex;
+  flex-direction: column;
+}

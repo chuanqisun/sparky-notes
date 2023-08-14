@@ -88,7 +88,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         </article>
       )}
       {isConnected !== false && report && (
-        <div class="c-scroll-area">
+        <div class="c-scroll-area c-card-scroll-action-container">
           <ReportViewer report={report} onAddCards={handleAddCards} onOpenCard={handleOpenCard} />
           <button class="u-reset c-back-button c-top-divider" onClick={() => location.replace("./index.html")}>
             Find other insights
