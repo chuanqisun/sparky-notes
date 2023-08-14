@@ -95,7 +95,7 @@ export function useReportDetails({ isTokenExpired, accessToken, entityId, entity
         tags: [...cardData.products.map(getDisplayTagMapper("product")), ...cardData.topics.map(getDisplayTagMapper("topic"))],
       });
     });
-  });
+  }, [isTokenExpired]);
 
   return {
     report,
