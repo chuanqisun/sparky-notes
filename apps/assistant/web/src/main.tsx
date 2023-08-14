@@ -8,6 +8,7 @@ import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
+import { useHandleAddCards } from "./modules/hits/use-handle-add-card";
 import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
@@ -90,14 +91,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   );
 
   // handle send card to figma
-  const handleAddCard = useCallback((cardData: CardData) => {
-    appInsights.trackEvent({ name: "add-card" }, { gesture: "click" });
-    proxyToFigma.notify({ createCards: { cards: [cardData] } });
-  }, []);
-  const handleAddCards = useCallback((cardData: CardData[]) => {
-    appInsights.trackEvent({ name: "add-card" }, { gesture: "click" });
-    proxyToFigma.notify({ createCards: { cards: cardData } });
-  }, []);
+  const handleAddCards = useHandleAddCards(appInsights, proxyToFigma);
 
   const handleDragStart = useCallback((cardData: CardData, e: DragEvent) => {
     if (!e.dataTransfer || !e.target) return;

@@ -1,11 +1,12 @@
-import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
-import { useCallback, useEffect } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
+import { useHandleAddCards } from "./modules/hits/use-handle-add-card";
 import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -39,10 +40,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   });
 
   // handle send card to figma
-  const handleAddCard = useCallback((cardData: CardData) => {
-    appInsights.trackEvent({ name: "add-card" }, { entityId: cardData.entityId, entityType: cardData.entityType, gesture: "click" });
-    proxyToFigma.notify({ createCards: { cards: [cardData] } });
-  }, []);
+  const handleAddCards = useHandleAddCards(appInsights, proxyToFigma);
 
   // Figma RPC
   useEffect(() => {
@@ -83,7 +81,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <ErrorMessage />
         </article>
       )}
-      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} onAddCard={handleAddCard} />}
+      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} onAddCards={handleAddCards} />}
     </>
   );
 }
