@@ -99,6 +99,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     appInsights.trackEvent({ name: "add-card" }, { gesture: "drag" });
     const createCardSummary: CreateCardsSummary = { cards: [cardData], webDragContext: getDragContext(e) };
 
+    // e.dataTransfer.setData("text/html", `<a href="${getEntityUrl(cardData.entityType, cardData.entityId)}">${cardData.title}</a>`);
     e.dataTransfer.setData("application/x.hits.drop-card", JSON.stringify(createCardSummary));
   }, []);
 

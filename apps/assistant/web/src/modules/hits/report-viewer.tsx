@@ -1,8 +1,9 @@
 import type { CardData } from "@h20/assistant-types";
 import { Fragment } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
+import { EntityDisplayName, EntityIconComponent } from "./entity";
 import { entityToCard } from "./entity-to-card";
+import { getEntityUrl } from "./get-entity-url";
 import "./report-viewer.css";
 import type { ReportDetails } from "./use-report-details";
 
@@ -52,7 +53,7 @@ export function ReportViewer(props: ReportViewerProps) {
           </ul>
         ) : null}
         <h1 class="c-card-title" data-highlight={report.isHighlighted}>
-          <a class="u-reset" target="_blank" href={`https://hits.microsoft.com/${EntityName[report.entityType]}/${report.entityId}`}>
+          <a class="u-reset" target="_blank" href={getEntityUrl(report.entityType, report.entityId)}>
             {report.title}
           </a>
         </h1>
@@ -122,7 +123,7 @@ export function ReportViewer(props: ReportViewerProps) {
                 <div class="c-child-accordion__title">
                   {EntityIconComponent[child.entityType]()}
                   <span class="js-accordion-scroll-center c-child-title" data-highlight={child.isHighlighted}>
-                    <a class="u-reset" target="_blank" href={`https://hits.microsoft.com/${EntityName[child.entityType]}/${child.entityId}`}>
+                    <a class="u-reset" target="_blank" href={getEntityUrl(child.entityType, child.entityId)}>
                       {child.title}
                     </a>
                   </span>
