@@ -3,6 +3,7 @@
 }
 .c-button--hits {
   padding-inline: 8px;
+  text-decoration: none;
 }
 
 .c-button--hits:is(:focus-visible, :hover) {
