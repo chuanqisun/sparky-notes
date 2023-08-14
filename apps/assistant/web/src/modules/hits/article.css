@@ -18,6 +18,10 @@
 .c-button--hits-child {
   padding-block: 4px;
 }
+.c-button--hits-clicked {
+  color: #000;
+  background-color: #eee;
+}
 
 .hits-item {
   display: grid;

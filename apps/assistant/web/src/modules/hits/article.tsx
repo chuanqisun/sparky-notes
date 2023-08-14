@@ -1,4 +1,5 @@
 import type { CardData } from "@h20/assistant-types";
+import { useRef } from "preact/hooks";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityIconComponent, EntityName } from "./entity";
@@ -12,14 +13,22 @@ export interface HitsCardProps {
 }
 export function HitsArticle({ node, onClick, onDragStart, isParent }: HitsCardProps) {
   const cardData = entityToCard(node.id, node.entityType, node.title);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleClickInternal = (e: MouseEvent) => {
+    buttonRef.current?.classList.add("c-button--hits-clicked");
+    e.ctrlKey ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank") : onClick(cardData);
+  };
+
+  const handleDragInternal = (e: DragEvent) => {
+    buttonRef.current?.classList.add("c-button--hits-clicked");
+    onDragStart(cardData, e);
+  };
 
   return (
     <>
-      <li class={`c-list__item`} key={node.id} draggable={true} onDragStart={(e) => onDragStart(cardData, e)}>
-        <button
-          class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
-          onClick={(e) => (e.ctrlKey ? window.open(`https://hits.microsoft.com/${EntityName[node.entityType]}/${node.id}`, "__blank") : onClick(cardData))}
-        >
+      <li class={`c-list__item`} key={node.id} draggable={true} onDragStart={handleDragInternal}>
+        <button ref={buttonRef} class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`} onClick={handleClickInternal}>
           <article class="hits-item">
             {EntityIconComponent[node.entityType]()}
             <div class="hits-item__text">
