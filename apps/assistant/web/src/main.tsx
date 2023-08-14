@@ -4,11 +4,12 @@ import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { HitsDisplayNode } from "./modules/display/display-node";
+import { handleAddedCards } from "./modules/handlers/handle-added-cards";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
-import { useHandleAddCards } from "./modules/hits/use-handle-add-card";
+import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
 import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
@@ -52,6 +53,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       console.log(`[ipc] Figma -> Web`, message);
 
       handleDropHtml(message, proxyToFigma);
+      handleAddedCards(message, appInsights);
     };
 
     window.addEventListener("message", handleMainMessage);
@@ -90,7 +92,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   );
 
   // handle send card to figma
-  const handleAddCards = useHandleAddCards(appInsights, proxyToFigma);
+  const handleAddCards = useHandleAddCards(proxyToFigma);
 
   const { queue, add } = useConcurrentTasks<SearchRes>();
 
@@ -142,11 +144,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [hasMore, shouldLoadMore, isSearchPending]);
 
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
-  useEffect(() => {
-    if (selectedCard) {
-      (document.getElementById("report-viewer-dialog") as HTMLDialogElement)?.showModal();
-    }
-  }, [selectedCard]);
+  const handleSelectCard = (cardData: CardData) => {
+    appInsights.trackEvent({ name: "selected-card" }, { cardData });
+    setSelectedCard(cardData);
+    (document.getElementById("report-viewer-dialog") as HTMLDialogElement)?.showModal();
+  };
+  const handleOpenCard = (cardData: CardData) => {
+    appInsights.trackEvent({ name: "opened-card" }, { cardData });
+  };
 
   const { report, isLoading: isReportDetailsLoading } = useReportDetails({
     isTokenExpired,
@@ -219,7 +224,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         {isConnected && (
           <ul class="c-list">
             {outputState.nodes.map((parentNode, index) => (
-              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onClick={setSelectedCard} />
+              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onSelect={handleSelectCard} onOpen={handleOpenCard} />
             ))}
           </ul>
         )}

@@ -42,7 +42,7 @@ function Widget() {
 
       handleEnableCopilot(message, enableCopilot, openCopilotPage);
       handleDisableCopilot(message, disableCopilot, openIndexPage);
-      handleAddCards(message, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
+      handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;

@@ -3,10 +3,11 @@ import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useEffect } from "preact/hooks";
+import { handleAddedCards } from "./modules/handlers/handle-added-cards";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
-import { useHandleAddCards } from "./modules/hits/use-handle-add-card";
+import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
 import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -40,7 +41,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   });
 
   // handle send card to figma
-  const handleAddCards = useHandleAddCards(appInsights, proxyToFigma);
+  const handleAddCards = useHandleAddCards(proxyToFigma);
 
   // Figma RPC
   useEffect(() => {
@@ -48,6 +49,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       const message = e.data.pluginMessage as MessageToWeb;
       console.log(`[ipc] Figma -> Web`, message);
       handleDropHtml(message, proxyToFigma);
+      handleAddedCards(message, appInsights);
     };
 
     window.addEventListener("message", handleMainMessage);

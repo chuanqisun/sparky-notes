@@ -6,6 +6,7 @@ export interface MessageToWeb {
     figmaDropContext: FigmaDropContext;
     webDragContext?: WebDragContext;
   };
+  addedCards?: AddCards;
 }
 
 export interface MessageToFigma {

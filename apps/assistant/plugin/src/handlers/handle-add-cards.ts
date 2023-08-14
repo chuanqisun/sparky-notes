@@ -1,11 +1,16 @@
-import type { MessageToFigma } from "@h20/assistant-types";
-import { loadFonts, replaceNotification } from "@h20/figma-tools";
+import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import { loadFonts, replaceNotification, type ProxyToWeb } from "@h20/figma-tools";
 import { startLayoutDraftFrame } from "../utils/layout";
 import type { LayoutDraft } from "../widget/use-layout-draft";
 
 const VERTICAL_GAP = 32;
 
-export async function handleAddCards(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
+export async function handleAddCards(
+  message: MessageToFigma,
+  proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>,
+  currentNodeId: string,
+  widgetManifestId: string
+) {
   if (!message.addCards) return;
 
   const summary = message.addCards;
@@ -65,6 +70,8 @@ export async function handleAddCards(message: MessageToFigma, currentNodeId: str
       });
     }
   });
+
+  proxyToWeb.notify({ addedCards: summary });
 }
 
 function getCloneFromNode(currentNodeId: string, widgetManifestId: string): WidgetNode | null {

@@ -9,17 +9,20 @@ import { getEntityUrl } from "./get-entity-url";
 export interface HitsCardProps {
   node: HitsDisplayNode;
   isParent?: boolean;
-  onClick: (cardData: CardData) => void;
+  onSelect: (cardData: CardData) => void;
+  onOpen: (cardData: CardData) => void;
 }
-export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
+export function HitsArticle({ node, onSelect, onOpen, isParent }: HitsCardProps) {
   const cardData = entityToCard(node.id, node.entityType, node.title);
   const buttonRef = useRef<HTMLAnchorElement>(null);
 
   const handleClickInternal = (e: MouseEvent) => {
     buttonRef.current?.classList.add("c-button--hits-clicked");
     if (!e.ctrlKey) {
-      onClick(cardData);
+      onSelect(cardData);
       e.preventDefault();
+    } else {
+      onOpen(cardData);
     }
   };
 
@@ -52,7 +55,9 @@ export function HitsArticle({ node, onClick, isParent }: HitsCardProps) {
       </li>
       {isParent &&
         node.children.map((childNode) =>
-          node.showAllChildren || childNode.hasHighlight ? <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onClick={onClick} /> : null
+          node.showAllChildren || childNode.hasHighlight ? (
+            <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onSelect={onSelect} onOpen={onOpen} />
+          ) : null
         )}
     </>
   );
