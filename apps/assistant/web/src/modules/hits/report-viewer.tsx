@@ -2,46 +2,20 @@ import { Fragment } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { EntityDisplayName, EntityIconComponent, EntityName } from "./entity";
 import "./report-viewer.css";
+import type { ReportDetails } from "./use-report-details";
 
 export interface ReportViewerProps {
-  class?: string;
+  className?: string;
   entityId: null | string;
-  report: ReportDetails;
-}
-
-export interface ReportDetails {
-  title: string;
-  body: string;
-  bodyOverflow: string;
-  entityId: string;
-  entityType: number;
-  updatedOn: Date;
-  tags: {
-    displayName: string;
-    url: string;
-  }[];
-  children: {
-    entityId: string;
-    entityType: number;
-    title: string;
-    body: string;
-  }[];
-  group: {
-    displayName: string;
-    url: string;
-  };
-  researchers: {
-    displayName: string;
-    url: string;
-  }[];
+  reportDetails: ReportDetails;
 }
 
 export function ReportViewer(props: ReportViewerProps) {
-  const { report, entityId } = props;
+  const { reportDetails: report, entityId } = props;
 
   const [isBodyExpanded, setIsBodyExpanded] = useState(false);
 
-  // // Auto expand highlighted child entity
+  // Auto expand highlighted child entity
   useEffect(() => {
     const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
     if (!accordion) return;
@@ -51,7 +25,7 @@ export function ReportViewer(props: ReportViewerProps) {
   }, [entityId]);
 
   return (
-    <article class={`${props.class} c-card-article`}>
+    <article class={`${props.className} c-card-article`}>
       {report.tags ? (
         <ul class="c-tag-list">
           {report.tags.map((tag) => (
