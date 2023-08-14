@@ -18,12 +18,21 @@ export function ReportViewer(props: ReportViewerProps) {
 
   // Auto expand highlighted child entity
   useEffect(() => {
-    const accordion = document.querySelector<HTMLElement>(`[data-entity-id="${highlightedId}"]`);
-    if (!accordion) return;
-
-    accordion.setAttribute("data-open", "true");
-    accordion.querySelector(".js-accordion-scroll-center")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    handleExpand(highlightedId ?? "", true);
   }, [highlightedId]);
+
+  const handleExpand = (id: string, scrollTo?: boolean) => {
+    const accordion = document.querySelector<HTMLElement>(`[data-entity-id="${id}"]`);
+    accordion?.setAttribute("data-open", "true");
+    if (scrollTo) {
+      accordion?.querySelector(".js-accordion-scroll-center")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const handleCollapse = (id: string) => {
+    const accordion = document.querySelector<HTMLElement>(`[data-entity-id="${id}"]`);
+    accordion?.removeAttribute("data-open");
+  };
 
   return (
     <>
@@ -40,7 +49,9 @@ export function ReportViewer(props: ReportViewerProps) {
           </ul>
         ) : null}
         <h1 class="c-card-title" data-highlight={report.isHighlighted}>
-          {report.title}
+          <a class="u-reset" target="_blank" href={`https://hits.microsoft.com/${EntityName[report.entityType]}/${report.entityId}`}>
+            {report.title}
+          </a>
         </h1>
         <p class="c-card-byline">
           {EntityDisplayName[report.entityType]} ·{" "}
@@ -58,14 +69,33 @@ export function ReportViewer(props: ReportViewerProps) {
           ))}{" "}
           · {report.updatedOn.toLocaleString()}
         </p>
-        <button class="u-reset" onClick={() => setIsBodyExpanded((prev) => !prev)}>
-          <p class="c-card-body">
-            <span class="c-card-body__visible" data-overflow={!isBodyExpanded && !!report.bodyOverflow}>
-              {report.body}
-            </span>
-            {isBodyExpanded && report.bodyOverflow && <span> {report.bodyOverflow}</span>}
-          </p>
-        </button>
+        <div class="c-action-bar">
+          <button class="u-reset c-action-bar__button" onClick={() => handleExpand(report.entityId)}>
+            Add to Figma
+          </button>
+        </div>
+        <p class="c-card-body">
+          <span class="c-card-body__visible" data-overflow={!isBodyExpanded && !!report.bodyOverflow}>
+            {report.body}
+            {!isBodyExpanded && report.bodyOverflow && (
+              <>
+                ...{" "}
+                <button class="u-reset c-accordion-inline-button" onClick={() => setIsBodyExpanded((prev) => !prev)}>
+                  Show more
+                </button>
+              </>
+            )}
+          </span>
+          {isBodyExpanded && report.bodyOverflow && <span> {report.bodyOverflow}</span>}
+          {report.bodyOverflow && isBodyExpanded && (
+            <>
+              {" "}
+              <button class="u-reset c-accordion-inline-button" onClick={() => setIsBodyExpanded((prev) => !prev)}>
+                Show less
+              </button>
+            </>
+          )}
+        </p>
         <ul class="c-child-entity-list">
           {report.children.map((child) => (
             <li key={child.entityId}>
@@ -73,17 +103,33 @@ export function ReportViewer(props: ReportViewerProps) {
                 <div class="c-child-accordion__title">
                   {EntityIconComponent[child.entityType]()}
                   <span class="js-accordion-scroll-center c-child-title" data-highlight={child.isHighlighted}>
-                    {child.title}
+                    <a class="u-reset" target="_blank" href={`https://hits.microsoft.com/${EntityName[child.entityType]}/${child.entityId}`}>
+                      {child.title}
+                    </a>
                   </span>
                 </div>
-                {child.body.length ? <p class="c-child-details">{child.body}</p> : null}
+
+                <div class="c-action-bar c-action-bar--indented">
+                  <button class="u-reset c-action-bar__button" onClick={() => handleExpand(child.entityId)}>
+                    Add to Figma
+                  </button>
+                  {child.body.length ? (
+                    <button class="u-reset c-action-bar__button c-child-accordion__collapsed-only" onClick={() => handleExpand(child.entityId)}>
+                      Show content
+                    </button>
+                  ) : null}
+                  {child.body.length ? (
+                    <button class="u-reset c-action-bar__button c-child-accordion__expanded-only" onClick={() => handleCollapse(child.entityId)}>
+                      Hide content
+                    </button>
+                  ) : null}
+                </div>
+
+                {child.body.length ? <p class="c-child-details c-child-accordion__expanded-only">{child.body}</p> : null}
               </div>
             </li>
           ))}
         </ul>
-        <a class="c-card-full-report-link" target="_blank" href={`https://hits.microsoft.com/${EntityName[report.entityType]}/${report.entityId}`}>
-          Full report
-        </a>
       </article>
     </>
   );

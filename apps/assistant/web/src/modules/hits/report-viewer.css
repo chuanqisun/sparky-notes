@@ -14,23 +14,50 @@
   white-space: pre-line;
 }
 
-.c-child-accordion__container:not([data-open]) .c-child-details {
-  display: none;
-}
-
 .c-child-accordion__container[data-has-details="true"]:not([data-open]) .c-child-title::after,
 .c-card-body__visible[data-overflow="true"]::after {
-  content: "...";
-  font-weight: inherit;
-  display: inline-flex;
-  background-color: #eee;
-  padding: 0px 8px 4px 8px;
-  height: 10px;
-  border-radius: 5px;
-  box-sizing: border-box;
-  line-height: 0px;
-  vertical-align: middle;
-  margin-left: 4px;
+}
+
+.c-action-bar {
+  margin-block-start: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.c-action-bar--indented {
+  padding-left: 24px;
+}
+
+.c-accordion-inline-button {
+  color: #666;
+  text-decoration: underline;
+
+  &:hover {
+    color: #000;
+  }
+}
+
+.c-action-bar__button {
+  color: #666;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  line-height: 16px;
+  padding: 2px 6px;
+
+  &:hover {
+    background: black;
+    color: white;
+    border-color: black;
+  }
+}
+
+.c-child-accordion__container:not([data-open]) .c-child-accordion__expanded-only {
+  display: none;
+}
+.c-child-accordion__container[data-open] .c-child-accordion__collapsed-only {
+  display: none;
 }
 
 .c-card-byline {
@@ -64,7 +91,7 @@
 
 .c-child-details {
   padding-left: 24px;
-  margin-block: 8px;
+  margin-block: 0px 8px;
 }
 
 .c-child-entity-list {

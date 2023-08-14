@@ -6,6 +6,10 @@
   overflow: auto;
 }
 
+.u-reset:where(a) {
+  color: inherit;
+}
+
 .u-reset:where(button) {
   text-align: unset;
   border: none;

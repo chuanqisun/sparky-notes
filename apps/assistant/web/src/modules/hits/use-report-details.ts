@@ -19,6 +19,7 @@ export interface ReportDetails {
   entityType: number;
   title: string;
   body: string;
+  /** Only when body is truncated */
   bodyOverflow: string;
   isHighlighted: boolean;
   updatedOn: Date;
@@ -69,8 +70,10 @@ export function useReportDetails({ isTokenExpired, accessToken, entityId, entity
       }
 
       const outline = JSON.parse(cardData.outline);
+      console.log(outline);
       const flatIds = flatItem(outline)
         .filter(isClaimType)
+        .filter((item) => Boolean(item.id))
         .map((item) => item.id.toString());
 
       const normalizedBodyWords = normalizeWhitespace(cardData.contents ?? "").split(" ");
