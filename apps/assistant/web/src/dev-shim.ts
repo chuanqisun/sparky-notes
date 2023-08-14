@@ -15,9 +15,9 @@ window.addEventListener("message", (e) => {
   const message = e.data?.pluginMessage as MessageToFigma;
   console.log(`[debug] UI -> Main`, message);
 
-  if (message.createCards) {
-    typePreview.value = message.createCards.cards.at(0)!.entityType.toString();
-    idPreview.value = message.createCards.cards.at(0)!.entityId;
+  if (message.addCards) {
+    typePreview.value = message.addCards.cards.at(0)!.entityType.toString();
+    idPreview.value = message.addCards.cards.at(0)!.entityId;
   }
 });
 

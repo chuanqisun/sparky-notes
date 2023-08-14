@@ -9,7 +9,7 @@ export interface MessageToWeb {
 }
 
 export interface MessageToFigma {
-  createCards?: CreateCardsSummary;
+  addCards?: AddCards;
   disableCopilot?: boolean;
   enableCopilot?: boolean;
   parseHtmlLinksRes?: ParsedLink[];
@@ -37,7 +37,7 @@ export interface CardData {
   backgroundColor: string;
 }
 
-export interface CreateCardsSummary {
+export interface AddCards {
   cards: CardData[];
   webDragContext?: WebDragContext;
   figmaDropContext?: FigmaDropContext;

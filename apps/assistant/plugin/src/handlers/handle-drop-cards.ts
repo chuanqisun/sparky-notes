@@ -5,10 +5,10 @@ import type { LayoutDraft } from "../widget/use-layout-draft";
 
 const VERTICAL_GAP = 32;
 
-export async function handleDropCards(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
-  if (!message.createCards) return;
+export async function handleAddCards(message: MessageToFigma, currentNodeId: string, widgetManifestId: string) {
+  if (!message.addCards) return;
 
-  const summary = message.createCards;
+  const summary = message.addCards;
   const { figmaDropContext, webDragContext } = summary;
 
   const cloneFromNode = getCloneFromNode(currentNodeId, widgetManifestId);

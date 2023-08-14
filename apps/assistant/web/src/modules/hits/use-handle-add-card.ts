@@ -6,7 +6,7 @@ import { useCallback } from "preact/hooks";
 export function useHandleAddCards(appInsights: ApplicationInsights, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>) {
   const handleAddCards = useCallback((cardData: CardData[]) => {
     appInsights.trackEvent({ name: "add-card" }, { gesture: "click" });
-    proxyToFigma.notify({ createCards: { cards: cardData } });
+    proxyToFigma.notify({ addCards: { cards: cardData } });
   }, []);
 
   return handleAddCards;

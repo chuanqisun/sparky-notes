@@ -33,7 +33,7 @@ export function handleDropHtml(message: MessageToWeb, proxyToFigma: ProxyToFigma
       .filter((link, index, self) => self.findIndex((l) => l.url === link.url) === index) // ensure unique
       .map(linkToCard);
 
-    proxyToFigma.notify({ createCards: { cards, figmaDropContext, webDragContext } });
+    proxyToFigma.notify({ addCards: { cards, figmaDropContext, webDragContext } });
   });
 }
 
