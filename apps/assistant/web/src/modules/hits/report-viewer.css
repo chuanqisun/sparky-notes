@@ -14,7 +14,11 @@
   white-space: pre-line;
 }
 
-.c-child-accordion__container[data-has-details="true"]:not([open]) .c-child-title::after,
+.c-child-accordion__container:not([data-open]) .c-child-details {
+  display: none;
+}
+
+.c-child-accordion__container[data-has-details="true"]:not([data-open]) .c-child-title::after,
 .c-card-body__visible[data-overflow="true"]::after {
   content: "...";
   font-weight: inherit;

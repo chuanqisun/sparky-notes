@@ -18,11 +18,11 @@ export function ReportViewer(props: ReportViewerProps) {
 
   // Auto expand highlighted child entity
   useEffect(() => {
-    const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${highlightedId}"]`);
+    const accordion = document.querySelector<HTMLElement>(`[data-entity-id="${highlightedId}"]`);
     if (!accordion) return;
 
-    accordion.open = true;
-    accordion.querySelector("summary")!.scrollIntoView({ behavior: "smooth", block: "center" });
+    accordion.setAttribute("data-open", "true");
+    accordion.querySelector(".js-accordion-scroll-center")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [highlightedId]);
 
   return (
@@ -69,15 +69,15 @@ export function ReportViewer(props: ReportViewerProps) {
         <ul class="c-child-entity-list">
           {report.children.map((child) => (
             <li key={child.entityId}>
-              <details class="c-child-accordion__container" data-entity-id={child.entityId} data-has-details={child.body.length > 0}>
-                <summary class="c-child-accordion__title">
+              <div class="c-child-accordion__container" data-entity-id={child.entityId} data-has-details={child.body.length > 0}>
+                <div class="c-child-accordion__title">
                   {EntityIconComponent[child.entityType]()}
-                  <span class="c-child-title" data-highlight={child.isHighlighted}>
+                  <span class="js-accordion-scroll-center c-child-title" data-highlight={child.isHighlighted}>
                     {child.title}
                   </span>
-                </summary>
+                </div>
                 {child.body.length ? <p class="c-child-details">{child.body}</p> : null}
-              </details>
+              </div>
             </li>
           ))}
         </ul>
