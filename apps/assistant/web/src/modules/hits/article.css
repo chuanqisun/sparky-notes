@@ -4,6 +4,7 @@
 .c-button--hits {
   padding-inline: 8px;
 }
+
 .c-button--hits:is(:focus-visible, :hover) {
   color: #000;
   background-color: #eee;

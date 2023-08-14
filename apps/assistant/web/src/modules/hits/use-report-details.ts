@@ -15,11 +15,12 @@ export interface UseReportDetailsProps {
 }
 
 export interface ReportDetails {
+  entityId: string;
+  entityType: number;
   title: string;
   body: string;
   bodyOverflow: string;
-  entityId: string;
-  entityType: number;
+  isHighlighted: boolean;
   updatedOn: Date;
   tags: {
     displayName: string;
@@ -30,6 +31,7 @@ export interface ReportDetails {
     entityType: number;
     title: string;
     body: string;
+    isHighlighted: boolean;
   }[];
   group: {
     displayName: string;
@@ -80,6 +82,7 @@ export function useReportDetails({ isTokenExpired, accessToken, entityId, entity
         title: normalizeWhitespace(cardData.title),
         body: cardData.abstract ?? normalizedBodyWords.slice(0, bodyTextOverflowThreshold).join(" "),
         bodyOverflow: cardData.abstract ? "" : normalizedBodyWords.slice(bodyTextOverflowThreshold).join(" "),
+        isHighlighted: entityId === cardData.id,
         entityType: cardData.entityType,
         updatedOn: new Date(cardData.updatedOn),
         group: {
@@ -96,6 +99,7 @@ export function useReportDetails({ isTokenExpired, accessToken, entityId, entity
           .map((child) => ({
             entityId: child.id,
             entityType: child.entityType,
+            isHighlighted: entityId === child.id,
             title: normalizeWhitespace(child.title ?? "Untitled"),
             body: normalizeWhitespace(child.contents ?? ""),
           })),

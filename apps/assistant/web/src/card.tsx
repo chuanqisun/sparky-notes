@@ -77,7 +77,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <ErrorMessage />
         </article>
       )}
-      {isConnected !== false && report && <ReportViewer className="c-scroll-area" entityId={entityId} reportDetails={report} />}
+      {isConnected !== false && report && <ReportViewer className="c-scroll-area" entityId={entityId} report={report} />}
     </>
   );
 }

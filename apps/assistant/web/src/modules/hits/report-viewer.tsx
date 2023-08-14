@@ -6,23 +6,24 @@ import type { ReportDetails } from "./use-report-details";
 
 export interface ReportViewerProps {
   className?: string;
-  entityId: null | string;
-  reportDetails: ReportDetails;
+  report: ReportDetails;
 }
 
 export function ReportViewer(props: ReportViewerProps) {
-  const { reportDetails: report, entityId } = props;
+  const { report } = props;
 
   const [isBodyExpanded, setIsBodyExpanded] = useState(false);
 
+  const highlightedId = report.isHighlighted ? report.entityId : report.children.find((child) => child.isHighlighted)?.entityId ?? null;
+
   // Auto expand highlighted child entity
   useEffect(() => {
-    const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${entityId}"]`);
+    const accordion = document.querySelector<HTMLDetailsElement>(`details[data-entity-id="${highlightedId}"]`);
     if (!accordion) return;
 
     accordion.open = true;
     accordion.querySelector("summary")!.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [entityId]);
+  }, [highlightedId]);
 
   return (
     <>
@@ -38,7 +39,7 @@ export function ReportViewer(props: ReportViewerProps) {
             ))}
           </ul>
         ) : null}
-        <h1 class="c-card-title" data-highlight={report.entityId === entityId}>
+        <h1 class="c-card-title" data-highlight={report.isHighlighted}>
           {report.title}
         </h1>
         <p class="c-card-byline">
@@ -71,7 +72,7 @@ export function ReportViewer(props: ReportViewerProps) {
               <details class="c-child-accordion__container" data-entity-id={child.entityId} data-has-details={child.body.length > 0}>
                 <summary class="c-child-accordion__title">
                   {EntityIconComponent[child.entityType]()}
-                  <span class="c-child-title" data-highlight={child.entityId === entityId}>
+                  <span class="c-child-title" data-highlight={child.isHighlighted}>
                     {child.title}
                   </span>
                 </summary>
