@@ -19,7 +19,7 @@
 .c-button--hits-child {
   padding-block: 4px;
 }
-.c-button--hits-clicked {
+.c-button--hits[data-visited="true"] {
   color: #000;
   background-color: #eee;
 }

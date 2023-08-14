@@ -36,9 +36,11 @@ export async function handleAddCards(
 
   (parentNode as ChildrenMixin).appendChild(frame);
 
+  const addedNodes: SceneNode[] = [];
   summary.cards.forEach((card, index) => {
     const clonedWidget = cloneFromNode.cloneWidget({ cardData: card });
     frame.appendChild(clonedWidget);
+    addedNodes.push(clonedWidget);
 
     // the last card will be annotated with layout draft for the entire frame
     if (index === summary.cards.length - 1) {
@@ -62,10 +64,12 @@ export async function handleAddCards(
     }
 
     if (!figmaDropContext) {
+      figma.currentPage.selection = [...addedNodes];
+
       replaceNotification(`✅ Card added to canvas`, {
         button: {
           text: "Locate it",
-          action: () => figma.viewport.scrollAndZoomIntoView([clonedWidget]),
+          action: () => figma.viewport.scrollAndZoomIntoView([...addedNodes]),
         },
       });
     }

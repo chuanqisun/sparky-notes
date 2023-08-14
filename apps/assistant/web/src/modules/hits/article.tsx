@@ -1,5 +1,4 @@
 import type { CardData } from "@h20/assistant-types";
-import { useRef } from "preact/hooks";
 import type { HitsDisplayNode } from "../display/display-node";
 import "./article.css";
 import { EntityIconComponent } from "./entity";
@@ -11,13 +10,12 @@ export interface HitsCardProps {
   isParent?: boolean;
   onSelect: (cardData: CardData) => void;
   onOpen: (cardData: CardData) => void;
+  visitedIds: Set<string>;
 }
-export function HitsArticle({ node, onSelect, onOpen, isParent }: HitsCardProps) {
+export function HitsArticle({ node, onSelect, onOpen, isParent, visitedIds }: HitsCardProps) {
   const cardData = entityToCard(node.id, node.entityType, node.title);
-  const buttonRef = useRef<HTMLAnchorElement>(null);
 
   const handleClickInternal = (e: MouseEvent) => {
-    buttonRef.current?.classList.add("c-button--hits-clicked");
     if (!e.ctrlKey) {
       onSelect(cardData);
       e.preventDefault();
@@ -30,10 +28,10 @@ export function HitsArticle({ node, onSelect, onOpen, isParent }: HitsCardProps)
     <>
       <li class={`c-list__item`} key={node.id} draggable={true}>
         <a
-          ref={buttonRef}
           href={getEntityUrl(node.entityType, node.id)}
           target="_blank"
           class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
+          data-visited={visitedIds.has(node.id)}
           onClick={handleClickInternal}
         >
           <article class="hits-item">
@@ -56,7 +54,7 @@ export function HitsArticle({ node, onSelect, onOpen, isParent }: HitsCardProps)
       {isParent &&
         node.children.map((childNode) =>
           node.showAllChildren || childNode.hasHighlight ? (
-            <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onSelect={onSelect} onOpen={onOpen} />
+            <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onSelect={onSelect} onOpen={onOpen} visitedIds={visitedIds} />
           ) : null
         )}
     </>

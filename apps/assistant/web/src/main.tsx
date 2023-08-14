@@ -4,7 +4,9 @@ import { getProxyToFigma } from "@h20/figma-tools";
 import { render, type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { HitsDisplayNode } from "./modules/display/display-node";
-import { useSharedFigmaEventHandlers } from "./modules/handlers/use-shared-figma-event-handlers";
+import { handleAddedCards } from "./modules/handlers/handle-added-cards";
+import { handleDropHtml } from "./modules/handlers/handle-drop-html";
+import { handleMarkCardAsAdded } from "./modules/handlers/handle-mark-card-as-added";
 import { HitsArticle } from "./modules/hits/article";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
@@ -45,8 +47,22 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = useCallback(() => setIsMenuOpen((isOpen) => !isOpen), []);
 
+  const [sessionVisitedIds, setSessionVisitedIds] = useState(new Set<string>());
+
   // Figma RPC
-  useSharedFigmaEventHandlers({ proxyToFigma, appInsights });
+  useEffect(() => {
+    const handleMainMessage = (e: MessageEvent) => {
+      const message = e.data.pluginMessage as MessageToWeb;
+      console.log(`[ipc] Figma -> Web`, message);
+      handleDropHtml(message, proxyToFigma);
+      handleAddedCards(message, appInsights);
+      handleMarkCardAsAdded(message, (...ids) => setSessionVisitedIds((prev) => new Set([...prev, ...ids])));
+    };
+
+    window.addEventListener("message", handleMainMessage);
+
+    return () => window.removeEventListener("message", handleMainMessage);
+  }, []);
 
   const [query, setQuery] = useState("");
   const [inputState, setInputState] = useState({ effectiveQuery: "", skip: 0 });
@@ -80,6 +96,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   // handle send card to figma
   const handleAddCards = useHandleAddCards(proxyToFigma);
+  const handleAddCardsWithVisitTracking = useCallback(
+    (cards: CardData[]) => {
+      handleAddCards(cards);
+      setSessionVisitedIds((prev) => new Set([...prev, ...cards.map((card) => card.entityId)]));
+    },
+    [handleAddCards]
+  );
 
   const { queue, add } = useConcurrentTasks<SearchRes>();
 
@@ -133,12 +156,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const handleSelectCard = (cardData: CardData) => {
     setSelectedCard(cardData);
+    setSessionVisitedIds((prev) => new Set([...prev, cardData.entityId]));
     (document.getElementById("report-viewer-dialog") as HTMLDialogElement)?.showModal();
 
     appInsights.trackEvent({ name: "selected-card" }, { cardData });
   };
 
   const handleOpenCard = (cardData: CardData) => {
+    setSessionVisitedIds((prev) => new Set([...prev, cardData.entityId]));
     appInsights.trackEvent({ name: "opened-card" }, { cardData });
   };
 
@@ -206,14 +231,21 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </header>
             <div class="c-app-layout__main u-scroll">
               {isReportDetailsLoading && <div class="c-progress-bar" />}
-              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCards={handleAddCards} onOpenCard={handleOpenCard} />}
+              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCards={handleAddCardsWithVisitTracking} onOpenCard={handleOpenCard} />}
             </div>
           </dialog>
         ) : null}
         {isConnected && (
           <ul class="c-list">
             {outputState.nodes.map((parentNode, index) => (
-              <HitsArticle key={parentNode.id} node={parentNode} isParent={true} onSelect={handleSelectCard} onOpen={handleOpenCard} />
+              <HitsArticle
+                key={parentNode.id}
+                node={parentNode}
+                isParent={true}
+                onSelect={handleSelectCard}
+                onOpen={handleOpenCard}
+                visitedIds={sessionVisitedIds}
+              />
             ))}
           </ul>
         )}

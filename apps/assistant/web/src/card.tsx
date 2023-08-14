@@ -2,7 +2,9 @@ import type { CardData, MessageToFigma, MessageToWeb } from "@h20/assistant-type
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
-import { useSharedFigmaEventHandlers } from "./modules/handlers/use-shared-figma-event-handlers";
+import { useEffect } from "preact/hooks";
+import { handleAddedCards } from "./modules/handlers/handle-added-cards";
+import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
 import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
@@ -39,7 +41,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   });
 
   // handle figma events
-  useSharedFigmaEventHandlers({ proxyToFigma, appInsights });
+  useEffect(() => {
+    const handleMainMessage = (e: MessageEvent) => {
+      const message = e.data.pluginMessage as MessageToWeb;
+      console.log(`[ipc] Figma -> Web`, message);
+      handleDropHtml(message, proxyToFigma);
+      handleAddedCards(message, appInsights);
+    };
+
+    window.addEventListener("message", handleMainMessage);
+
+    return () => window.removeEventListener("message", handleMainMessage);
+  }, []);
 
   // handle ui events
   const handleAddCards = useHandleAddCards(proxyToFigma);
@@ -68,12 +81,20 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </div>
         </section>
       )}
+
       {isConnected === true && report === null && (
         <article class="c-card-article">
           <ErrorMessage />
         </article>
       )}
-      {isConnected !== false && report && <ReportViewer className="c-scroll-area" report={report} onAddCards={handleAddCards} onOpenCard={handleOpenCard} />}
+      {isConnected !== false && report && (
+        <div class="c-scroll-area">
+          <ReportViewer report={report} onAddCards={handleAddCards} onOpenCard={handleOpenCard} />
+          <button class="u-reset c-back-button c-top-divider" onClick={() => location.replace("./index.html")}>
+            Find other insights
+          </button>
+        </div>
+      )}
     </>
   );
 }
