@@ -9,7 +9,7 @@ const typePreview = document.querySelector<HTMLInputElement>(`[data-preview="typ
 const idPreview = document.querySelector<HTMLInputElement>(`[data-preview="id"]`)!;
 
 mainIframe.src = import.meta.env.VITE_WEB_HOST;
-cardIframe.src = import.meta.env.VITE_WEB_HOST + "/report.html";
+cardIframe.src = import.meta.env.VITE_WEB_HOST + "/card.html";
 
 window.addEventListener("message", (e) => {
   const message = e.data?.pluginMessage as MessageToFigma;
@@ -27,7 +27,7 @@ window.addEventListener("click", (e) => {
 
   switch (action) {
     case "loadCard":
-      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/report.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
+      cardIframe.src = import.meta.env.VITE_WEB_HOST + `/card.html?entityId=${idPreview.value}&entityType=${typePreview.value}`;
       break;
     case "rotate":
       // select the last iframe on the page and prepend it to the first iframe
