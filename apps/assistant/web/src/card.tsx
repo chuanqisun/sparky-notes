@@ -1,14 +1,14 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
-import { Fragment, render } from "preact";
+import { render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { isClaimType } from "./modules/display/display-node";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
-import { EntityDisplayName, EntityIconComponent, EntityName } from "./modules/hits/entity";
 import { ErrorMessage } from "./modules/hits/error";
 import { getHubSlug } from "./modules/hits/get-hub-slug";
 import type { SearchResultTag } from "./modules/hits/hits";
+import { ReportViewer } from "./modules/hits/report-viewer";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
 import { WorkerClient } from "./utils/worker-rpc";
@@ -177,66 +177,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           <ErrorMessage />
         </article>
       )}
-      {isConnected !== false && cardData && (
-        <article class="c-card-article">
-          {cardData.tags ? (
-            <ul class="c-tag-list">
-              {cardData.tags.map((tag) => (
-                <li key={tag.url}>
-                  <a class="c-tag" target="_blank" href={tag.url}>
-                    {tag.displayName}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <h1 class="c-card-title" data-highlight={cardData.entityId === entityId}>
-            {cardData.title}
-          </h1>
-          <p class="c-card-byline">
-            {EntityDisplayName[cardData.entityType]} ·{" "}
-            <a class="c-card-meta-link" href={cardData.group.url} target="_blank">
-              {cardData.group.displayName}
-            </a>{" "}
-            ·{" "}
-            {cardData.researchers.map((researcher, index) => (
-              <Fragment key={researcher.url}>
-                {index > 0 ? ", " : ""}
-                <a class="c-card-meta-link" href={researcher.url} target="_blank">
-                  {researcher.displayName}
-                </a>
-              </Fragment>
-            ))}{" "}
-            · {cardData.updatedOn.toLocaleString()}
-          </p>
-          <button class="u-reset" onClick={() => setIsBodyExpanded((prev) => !prev)}>
-            <p class="c-card-body">
-              <span class="c-card-body__visible" data-overflow={!isBodyExpanded && !!cardData.bodyOverflow}>
-                {cardData.body}
-              </span>
-              {isBodyExpanded && cardData.bodyOverflow && <span> {cardData.bodyOverflow}</span>}
-            </p>
-          </button>
-          <ul class="c-child-entity-list">
-            {cardData.children.map((child) => (
-              <li key={child.entityId}>
-                <details class="c-child-accordion__container" data-entity-id={child.entityId} data-has-details={child.body.length > 0}>
-                  <summary class="c-child-accordion__title">
-                    {EntityIconComponent[child.entityType]()}
-                    <span class="c-child-title" data-highlight={child.entityId === entityId}>
-                      {child.title}
-                    </span>
-                  </summary>
-                  {child.body.length ? <p class="c-child-details">{child.body}</p> : null}
-                </details>
-              </li>
-            ))}
-          </ul>
-          <a class="c-card-full-report-link" target="_blank" href={`https://hits.microsoft.com/${EntityName[cardData.entityType]}/${cardData.entityId}`}>
-            Full report
-          </a>
-        </article>
-      )}
+      {isConnected !== false && cardData && <ReportViewer class="c-scroll-area" entityId={entityId} report={cardData} />}
     </>
   );
 }
