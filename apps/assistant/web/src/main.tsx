@@ -177,34 +177,36 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   return (
     <>
-      <header class="c-app-header">
-        <input class="c-app-header__input c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={handleInputChange} />
-        <button class="u-reset c-app-header__trigger c-menu-trigger-button" data-active={isMenuOpen} onClick={toggleMenu}>
-          Menu
-        </button>
-        {isMenuOpen && (
-          <menu class="c-app-header__menu c-app-menu" onClick={toggleMenu}>
-            {isConnected === undefined && <span class="c-app-menu--text">Signing in...</span>}
-            {isConnected === false && (
-              <button class="u-reset c-app-menu--btn" onClick={signIn}>
-                Sign in
-              </button>
-            )}
-            {isConnected && (
-              <>
-                {query === "dolegendaryshit" ? (
-                  <button class="u-reset c-app-menu--btn" onClick={() => proxyToFigma.notify({ enableCopilot: true })}>
-                    Copilot
-                  </button>
-                ) : null}
-                <button class="u-reset c-app-menu--btn" onClick={signOut}>
-                  Sign out
+      {isConnected === undefined ? null : (
+        <header class="c-app-header">
+          <input class="c-app-header__input c-search-input" type="search" placeholder="Search" spellcheck={false} value={query} onInput={handleInputChange} />
+          <button class="u-reset c-app-header__trigger c-menu-trigger-button" data-active={isMenuOpen} onClick={toggleMenu}>
+            Menu
+          </button>
+          {isMenuOpen && (
+            <menu class="c-app-header__menu c-app-menu" onClick={toggleMenu}>
+              {isConnected === undefined && <span class="c-app-menu--text">Signing in...</span>}
+              {isConnected === false && (
+                <button class="u-reset c-app-menu--btn" onClick={signIn}>
+                  Sign in
                 </button>
-              </>
-            )}
-          </menu>
-        )}
-      </header>
+              )}
+              {isConnected && (
+                <>
+                  {query === "dolegendaryshit" ? (
+                    <button class="u-reset c-app-menu--btn" onClick={() => proxyToFigma.notify({ enableCopilot: true })}>
+                      Copilot
+                    </button>
+                  ) : null}
+                  <button class="u-reset c-app-menu--btn" onClick={signOut}>
+                    Sign out
+                  </button>
+                </>
+              )}
+            </menu>
+          )}
+        </header>
+      )}
       <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
         {outputState.showTopLoadingSpinner && <div class="c-progress-bar" />}
         {outputState.showErrorMessage && (

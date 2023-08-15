@@ -62,6 +62,7 @@ export function useAuth({ serverHost, webHost }: UseAuthConfig) {
 
   const signOut = useCallback(() => {
     localStorage.clear();
+    timedToken.reset();
 
     signOutRemote({
       input: { email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId },
