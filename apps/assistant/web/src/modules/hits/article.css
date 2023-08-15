@@ -4,14 +4,32 @@
 .c-button--hits {
   padding-inline: 8px;
   text-decoration: none;
+  cursor: grab;
+}
+.c-button--hits:active {
+  border-top: none;
+  cursor: grabbing;
+  transform: scale(0.98) translate(0px, 2px);
+  box-shadow: rgba(0, 0, 0, 0.13) 0px 3px 7px 0px, rgba(0, 0, 0, 0.11) 0px 1px 2px 0px;
+}
+
+.c-list__item--article {
+  display: grid;
+}
+
+.c-list__item--article:has(+ .c-list__item--article .c-button--hits:active) {
+  border-bottom: 1px solid #ccc;
+}
+
+.c-list__item--article:first-child {
+  .c-button--hits-parent {
+    border-top: none;
+  }
 }
 
 .c-button--hits:is(:focus-visible, :hover) {
   color: #000;
   background-color: #eee;
-}
-.c-button--hits:active {
-  transform: scale(0.98);
 }
 .c-button--hits-parent {
   padding-block: 8px 4px;

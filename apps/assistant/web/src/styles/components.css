@@ -102,10 +102,6 @@
   flex-direction: column;
 }
 
-.c-list__item {
-  display: grid;
-}
-
 .c-list__placeholder {
   min-height: 65px;
 }

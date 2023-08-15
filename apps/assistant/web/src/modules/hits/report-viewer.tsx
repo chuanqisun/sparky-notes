@@ -46,7 +46,7 @@ export function ReportViewer(props: ReportViewerProps) {
 
   return (
     <>
-      <article class={`${props.className} c-card-article`}>
+      <article class={`${props.className ?? ""} c-card-article`}>
         {report.tags ? (
           <ul class="c-tag-list">
             {report.tags.map((tag) => (

@@ -26,9 +26,10 @@ export function HitsArticle({ node, onSelect, onOpen, isParent, visitedIds }: Hi
 
   return (
     <>
-      <li class={`c-list__item`} key={node.id} draggable={true}>
+      <li class={`c-list__item c-list__item--article`} key={node.id} draggable={true}>
         <a
           href={getEntityUrl(node.entityType, node.id)}
+          title="Drag to canvas or click to open"
           target="_blank"
           class={`u-reset c-button--hits ${isParent ? "c-button--hits-parent" : "c-button--hits-child"}`}
           data-visited={visitedIds.has(node.id)}
