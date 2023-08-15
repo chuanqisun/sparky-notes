@@ -246,6 +246,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 isParent={true}
                 onSelect={handleSelectCard}
                 onOpen={handleOpenCard}
+                onAdd={() => {
+                  /* WIP */
+                }}
                 visitedIds={sessionVisitedIds}
               />
             ))}

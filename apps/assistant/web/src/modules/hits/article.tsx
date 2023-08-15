@@ -1,4 +1,5 @@
 import type { CardData } from "@h20/assistant-types";
+import { useCallback } from "preact/hooks";
 import type { HitsDisplayNode } from "../display/display-node";
 import { EntityIconComponent } from "./entity";
 import { entityToCard } from "./entity-to-card";
@@ -7,25 +8,39 @@ import { getEntityUrl } from "./get-entity-url";
 export interface HitsCardProps {
   node: HitsDisplayNode;
   isParent?: boolean;
+  onAdd: (cardData: CardData) => void;
   onSelect: (cardData: CardData) => void;
   onOpen: (cardData: CardData) => void;
   visitedIds: Set<string>;
 }
-export function HitsArticle({ node, onSelect, onOpen, isParent, visitedIds }: HitsCardProps) {
+export function HitsArticle({ node, onSelect, onOpen, onAdd, isParent, visitedIds }: HitsCardProps) {
   const cardData = entityToCard(node.id, node.entityType, node.title);
 
-  const handleClickInternal = (e: MouseEvent) => {
-    if (!e.ctrlKey) {
-      onSelect(cardData);
-      e.preventDefault();
-    } else {
-      onOpen(cardData);
-    }
-  };
+  const handleClickInternal = useCallback(
+    (e: MouseEvent) => {
+      if (!e.ctrlKey) {
+        onSelect(cardData);
+        e.preventDefault();
+      } else {
+        onOpen(cardData);
+      }
+    },
+    [onSelect, onOpen]
+  );
+
+  const handleDragEnd = useCallback(
+    (e: DragEvent) => {
+      console.log("debug drag end", e);
+      // ref: https://www.figma.com/plugin-docs/creating-ui/#drop-events-from-a-non-null-origin-iframe
+      // ref: https://forum.figma.com/t/inconsistent-plugin-behavior-in-figma-app-and-browser/38439/2
+      onAdd(cardData);
+    },
+    [onAdd]
+  );
 
   return (
     <>
-      <li class={`c-list__item c-list__item--article`} key={node.id} draggable={true}>
+      <li class={`c-list__item c-list__item--article`} key={node.id} draggable={true} onDragEnd={handleDragEnd}>
         <a
           href={getEntityUrl(node.entityType, node.id)}
           title="Drag to canvas or click to open"
@@ -54,7 +69,14 @@ export function HitsArticle({ node, onSelect, onOpen, isParent, visitedIds }: Hi
       {isParent &&
         node.children.map((childNode) =>
           node.showAllChildren || childNode.hasHighlight ? (
-            <HitsArticle isParent={false} node={childNode as any as HitsDisplayNode} onSelect={onSelect} onOpen={onOpen} visitedIds={visitedIds} />
+            <HitsArticle
+              isParent={false}
+              node={childNode as any as HitsDisplayNode}
+              onSelect={onSelect}
+              onOpen={onOpen}
+              onAdd={onAdd}
+              visitedIds={visitedIds}
+            />
           ) : null
         )}
     </>
