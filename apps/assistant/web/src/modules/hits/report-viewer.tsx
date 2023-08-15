@@ -9,8 +9,8 @@ import type { ReportDetails } from "./use-report-details";
 export interface ReportViewerProps {
   className?: string;
   report: ReportDetails;
-  onAddCards: (cardData: CardData[]) => void;
-  onOpenCard: (cardData: CardData) => void;
+  onAddMultiple: (cardData: CardData[]) => void;
+  onOpen: (cardData: CardData) => void;
 }
 
 export function ReportViewer(props: ReportViewerProps) {
@@ -40,7 +40,7 @@ export function ReportViewer(props: ReportViewerProps) {
 
   const handleOpenCard = (entityId: string, entityType: number, title: string) => {
     const cardData = entityToCard(entityId, entityType, title);
-    props.onOpenCard(cardData);
+    props.onOpen(cardData);
   };
 
   return (
@@ -71,7 +71,7 @@ export function ReportViewer(props: ReportViewerProps) {
           <button
             title="Add report to Figma"
             class="u-reset c-action-bar__button"
-            onClick={() => props.onAddCards([entityToCard(report.entityId, report.entityType, report.title)])}
+            onClick={() => props.onAddMultiple([entityToCard(report.entityId, report.entityType, report.title)])}
           >
             Add
           </button>
@@ -79,7 +79,7 @@ export function ReportViewer(props: ReportViewerProps) {
             title="Add report and its insights and recommendations to Figma"
             class="u-reset c-action-bar__button"
             onClick={() =>
-              props.onAddCards([
+              props.onAddMultiple([
                 entityToCard(report.entityId, report.entityType, report.title),
                 ...report.children.map((child) => entityToCard(child.entityId, child.entityType, child.title)),
               ])
@@ -148,7 +148,7 @@ export function ReportViewer(props: ReportViewerProps) {
                   <button
                     class="u-reset c-action-bar__button"
                     title="Add to Figma"
-                    onClick={() => props.onAddCards([entityToCard(child.entityId, child.entityType, child.title)])}
+                    onClick={() => props.onAddMultiple([entityToCard(child.entityId, child.entityType, child.title)])}
                   >
                     Add
                   </button>

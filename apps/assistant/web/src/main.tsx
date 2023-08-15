@@ -233,7 +233,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </header>
             <div class="c-app-layout__main u-scroll">
               {isReportDetailsLoading && <div class="c-progress-bar" />}
-              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddCards={handleAddCardsWithVisitTracking} onOpenCard={handleOpenCard} />}
+              {!isReportDetailsLoading && report && <ReportViewer report={report} onAddMultiple={handleAddCardsWithVisitTracking} onOpen={handleOpenCard} />}
             </div>
           </dialog>
         ) : null}
@@ -246,9 +246,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 isParent={true}
                 onSelect={handleSelectCard}
                 onOpen={handleOpenCard}
-                onAdd={() => {
-                  /* WIP */
-                }}
+                onAddMultiple={handleAddCardsWithVisitTracking}
                 visitedIds={sessionVisitedIds}
               />
             ))}

@@ -9,12 +9,12 @@ import { getEntityUrl } from "./get-entity-url";
 export interface HitsCardProps {
   node: HitsDisplayNode;
   isParent?: boolean;
-  onAdd: (cardData: CardData) => void;
+  onAddMultiple: (cardData: CardData[]) => void;
   onSelect: (cardData: CardData) => void;
   onOpen: (cardData: CardData) => void;
   visitedIds: Set<string>;
 }
-export function HitsArticle({ node, onSelect, onOpen, onAdd, isParent, visitedIds }: HitsCardProps) {
+export function HitsArticle({ node, onSelect, onOpen, onAddMultiple, isParent, visitedIds }: HitsCardProps) {
   const cardData = entityToCard(node.id, node.entityType, node.title);
 
   const handleClickInternal = useCallback(
@@ -31,41 +31,33 @@ export function HitsArticle({ node, onSelect, onOpen, onAdd, isParent, visitedId
 
   const handleDragEnd = useCallback(
     (e: DragEvent) => {
+      console.log("Drag ended", e);
       // ref: https://www.figma.com/plugin-docs/creating-ui/#drop-events-from-a-non-null-origin-iframe
       // ref: https://forum.figma.com/t/inconsistent-plugin-behavior-in-figma-app-and-browser/38439/2
-      console.log("debug drag end", e);
-      // TODO: make sure the drop target meets all following criteria:
 
-      // 0. It must NOT be the native app. (check: agent.navigator)
-      const isWebClient = !isNative();
+      // It must NOT be the native app. (check: agent.navigator)
+      if (isNative()) return;
 
-      // 1. It must accept copy effect. (check: event.dataTransfer.dropEffect === "copy")
-      const isCopyEffect = e.dataTransfer?.dropEffect === "copy";
+      // It must block drop effect. (check: event.dataTransfer.dropEffect === "none")
+      const isDropBlocked = e.dataTransfer?.dropEffect === "none";
+      if (!isDropBlocked) return;
 
-      // 2. It must be outside of plugin iframe. (It's INSIDE when 0 < event.clientX < window.innerWidth, 0 < event.clientY < window.innerHeight)
+      // It must be outside of plugin iframe. (It's INSIDE when 0 < event.clientX < window.innerWidth, 0 < event.clientY < window.innerHeight)
       const isInsideIframe = 0 < e.clientX && e.clientX < window.innerWidth && 0 < e.clientY && e.clientY < window.innerHeight;
+      if (isInsideIframe) return;
 
-      // 3. It must be inside of Figma app window. (window.screenTop < event.screenY < window.screenTop + window.outerHeight, window.screenLeft < event.screenX < window.screenLeft + window.outerWidth)
+      // It must be inside of Figma app window. (window.screenTop < event.screenY < window.screenTop + window.outerHeight, window.screenLeft < event.screenX < window.screenLeft + window.outerWidth)
       const isInsideFigmaApp =
         window.screenTop < e.screenY &&
         e.screenY < window.screenTop + window.outerHeight &&
         window.screenLeft < e.screenX &&
         e.screenX < window.screenLeft + window.outerWidth;
+      if (!isInsideFigmaApp) return;
 
-      // 4. (Impossible to check?) It must be inside of Figma canvas area
-
-      console.log({
-        isWebClient,
-        isCopyEffect,
-        isInsideIframe,
-        isInsideFigmaApp,
-      });
-
-      if (isWebClient && isCopyEffect && !isInsideIframe && isInsideFigmaApp) {
-        onAdd(cardData);
-      }
+      // TODO (Impossible to check?) It must be inside of Figma canvas area
+      onAddMultiple([cardData]);
     },
-    [onAdd]
+    [onAddMultiple]
   );
 
   return (
@@ -104,7 +96,7 @@ export function HitsArticle({ node, onSelect, onOpen, onAdd, isParent, visitedId
               node={childNode as any as HitsDisplayNode}
               onSelect={onSelect}
               onOpen={onOpen}
-              onAdd={onAdd}
+              onAddMultiple={onAddMultiple}
               visitedIds={visitedIds}
             />
           ) : null
