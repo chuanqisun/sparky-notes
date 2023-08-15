@@ -4,7 +4,6 @@ import { useEffect, useState } from "preact/hooks";
 import { EntityDisplayName, EntityIconComponent } from "./entity";
 import { entityToCard } from "./entity-to-card";
 import { getEntityUrl } from "./get-entity-url";
-import "./report-viewer.css";
 import type { ReportDetails } from "./use-report-details";
 
 export interface ReportViewerProps {

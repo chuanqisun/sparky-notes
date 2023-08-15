@@ -1,9 +1,8 @@
-@import url("./styles/variables.css");
-@import url("./styles/reset.css");
-@import url("./styles/utils.css");
-@import url("./styles/components.css");
-@import url("./styles/progress-bar.css");
-@import url("./styles/body.css");
+@layer variables, reset, utils, components;
+
+@import url("./styles/variables.css") layer(variables);
+@import url("./styles/reset.css") layer(reset);
+@import url("./styles/utils.css") layer(utils);
 
 .c-shelf {
   max-height: 40vh;

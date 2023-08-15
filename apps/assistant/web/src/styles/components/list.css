@@ -1,0 +1,9 @@
+.c-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.c-list__placeholder {
+  min-height: 65px;
+}

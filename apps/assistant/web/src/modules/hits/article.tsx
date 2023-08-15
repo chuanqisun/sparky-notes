@@ -1,6 +1,5 @@
 import type { CardData } from "@h20/assistant-types";
 import type { HitsDisplayNode } from "../display/display-node";
-import "./article.css";
 import { EntityIconComponent } from "./entity";
 import { entityToCard } from "./entity-to-card";
 import { getEntityUrl } from "./get-entity-url";
