@@ -31,6 +31,12 @@ export function HitsArticle({ node, onSelect, onOpen, onAdd, isParent, visitedId
   const handleDragEnd = useCallback(
     (e: DragEvent) => {
       console.log("debug drag end", e);
+      // TODO: make sure the drop target meets all following criteria:
+      // 1. It must accept copy effect. (check: event.dataTransfer.dropEffect === "copy")
+      // 2. It must be outside of plugin iframe. (It's INSIDE when 0 < event.clientX < window.innerWidth, 0 < event.clientY < window.innerHeight)
+      // 3. It must be inside of Figma app window. (window.screenTop < event.screenY < window.screenTop + window.outerHeight, window.screenLeft < event.screenX < window.screenLeft + window.outerWidth)
+      // 4. (Impossible to check?) It must be inside of Figma canvas area
+      // 5. It must NOT be the native app. (check: agent.navigator)
       // ref: https://www.figma.com/plugin-docs/creating-ui/#drop-events-from-a-non-null-origin-iframe
       // ref: https://forum.figma.com/t/inconsistent-plugin-behavior-in-figma-app-and-browser/38439/2
       onAdd(cardData);
