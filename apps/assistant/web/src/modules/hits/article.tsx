@@ -1,6 +1,6 @@
 import type { CardData } from "@h20/assistant-types";
 import { useCallback } from "preact/hooks";
-import { isNative } from "../../utils/agent";
+import { isFigmaWebDragEnd } from "../../utils/drag-and-drop";
 import type { HitsDisplayNode } from "../display/display-node";
 import { EntityIconComponent } from "./entity";
 import { entityToCard } from "./entity-to-card";
@@ -31,33 +31,11 @@ export function HitsArticle({ node, onSelect, onOpen, onAddMultiple, isParent, v
 
   const handleDragEnd = useCallback(
     (e: DragEvent) => {
-      console.log("Drag ended", e);
-      // ref: https://www.figma.com/plugin-docs/creating-ui/#drop-events-from-a-non-null-origin-iframe
-      // ref: https://forum.figma.com/t/inconsistent-plugin-behavior-in-figma-app-and-browser/38439/2
-
-      // It must NOT be the native app. (check: agent.navigator)
-      if (isNative()) return;
-
-      // It must block drop effect. (check: event.dataTransfer.dropEffect === "none")
-      const isDropBlocked = e.dataTransfer?.dropEffect === "none";
-      if (!isDropBlocked) return;
-
-      // It must be outside of plugin iframe. (It's INSIDE when 0 < event.clientX < window.innerWidth, 0 < event.clientY < window.innerHeight)
-      const isInsideIframe = 0 < e.clientX && e.clientX < window.innerWidth && 0 < e.clientY && e.clientY < window.innerHeight;
-      if (isInsideIframe) return;
-
-      // It must be inside of Figma app window. (window.screenTop < event.screenY < window.screenTop + window.outerHeight, window.screenLeft < event.screenX < window.screenLeft + window.outerWidth)
-      const isInsideFigmaApp =
-        window.screenTop < e.screenY &&
-        e.screenY < window.screenTop + window.outerHeight &&
-        window.screenLeft < e.screenX &&
-        e.screenX < window.screenLeft + window.outerWidth;
-      if (!isInsideFigmaApp) return;
-
-      // TODO (Impossible to check?) It must be inside of Figma canvas area
-      onAddMultiple([cardData]);
+      if (isFigmaWebDragEnd(e)) {
+        onAddMultiple([cardData]);
+      }
     },
-    [onAddMultiple]
+    [cardData, onAddMultiple]
   );
 
   return (

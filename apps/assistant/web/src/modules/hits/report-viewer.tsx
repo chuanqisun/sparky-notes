@@ -1,6 +1,7 @@
 import type { CardData } from "@h20/assistant-types";
 import { Fragment } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { isFigmaWebDragEnd } from "../../utils/drag-and-drop";
 import { EntityDisplayName, EntityIconComponent } from "./entity";
 import { entityToCard } from "./entity-to-card";
 import { getEntityUrl } from "./get-entity-url";
@@ -43,6 +44,13 @@ export function ReportViewer(props: ReportViewerProps) {
     props.onOpen(cardData);
   };
 
+  const handleDragEnd = (entityId: string, entityType: number, title: string, e: DragEvent) => {
+    if (isFigmaWebDragEnd(e)) {
+      const cardData = entityToCard(entityId, entityType, title);
+      props.onAddMultiple([cardData]);
+    }
+  };
+
   return (
     <>
       <article class={`${props.className ?? ""} c-card-article`}>
@@ -62,6 +70,7 @@ export function ReportViewer(props: ReportViewerProps) {
             class="u-reset"
             target="_blank"
             href={getEntityUrl(report.entityType, report.entityId)}
+            onDragEnd={(e) => handleDragEnd(report.entityId, report.entityType, report.title, e)}
             onClick={() => handleOpenCard(report.entityId, report.entityType, report.title)}
           >
             {report.title}
@@ -138,6 +147,7 @@ export function ReportViewer(props: ReportViewerProps) {
                       target="_blank"
                       href={getEntityUrl(child.entityType, child.entityId)}
                       onClick={() => handleOpenCard(child.entityId, child.entityType, child.title)}
+                      onDragEnd={(e) => handleDragEnd(child.entityId, child.entityType, child.title, e)}
                     >
                       {child.title}
                     </a>
