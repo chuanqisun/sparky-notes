@@ -3,6 +3,7 @@ import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
 import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCards } from "./handlers/handle-add-cards";
+import { handleCreateShelf } from "./handlers/handle-create-shelf";
 import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
 import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
@@ -43,6 +44,7 @@ function Widget() {
       handleEnableCopilot(message, enableCopilot, openCopilotPage);
       handleDisableCopilot(message, disableCopilot, openIndexPage);
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
+      handleCreateShelf(message);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;

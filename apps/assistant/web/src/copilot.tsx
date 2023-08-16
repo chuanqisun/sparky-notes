@@ -6,8 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { Tool } from "./modules/copilot/tool";
 import { filterTool } from "./modules/copilot/tools/filter";
 import { groupTool } from "./modules/copilot/tools/group";
-import { importTool } from "./modules/copilot/tools/import";
 import { getH20Proxy } from "./modules/h20/proxy";
+import { convertFileByExtension } from "./modules/io/convert";
+import { pickFiles } from "./modules/io/pick-files";
 import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -60,12 +61,26 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  const tools = useMemo(() => [importTool(), filterTool(fnCallProxy), groupTool(fnCallProxy)], []);
+  const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], []);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(async () => {
     await activeTool.tool?.run({ shelf: selection?.stickies.map((sticky) => sticky.text) ?? [], args: activeTool.args, setOutput });
   }, [activeTool, setOutput, selection]);
+
+  const handleCreateShelfFromCanvas = useCallback(async () => {
+    const data = (selection?.stickies ?? []).map((item) => item.text);
+    proxyToFigma.notify({ createShelf: { rawData: JSON.stringify(data) } });
+  }, [selection]);
+
+  const handleCreateShelfFromUpload = useCallback(async () => {
+    const [file] = await pickFiles({
+      accept: "application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const converted = await convertFileByExtension(file);
+    proxyToFigma.notify({ createShelf: { name: file.name, rawData: JSON.stringify(converted) } });
+  }, []);
 
   return (
     <>
@@ -84,8 +99,30 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         <div class="c-module-stack">
           <fieldset>
             <div class="c-field">
+              <div class="c-field__key">Shelf</div>
+              {selection?.shelves?.length ? (
+                <ul class="c-field__value c-shelf">
+                  {selection?.shelves.map((shelf) => (
+                    <details key={shelf.id}>
+                      <summary>{shelf.name}</summary>
+                      <pre>{JSON.stringify(JSON.parse(shelf.rawData), null, 2)}</pre>
+                    </details>
+                  ))}
+                </ul>
+              ) : (
+                <div class="c-field__actions">
+                  <button onClick={handleCreateShelfFromCanvas} disabled={!selection?.stickies.length}>
+                    Create
+                  </button>
+                  <button onClick={handleCreateShelfFromUpload}>Upload</button>
+                </div>
+              )}
+            </div>
+          </fieldset>
+          <fieldset>
+            <div class="c-field">
               <label class="c-field__key" for="tool-select">
-                Tool
+                Action
               </label>
               <select
                 class="c-field__value"
@@ -134,16 +171,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               </div>
             </div>
           </fieldset>
-          <fieldset>
-            <div class="c-field">
-              <div class="c-field__key">Shelf</div>
-              <ul class="c-field__value c-shelf">
-                {selection?.stickies.map((sticky) => (
-                  <li key={sticky.id}>{JSON.stringify(sticky)}</li>
-                ))}
-              </ul>
-            </div>
-          </fieldset>
 
           <fieldset>
             <div class="c-field">
@@ -151,7 +178,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               <pre class="c-field__value c-output">{JSON.stringify(output, null, 2)}</pre>
             </div>
           </fieldset>
-          <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit</button>
+          <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit copilot</button>
         </div>
       )}
     </>

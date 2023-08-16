@@ -1,13 +1,20 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, SelectedShelf } from "@h20/assistant-types";
 import { walk, type ProxyToWeb } from "@h20/figma-tools";
 
 export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
-  const ids = figma.currentPage.selection.map((node) => node.id);
-
   const stickyNodes: StickyNode[] = [];
+  const shelves: SelectedShelf[] = [];
+
   walk(figma.currentPage.selection, {
-    onPreVisit: (candidate) => (candidate.type === "STICKY" ? stickyNodes.push(candidate) : 0),
-    onChild: (candidate) => candidate.type === "SECTION" || candidate.type === "STICKY",
+    onPreVisit: (candidate) => {
+      if (candidate.type === "STICKY") {
+        stickyNodes.push(candidate);
+      }
+      if (candidate.getPluginDataKeys().includes("shelfData") && candidate.type === "SHAPE_WITH_TEXT") {
+        shelves.push({ id: candidate.id, rawData: candidate.getPluginData("shelfData"), name: candidate.name });
+      }
+    },
+    onShouldVisitChild: (candidate) => candidate.type === "SECTION" || candidate.type === "STICKY" || candidate.type === "SHAPE_WITH_TEXT",
   });
 
   const stickies = stickyNodes.map((sticky) => ({
@@ -16,5 +23,5 @@ export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, Messa
     color: "",
   }));
 
-  proxyToWeb.notify({ selectionChanged: { ids, stickies } });
+  proxyToWeb.notify({ selectionChanged: { stickies, shelves } });
 }

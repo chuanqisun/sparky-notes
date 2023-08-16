@@ -1,4 +1,4 @@
-@layer variables, reset, utils, components;
+@layer variables, theme, reset, utils, elements, components;
 
 @import url("./styles/variables.css") layer(variables);
 @import url("./styles/reset.css") layer(reset);
@@ -43,6 +43,7 @@
 
   .c-field {
     display: grid;
+    font-size: 14px;
     gap: 4px;
   }
 
@@ -52,16 +53,20 @@
   }
 
   .c-field__value {
-    font-size: 14px;
-
-    &:where(input, textarea) {
-      padding: 2px 4px;
-    }
   }
 
   .c-field__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
+  }
+
+  .c-field {
+    & :where(button, input) {
+      padding: 2px 4px;
+    }
+    & select {
+      padding: 2px 0px;
+    }
   }
 }

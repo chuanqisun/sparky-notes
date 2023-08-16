@@ -11,6 +11,7 @@ export interface MessageToWeb {
 
 export interface MessageToFigma {
   addCards?: AddCards;
+  createShelf?: CreateShelf;
   disableCopilot?: boolean;
   enableCopilot?: boolean;
   parseHtmlLinksRes?: ParsedLink[];
@@ -18,15 +19,26 @@ export interface MessageToFigma {
   selectionChange?: boolean;
 }
 
+export interface CreateShelf {
+  name?: string;
+  rawData: string;
+}
+
 export interface SelectionSummary {
-  ids: string[];
   stickies: SelectedSticky[];
+  shelves: SelectedShelf[];
 }
 
 export interface SelectedSticky {
   id: string;
   text: string;
   color: string;
+}
+
+export interface SelectedShelf {
+  id: string;
+  name: string;
+  rawData: string;
 }
 
 export interface CardData {
