@@ -10,7 +10,7 @@ export function filterTool(fnCallProxy: FnCallProxy): Tool {
       {
         displayName: "Predicate",
         key: "predicate",
-        hint: "e.g. Is it alive?",
+        hint: "is a household object",
         isOptional: true,
       },
     ],

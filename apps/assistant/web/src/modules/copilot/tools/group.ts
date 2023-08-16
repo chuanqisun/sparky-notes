@@ -14,9 +14,9 @@ export function groupTool(fnCallProxy: FnCallProxy): Tool {
         isOptional: true,
       },
       {
-        displayName: "Predefined group names",
+        displayName: "Group names",
         key: "groupNames",
-        hint: `"Bug report, Feature request, Question"`,
+        hint: `Bug report, Feature request, Question`,
         isOptional: true,
       },
       {
