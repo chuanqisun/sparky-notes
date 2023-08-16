@@ -4,18 +4,58 @@
 @import url("./styles/reset.css") layer(reset);
 @import url("./styles/utils.css") layer(utils);
 
-.c-shelf {
-  max-height: 40vh;
-  overflow-y: auto;
-}
+@layer components {
+  fieldset {
+    padding: 4px 8px 8px 8px;
+    margin: 0;
+    display: grid;
+    border: none;
+    background: white;
+  }
 
-fieldset {
-  display: grid;
-}
+  .c-module-stack {
+    background-color: #eee;
+    display: grid;
+    gap: 1px;
+  }
 
-.c-output {
-  max-width: 100%;
-  max-height: 40vh;
-  overflow-y: auto;
-  overflow-x: auto;
+  .c-radio-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .c-radio-item {
+    display: flex;
+    gap: 4px;
+  }
+
+  .c-output {
+    max-width: 100%;
+    max-height: 40vh;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  .c-shelf {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .c-field {
+    display: grid;
+    gap: 4px;
+  }
+
+  .c-field__key {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .c-field__value {
+    font-size: 14px;
+
+    &:where(input, textarea) {
+      padding: 2px 4px;
+    }
+  }
 }

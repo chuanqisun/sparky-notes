@@ -11,7 +11,8 @@
   "dependencies": {
     "@microsoft/applicationinsights-web": "^3.0.2",
     "acs-expression-builder": "^0.0.2",
-    "preact": "^10.16.0"
+    "preact": "^10.16.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.5.0"
