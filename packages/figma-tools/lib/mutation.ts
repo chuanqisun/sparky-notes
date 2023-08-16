@@ -2,7 +2,6 @@ import { getAbsoluteBoundingBox } from "./query";
 
 export function moveToViewCenter(nodes: SceneNode[]) {
   const rect = getAbsoluteBoundingBox(nodes);
-  console.log(rect);
   const rectCenter = {
     x: rect.x + rect.width / 2,
     y: rect.y + rect.height / 2,
@@ -10,7 +9,6 @@ export function moveToViewCenter(nodes: SceneNode[]) {
   const translateX = figma.viewport.center.x - rectCenter.x;
   const translateY = figma.viewport.center.y - rectCenter.y;
 
-  console.log(translateX, translateY);
   return translate(translateX, translateY, nodes);
 }
 

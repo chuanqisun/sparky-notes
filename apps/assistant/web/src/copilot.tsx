@@ -103,10 +103,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               {selection?.shelves?.length ? (
                 <ul class="c-field__value c-shelf">
                   {selection?.shelves.map((shelf) => (
-                    <details key={shelf.id}>
-                      <summary>{shelf.name}</summary>
-                      <pre>{JSON.stringify(JSON.parse(shelf.rawData), null, 2)}</pre>
-                    </details>
+                    <div key={shelf.id} class="c-object-viewer">
+                      <ObjectTreeNode data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
+                    </div>
                   ))}
                 </ul>
               ) : (
@@ -186,3 +185,49 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 }
 
 render(<App worker={worker} />, document.getElementById("app") as HTMLElement);
+
+const isPrimitive = (data: any) => typeof data !== "object" || data === null;
+
+/** Render array as a list of <details><summary/><details/>, render object and <dl><dt><dd> */
+function ObjectTreeNode({ data }: any) {
+  if (typeof data !== "object") return <span>{data.toString()}</span>;
+  if (data === null) return <span>null</span>;
+
+  if (Array.isArray(data)) {
+    return (
+      <>
+        {data.map((item, index) => (
+          <>
+            <details key={index}>
+              <summary>{index}</summary>
+              <div class="c-object-viewer__details">
+                <ObjectTreeNode data={item} />
+              </div>
+            </details>
+          </>
+        ))}
+      </>
+    );
+  } else {
+    return (
+      <>
+        {Object.entries(data).map(([key, value], index) => (
+          <>
+            {isPrimitive(value) ? (
+              <div key={index}>
+                <span class="c-object-viewer__key">{key}</span>: <span class="c-object-viewer__value">{value as any}</span>
+              </div>
+            ) : (
+              <details key={index}>
+                <summary>{key}</summary>
+                <div class="c-object-viewer__details">
+                  <ObjectTreeNode data={value} />
+                </div>
+              </details>
+            )}
+          </>
+        ))}
+      </>
+    );
+  }
+}
