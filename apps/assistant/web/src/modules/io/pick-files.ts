@@ -7,7 +7,7 @@ export async function pickFiles(config: UploadConfig): Promise<File[]> {
     const input = document.createElement("input");
     input.multiple = config.multiple ?? false;
     input.type = "file";
-    input.accept = "application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    input.accept = config.accept;
     input.addEventListener("change", (e) => {
       resolve((e.target as HTMLInputElement).files!);
       input.remove();

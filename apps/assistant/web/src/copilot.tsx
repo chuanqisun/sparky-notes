@@ -88,8 +88,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 Tool
               </label>
               <select
-                id="tool-select"
                 class="c-field__value"
+                id="tool-select"
                 onChange={(e) => {
                   setActiveTool((prev) => ({
                     ...prev,
@@ -128,7 +128,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                   />
                 </div>
               ))}
-              <div>
+              <div class="c-field__actions">
                 <button onClick={handleRun}>Run</button>
                 <button onClick={() => {}}>Cancel</button>
               </div>
@@ -146,7 +146,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
           </fieldset>
 
           <fieldset>
-            <pre class="c-output">{JSON.stringify(output, null, 2)}</pre>
+            <div class="c-field">
+              <label class="c-field__key">Export</label>
+              <pre class="c-field__value c-output">{JSON.stringify(output, null, 2)}</pre>
+            </div>
           </fieldset>
           <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit</button>
         </div>
