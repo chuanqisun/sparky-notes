@@ -1,5 +1,6 @@
 import type { MessageToFigma } from "@h20/assistant-types";
 import { appendAsTiles, loadFonts, moveToViewCenter } from "@h20/figma-tools";
+import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
 
 export async function handleRenderShelf(message: MessageToFigma) {
   if (!message.renderShelf) return;
@@ -31,7 +32,8 @@ function renderObjectRecursively(data: any) {
       section.name = key;
 
       const childNodes = renderObjectRecursively(value);
-      appendAsTiles(section, childNodes);
+      const layoutFn = Array.isArray(data) ? getNextHorizontalTilePosition : getNextVerticalTilePosition;
+      appendAsTiles(section, childNodes, layoutFn);
 
       return section;
     });

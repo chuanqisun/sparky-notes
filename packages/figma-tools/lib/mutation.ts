@@ -1,4 +1,4 @@
-import { getAbsoluteBoundingBox, getNextTilePosition } from "./query";
+import { getAbsoluteBoundingBox } from "./query";
 
 export function moveToViewCenter(nodes: SceneNode[]) {
   const rect = getAbsoluteBoundingBox(nodes);
@@ -36,9 +36,9 @@ export function resizeToHugContent(layout: { padding?: number; minHeight?: numbe
   return nodes;
 }
 
-export function appendAsTiles(parent: SectionNode, tiles: SceneNode[]) {
+export function appendAsTiles(parent: SectionNode, tiles: SceneNode[], layoutFn: (tile: SceneNode, parent: SectionNode) => { x: number; y: number }) {
   tiles.forEach((tile) => {
-    const { x, y } = getNextTilePosition(tile, parent);
+    const { x, y } = layoutFn(tile, parent);
 
     parent.appendChild(tile);
 
