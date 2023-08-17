@@ -9,6 +9,7 @@ import { groupTool } from "./modules/copilot/tools/group";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { convertFileByExtension } from "./modules/io/convert";
 import { pickFiles } from "./modules/io/pick-files";
+import { ObjectTree } from "./modules/object-tree/object-tree";
 import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
@@ -113,9 +114,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               {selection?.shelves?.length ? (
                 <ul class="c-field__value c-shelf">
                   {selection?.shelves.map((shelf) => (
-                    <div key={shelf.id} class="c-object-viewer">
-                      <ObjectTreeNode data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
-                    </div>
+                    <ObjectTree key={shelf.id} data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
                   ))}
                 </ul>
               ) : (
@@ -191,32 +190,3 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 }
 
 render(<App worker={worker} />, document.getElementById("app") as HTMLElement);
-
-const isPrimitive = (data: any) => typeof data !== "object" || data === null;
-
-/** Render array as a list of <details><summary/><details/>, render object and <dl><dt><dd> */
-function ObjectTreeNode({ data }: any) {
-  if (typeof data !== "object") return <span>{data.toString()}</span>;
-  if (data === null) return <span>null</span>;
-
-  return (
-    <>
-      {Object.entries(data).map(([key, value], index) => (
-        <>
-          {isPrimitive(value) ? (
-            <div key={index}>
-              <span class="c-object-viewer__key">{key}</span>: <span class="c-object-viewer__value">{value as any}</span>
-            </div>
-          ) : (
-            <details key={index}>
-              <summary>{key}</summary>
-              <div class="c-object-viewer__details">
-                <ObjectTreeNode data={value} />
-              </div>
-            </details>
-          )}
-        </>
-      ))}
-    </>
-  );
-}
