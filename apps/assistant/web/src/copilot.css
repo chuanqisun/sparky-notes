@@ -63,6 +63,11 @@
     font-size: 14px;
   }
 
+  .c-field__key--with-menu {
+    display: flex;
+    justify-content: space-between;
+  }
+
   .c-field__value {
   }
 
@@ -78,6 +83,19 @@
     }
     & select {
       padding: 2px 0px;
+    }
+  }
+
+  .c-overflow-menu {
+    display: inline;
+    position: relative;
+
+    .c-overflow-menu__actions {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      transform: translateY(100%);
+      width: max-content;
     }
   }
 }

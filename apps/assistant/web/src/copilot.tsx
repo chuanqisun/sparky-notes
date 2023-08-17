@@ -93,6 +93,8 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     proxyToFigma.notify({ createShelf: { name: file.name, rawData: JSON.stringify(converted) } });
   }, []);
 
+  const [isShelfMenuOpen, setIsShelfMenuOpen] = useState(false);
+
   return (
     <>
       {isConnected === undefined && <div class="c-progress-bar" />}
@@ -110,7 +112,19 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         <div class="c-module-stack">
           <fieldset class="c-fieldset">
             <div class="c-field">
-              <div class="c-field__key">Shelf</div>
+              <div class="c-field__key c-field__key--with-menu">
+                Shelf{" "}
+                <div class="c-overflow-menu">
+                  <button class="c-overflow-menu__trigger" onClick={() => setIsShelfMenuOpen((prev) => !prev)}>
+                    ...
+                  </button>
+                  {isShelfMenuOpen ? (
+                    <div class="c-overflow-menu__actions">
+                      <button>Export to Canvas</button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
               {selection?.shelves?.length ? (
                 <ul class="c-field__value c-shelf">
                   {selection?.shelves.map((shelf) => (
