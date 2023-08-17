@@ -61,7 +61,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
-  const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], []);
+  const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(async () => {
