@@ -1,4 +1,4 @@
-import { getAbsoluteBoundingBox } from "./query";
+import { getAbsoluteBoundingBox, getNextTilePosition } from "./query";
 
 export function moveToViewCenter(nodes: SceneNode[]) {
   const rect = getAbsoluteBoundingBox(nodes);
@@ -19,4 +19,34 @@ export function translate(x: number, y: number, nodes: SceneNode[]) {
   });
 
   return nodes;
+}
+
+export function resizeToHugContent(layout: { padding?: number; minHeight?: number; minWidth?: number }, nodes: SceneNode[]) {
+  const { padding = 40, minWidth = 0, minHeight = 0 } = layout;
+
+  nodes
+    .filter((node) => (node as SectionNode)?.children && (node as SectionNode).resizeWithoutConstraints)
+    .forEach((targetNode) => {
+      const childMaxX = Math.max(0, ...(targetNode as ChildrenMixin).children.map((child) => child.x + child.width));
+      const childMaxY = Math.max(0, ...(targetNode as ChildrenMixin).children.map((child) => child.y + child.height));
+
+      (targetNode as SectionNode).resizeWithoutConstraints(Math.max(minWidth, childMaxX + padding), Math.max(minHeight, childMaxY + padding));
+    });
+
+  return nodes;
+}
+
+export function appendAsTiles(parent: SectionNode, tiles: SceneNode[]) {
+  tiles.forEach((tile) => {
+    const { x, y } = getNextTilePosition(tile, parent);
+
+    parent.appendChild(tile);
+
+    tile.x = x;
+    tile.y = y;
+
+    resizeToHugContent({}, [parent]);
+  });
+
+  return tiles;
 }
