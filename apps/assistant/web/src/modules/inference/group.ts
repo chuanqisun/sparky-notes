@@ -1,16 +1,14 @@
 import type { FnCallProxy } from "../openai/proxy";
 
-export interface GroupResult<T> {
-  groups: {
-    groupName: string;
-    items: T[];
-  }[];
+export interface NamedGroup<T> {
+  groupName: string;
+  items: T[];
 }
 
 interface RawResult {
   groups: { groupName: string; ids: number[] }[];
 }
-export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[]): Promise<GroupResult<T>> {
+export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[]): Promise<NamedGroup<T>[]> {
   try {
     const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -64,20 +62,16 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
     );
 
     const parsedResults = JSON.parse(result.arguments) as RawResult;
-    const mappedResults: GroupResult<T> = {
-      groups: parsedResults.groups.map((group) => ({
-        groupName: group.groupName,
-        items: group.ids.map((id) => itemsWithIds.find((item) => item.id === id)!.data).filter(Boolean),
-      })),
-    };
+    const mappedResults: NamedGroup<T>[] = parsedResults.groups.map((group) => ({
+      groupName: group.groupName,
+      items: group.ids.map((id) => itemsWithIds.find((item) => item.id === id)!.data).filter(Boolean),
+    }));
 
     console.log("grouped", mappedResults);
 
     return mappedResults;
   } catch (e) {
     console.error(e);
-    return {
-      groups: [],
-    };
+    return [];
   }
 }

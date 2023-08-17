@@ -43,7 +43,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, [accessToken]);
 
   const [selection, setSelection] = useState<SelectionSummary | null>(null);
-  const [output, setOutput] = useState<any>(null);
 
   // Figma RPC
   useEffect(() => {
@@ -64,9 +63,20 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
+  const handleOutput = useCallback((data: any) => {
+    console.log("debug output", data);
+
+    proxyToFigma.notify({
+      createShelf: {
+        name: "New shelf",
+        rawData: JSON.stringify(data),
+      },
+    });
+  }, []);
+
   const handleRun = useCallback(async () => {
-    await activeTool.tool?.run({ shelf: JSON.parse(selection?.shelves.at(0)?.rawData ?? "[]"), args: activeTool.args, setOutput });
-  }, [activeTool, setOutput, selection]);
+    await activeTool.tool?.run({ shelf: JSON.parse(selection?.shelves.at(0)?.rawData ?? "[]"), args: activeTool.args, setOutput: handleOutput });
+  }, [activeTool, selection]);
 
   const handleCreateShelfFromCanvas = useCallback(async () => {
     const data = (selection?.stickies ?? []).map((item) => item.text);
@@ -173,12 +183,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             </fieldset>
           ) : null}
 
-          <fieldset class="c-fieldset">
-            <div class="c-field">
-              <label class="c-field__key">Export</label>
-              <pre class="c-field__value c-output">{JSON.stringify(output, null, 2)}</pre>
-            </div>
-          </fieldset>
           <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit copilot</button>
         </div>
       )}
@@ -195,41 +199,24 @@ function ObjectTreeNode({ data }: any) {
   if (typeof data !== "object") return <span>{data.toString()}</span>;
   if (data === null) return <span>null</span>;
 
-  if (Array.isArray(data)) {
-    return (
-      <>
-        {data.map((item, index) => (
-          <>
+  return (
+    <>
+      {Object.entries(data).map(([key, value], index) => (
+        <>
+          {isPrimitive(value) ? (
+            <div key={index}>
+              <span class="c-object-viewer__key">{key}</span>: <span class="c-object-viewer__value">{value as any}</span>
+            </div>
+          ) : (
             <details key={index}>
-              <summary>{index}</summary>
+              <summary>{key}</summary>
               <div class="c-object-viewer__details">
-                <ObjectTreeNode data={item} />
+                <ObjectTreeNode data={value} />
               </div>
             </details>
-          </>
-        ))}
-      </>
-    );
-  } else {
-    return (
-      <>
-        {Object.entries(data).map(([key, value], index) => (
-          <>
-            {isPrimitive(value) ? (
-              <div key={index}>
-                <span class="c-object-viewer__key">{key}</span>: <span class="c-object-viewer__value">{value as any}</span>
-              </div>
-            ) : (
-              <details key={index}>
-                <summary>{key}</summary>
-                <div class="c-object-viewer__details">
-                  <ObjectTreeNode data={value} />
-                </div>
-              </details>
-            )}
-          </>
-        ))}
-      </>
-    );
-  }
+          )}
+        </>
+      ))}
+    </>
+  );
 }
