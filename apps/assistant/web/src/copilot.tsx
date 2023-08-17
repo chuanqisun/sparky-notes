@@ -65,7 +65,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(async () => {
-    await activeTool.tool?.run({ shelf: selection?.stickies.map((sticky) => sticky.text) ?? [], args: activeTool.args, setOutput });
+    await activeTool.tool?.run({ shelf: JSON.parse(selection?.shelves.at(0)?.rawData ?? "[]"), args: activeTool.args, setOutput });
   }, [activeTool, setOutput, selection]);
 
   const handleCreateShelfFromCanvas = useCallback(async () => {
@@ -118,58 +118,60 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               )}
             </div>
           </fieldset>
-          <fieldset class="c-fieldset">
-            <div class="c-field">
-              <label class="c-field__key" for="tool-select">
-                Action
-              </label>
-              <select
-                class="c-field__value"
-                id="tool-select"
-                onChange={(e) => {
-                  setActiveTool((prev) => ({
-                    ...prev,
-                    tool: tools.find((tool) => tool.id === (e.target as HTMLOptionElement).value) ?? prev.tool,
-                    args: {},
-                  }));
-                }}
-              >
-                {tools.map((tool) => (
-                  <option key={tool.id} value={tool.id}>
-                    {tool.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {activeTool.tool.parameters.map((parameter) => (
-              <div class="c-field" key={parameter.key}>
-                <label class="c-field__key" for={`${activeTool.tool.id}-${parameter.key}-input`}>
-                  {parameter.displayName}
+          {selection?.shelves.length ? (
+            <fieldset class="c-fieldset">
+              <div class="c-field">
+                <label class="c-field__key" for="tool-select">
+                  Action
                 </label>
-                <input
-                  id={`${activeTool.tool.id}-${parameter.key}-input`}
+                <select
                   class="c-field__value"
-                  type="text"
-                  placeholder={parameter.hint}
-                  required={!parameter.isOptional}
-                  onChange={(e) =>
+                  id="tool-select"
+                  onChange={(e) => {
                     setActiveTool((prev) => ({
                       ...prev,
-                      args: {
-                        ...prev.args,
-                        [parameter.key]: (e.target as HTMLInputElement).value,
-                      },
-                    }))
-                  }
-                  value={activeTool.args[parameter.key]}
-                />
+                      tool: tools.find((tool) => tool.id === (e.target as HTMLOptionElement).value) ?? prev.tool,
+                      args: {},
+                    }));
+                  }}
+                >
+                  {tools.map((tool) => (
+                    <option key={tool.id} value={tool.id}>
+                      {tool.displayName}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ))}
-            <div class="c-fieldset__actions">
-              <button onClick={handleRun}>Run</button>
-              <button onClick={() => {}}>Cancel</button>
-            </div>
-          </fieldset>
+              {activeTool.tool.parameters.map((parameter) => (
+                <div class="c-field" key={parameter.key}>
+                  <label class="c-field__key" for={`${activeTool.tool.id}-${parameter.key}-input`}>
+                    {parameter.displayName}
+                  </label>
+                  <input
+                    id={`${activeTool.tool.id}-${parameter.key}-input`}
+                    class="c-field__value"
+                    type="text"
+                    placeholder={parameter.hint}
+                    required={!parameter.isOptional}
+                    onChange={(e) =>
+                      setActiveTool((prev) => ({
+                        ...prev,
+                        args: {
+                          ...prev.args,
+                          [parameter.key]: (e.target as HTMLInputElement).value,
+                        },
+                      }))
+                    }
+                    value={activeTool.args[parameter.key]}
+                  />
+                </div>
+              ))}
+              <div class="c-fieldset__actions">
+                <button onClick={handleRun}>Run</button>
+                <button onClick={() => {}}>Cancel</button>
+              </div>
+            </fieldset>
+          ) : null}
 
           <fieldset class="c-fieldset">
             <div class="c-field">
