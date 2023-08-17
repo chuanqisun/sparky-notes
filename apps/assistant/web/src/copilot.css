@@ -96,6 +96,7 @@
       right: 0;
       transform: translateY(100%);
       width: max-content;
+      z-index: 100; /* HACK */
     }
   }
 }

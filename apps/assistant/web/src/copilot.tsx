@@ -1,4 +1,4 @@
-import type { MessageToFigma, MessageToWeb, SelectionSummary } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, RenderShelf, SelectionSummary } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
@@ -93,6 +93,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     proxyToFigma.notify({ createShelf: { name: file.name, rawData: JSON.stringify(converted) } });
   }, []);
 
+  const handleExportToCanvas = useCallback(async () => {
+    if (!selection?.shelves.length) return;
+
+    const selectedShelf = selection.shelves.at(0)!;
+
+    const shelf: RenderShelf = {
+      name: selectedShelf.name,
+      rawData: selectedShelf.rawData,
+    };
+    proxyToFigma.notify({ renderShelf: shelf });
+  }, [selection]);
+
   const [isShelfMenuOpen, setIsShelfMenuOpen] = useState(false);
 
   return (
@@ -120,7 +132,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                   </button>
                   {isShelfMenuOpen ? (
                     <div class="c-overflow-menu__actions">
-                      <button>Export to Canvas</button>
+                      <button onClick={handleExportToCanvas}>Export to Canvas</button>
                     </div>
                   ) : null}
                 </div>

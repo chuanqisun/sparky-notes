@@ -14,6 +14,7 @@ export interface MessageToFigma {
   createShelf?: CreateShelf;
   disableCopilot?: boolean;
   enableCopilot?: boolean;
+  renderShelf?: RenderShelf;
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
   selectionChange?: boolean;
@@ -22,6 +23,11 @@ export interface MessageToFigma {
 export interface CreateShelf {
   name?: string;
   rawData: string;
+}
+
+export interface RenderShelf {
+  name: string;
+  rawData: any;
 }
 
 export interface SelectionSummary {
