@@ -3,11 +3,17 @@ import type { FnCallProxy } from "../openai/proxy";
 export interface GroupResult<T> {
   groups: {
     groupName: string;
-    ids: string[];
+    items: T[];
   }[];
+}
+
+interface RawResult {
+  groups: { groupName: string; ids: number[] }[];
 }
 export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[]): Promise<GroupResult<T>> {
   try {
+    const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: item }));
+
     const result = await fnCallProxy(
       [
         {
@@ -16,11 +22,11 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
         },
         {
           role: "user",
-          content: JSON.stringify(items),
+          content: JSON.stringify(itemsWithIds),
         },
       ],
       {
-        max_tokens: 1000, // to estimate tokens
+        max_tokens: 400, // TODO estimate tokens based on input size
         function_call: { name: "respond_groups" },
         functions: [
           {
@@ -43,7 +49,7 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
                         type: "array",
                         description: `The ids of the items in the group`,
                         items: {
-                          type: "string",
+                          type: "number",
                         },
                       },
                     },
@@ -57,8 +63,17 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
       }
     );
 
-    console.log("group raw", result);
-    return JSON.parse(result.arguments);
+    const parsedResults = JSON.parse(result.arguments) as RawResult;
+    const mappedResults: GroupResult<T> = {
+      groups: parsedResults.groups.map((group) => ({
+        groupName: group.groupName,
+        items: group.ids.map((id) => itemsWithIds.find((item) => item.id === id)!.data).filter(Boolean),
+      })),
+    };
+
+    console.log("grouped", mappedResults);
+
+    return mappedResults;
   } catch (e) {
     console.error(e);
     return {
