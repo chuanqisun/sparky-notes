@@ -32,7 +32,8 @@ export interface RenderShelf {
 
 export interface SelectionSummary {
   stickies: SelectedSticky[];
-  shelves: SelectedShelf[];
+  abstractShelves: AbstractShelf[];
+  dataNode: DataNode;
 }
 
 export interface SelectedSticky {
@@ -41,11 +42,19 @@ export interface SelectedSticky {
   color: string;
 }
 
-export interface SelectedShelf {
+export interface AbstractShelf {
   id: string;
   name: string;
   rawData: string;
 }
+
+export interface DataNode {
+  name?: string;
+  isRoot?: boolean;
+  children: DataNodeItem[];
+}
+
+export type DataNodeItem = string | DataNode;
 
 export interface CardData {
   category: string;

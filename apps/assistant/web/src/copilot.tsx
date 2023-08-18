@@ -76,7 +76,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const handleRun = useCallback(async () => {
-    await activeTool.tool?.run({ shelf: JSON.parse(selection?.shelves.at(0)?.rawData ?? "[]"), args: activeTool.args, setOutput: handleOutput });
+    await activeTool.tool?.run({ shelf: JSON.parse(selection?.abstractShelves.at(0)?.rawData ?? "[]"), args: activeTool.args, setOutput: handleOutput });
   }, [activeTool, selection]);
 
   const handleCreateShelfFromCanvas = useCallback(async () => {
@@ -94,9 +94,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const handleExportToCanvas = useCallback(async () => {
-    if (!selection?.shelves.length) return;
+    if (!selection?.abstractShelves.length) return;
 
-    const selectedShelf = selection.shelves.at(0)!;
+    const selectedShelf = selection.abstractShelves.at(0)!;
 
     const shelf: RenderShelf = {
       name: selectedShelf.name,
@@ -137,9 +137,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                   ) : null}
                 </div>
               </div>
-              {selection?.shelves?.length ? (
+              {selection?.abstractShelves?.length ? (
                 <ul class="c-field__value c-shelf">
-                  {selection?.shelves.map((shelf) => (
+                  {selection?.abstractShelves.map((shelf) => (
                     <ObjectTree key={shelf.id} data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
                   ))}
                 </ul>
@@ -153,7 +153,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               )}
             </div>
           </fieldset>
-          {selection?.shelves.length ? (
+          {selection?.abstractShelves.length ? (
             <fieldset class="c-fieldset">
               <div class="c-field">
                 <label class="c-field__key" for="tool-select">
