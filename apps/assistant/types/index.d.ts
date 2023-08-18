@@ -33,7 +33,7 @@ export interface RenderShelf {
 export interface SelectionSummary {
   stickies: SelectedSticky[];
   abstractShelves: AbstractShelf[];
-  dataNode: DataNode;
+  shelfNode: ShelfNode; // TBD
 }
 
 export interface SelectedSticky {
@@ -48,13 +48,13 @@ export interface AbstractShelf {
   rawData: string;
 }
 
-export interface DataNode {
+export interface ShelfNode {
   name?: string;
   isRoot?: boolean;
-  children: DataNodeItem[];
+  children: ShelfChild[];
 }
 
-export type DataNodeItem = string | DataNode;
+export type ShelfChild = string | ShelfNode;
 
 export interface CardData {
   category: string;

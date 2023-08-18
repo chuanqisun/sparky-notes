@@ -7,11 +7,6 @@ export async function handleRenderShelf(message: MessageToFigma) {
 
   await loadFonts({ family: "Inter", style: "Medium" });
 
-  const container = createTilingContainer({
-    itemSpacing: 16,
-    layoutMode: "HORIZONTAL",
-  });
-
   const result = renderObjectRecursively({ [message.renderShelf.name]: JSON.parse(message.renderShelf.rawData) });
 
   moveToViewCenter(result);

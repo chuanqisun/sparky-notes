@@ -1,12 +1,12 @@
 import type { FnCallProxy } from "../openai/proxy";
 
 export interface NamedGroup<T> {
-  groupName: string;
+  name: string;
   items: T[];
 }
 
 interface RawResult {
-  groups: { groupName: string; ids: number[] }[];
+  groups: { name: string; ids: number[] }[];
 }
 export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[]): Promise<NamedGroup<T>[]> {
   try {
@@ -39,7 +39,7 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
                   items: {
                     type: "object",
                     properties: {
-                      groupName: {
+                      name: {
                         type: "string",
                         description: `The name of the group`,
                       },
@@ -63,7 +63,7 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
 
     const parsedResults = JSON.parse(result.arguments) as RawResult;
     const mappedResults: NamedGroup<T>[] = parsedResults.groups.map((group) => ({
-      groupName: group.groupName,
+      name: group.name,
       items: group.ids.map((id) => itemsWithIds.find((item) => item.id === id)!.data).filter(Boolean),
     }));
 

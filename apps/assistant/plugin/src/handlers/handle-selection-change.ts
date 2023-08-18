@@ -1,4 +1,4 @@
-import type { AbstractShelf, DataNode, DataNodeItem, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
+import type { AbstractShelf, MessageToFigma, MessageToWeb, ShelfChild, ShelfNode } from "@h20/assistant-types";
 import { walk, type ProxyToWeb } from "@h20/figma-tools";
 
 export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
@@ -25,25 +25,25 @@ export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, Messa
     color: "",
   }));
 
-  proxyToWeb.notify({ selectionChanged: { stickies, abstractShelves, dataNode } });
+  proxyToWeb.notify({ selectionChanged: { stickies, abstractShelves, shelfNode: dataNode } });
 }
 
-function getDataNode(selection: readonly SceneNode[]): DataNode {
-  const rootShelf: DataNode = {
+function getDataNode(selection: readonly SceneNode[]): ShelfNode {
+  const rootShelf: ShelfNode = {
     isRoot: true,
-    children: selection.map((item) => getDataNodeInternal(item)).filter((shelf) => shelf !== null) as DataNodeItem[],
+    children: selection.map((item) => getDataNodeInternal(item)).filter((shelf) => shelf !== null) as ShelfChild[],
   };
 
   return rootShelf;
 }
 
-function getDataNodeInternal(node: SceneNode): DataNodeItem | null {
+function getDataNodeInternal(node: SceneNode): ShelfChild | null {
   if (node.type === "STICKY") {
     return node.text.characters;
   } else if (node.type === "SECTION") {
-    const shelf: DataNode = {
+    const shelf: ShelfNode = {
       name: node.name,
-      children: node.children.map(getDataNodeInternal).filter((item) => item !== null) as DataNodeItem[],
+      children: node.children.map(getDataNodeInternal).filter((item) => item !== null) as ShelfChild[],
     };
 
     return shelf;
