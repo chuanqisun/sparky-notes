@@ -9,8 +9,62 @@ export async function handleRenderShelf(message: MessageToFigma) {
 
   const result = renderObjectRecursively({ [message.renderShelf.name]: JSON.parse(message.renderShelf.rawData) });
 
+  console.log(getDisplayNodes({ [message.renderShelf.name]: JSON.parse(message.renderShelf.rawData) }));
+
   moveToViewCenter(result);
   figma.currentPage.selection = result;
+}
+
+interface DisplaySection {
+  type: "Section";
+  name: string;
+  children: (DisplaySection | DisplaySticky)[];
+}
+interface DisplaySticky {
+  type: "Sticky";
+  text: string;
+}
+
+function getDisplayNodes(data: any): (DisplaySection | DisplaySticky)[] {
+  if (isPrimitive(data)) {
+    return [
+      {
+        type: "Sticky",
+        text: data.toString(),
+      },
+    ];
+  }
+
+  if (Array.isArray(data)) {
+    const stickies: DisplaySticky[] = data.filter(isPrimitive).map((item) => ({
+      type: "Sticky",
+      text: item.toString(),
+    }));
+
+    const Sections: DisplaySection[] = data
+      .filter((value) => !isPrimitive(value))
+      .map((value, index) => ({
+        type: "Section",
+        name: index.toString(),
+        children: getDisplayNodes(value),
+      }));
+
+    return [...stickies, ...Sections];
+  }
+
+  if (typeof data === "object") {
+    return Object.entries(data).map(([key, value]) => ({
+      type: "Section",
+      name: key,
+      children: getDisplayNodes(value),
+    }));
+  }
+
+  return [];
+}
+
+function renderDisplayNodes(nodes: (DisplaySection | DisplaySticky)[]) {
+  // TBD
 }
 
 function renderObjectRecursively(data: any) {
