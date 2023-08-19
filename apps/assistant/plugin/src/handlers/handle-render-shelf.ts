@@ -19,6 +19,7 @@ interface DisplaySection {
   type: "Section";
   name: string;
   children: (DisplaySection | DisplaySticky)[];
+  direction: "vertical" | "horizontal";
 }
 interface DisplaySticky {
   type: "Sticky";
@@ -47,6 +48,7 @@ function getDisplayNodes(data: any): (DisplaySection | DisplaySticky)[] {
         type: "Section",
         name: index.toString(),
         children: getDisplayNodes(value),
+        direction: "horizontal",
       }));
 
     return [...stickies, ...Sections];
@@ -57,6 +59,7 @@ function getDisplayNodes(data: any): (DisplaySection | DisplaySticky)[] {
       type: "Section",
       name: key,
       children: getDisplayNodes(value),
+      direction: "vertical",
     }));
   }
 
@@ -64,20 +67,25 @@ function getDisplayNodes(data: any): (DisplaySection | DisplaySticky)[] {
 }
 
 function renderDisplayNodes(nodes: (DisplaySection | DisplaySticky)[]) {
-  // TBD
+  const stickies = nodes.filter((node) => node.type === "Sticky");
+}
+
+function renderStiky(node: DisplaySticky) {
+  const sticky = figma.createSticky();
+  sticky.text.characters = node.text.toString();
+
+  return sticky;
 }
 
 function renderObjectRecursively(data: any) {
   if (isPrimitive(data)) {
     const sticky = figma.createSticky();
-    figma.currentPage.appendChild(sticky);
     sticky.text.characters = data.toString();
 
     return [sticky];
   } else {
     const sections = Object.entries(data).map(([key, value]) => {
       const section = figma.createSection();
-      figma.currentPage.appendChild(section);
       section.name = key;
 
       const childNodes = renderObjectRecursively(value);
