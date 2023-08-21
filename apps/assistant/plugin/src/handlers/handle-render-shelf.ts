@@ -32,7 +32,7 @@ function getDisplayNodes(data: any): (DisplaySection | DisplaySticky)[] {
     return [
       {
         type: "Sticky",
-        text: data.toString(),
+        text: data === null ? "" : data.toString(),
       },
     ];
   }
