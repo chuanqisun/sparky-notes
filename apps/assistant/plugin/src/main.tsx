@@ -48,7 +48,7 @@ function Widget() {
       handleDisableCopilot(message, disableCopilot, openIndexPage);
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleCreateShelf(message);
-      handleUpdateShelf(message);
+      handleUpdateShelf(message, wrappedHandleSelectionChange);
       handleRenderShelf(message);
       handleGetSelectionReq(message, proxyToWeb);
     };

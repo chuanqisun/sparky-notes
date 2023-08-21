@@ -1,6 +1,6 @@
 import type { MessageToFigma } from "@h20/assistant-types";
 
-export async function handleUpdateShelf(message: MessageToFigma) {
+export async function handleUpdateShelf(message: MessageToFigma, notifySelectionChange: () => void) {
   if (!message.updateShelf) return;
 
   const shelfNode = figma.getNodeById(message.updateShelf.id) as ShapeWithTextNode;
@@ -13,5 +13,6 @@ export async function handleUpdateShelf(message: MessageToFigma) {
 
   if (rawData !== undefined) {
     shelfNode.setPluginData("shelfData", rawData);
+    notifySelectionChange();
   }
 }
