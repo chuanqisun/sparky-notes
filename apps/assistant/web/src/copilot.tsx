@@ -97,7 +97,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   const updateShelf = useCallback(async (updateFn: (prev: ParsedShelf) => ParsedShelf) => {
     const { getSelectionRes } = await proxyToFigma.request({ getSelectionReq: true });
-
     if (!getSelectionRes) return;
 
     const selectedAbstractShelf = getSelectionRes.abstractShelves.at(0);
@@ -117,7 +116,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
     proxyToFigma.notify({ createShelf: serializeNewShelf({ name: "New shelf", data: [] }) });
 
-    activeTool.tool?.run({
+    await activeTool.tool?.run({
       shelf: prevShelf,
       args: activeTool.args,
       update: updateShelf,
@@ -139,16 +138,18 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   }, []);
 
   const handleExportToCanvas = useCallback(async () => {
-    if (!selection?.abstractShelves.length) return;
+    const { getSelectionRes } = await proxyToFigma.request({ getSelectionReq: true });
+    if (!getSelectionRes) return;
 
-    const selectedShelf = selection.abstractShelves.at(0)!;
+    const selectedShelf = getSelectionRes.abstractShelves.at(0);
+    if (!selectedShelf) return;
 
     const shelf: RenderShelf = {
       name: selectedShelf.name,
       rawData: selectedShelf.rawData,
     };
     proxyToFigma.notify({ renderShelf: shelf });
-  }, [selection]);
+  }, []);
 
   const [isShelfMenuOpen, setIsShelfMenuOpen] = useState(false);
 
@@ -190,7 +191,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                     ))}
                   </ul>
                   <div class="c-field__actions">
-                    <button onClick={handleExportToCanvas}>Export to Canvas</button>
+                    <button onClick={handleExportToCanvas}>Open on Canvas</button>
                   </div>
                 </>
               ) : (
@@ -252,6 +253,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 </div>
               ))}
               <div class="c-fieldset__actions">
+                <button onClick={() => handleRun().then(handleExportToCanvas)}>Run and open</button>
                 <button onClick={handleRun}>Run</button>
                 <button onClick={() => {}}>Cancel</button>
               </div>

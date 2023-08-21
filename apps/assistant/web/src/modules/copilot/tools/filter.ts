@@ -18,7 +18,7 @@ export function filterTool(fnCallProxy: FnCallProxy): Tool {
       updateShelf((prev) => ({ ...prev, name: "Filtering..." }));
       const response = await filter(fnCallProxy, args["predicate"], shelf.data);
       console.log(response);
-      updateShelf((prev) => ({ ...prev, name: `${shelf.name} filtered`, data: response.accepted }));
+      await updateShelf((prev) => ({ ...prev, name: `${shelf.name} filtered`, data: response.accepted }));
     },
   };
 }

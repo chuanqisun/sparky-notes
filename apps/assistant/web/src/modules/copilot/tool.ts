@@ -21,5 +21,5 @@ export interface ParsedShelf {
 export interface ToolRunContext {
   shelf: ParsedShelf;
   args: Record<string, string>;
-  update: (updateFn: (prev: ParsedShelf) => ParsedShelf) => void;
+  update: (updateFn: (prev: ParsedShelf) => ParsedShelf) => Promise<void>;
 }
