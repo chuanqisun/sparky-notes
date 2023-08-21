@@ -61,6 +61,10 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  useEffect(() => {
+    proxyToFigma.notify({ detectSelection: true });
+  }, []);
+
   const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
@@ -173,17 +177,22 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                   </button>
                   {isShelfMenuOpen ? (
                     <div class="c-overflow-menu__actions">
-                      <button onClick={handleExportToCanvas}>Export to Canvas</button>
+                      <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit copilot</button>
                     </div>
                   ) : null}
                 </div>
               </div>
               {selection?.abstractShelves?.length ? (
-                <ul class="c-field__value c-shelf">
-                  {selection?.abstractShelves.map((shelf) => (
-                    <ObjectTree key={shelf.id} data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
-                  ))}
-                </ul>
+                <>
+                  <ul class="c-field__value c-shelf">
+                    {selection?.abstractShelves.map((shelf) => (
+                      <ObjectTree key={shelf.id} data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
+                    ))}
+                  </ul>
+                  <div class="c-field__actions">
+                    <button onClick={handleExportToCanvas}>Export to Canvas</button>
+                  </div>
+                </>
               ) : (
                 <div class="c-field__actions">
                   <button onClick={handleCreateShelfFromCanvas} disabled={!selection?.stickies.length}>
@@ -248,8 +257,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               </div>
             </fieldset>
           ) : null}
-
-          <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit copilot</button>
         </div>
       )}
     </>

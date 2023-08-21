@@ -13,14 +13,14 @@ export interface MessageToWeb {
 export interface MessageToFigma {
   addCards?: AddCards;
   createShelf?: ShelfCreation;
+  detectSelection?: boolean; // request plugin to notfiy selection
   updateShelf?: ShelfChange;
   disableCopilot?: boolean;
   enableCopilot?: boolean;
   renderShelf?: RenderShelf;
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
-  getSelectionReq?: boolean;
-  selectionChange?: boolean;
+  getSelectionReq?: boolean; // read current selection
 }
 
 export interface ShelfCreation {

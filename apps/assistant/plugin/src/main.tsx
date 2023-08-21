@@ -4,6 +4,7 @@ import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCards } from "./handlers/handle-add-cards";
 import { handleCreateShelf } from "./handlers/handle-create-shelf";
+import { handleDetectSelection } from "./handlers/handle-detect-selection";
 import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
 import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
@@ -44,13 +45,14 @@ function Widget() {
     const handleMessageFromWeb = async (message: MessageToFigma) => {
       console.log(message);
 
-      handleEnableCopilot(message, enableCopilot, openCopilotPage);
-      handleDisableCopilot(message, disableCopilot, openIndexPage);
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleCreateShelf(message);
-      handleUpdateShelf(message, wrappedHandleSelectionChange);
-      handleRenderShelf(message);
+      handleDetectSelection(message, wrappedHandleSelectionChange);
+      handleDisableCopilot(message, disableCopilot, openIndexPage);
+      handleEnableCopilot(message, enableCopilot, openCopilotPage);
       handleGetSelectionReq(message, proxyToWeb);
+      handleRenderShelf(message);
+      handleUpdateShelf(message, wrappedHandleSelectionChange);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
