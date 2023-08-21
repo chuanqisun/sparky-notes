@@ -1,5 +1,6 @@
 export interface MessageToWeb {
   ping?: string;
+  getSelectionRes?: SelectionSummary;
   selectionChanged?: SelectionSummary;
   parseDropHtml?: {
     items: string[];
@@ -11,18 +12,27 @@ export interface MessageToWeb {
 
 export interface MessageToFigma {
   addCards?: AddCards;
-  createShelf?: CreateShelf;
+  createShelf?: ShelfCreation;
+  updateShelf?: ShelfChange;
   disableCopilot?: boolean;
   enableCopilot?: boolean;
   renderShelf?: RenderShelf;
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
+  getSelectionReq?: boolean;
   selectionChange?: boolean;
 }
 
-export interface CreateShelf {
-  name?: string;
+export interface ShelfCreation {
+  name: string;
   rawData: string;
+}
+
+/** undefined means no change */
+export interface ShelfChange {
+  id: string;
+  name?: string;
+  rawData?: string;
 }
 
 export interface RenderShelf {
@@ -32,7 +42,7 @@ export interface RenderShelf {
 
 export interface SelectionSummary {
   stickies: SelectedSticky[];
-  abstractShelves: AbstractShelf[];
+  abstractShelves: SerializedShelf[];
   shelfNode: ShelfNode; // TBD
 }
 
@@ -42,7 +52,7 @@ export interface SelectedSticky {
   color: string;
 }
 
-export interface AbstractShelf {
+export interface SerializedShelf {
   id: string;
   name: string;
   rawData: string;

@@ -1,9 +1,9 @@
-import type { MessageToFigma, MessageToWeb, RenderShelf, SelectionSummary } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, RenderShelf, SelectionSummary, SerializedShelf } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import type { Tool } from "./modules/copilot/tool";
+import type { ParsedShelf, Tool } from "./modules/copilot/tool";
 import { filterTool } from "./modules/copilot/tools/filter";
 import { groupTool } from "./modules/copilot/tools/group";
 import { getH20Proxy } from "./modules/h20/proxy";
@@ -64,24 +64,65 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
   const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
-  const handleOutput = useCallback((data: any) => {
-    console.log("debug output", data);
+  const parseShelf = useCallback((shelf: SerializedShelf) => {
+    const parsed: ParsedShelf = {
+      ...shelf,
+      data: JSON.parse(shelf.rawData),
+    };
 
-    proxyToFigma.notify({
-      createShelf: {
-        name: "New shelf",
-        rawData: JSON.stringify(data),
-      },
-    });
+    return parsed;
+  }, []);
+
+  const serializeShelf = useCallback((shelf: ParsedShelf) => {
+    const serialized: SerializedShelf = {
+      ...shelf,
+      rawData: JSON.stringify(shelf.data),
+    };
+
+    return serialized;
+  }, []);
+
+  const serializeNewShelf = useCallback((shelf: Omit<ParsedShelf, "id">) => {
+    const serialized: Omit<SerializedShelf, "id"> = {
+      ...shelf,
+      rawData: JSON.stringify(shelf.data),
+    };
+
+    return serialized;
+  }, []);
+
+  const updateShelf = useCallback(async (updateFn: (prev: ParsedShelf) => ParsedShelf) => {
+    const { getSelectionRes } = await proxyToFigma.request({ getSelectionReq: true });
+
+    if (!getSelectionRes) return;
+
+    const selectedAbstractShelf = getSelectionRes.abstractShelves.at(0);
+    if (!selectedAbstractShelf) return;
+
+    const prevShelf = parseShelf(selectedAbstractShelf);
+    const updatedShelf = updateFn(prevShelf);
+
+    proxyToFigma.notify({ updateShelf: serializeShelf(updatedShelf) });
   }, []);
 
   const handleRun = useCallback(async () => {
-    await activeTool.tool?.run({ shelf: JSON.parse(selection?.abstractShelves.at(0)?.rawData ?? "[]"), args: activeTool.args, setOutput: handleOutput });
-  }, [activeTool, selection]);
+    const selectedAbstractShelf = selection?.abstractShelves.at(0);
+    if (!selectedAbstractShelf) return;
+
+    const prevShelf = parseShelf(selectedAbstractShelf);
+
+    proxyToFigma.notify({ createShelf: serializeNewShelf({ name: "New shelf", data: [] }) });
+
+    activeTool.tool?.run({
+      shelf: prevShelf,
+      args: activeTool.args,
+      update: updateShelf,
+    });
+  }, [activeTool, selection, updateShelf]);
 
   const handleCreateShelfFromCanvas = useCallback(async () => {
     const data = (selection?.stickies ?? []).map((item) => item.text);
-    proxyToFigma.notify({ createShelf: { rawData: JSON.stringify(data) } });
+    proxyToFigma.notify({ createShelf: serializeNewShelf({ name: "New shelf", data }) });
   }, [selection]);
 
   const handleCreateShelfFromUpload = useCallback(async () => {

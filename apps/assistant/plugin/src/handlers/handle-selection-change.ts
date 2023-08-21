@@ -1,10 +1,13 @@
-import type { AbstractShelf, MessageToFigma, MessageToWeb, ShelfChild, ShelfNode } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, SerializedShelf, ShelfChild, ShelfNode } from "@h20/assistant-types";
 import { walk, type ProxyToWeb } from "@h20/figma-tools";
 
 export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
-  const stickyNodes: StickyNode[] = [];
-  const abstractShelves: AbstractShelf[] = [];
+  proxyToWeb.notify({ selectionChanged: getCurrentSelection() });
+}
 
+export function getCurrentSelection() {
+  const stickyNodes: StickyNode[] = [];
+  const abstractShelves: SerializedShelf[] = [];
   walk(figma.currentPage.selection, {
     onPreVisit: (candidate) => {
       if (candidate.type === "STICKY") {
@@ -25,7 +28,11 @@ export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, Messa
     color: "",
   }));
 
-  proxyToWeb.notify({ selectionChanged: { stickies, abstractShelves, shelfNode: dataNode } });
+  return {
+    stickies,
+    abstractShelves,
+    shelfNode: dataNode,
+  };
 }
 
 function getDataNode(selection: readonly SceneNode[]): ShelfNode {

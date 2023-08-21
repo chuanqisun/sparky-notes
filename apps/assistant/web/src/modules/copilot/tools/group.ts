@@ -26,10 +26,10 @@ export function groupTool(fnCallProxy: FnCallProxy): Tool {
         isOptional: true,
       },
     ],
-    run: async ({ args, shelf, setOutput }) => {
-      const response = await group(fnCallProxy, args["by"], shelf);
-      console.log(response);
-      setOutput(response);
+    run: async ({ args, shelf, update: updateShelf }) => {
+      updateShelf((prev) => ({ ...prev, name: "Grouping..." }));
+      const response = await group(fnCallProxy, args["by"], shelf.data);
+      updateShelf((prev) => ({ ...prev, name: `${shelf.name} grouped`, data: response }));
     },
   };
 }

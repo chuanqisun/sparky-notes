@@ -14,10 +14,11 @@ export function filterTool(fnCallProxy: FnCallProxy): Tool {
         isOptional: true,
       },
     ],
-    run: async ({ args, shelf, setOutput }) => {
-      const response = await filter(fnCallProxy, args["predicate"], shelf);
+    run: async ({ args, shelf, update: updateShelf }) => {
+      updateShelf((prev) => ({ ...prev, name: "Filtering..." }));
+      const response = await filter(fnCallProxy, args["predicate"], shelf.data);
       console.log(response);
-      setOutput(response);
+      updateShelf((prev) => ({ ...prev, name: `${shelf.name} filtered`, data: response.accepted }));
     },
   };
 }

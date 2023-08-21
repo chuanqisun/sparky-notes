@@ -12,8 +12,14 @@ export interface ToolParameter {
   isOptional?: boolean;
 }
 
+export interface ParsedShelf {
+  id: string;
+  name: string;
+  data: any;
+}
+
 export interface ToolRunContext {
-  shelf: any;
+  shelf: ParsedShelf;
   args: Record<string, string>;
-  setOutput: (output: any) => void;
+  update: (updateFn: (prev: ParsedShelf) => ParsedShelf) => void;
 }

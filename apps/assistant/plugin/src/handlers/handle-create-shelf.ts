@@ -9,7 +9,7 @@ export async function handleCreateShelf(message: MessageToFigma) {
   const shapeNode = figma.createShapeWithText();
   shapeNode.shapeType = "SQUARE";
   shapeNode.resize(320, 200);
-  shapeNode.text.characters = message.createShelf.name ?? "New shelf";
+  shapeNode.text.characters = message.createShelf.name;
   shapeNode.setPluginData("shelfData", message.createShelf.rawData);
 
   moveToViewCenter([shapeNode]);

@@ -7,8 +7,10 @@ import { handleCreateShelf } from "./handlers/handle-create-shelf";
 import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
 import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
+import { handleGetSelectionReq } from "./handlers/handle-get-selection-req";
 import { handleRenderShelf } from "./handlers/handle-render-shelf";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
+import { handleUpdateShelf } from "./handlers/handle-update-shelf";
 import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
 import { useCopilotSwitch } from "./widget/use-copilot-switch";
@@ -46,7 +48,9 @@ function Widget() {
       handleDisableCopilot(message, disableCopilot, openIndexPage);
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleCreateShelf(message);
+      handleUpdateShelf(message);
       handleRenderShelf(message);
+      handleGetSelectionReq(message, proxyToWeb);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
