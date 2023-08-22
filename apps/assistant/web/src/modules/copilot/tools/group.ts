@@ -11,20 +11,20 @@ export function groupTool(fnCallProxy: FnCallProxy): Tool {
         displayName: "By",
         key: "by",
         hint: `Color, Texture, Sentiment, Concept`,
-        isOptional: true,
+        isOptional: false,
       },
-      {
-        displayName: "Group names",
-        key: "groupNames",
-        hint: `Bug report, Feature request, Question`,
-        isOptional: true,
-      },
-      {
-        displayName: "Group count",
-        key: "count",
-        hint: `5, Up to three, >= 4`,
-        isOptional: true,
-      },
+      // {
+      //   displayName: "Group names",
+      //   key: "groupNames",
+      //   hint: `Bug report, Feature request, Question`,
+      //   isOptional: true,
+      // },
+      // {
+      //   displayName: "Group count",
+      //   key: "count",
+      //   hint: `5, Up to three, >= 4`,
+      //   isOptional: true,
+      // },
     ],
     run: async ({ args, shelf, update: updateShelf }) => {
       updateShelf((prev) => ({ ...prev, name: "Grouping..." }));

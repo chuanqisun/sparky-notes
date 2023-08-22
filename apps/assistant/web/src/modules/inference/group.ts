@@ -16,7 +16,7 @@ export interface GroupConfig {
 }
 
 function byClause(by?: string) {
-  return by ? `by ${by}` : "";
+  return by ? ` by ${by}` : "";
 }
 
 export async function group<T>(fnCallProxy: FnCallProxy, config: GroupConfig, items: T[]): Promise<NamedGroup<T>[]> {
@@ -27,7 +27,7 @@ export async function group<T>(fnCallProxy: FnCallProxy, config: GroupConfig, it
       [
         {
           role: "system",
-          content: `Group the items ${byClause(config.by)}. Give each group a name and respond the ids of items in each group.`,
+          content: `Group the items${byClause(config.by)}. For each group, provide a name and item ids`,
         },
         {
           role: "user",
@@ -62,10 +62,11 @@ export async function group<T>(fnCallProxy: FnCallProxy, config: GroupConfig, it
                         },
                       },
                     },
+                    required: ["name", "ids"],
                   },
                 },
               },
-              required: ["isTrue"],
+              required: ["groups"],
             },
           },
         ],
