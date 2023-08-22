@@ -253,7 +253,6 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                 </div>
               ))}
               <div class="c-fieldset__actions">
-                <button onClick={() => handleRun().then(handleExportToCanvas)}>Run and open</button>
                 <button onClick={handleRun}>Run</button>
                 <button onClick={() => {}}>Cancel</button>
               </div>
