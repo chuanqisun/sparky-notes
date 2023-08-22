@@ -8,7 +8,18 @@ export interface NamedGroup<T> {
 interface RawResult {
   groups: { name: string; ids: number[] }[];
 }
-export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[]): Promise<NamedGroup<T>[]> {
+
+export interface GroupConfig {
+  by?: string;
+  labels?: string[];
+  count?: number;
+}
+
+function byClause(by?: string) {
+  return by ? `by ${by}` : "";
+}
+
+export async function group<T>(fnCallProxy: FnCallProxy, config: GroupConfig, items: T[]): Promise<NamedGroup<T>[]> {
   try {
     const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -16,7 +27,7 @@ export async function group<T>(fnCallProxy: FnCallProxy, by: string, items: T[])
       [
         {
           role: "system",
-          content: `Group the items by ${by}. Give each group a name and respond the ids of items in each group.`,
+          content: `Group the items ${byClause(config.by)}. Give each group a name and respond the ids of items in each group.`,
         },
         {
           role: "user",

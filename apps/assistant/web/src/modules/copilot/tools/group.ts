@@ -28,7 +28,7 @@ export function groupTool(fnCallProxy: FnCallProxy): Tool {
     ],
     run: async ({ args, shelf, update: updateShelf }) => {
       updateShelf((prev) => ({ ...prev, name: "Grouping..." }));
-      const response = await group(fnCallProxy, args["by"], shelf.data);
+      const response = await group(fnCallProxy, { by: args["by"] }, shelf.data);
       await updateShelf((prev) => ({ ...prev, name: `${shelf.name} grouped`, data: response }));
     },
   };
