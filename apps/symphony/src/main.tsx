@@ -62,6 +62,11 @@ const ROUTES: NamedRoute[] = [
     path: "/experiments/motif-shelf",
     lazy: () => import("./experiments/motif-shelf").then(({ MotifShelf }) => ({ Component: MotifShelf })),
   },
+  {
+    displayName: "Vector scope",
+    path: "/experiments/vector-scope",
+    lazy: () => import("./experiments/vector-scope").then(({ VectorScope }) => ({ Component: VectorScope })),
+  },
 ];
 
 function testGraph(graph: Cozo) {

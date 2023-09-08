@@ -9,7 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^9.83.3",
+    "@react-three/fiber": "^8.14.1",
     "@trpc/client": "^10.25.0",
+    "@types/three": "^0.155.1",
     "@uiw/react-codemirror": "^4.21.9",
     "cozo-lib-wasm": "^0.7.2",
     "d3": "^7.8.5",
@@ -23,6 +26,7 @@
     "react-router-dom": "^6.10.0",
     "reactflow": "^11.7.2",
     "styled-components": "^6.0.7",
+    "three": "^0.156.1",
     "three-spritetext": "^1.8.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz",
     "yaml": "^2.3.1"
