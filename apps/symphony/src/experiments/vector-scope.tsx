@@ -36,6 +36,9 @@ function DataNode(props: DataNodeProps) {
   );
 }
 
+const axisHelper = new THREE.AxesHelper(100);
+// axisHelper.setColors(new THREE.Color("red"), new THREE.Color("purple"), new THREE.Color("white"));
+
 export const VectorScope: React.FC = () => {
   const [data, setData] = useState<DataPoint[]>([]);
 
@@ -77,7 +80,7 @@ export const VectorScope: React.FC = () => {
                 isActive={activeItems.some((i) => i === d)}
               />
             ))}
-            <primitive object={new THREE.AxesHelper(10)} />
+            <primitive object={axisHelper} />
             <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} />
             <OrbitControls makeDefault />.
           </Canvas>
