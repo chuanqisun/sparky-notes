@@ -1,10 +1,9 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import type { RequestHandler } from "http-proxy-middleware";
 import { arxivSearch } from "./modules/arxiv/search";
 import { requireJwt } from "./modules/auth/require-jwt";
-import { hitsApi } from "./modules/hits/api";
+import { hitsSearchIndex } from "./modules/hits/api";
 import { hitsSignIn } from "./modules/hits/sign-in";
 import { hitsSignInStatus } from "./modules/hits/sign-in-status";
 import { hitsSignOut } from "./modules/hits/sign-out";
@@ -32,17 +31,10 @@ app.use(cors());
 
 // proxy middleware must be registered before express.json()
 // ref: https://github.com/chimurai/http-proxy-middleware/issues/320
-app.use("/hits/api", [
-  requireJwt,
-  hitsApi,
-  ((req, res, next) => {
-    console.log("!!!!!!!");
-    next();
-  }) as RequestHandler,
-]);
 app.use("/hits/search/claims", [validateHitsToken, hitsUATSearch("/indexes/hits-claims/docs/search?api-version=2021-04-30-Preview")]);
 
 app.use(express.json());
+app.post("/hits/api/search/index", [requireJwt, hitsSearchIndex]);
 
 app.post("/openai/plexchat", [
   validateHitsToken,
