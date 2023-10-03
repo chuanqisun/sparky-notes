@@ -2,12 +2,12 @@ import type { MessageToFigma } from "@h20/assistant-types";
 import { appendAsTiles, loadFonts, moveToViewCenter } from "@h20/figma-tools";
 import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
 
-export async function handleRenderShelf(message: MessageToFigma) {
-  if (!message.renderShelf) return;
+export async function handleRenderObject(message: MessageToFigma) {
+  if (!message.renderObject) return;
 
   await loadFonts({ family: "Inter", style: "Medium" });
 
-  const displayNodes = getDisplayNodes({ _root: JSON.parse(message.renderShelf.rawData) });
+  const displayNodes = getDisplayNodes({ _root: message.renderObject });
   const renderedRoot = renderDisplayNodes(displayNodes)[0]! as SectionNode;
   const renderedItems = renderedRoot.children as SceneNode[];
   figma.ungroup(renderedRoot);
@@ -121,7 +121,8 @@ function renderSection(node: DisplaySection): SceneNode {
   const section = figma.createSection();
 
   section.name = node.name;
-  const layoutFn = node.direction === "Horizontal" ? getNextHorizontalTilePosition : getNextVerticalTilePosition;
+  const layoutFn =
+    node.direction === "Horizontal" ? getNextHorizontalTilePosition.bind(null, { gap: 32 }) : getNextVerticalTilePosition.bind(null, { gap: 120 });
   appendAsTiles(section, sectionItems, layoutFn);
 
   return section;

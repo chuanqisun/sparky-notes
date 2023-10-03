@@ -1,20 +1,16 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
-import BadgeDarkSvg from "./assets/BadgeDark.svg";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCards } from "./handlers/handle-add-cards";
-import { handleCreateShelf } from "./handlers/handle-create-shelf";
+import { handleClearNotification } from "./handlers/handle-clear-notification";
 import { handleDetectSelection } from "./handlers/handle-detect-selection";
-import { handleDisableCopilot } from "./handlers/handle-disable-copilot";
 import { handleDropLinks } from "./handlers/handle-drop-links";
-import { handleEnableCopilot } from "./handlers/handle-enable-copilot";
-import { handleGetSelectionReq } from "./handlers/handle-get-selection-req";
-import { handleRenderShelf } from "./handlers/handle-render-shelf";
+import { handleMutation } from "./handlers/handle-mutation";
+import { handleRenderObject } from "./handlers/handle-render-object";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
-import { handleUpdateShelf } from "./handlers/handle-update-shelf";
-import { openCardPage, openCopilotPage, openIndexPage } from "./router/router";
+import { handleShowNotification } from "./handlers/handle-show-notification";
+import { openCardPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
-import { useCopilotSwitch } from "./widget/use-copilot-switch";
 import { useLayoutDraft } from "./widget/use-layout-draft";
 
 const { widget } = figma;
@@ -26,7 +22,6 @@ function Widget() {
   const widgetId = useWidgetId();
 
   const { cardData } = useWidgetState({ openIndexPage });
-  const { isCopilotEnabled, enableCopilot, disableCopilot } = useCopilotSwitch();
 
   useLayoutDraft(cardData, widgetId);
 
@@ -46,13 +41,11 @@ function Widget() {
       console.log(message);
 
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
-      handleCreateShelf(message);
       handleDetectSelection(message, wrappedHandleSelectionChange);
-      handleDisableCopilot(message, disableCopilot, openIndexPage);
-      handleEnableCopilot(message, enableCopilot, openCopilotPage);
-      handleGetSelectionReq(message, proxyToWeb);
-      handleRenderShelf(message);
-      handleUpdateShelf(message, wrappedHandleSelectionChange);
+      handleRenderObject(message);
+      handleMutation(message, proxyToWeb);
+      handleShowNotification(message);
+      handleClearNotification(message);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
@@ -67,12 +60,7 @@ function Widget() {
   });
 
   return cardData === null ? (
-    <SVG
-      src={isCopilotEnabled ? BadgeDarkSvg : BadgeLightSvg}
-      width={436}
-      height={436}
-      onClick={() => new Promise((_resolve) => (isCopilotEnabled ? openCopilotPage() : openIndexPage()))}
-    />
+    <SVG src={BadgeLightSvg} width={436} height={436} onClick={() => new Promise((_resolve) => openIndexPage())} />
   ) : (
     <AutoLayout
       padding={0}

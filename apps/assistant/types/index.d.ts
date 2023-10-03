@@ -8,63 +8,60 @@ export interface MessageToWeb {
     webDragContext?: WebDragContext;
   };
   addedCards?: AddCards;
+  mutationResponse?: MutationResponse;
 }
 
 export interface MessageToFigma {
   addCards?: AddCards;
-  createShelf?: ShelfCreation;
   detectSelection?: boolean; // request plugin to notfiy selection
-  updateShelf?: ShelfChange;
-  disableCopilot?: boolean;
-  enableCopilot?: boolean;
-  renderShelf?: RenderShelf;
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
-  getSelectionReq?: boolean; // read current selection
+  renderObject?: any;
+  showNotification?: FigmaNotification;
+  clearNotification?: boolean;
+  mutationRequest?: MutationRequest;
 }
 
-export interface ShelfCreation {
+export interface MutationRequest {
+  createSections?: CreateSectionMutation[];
+  updateSections?: UpdateSectionMutation[];
+  removeSections?: string[];
+  showSuccessMessage?: string;
+  showLocator?: string;
+}
+
+export interface MutationResponse {
+  createdSections: string[]; // ids
+}
+
+export interface CreateSectionMutation {
   name: string;
-  rawData: string;
+  moveStickies?: string[]; // move by ids
 }
 
-/** undefined means no change */
-export interface ShelfChange {
+export interface UpdateSectionMutation {
   id: string;
-  name?: string;
-  rawData?: string;
+  moveStickies?: string[]; // move by ids
 }
 
-export interface RenderShelf {
-  name: string;
-  rawData: any;
+export interface FigmaNotification {
+  message: string;
+  config?: {
+    timeout?: number;
+    error?: boolean;
+  };
 }
 
 export interface SelectionSummary {
-  stickies: SelectedSticky[];
-  abstractShelves: SerializedShelf[];
-  shelfNode: ShelfNode; // TBD
+  contentNodes: ContentNode[];
 }
 
-export interface SelectedSticky {
+export interface ContentNode {
   id: string;
-  text: string;
-  color: string;
+  type: "sticky" | "section";
+  content: string;
+  children?: ContentNode[];
 }
-
-export interface SerializedShelf {
-  id: string;
-  name: string;
-  rawData: string;
-}
-
-export interface ShelfNode {
-  name?: string;
-  isRoot?: boolean;
-  children: ShelfChild[];
-}
-
-export type ShelfChild = string | ShelfNode;
 
 export interface CardData {
   category: string;

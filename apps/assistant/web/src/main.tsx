@@ -193,11 +193,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               )}
               {isConnected && (
                 <>
-                  {query === "dolegendaryshit" ? (
-                    <button class="u-reset c-app-menu--btn" onClick={() => proxyToFigma.notify({ enableCopilot: true })}>
-                      Copilot
-                    </button>
-                  ) : null}
+                  <button class="u-reset c-app-menu--btn" onClick={() => location.replace("./copilot.html")}>
+                    Copilot
+                  </button>
                   <button class="u-reset c-app-menu--btn" onClick={signOut}>
                     Sign out
                   </button>

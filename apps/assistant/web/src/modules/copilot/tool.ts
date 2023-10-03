@@ -1,8 +1,11 @@
+import type { ContentNode } from "@h20/assistant-types";
+
 export interface Tool {
   id: string;
   displayName: string;
   parameters: ToolParameter[];
-  run: (context: ToolRunContext) => void;
+  getActions: (context: ToolGetActionsContext) => string[];
+  run: (context: ToolRunContextV2) => Promise<any>;
 }
 
 export interface ToolParameter {
@@ -18,8 +21,14 @@ export interface ParsedShelf {
   data: any;
 }
 
-export interface ToolRunContext {
-  shelf: ParsedShelf;
+export interface ToolGetActionsContext {
+  input: ContentNode[];
+  previousOutput?: any;
   args: Record<string, string>;
-  update: (updateFn: (prev: ParsedShelf) => ParsedShelf) => Promise<void>;
+}
+
+export interface ToolRunContextV2 {
+  input: ContentNode[];
+  args: Record<string, string>;
+  action: string;
 }

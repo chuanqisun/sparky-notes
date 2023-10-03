@@ -46,6 +46,7 @@ export function getFnCallProxy(h20Proxy: H20Proxy): FnCallProxy {
     };
 
     const rawResult = await h20Proxy<PlexChatInput, PlexChatOutput>("/openai/plexchat", payload);
+    if (rawResult.choices[0].finish_reason !== "stop") throw new Error("Abnormal finish reason");
 
     return rawResult.choices[0].message.function_call!;
   };

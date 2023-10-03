@@ -1,13 +1,15 @@
 ## Assistant
 
-- Better In-app mechanism to view all claims under a report
-  - Render Card page as a component inside Main page
-- Edit card title
-- Text underline hover effect for url on the card
-- In-figma button/card hover effect: toggle shadow
-- Provide feedback menu action
-- Handle permission errors when loading other people's work
-- Detect outdated widget version and prompt for upgrade
+- Copilot | Abort controller
+- Copilot | Move selection preview to bottom
+- Copilot | Add an exit button
+- Copilot | Improve default output position
+- Widget | Edit card title
+- Widget | Text underline hover effect for url on the card
+- Widget | In-figma button/card hover effect: toggle shadow
+- Web | Provide feedback menu action
+- Web | Handle permission errors when loading other people's work
+- Widget | Detect outdated widget version and prompt for upgrade
 - Auth | Timestamp last access token usage
 - Auth | Sign out from all HITS Assistants
 

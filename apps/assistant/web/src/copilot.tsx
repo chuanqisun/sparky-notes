@@ -1,23 +1,16 @@
-import type { MessageToFigma, MessageToWeb, RenderShelf, SelectionSummary, SerializedShelf } from "@h20/assistant-types";
+import type { FigmaNotification, MessageToFigma, MessageToWeb, SelectionSummary } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import type { ParsedShelf, Tool } from "./modules/copilot/tool";
+import type { Tool } from "./modules/copilot/tool";
+import { categorizeTool } from "./modules/copilot/tools/categorize";
 import { filterTool } from "./modules/copilot/tools/filter";
-import { groupTool } from "./modules/copilot/tools/group";
 import { getH20Proxy } from "./modules/h20/proxy";
-import { convertFileByExtension } from "./modules/io/convert";
-import { pickFiles } from "./modules/io/pick-files";
+import { contentNodesToObject } from "./modules/object-tree/content-nodes-to-objects";
 import { ObjectTree } from "./modules/object-tree/object-tree";
 import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
-import type { WorkerEvents, WorkerRoutes } from "./routes";
-import { WorkerClient } from "./utils/worker-rpc";
-import WebWorker from "./worker?worker";
-
-// start worker ASAP
-const worker = new WorkerClient<WorkerRoutes, WorkerEvents>(new WebWorker()).start();
 
 const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
@@ -27,8 +20,7 @@ window.focus();
 
 appInsights.trackPageView();
 
-function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
-  const { worker } = props;
+function App() {
   const { isConnected, signIn, accessToken } = useAuth({
     serverHost: import.meta.env.VITE_H20_SERVER_HOST,
     webHost: import.meta.env.VITE_WEB_HOST,
@@ -61,97 +53,47 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     return () => window.removeEventListener("message", handleMainMessage);
   }, []);
 
+  const notify = useCallback((notification: FigmaNotification) => {
+    return proxyToFigma.notify({ showNotification: notification });
+  }, []);
+
   useEffect(() => {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [filterTool(fnCallProxy), groupTool(fnCallProxy)], [fnCallProxy]);
+  const tools = useMemo(() => [categorizeTool(fnCallProxy, proxyToFigma), filterTool(fnCallProxy, proxyToFigma)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
-  const parseShelf = useCallback((shelf: SerializedShelf) => {
-    const parsed: ParsedShelf = {
-      ...shelf,
-      data: JSON.parse(shelf.rawData),
-    };
-
-    return parsed;
-  }, []);
-
-  const serializeShelf = useCallback((shelf: ParsedShelf) => {
-    const serialized: SerializedShelf = {
-      ...shelf,
-      rawData: JSON.stringify(shelf.data),
-    };
-
-    return serialized;
-  }, []);
-
-  const serializeNewShelf = useCallback((shelf: Omit<ParsedShelf, "id">) => {
-    const serialized: Omit<SerializedShelf, "id"> = {
-      ...shelf,
-      rawData: JSON.stringify(shelf.data),
-    };
-
-    return serialized;
-  }, []);
-
-  const updateShelf = useCallback(async (updateFn: (prev: ParsedShelf) => ParsedShelf) => {
-    const { getSelectionRes } = await proxyToFigma.request({ getSelectionReq: true });
-    if (!getSelectionRes) return;
-
-    const selectedAbstractShelf = getSelectionRes.abstractShelves.at(0);
-    if (!selectedAbstractShelf) return;
-
-    const prevShelf = parseShelf(selectedAbstractShelf);
-    const updatedShelf = updateFn(prevShelf);
-
-    proxyToFigma.notify({ updateShelf: serializeShelf(updatedShelf) });
-  }, []);
-
-  const handleRun = useCallback(async () => {
-    const selectedAbstractShelf = selection?.abstractShelves.at(0);
-    if (!selectedAbstractShelf) return;
-
-    const prevShelf = parseShelf(selectedAbstractShelf);
-
-    proxyToFigma.notify({ createShelf: serializeNewShelf({ name: "New shelf", data: [] }) });
-
-    await activeTool.tool?.run({
-      shelf: prevShelf,
-      args: activeTool.args,
-      update: updateShelf,
-    });
-  }, [activeTool, selection, updateShelf]);
-
-  const handleCreateShelfFromCanvas = useCallback(async () => {
-    const data = (selection?.stickies ?? []).map((item) => item.text);
-    proxyToFigma.notify({ createShelf: serializeNewShelf({ name: "New shelf", data }) });
-  }, [selection]);
-
-  const handleCreateShelfFromUpload = useCallback(async () => {
-    const [file] = await pickFiles({
-      accept: "application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    const converted = await convertFileByExtension(file);
-    proxyToFigma.notify({ createShelf: { name: file.name, rawData: JSON.stringify(converted) } });
-  }, []);
-
-  const handleExportToCanvas = useCallback(async () => {
-    const { getSelectionRes } = await proxyToFigma.request({ getSelectionReq: true });
-    if (!getSelectionRes) return;
-
-    const selectedShelf = getSelectionRes.abstractShelves.at(0);
-    if (!selectedShelf) return;
-
-    const shelf: RenderShelf = {
-      name: selectedShelf.name,
-      rawData: selectedShelf.rawData,
-    };
-    proxyToFigma.notify({ renderShelf: shelf });
-  }, []);
-
-  const [isShelfMenuOpen, setIsShelfMenuOpen] = useState(false);
+  const handleRun = useCallback(
+    async (action: string) => {
+      const input = selection?.contentNodes ?? [];
+      if (!input.length) {
+        proxyToFigma.notify({
+          showNotification: {
+            message: "No stickies were selected",
+          },
+        });
+        return;
+      }
+      try {
+        await activeTool.tool.run?.({
+          input,
+          action,
+          args: activeTool.args,
+        });
+      } catch (e) {
+        proxyToFigma.notify({
+          showNotification: {
+            message: `${[(e as Error).name, (e as Error).message].filter(Boolean).join(" | ")}`,
+            config: {
+              error: true,
+            },
+          },
+        });
+      }
+    },
+    [selection, activeTool]
+  );
 
   return (
     <>
@@ -170,48 +112,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         <div class="c-module-stack">
           <fieldset class="c-fieldset">
             <div class="c-field">
-              <div class="c-field__key c-field__key--with-menu">
-                Shelf{" "}
-                <div class="c-overflow-menu">
-                  <button class="c-overflow-menu__trigger" onClick={() => setIsShelfMenuOpen((prev) => !prev)}>
-                    ...
-                  </button>
-                  {isShelfMenuOpen ? (
-                    <div class="c-overflow-menu__actions">
-                      <button onClick={() => proxyToFigma.notify({ disableCopilot: true })}>Exit copilot</button>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-              {selection?.abstractShelves?.length ? (
-                <>
-                  <ul class="c-field__value c-shelf">
-                    {selection?.abstractShelves.map((shelf) => (
-                      <ObjectTree key={shelf.id} data={{ [shelf.name]: JSON.parse(shelf.rawData) }} />
-                    ))}
-                  </ul>
-                  <div class="c-field__actions">
-                    <button onClick={handleExportToCanvas}>Open on Canvas</button>
-                  </div>
-                </>
-              ) : (
-                <div class="c-field__actions">
-                  <button onClick={handleCreateShelfFromCanvas} disabled={!selection?.stickies.length}>
-                    Create
-                  </button>
-                  <button onClick={handleCreateShelfFromUpload}>Upload</button>
-                </div>
-              )}
-            </div>
-          </fieldset>
-          {selection?.abstractShelves.length ? (
-            <fieldset class="c-fieldset">
-              <div class="c-field">
-                <label class="c-field__key" for="tool-select">
-                  Action
-                </label>
+              <label class="c-field__key" for="tool-select">
+                Tool
+              </label>
+              <div class="c-field__value">
                 <select
-                  class="c-field__value"
                   id="tool-select"
                   onChange={(e) => {
                     setActiveTool((prev) => ({
@@ -228,14 +133,15 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                   ))}
                 </select>
               </div>
-              {activeTool.tool.parameters.map((parameter) => (
-                <div class="c-field" key={parameter.key}>
-                  <label class="c-field__key" for={`${activeTool.tool.id}-${parameter.key}-input`}>
-                    {parameter.displayName}
-                  </label>
+            </div>
+            {activeTool.tool.parameters.map((parameter) => (
+              <div class="c-field" key={parameter.key}>
+                <label class="c-field__key" for={`${activeTool.tool.id}-${parameter.key}-input`}>
+                  {parameter.displayName}
+                </label>
+                <div class="c-field__value">
                   <input
                     id={`${activeTool.tool.id}-${parameter.key}-input`}
-                    class="c-field__value"
                     type="text"
                     placeholder={parameter.hint}
                     required={!parameter.isOptional}
@@ -251,17 +157,37 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                     value={activeTool.args[parameter.key]}
                   />
                 </div>
-              ))}
-              <div class="c-fieldset__actions">
-                <button onClick={handleRun}>Run</button>
-                <button onClick={() => {}}>Cancel</button>
               </div>
-            </fieldset>
-          ) : null}
+            ))}
+            <div class="c-fieldset__actions">
+              {activeTool.tool
+                .getActions({
+                  input: selection?.contentNodes ?? [],
+                  args: activeTool.args,
+                })
+                .map((action) => (
+                  <button class="c-fieldset__action" key={action} onClick={() => handleRun(action)}>
+                    {action}
+                  </button>
+                ))}
+            </div>
+          </fieldset>
+          <fieldset class="c-fieldset c-module-stack__scroll">
+            <div class="c-field c-field--scroll">
+              <div class="c-field__key">Input</div>
+              <ul class="c-field__value c-field__value--scroll">
+                {selection?.contentNodes?.length ? (
+                  <ObjectTree data={contentNodesToObject(selection?.contentNodes ?? [])} />
+                ) : (
+                  <div>Select sections or stickies as input to the tool</div>
+                )}
+              </ul>
+            </div>
+          </fieldset>
         </div>
       )}
     </>
   );
 }
 
-render(<App worker={worker} />, document.getElementById("app") as HTMLElement);
+render(<App />, document.getElementById("app") as HTMLElement);

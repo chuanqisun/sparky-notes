@@ -36,9 +36,9 @@ export function resizeToHugContent(layout: { padding?: number; minHeight?: numbe
   return nodes;
 }
 
-export function appendAsTiles(parent: SectionNode, tiles: SceneNode[], layoutFn: (tile: SceneNode, parent: SectionNode) => { x: number; y: number }) {
+export function appendAsTiles(parent: SectionNode, tiles: SceneNode[], layoutFn: (parent: SectionNode, tile: SceneNode) => { x: number; y: number }) {
   tiles.forEach((tile) => {
-    const { x, y } = layoutFn(tile, parent);
+    const { x, y } = layoutFn(parent, tile);
 
     parent.appendChild(tile);
 

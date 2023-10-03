@@ -11,7 +11,13 @@ export interface FilterResult<T> {
   rejected: T[];
   errors: { item: T; error: any }[];
 }
-export async function filter<T>(fnCallProxy: FnCallProxy, predicate: string, items: T[], options?: FilterOptions<T>): Promise<FilterResult<T>> {
+export async function filter<T>(
+  fnCallProxy: FnCallProxy,
+  predicate: string,
+  getItemText: (item: T) => string,
+  items: T[],
+  options?: FilterOptions<T>
+): Promise<FilterResult<T>> {
   const results = {
     accepted: [] as T[],
     rejected: [] as T[],
@@ -29,7 +35,7 @@ export async function filter<T>(fnCallProxy: FnCallProxy, predicate: string, ite
             },
             {
               role: "user",
-              content: JSON.stringify(item),
+              content: getItemText(item),
             },
           ],
           {
