@@ -58,9 +58,12 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
       ? {
           button: {
             text: message.mutationRequest.showLocator,
-            action: () => figma.viewport.scrollAndZoomIntoView(affectedNodes),
+            action: () => {
+              figma.viewport.scrollAndZoomIntoView(affectedNodes);
+              figma.currentPage.selection = affectedNodes;
+            },
           },
-          timeout: 999_999,
+          timeout: 30_000,
         }
       : undefined;
 
