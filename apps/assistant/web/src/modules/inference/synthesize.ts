@@ -1,7 +1,7 @@
 import type { FnCallProxy } from "../openai/proxy";
 import { ensureTokenLimit } from "../openai/tokens";
 
-export interface NamedCategory<T> {
+export interface NamedInsight<T> {
   name: string;
   description: string;
   items: T[];
@@ -11,7 +11,7 @@ interface RawResult {
   insights: { name: string; description: string; ids: number[] }[];
 }
 
-export async function categorize<T>(fnCallProxy: FnCallProxy, items: T[], onStringify: (item: T) => string): Promise<NamedCategory<T>[]> {
+export async function synthesize<T>(fnCallProxy: FnCallProxy, items: T[], onStringify: (item: T) => string): Promise<NamedInsight<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -89,7 +89,7 @@ Requirements:
   );
 
   const parsedResults = JSON.parse(result.arguments) as RawResult;
-  const mappedResults: NamedCategory<T>[] = parsedResults.insights.map((category) => ({
+  const mappedResults: NamedInsight<T>[] = parsedResults.insights.map((category) => ({
     name: category.name,
     description: category.description,
     items: category.ids.map((id) => originalItems.find((item) => item.id === id)!.data).filter(Boolean),
@@ -98,13 +98,13 @@ Requirements:
   const unusedItems = originalItems.filter((item) => parsedResults.insights.every((cateogry) => !cateogry.ids.includes(item.id)));
   if (unusedItems.length) {
     mappedResults.push({
-      name: "Other",
-      description: "Unused items",
+      name: "Unused",
+      description: "Items not used in any insight",
       items: unusedItems.map((item) => item.data),
     });
   }
 
-  console.log("categorized", mappedResults);
+  console.log("synthesized", mappedResults);
 
   return mappedResults;
 }

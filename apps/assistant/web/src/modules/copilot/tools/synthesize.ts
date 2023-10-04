@@ -1,22 +1,22 @@
 import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
 import type { ProxyToFigma } from "@h20/figma-tools";
-import { categorize } from "../../inference/categorize";
+import { synthesize } from "../../inference/synthesize";
 import { contentNodestoIdStickies, getItemId, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
 import type { FnCallProxy } from "../../openai/proxy";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function categorizeTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function synthesizeTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
-    id: "core.categorize",
-    displayName: "Categorize",
+    id: "core.synthesize",
+    displayName: "Synthesize",
     parameters: [],
     getActions: () => ["Run"],
     run: async ({ input, action }) => {
-      const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: notification }), "Categorizing");
+      const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: notification }), "Synthesizing");
 
       try {
-        const response = await categorize(fnCallProxy, contentNodestoIdStickies(input), getItemText);
+        const response = await synthesize(fnCallProxy, contentNodestoIdStickies(input), getItemText);
 
         const groupedIds = response.map((group) => ({
           ...group,
@@ -28,7 +28,7 @@ export function categorizeTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFi
             name: group.name,
             moveStickies: group.ids,
           })),
-          showSuccessMessage: "✅ Categorizing done",
+          showSuccessMessage: "✅ Synthesizing done",
           showLocator: "Show results",
         };
 

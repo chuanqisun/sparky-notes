@@ -4,8 +4,8 @@ import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { Tool } from "./modules/copilot/tool";
-import { categorizeTool } from "./modules/copilot/tools/categorize";
 import { filterTool } from "./modules/copilot/tools/filter";
+import { synthesizeTool } from "./modules/copilot/tools/synthesize";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { contentNodesToObject } from "./modules/object-tree/content-nodes-to-objects";
 import { ObjectTree } from "./modules/object-tree/object-tree";
@@ -61,7 +61,7 @@ function App() {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [categorizeTool(fnCallProxy, proxyToFigma), filterTool(fnCallProxy, proxyToFigma)], [fnCallProxy]);
+  const tools = useMemo(() => [filterTool(fnCallProxy, proxyToFigma), synthesizeTool(fnCallProxy, proxyToFigma)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(
