@@ -7,7 +7,7 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
   if (!message.mutationRequest) return;
 
   await loadFonts({ family: "Inter", style: "Medium" });
-  await loadFonts({ family: "Inter", style: "Semi Bold" });
+  await loadFonts({ family: "Inter", style: "Bold" });
 
   const layoutContainer = figma.createSection();
 
@@ -17,7 +17,7 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
     // create section, then clone stickies into the section
     const section = figma.createSection();
     section.name = createSection.name;
-    if (createSection.createSummary) createSectionSummary(section, isWideWidth, createSection.createSummary);
+    if (createSection.createSummary) createSectionSummary(section, isWideWidth, createSection.name, createSection.createSummary);
     if (createSection.moveStickies) cloneStickiesToSection(section, createSection.moveStickies);
 
     return section;
@@ -85,11 +85,12 @@ function cloneStickiesToSection(section: SectionNode, stickyTexts: string[]) {
   );
 }
 
-function createSectionSummary(section: SectionNode, isWideWidth: boolean, summary: string) {
+function createSectionSummary(section: SectionNode, isWideWidth: boolean, name: string, summary: string) {
   const summarySticky = figma.createSticky();
-  summarySticky.text.characters = summary;
   summarySticky.text.fontSize = 16;
-  summarySticky.text.fontName = { family: "Inter", style: "Semi Bold" };
+  summarySticky.text.fontName = { family: "Inter", style: "Medium" };
+  summarySticky.text.characters = name + "\n" + summary;
+  summarySticky.text.setRangeFontName(0, name.length, { family: "Inter", style: "Bold" });
   setFillColor(stickyColors.LightGray, summarySticky);
   summarySticky.isWideWidth = isWideWidth;
 
