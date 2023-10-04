@@ -10,13 +10,20 @@ export function synthesizeTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFi
   return {
     id: "core.synthesize",
     displayName: "Synthesize",
-    parameters: [],
+    parameters: [
+      {
+        displayName: "Each item is",
+        key: "itemType",
+        hint: "an interview note",
+        isOptional: true,
+      },
+    ],
     getActions: () => ["Run"],
-    run: async ({ input, action }) => {
+    run: async ({ input, args, action }) => {
       const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: notification }), "Synthesizing");
 
       try {
-        const response = await synthesize(fnCallProxy, contentNodestoIdStickies(input), getItemText);
+        const response = await synthesize(fnCallProxy, contentNodestoIdStickies(input), args["itemType"], getItemText);
 
         const groupedIds = response.map((group) => ({
           ...group,

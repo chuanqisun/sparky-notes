@@ -11,7 +11,12 @@ interface RawResult {
   findings: { name: string; description: string; evidence: number[] }[];
 }
 
-export async function synthesize<T>(fnCallProxy: FnCallProxy, items: T[], onStringify: (item: T) => string): Promise<NamedInsight<T>[]> {
+export async function synthesize<T>(
+  fnCallProxy: FnCallProxy,
+  items: T[],
+  itemType: string | undefined,
+  onStringify: (item: T) => string
+): Promise<NamedInsight<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -31,7 +36,7 @@ ${item.data}`.trim()
     [
       {
         role: "system",
-        content: `Synthesize findings from evidence
+        content: `Synthesize findings from evidence items.${itemType ? ` Each item is ${itemType}.` : ""}
         
 Requirements:
 - **two or more** evidence items per finding
