@@ -3,11 +3,12 @@ import { ensureTokenLimit } from "../openai/tokens";
 
 export interface NamedCategory<T> {
   name: string;
+  description: string;
   items: T[];
 }
 
 interface RawResult {
-  categories: { name: string; ids: number[] }[];
+  insights: { name: string; description: string; ids: number[] }[];
 }
 
 export async function categorize<T>(fnCallProxy: FnCallProxy, items: T[], onStringify: (item: T) => string): Promise<NamedCategory<T>[]> {
@@ -28,10 +29,13 @@ ${item.data}`.trim()
     [
       {
         role: "system",
-        content: `Categorize the items. Requirements:
-- Provide a name for each category and reference item ids that belong to the categroy
-- Only a single cohesive concept per cateogry
-- Each item can belong to many categories (fuzzy clustering)
+        content: `Identify insights from the items
+        
+Requirements:
+- An insight must be based on common patterns from least 2 items
+- Reference item ids that the insight is based on
+- Provide name and description for each insight
+- Each item can support multiple insights
           `.trim(),
       },
       {
@@ -40,39 +44,44 @@ ${item.data}`.trim()
       },
     ],
     {
-      max_tokens: 400, // TODO estimate tokens based on input size
+      max_tokens: 1200, // TODO estimate tokens based on input size
       models: ["gpt-4", "gpt-4-32k"],
-      function_call: { name: "respond_categories" },
+      function_call: { name: "identify_insights" },
       functions: [
         {
-          name: "respond_categories",
+          name: "identify_insights",
           description: "",
           parameters: {
             type: "object",
             properties: {
-              categories: {
+              insights: {
                 type: "array",
-                description: `List of categories`,
+                description: `List of insights`,
                 items: {
                   type: "object",
                   properties: {
                     name: {
                       type: "string",
-                      description: `name of the category`,
+                      description: `name of the insight`,
+                    },
+                    description: {
+                      type: "string",
+                      description: `description of the insight`,
                     },
                     ids: {
                       type: "array",
-                      description: `ids of items belonging to the category`,
+                      description: `ids of items belonging to the insight`,
+                      minItems: 2,
                       items: {
                         type: "number",
                       },
                     },
                   },
-                  required: ["name", "ids"],
+                  required: ["name", "theme", "ids"],
                 },
               },
             },
-            required: ["categories"],
+            required: ["insights"],
           },
         },
       ],
@@ -80,15 +89,17 @@ ${item.data}`.trim()
   );
 
   const parsedResults = JSON.parse(result.arguments) as RawResult;
-  const mappedResults: NamedCategory<T>[] = parsedResults.categories.map((category) => ({
+  const mappedResults: NamedCategory<T>[] = parsedResults.insights.map((category) => ({
     name: category.name,
+    description: category.description,
     items: category.ids.map((id) => originalItems.find((item) => item.id === id)!.data).filter(Boolean),
   }));
 
-  const unusedItems = originalItems.filter((item) => parsedResults.categories.every((cateogry) => !cateogry.ids.includes(item.id)));
+  const unusedItems = originalItems.filter((item) => parsedResults.insights.every((cateogry) => !cateogry.ids.includes(item.id)));
   if (unusedItems.length) {
     mappedResults.push({
       name: "Other",
+      description: "Unused items",
       items: unusedItems.map((item) => item.data),
     });
   }
