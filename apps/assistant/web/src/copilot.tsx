@@ -61,7 +61,7 @@ function App() {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [filterTool(fnCallProxy, proxyToFigma), synthesizeTool(fnCallProxy, proxyToFigma)], [fnCallProxy]);
+  const tools = useMemo(() => [synthesizeTool(fnCallProxy, proxyToFigma), filterTool(fnCallProxy, proxyToFigma)], [fnCallProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(

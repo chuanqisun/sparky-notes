@@ -1,6 +1,6 @@
 import type { FigmaNotification } from "@h20/assistant-types";
 
-export function setSpinner(proxy: (notification: FigmaNotification) => any, message: string, interval = 250) {
+export function setSpinner(proxy: (notification: FigmaNotification) => any, message: string, interval = 500) {
   let currentIndex = 0;
 
   const brackets = [

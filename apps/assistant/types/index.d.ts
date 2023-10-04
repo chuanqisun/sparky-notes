@@ -36,6 +36,7 @@ export interface MutationResponse {
 
 export interface CreateSectionMutation {
   name: string;
+  createSummary?: string;
   moveStickies?: string[]; // move by ids
 }
 

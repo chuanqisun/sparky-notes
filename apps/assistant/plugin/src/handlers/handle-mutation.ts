@@ -1,11 +1,13 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import { appendAsTiles, loadFonts, moveToViewCenter, replaceNotification, type ProxyToWeb } from "@h20/figma-tools";
 import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
+import { setFillColor, stickyColors } from "../utils/color";
 
 export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
   if (!message.mutationRequest) return;
 
   await loadFonts({ family: "Inter", style: "Medium" });
+  await loadFonts({ family: "Inter", style: "Semi Bold" });
 
   const layoutContainer = figma.createSection();
 
@@ -28,6 +30,21 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
     // create section, then clone stickies into the section
     const section = figma.createSection();
     section.name = createSection.name;
+    if (createSection.createSummary) {
+      const summarySticky = figma.createSticky();
+      summarySticky.text.characters = createSection.createSummary;
+      summarySticky.text.fontSize = 16;
+      summarySticky.text.fontName = { family: "Inter", style: "Semi Bold" };
+      setFillColor(stickyColors.LightGray, summarySticky);
+
+      appendAsTiles(
+        section,
+        [summarySticky],
+        getNextHorizontalTilePosition.bind(null, {
+          gap: 32,
+        })
+      );
+    }
     if (createSection.moveStickies) cloneStickiesToSection(section, createSection.moveStickies);
 
     return section;

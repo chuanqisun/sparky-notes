@@ -8,7 +8,7 @@ export interface NamedInsight<T> {
 }
 
 interface RawResult {
-  insights: { name: string; description: string; ids: number[] }[];
+  findings: { name: string; description: string; evidence: number[] }[];
 }
 
 export async function synthesize<T>(fnCallProxy: FnCallProxy, items: T[], onStringify: (item: T) => string): Promise<NamedInsight<T>[]> {
@@ -18,24 +18,26 @@ export async function synthesize<T>(fnCallProxy: FnCallProxy, items: T[], onStri
   const itemsYaml = itemsWithIds
     .map((item) =>
       `
+Evidence list
+
 [id: ${item.id}]
 ${item.data}`.trim()
     )
     .join("\n\n");
 
-  ensureTokenLimit(28_000, itemsYaml);
+  const safeCount = ensureTokenLimit(28_000, itemsYaml);
 
   const result = await fnCallProxy(
     [
       {
         role: "system",
-        content: `Identify insights from the items
+        content: `Synthesize findings from evidence
         
 Requirements:
-- An insight must be based on common patterns from least 2 items
-- Reference item ids that the insight is based on
-- Provide name and description for each insight
-- Each item can support multiple insights
+- **two or more** evidence items per finding
+- Provide name and a one-line description for each finding
+- Each evidence can appear in zero, one, or multiple findings
+- Discard unused evidence
           `.trim(),
       },
       {
@@ -44,44 +46,45 @@ Requirements:
       },
     ],
     {
-      max_tokens: 1200, // TODO estimate tokens based on input size
+      max_tokens: 200 + Math.round(safeCount * 1.5), // assume 200 token overhead + 1.5X expansion from input
       models: ["gpt-4", "gpt-4-32k"],
-      function_call: { name: "identify_insights" },
+      temperature: 0.5,
+      function_call: { name: "synthesize_findings" },
       functions: [
         {
-          name: "identify_insights",
+          name: "synthesize_findings",
           description: "",
           parameters: {
             type: "object",
             properties: {
-              insights: {
+              findings: {
                 type: "array",
-                description: `List of insights`,
+                description: `List of findings`,
                 items: {
                   type: "object",
                   properties: {
                     name: {
                       type: "string",
-                      description: `name of the insight`,
+                      description: `name of the finding`,
                     },
                     description: {
                       type: "string",
-                      description: `description of the insight`,
+                      description: `description of the finding`,
                     },
-                    ids: {
+                    evidence: {
                       type: "array",
-                      description: `ids of items belonging to the insight`,
+                      description: `ids of evidence that support the finding`,
                       minItems: 2,
                       items: {
                         type: "number",
                       },
                     },
                   },
-                  required: ["name", "theme", "ids"],
+                  required: ["name", "description", "evidence"],
                 },
               },
             },
-            required: ["insights"],
+            required: ["findings"],
           },
         },
       ],
@@ -89,13 +92,13 @@ Requirements:
   );
 
   const parsedResults = JSON.parse(result.arguments) as RawResult;
-  const mappedResults: NamedInsight<T>[] = parsedResults.insights.map((category) => ({
+  const mappedResults: NamedInsight<T>[] = parsedResults.findings.map((category) => ({
     name: category.name,
     description: category.description,
-    items: category.ids.map((id) => originalItems.find((item) => item.id === id)!.data).filter(Boolean),
+    items: category.evidence.map((id) => originalItems.find((item) => item.id === id)!.data).filter(Boolean),
   }));
 
-  const unusedItems = originalItems.filter((item) => parsedResults.insights.every((cateogry) => !cateogry.ids.includes(item.id)));
+  const unusedItems = originalItems.filter((item) => parsedResults.findings.every((cateogry) => !cateogry.evidence.includes(item.id)));
   if (unusedItems.length) {
     mappedResults.push({
       name: "Unused",

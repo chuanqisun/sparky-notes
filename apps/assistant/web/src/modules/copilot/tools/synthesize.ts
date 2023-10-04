@@ -26,6 +26,7 @@ export function synthesizeTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFi
         const mutation: MutationRequest = {
           createSections: groupedIds.map((group) => ({
             name: group.name,
+            createSummary: group.description,
             moveStickies: group.ids,
           })),
           showSuccessMessage: "✅ Synthesizing done",
