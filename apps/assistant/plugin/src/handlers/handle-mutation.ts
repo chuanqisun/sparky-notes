@@ -11,40 +11,13 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
 
   const layoutContainer = figma.createSection();
 
-  function cloneStickiesToSection(section: SectionNode, stickyTexts: string[]) {
-    const cloneStickyById = (id: string) => {
-      return (figma.getNodeById(id) as StickyNode)?.clone();
-    };
-
-    const existingStickies = stickyTexts.map(cloneStickyById).filter(Boolean) as StickyNode[];
-    appendAsTiles(
-      section,
-      existingStickies,
-      getNextHorizontalTilePosition.bind(null, {
-        gap: 32,
-      })
-    );
-  }
+  const isWideWidth = message.mutationRequest.createSections?.some((createSection) => (createSection.createSummary?.split(" ").length ?? 0) > 40) ?? false;
 
   const createdSections = (message.mutationRequest.createSections ?? []).map((createSection) => {
     // create section, then clone stickies into the section
     const section = figma.createSection();
     section.name = createSection.name;
-    if (createSection.createSummary) {
-      const summarySticky = figma.createSticky();
-      summarySticky.text.characters = createSection.createSummary;
-      summarySticky.text.fontSize = 16;
-      summarySticky.text.fontName = { family: "Inter", style: "Semi Bold" };
-      setFillColor(stickyColors.LightGray, summarySticky);
-
-      appendAsTiles(
-        section,
-        [summarySticky],
-        getNextHorizontalTilePosition.bind(null, {
-          gap: 32,
-        })
-      );
-    }
+    if (createSection.createSummary) createSectionSummary(section, isWideWidth, createSection.createSummary);
     if (createSection.moveStickies) cloneStickiesToSection(section, createSection.moveStickies);
 
     return section;
@@ -95,4 +68,36 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
 }
 function isNotNull<T>(value: T | null): value is T {
   return value !== null;
+}
+
+function cloneStickiesToSection(section: SectionNode, stickyTexts: string[]) {
+  const cloneStickyById = (id: string) => {
+    return (figma.getNodeById(id) as StickyNode)?.clone();
+  };
+
+  const existingStickies = stickyTexts.map(cloneStickyById).filter(Boolean) as StickyNode[];
+  appendAsTiles(
+    section,
+    existingStickies,
+    getNextHorizontalTilePosition.bind(null, {
+      gap: 32,
+    })
+  );
+}
+
+function createSectionSummary(section: SectionNode, isWideWidth: boolean, summary: string) {
+  const summarySticky = figma.createSticky();
+  summarySticky.text.characters = summary;
+  summarySticky.text.fontSize = 16;
+  summarySticky.text.fontName = { family: "Inter", style: "Semi Bold" };
+  setFillColor(stickyColors.LightGray, summarySticky);
+  summarySticky.isWideWidth = isWideWidth;
+
+  appendAsTiles(
+    section,
+    [summarySticky],
+    getNextHorizontalTilePosition.bind(null, {
+      gap: 32,
+    })
+  );
 }
