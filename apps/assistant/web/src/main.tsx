@@ -193,7 +193,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               )}
               {isConnected && (
                 <>
-                  <button class="u-reset c-app-menu--btn" onClick={() => location.replace("./copilot.html")}>
+                  <button class="u-reset c-app-menu--btn" onClick={() => location.replace(`./copilot.html?t=${Date.now()}`)}>
                     Copilot
                   </button>
                   <button class="u-reset c-app-menu--btn" onClick={signOut}>

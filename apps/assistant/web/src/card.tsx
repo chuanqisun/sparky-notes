@@ -90,7 +90,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       {isConnected !== false && report && (
         <div class="c-scroll-area c-card-scroll-action-container">
           <ReportViewer className="c-card-scroll-action-container--grow" report={report} onAddMultiple={handleAddCards} onOpen={handleOpenCard} />
-          <button class="u-reset c-back-button c-top-divider" onClick={() => location.replace("./index.html")}>
+          <button class="u-reset c-back-button c-top-divider" onClick={() => location.replace(`./index.html?t=${Date.now()}`)}>
             Find other insights
           </button>
         </div>
