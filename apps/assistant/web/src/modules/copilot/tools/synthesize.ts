@@ -23,7 +23,12 @@ export function synthesizeTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFi
       const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: notification }), "Synthesizing");
 
       try {
-        const response = await synthesize(fnCallProxy, contentNodestoIdStickies(input), args["itemType"], getItemText);
+        const response = await synthesize(
+          fnCallProxy,
+          contentNodestoIdStickies(input).filter((input) => input.content.trim()),
+          args["itemType"],
+          getItemText
+        );
 
         const groupedIds = response.map((group) => ({
           ...group,

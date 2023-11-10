@@ -44,60 +44,66 @@ export function filterTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFigma<
 
         const [acceptedContainer, rejectedContainer, errorsContaienr] = mutationResponse.createdSections;
 
-        const filterResults = await filter(fnCallProxy, args["predicate"], getItemText, contentNodestoIdStickies(input), {
-          onAccept: (item) =>
-            proxyToFigma.request({
-              mutationRequest: {
-                updateSections: [
-                  {
-                    id: acceptedContainer,
-                    moveStickies: [item.id],
-                  },
-                  {
-                    id: rejectedContainer,
-                  },
-                  {
-                    id: errorsContaienr,
-                  },
-                ],
-              },
-            }),
-          onReject: (item) =>
-            proxyToFigma.request({
-              mutationRequest: {
-                updateSections: [
-                  {
-                    id: acceptedContainer,
-                  },
-                  {
-                    id: rejectedContainer,
-                    moveStickies: [item.id],
-                  },
-                  {
-                    id: errorsContaienr,
-                  },
-                ],
-              },
-            }),
+        const filterResults = await filter(
+          fnCallProxy,
+          args["predicate"],
+          getItemText,
+          contentNodestoIdStickies(input).filter((node) => node.content.trim()),
+          {
+            onAccept: (item) =>
+              proxyToFigma.request({
+                mutationRequest: {
+                  updateSections: [
+                    {
+                      id: acceptedContainer,
+                      moveStickies: [item.id],
+                    },
+                    {
+                      id: rejectedContainer,
+                    },
+                    {
+                      id: errorsContaienr,
+                    },
+                  ],
+                },
+              }),
+            onReject: (item) =>
+              proxyToFigma.request({
+                mutationRequest: {
+                  updateSections: [
+                    {
+                      id: acceptedContainer,
+                    },
+                    {
+                      id: rejectedContainer,
+                      moveStickies: [item.id],
+                    },
+                    {
+                      id: errorsContaienr,
+                    },
+                  ],
+                },
+              }),
 
-          onError: (item) =>
-            proxyToFigma.request({
-              mutationRequest: {
-                updateSections: [
-                  {
-                    id: acceptedContainer,
-                  },
-                  {
-                    id: rejectedContainer,
-                  },
-                  {
-                    id: errorsContaienr,
-                    moveStickies: [item.id],
-                  },
-                ],
-              },
-            }),
-        });
+            onError: (item) =>
+              proxyToFigma.request({
+                mutationRequest: {
+                  updateSections: [
+                    {
+                      id: acceptedContainer,
+                    },
+                    {
+                      id: rejectedContainer,
+                    },
+                    {
+                      id: errorsContaienr,
+                      moveStickies: [item.id],
+                    },
+                  ],
+                },
+              }),
+          }
+        );
 
         if (!filterResults.errors.length) {
           // empty mutation just to align the items

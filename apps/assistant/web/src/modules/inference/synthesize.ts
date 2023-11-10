@@ -30,7 +30,10 @@ ${item.data}`.trim()
     )
     .join("\n\n");
 
-  const safeCount = ensureTokenLimit(28_000, itemsYaml);
+  const safeCount = ensureTokenLimit(8_000, itemsYaml);
+  const maxTokens = 200 + Math.round(safeCount * 2); // assume 200 token overhead + 2X expansion from input
+  if (maxTokens > 32_000) throw new Error("Content exceeds max token limit. Reduce the selection and retry.");
+  console.log({ maxTokens, safeCount });
 
   const result = await fnCallProxy(
     [
@@ -51,7 +54,7 @@ Requirements:
       },
     ],
     {
-      max_tokens: 200 + Math.round(safeCount * 1.5), // assume 200 token overhead + 1.5X expansion from input
+      max_tokens: maxTokens,
       models: ["gpt-4", "gpt-4-32k"],
       temperature: 0.5,
       function_call: { name: "synthesize_findings" },
