@@ -14,7 +14,6 @@ import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { chat } from "./modules/openai/chat";
 import { completions } from "./modules/openai/completion";
-import { embedding } from "./modules/openai/embedding";
 import { loadOpenAIProxies, plexChat } from "./modules/openai/plexchat";
 import { rateLimit } from "./modules/rate-limit/rate-limit";
 import { webCrawl } from "./modules/web/crawl";
@@ -44,7 +43,7 @@ app.post("/openai/completions", [
     key: process.env.OPENAI_API_DEV_KEY!,
   }),
 ]);
-// chat is actuall limited to 300 rpm. but response time seems unstable at that rate
+// TODO: migrate all chat endpoints to plexchat
 app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! })]);
 app.post("/openai/chat/v3.5-turbo", [
   rateLimit(300),
@@ -60,11 +59,6 @@ app.post("/openai/chat/v4-32k", [
   rateLimit(1),
   validateHitsToken,
   chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_DEV_KEY! }),
-]);
-app.post("/openai/embeddings", [
-  rateLimit(300),
-  validateHitsToken,
-  embedding({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_PROD_KEY! }),
 ]);
 
 app.post("/web/search", [validateHitsToken, webSearch]);

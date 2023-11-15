@@ -1,17 +1,16 @@
-import type { ChatInput, ChatMessage, ChatOutput, PlexChatInput, PlexChatModels, PlexChatOutput } from "@h20/server";
+import type { ChatInput, ChatMessage, ChatOutput, ModelName } from "@h20/server";
 import type { H20Proxy } from "../h20/proxy";
 
-export type RawProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<ChatOutput>;
 export type ChatProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<string>;
 export type FnCallProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<{ arguments: string; name: string }>;
 
 export interface SimpleModelConfig extends Partial<ChatInput> {
-  models?: PlexChatModels[];
+  models?: ModelName[];
 }
 
 export function getChatProxy(h20Proxy: H20Proxy): ChatProxy {
   const proxy: ChatProxy = async (messages, modelConfig) => {
-    const payload: PlexChatInput = {
+    const payload: ChatInput = {
       temperature: 0,
       top_p: 1,
       frequency_penalty: 0,
@@ -23,7 +22,7 @@ export function getChatProxy(h20Proxy: H20Proxy): ChatProxy {
       ...modelConfig,
     };
 
-    const rawResult = await h20Proxy<PlexChatInput, PlexChatOutput>("/openai/plexchat", payload);
+    const rawResult = await h20Proxy<ChatInput, ChatOutput>("/openai/plexchat", payload);
 
     return rawResult.choices[0].message.content ?? "";
   };
@@ -33,7 +32,7 @@ export function getChatProxy(h20Proxy: H20Proxy): ChatProxy {
 
 export function getFnCallProxy(h20Proxy: H20Proxy): FnCallProxy {
   const proxy: FnCallProxy = async (messages, modelConfig) => {
-    const payload: PlexChatInput = {
+    const payload: ChatInput = {
       temperature: 0,
       top_p: 1,
       frequency_penalty: 0,
@@ -45,7 +44,7 @@ export function getFnCallProxy(h20Proxy: H20Proxy): FnCallProxy {
       ...modelConfig,
     };
 
-    const rawResult = await h20Proxy<PlexChatInput, PlexChatOutput>("/openai/plexchat", payload);
+    const rawResult = await h20Proxy<ChatInput, ChatOutput>("/openai/plexchat", payload);
     if (rawResult.choices[0].finish_reason !== "stop") throw new Error("Abnormal finish reason");
 
     return rawResult.choices[0].message.function_call!;

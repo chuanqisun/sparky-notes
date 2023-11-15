@@ -7,9 +7,7 @@ let memoProxies: { chatProxy: SimpleChatProxy; embedProxy: SimpleEmbedProxy } | 
 
 export type { ChatInput, ChatMessage, ChatOutput } from "@h20/plex-chat";
 
-const { chatProxy } = loadOpenAIProxies();
-
-export const plexChat: (chatProxy: SimpleChatProxy) => RequestHandler = () => {
+export const plexChat: (chatProxy: SimpleChatProxy) => RequestHandler = (chatProxy) => {
   return async (req, res, next) => {
     try {
       const body = req.body as SimpleChatInput;
