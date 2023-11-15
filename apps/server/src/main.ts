@@ -40,25 +40,25 @@ app.post("/openai/completions", [
   validateHitsToken,
   completions({
     endpoint: process.env.OPENAI_COMPLETION_ENDPOINT!,
-    key: process.env.OPENAI_API_DEV_KEY!,
+    key: process.env.HITS_OPENAI_DEV_API_KEY!,
   }),
 ]);
 // TODO: migrate all chat endpoints to plexchat
-app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! })]);
+app.post("/openai/chat", [rateLimit(300), validateHitsToken, chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.HITS_OPENAI_DEV_API_KEY! })]);
 app.post("/openai/chat/v3.5-turbo", [
   rateLimit(300),
   validateHitsToken,
-  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.OPENAI_API_PROD_KEY! }),
+  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT!, key: process.env.HITS_OPENAI_DEV_API_KEY! }),
 ]);
 app.post("/openai/chat/v4-8k", [
   rateLimit(1),
   validateHitsToken,
-  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!, key: process.env.OPENAI_API_DEV_KEY! }),
+  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_8K!, key: process.env.HITS_OPENAI_DEV_API_KEY! }),
 ]);
 app.post("/openai/chat/v4-32k", [
   rateLimit(1),
   validateHitsToken,
-  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.OPENAI_API_DEV_KEY! }),
+  chat({ endpoint: process.env.OPENAI_CHAT_ENDPOINT_V4_32K!, key: process.env.HITS_OPENAI_DEV_API_KEY! }),
 ]);
 
 app.post("/web/search", [validateHitsToken, webSearch]);
