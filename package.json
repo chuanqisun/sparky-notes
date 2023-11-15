@@ -4,8 +4,8 @@
   "description": "",
   "scripts": {
     "dev": "concurrently npm:dev:*",
-    "dev-assistant": "concurrently npm:dev:assistant-plugin npm:dev:assistant-web npm:dev:server",
-    "dev-impromptu": "concurrently npm:dev:impromptu npm:dev:server",
+    "assistant": "concurrently npm:dev:assistant-plugin npm:dev:assistant-web npm:dev:server",
+    "impromptu": "concurrently npm:dev:impromptu npm:dev:server",
     "dev:assistant-plugin": "npm run dev -w apps/assistant/plugin",
     "dev:assistant-web": "npm run dev -w apps/assistant/web",
     "dev:server": "npm run dev -w apps/server",
