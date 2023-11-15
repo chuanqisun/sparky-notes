@@ -5,7 +5,7 @@ import { devChatEndpointManifest, prodChatEndpointManifest } from "./plexchat-co
 
 let memoProxies: { chatProxy: SimpleChatProxy; embedProxy: SimpleEmbedProxy } | null = null;
 
-export type { ChatInput, ChatMessage, ChatOutput } from "@h20/plex-chat";
+export type { ChatInput, ChatMessage, ChatOutput } from "plexchat";
 
 export const plexChat: (chatProxy: SimpleChatProxy) => RequestHandler = (chatProxy) => {
   return async (req, res, next) => {
