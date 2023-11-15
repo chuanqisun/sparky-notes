@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import assert from "node:assert";
 import { LogLevel, plexchat, type SimpleChatInput, type SimpleChatProxy, type SimpleEmbedProxy } from "plexchat";
-import { devChatEndpointManifest, prodChatEndpointManifest } from "../../plexchat-config";
+import { devChatEndpointManifest, prodChatEndpointManifest } from "./plexchat-config";
 
 let memoProxies: { chatProxy: SimpleChatProxy; embedProxy: SimpleEmbedProxy } | null = null;
 
