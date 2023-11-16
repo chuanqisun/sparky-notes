@@ -2,6 +2,7 @@ import { html } from "lit-html";
 import type { ChatMessage, ModelName, SimpleChatProxy } from "plexchat";
 import { BehaviorSubject, Observable, Subject, combineLatestWith, firstValueFrom, map } from "rxjs";
 
+import type { MessageFromUI } from "../../../../types/message";
 import "./chat.css";
 
 const defaultMessages = [
@@ -34,7 +35,7 @@ export const createChatState = () =>
     model: defaultModel,
   });
 
-export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $state: Subject<ChatState> }) => (props: {}) => {
+export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $state: Subject<ChatState>; $tx: Subject<MessageFromUI> }) => {
   const $handlers = config.$state.pipe(
     map((state) => {
       const handleTemperatureChange = (e: InputEvent) => {
@@ -121,7 +122,9 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $s
         });
       };
 
-      const handleSave = () => {};
+      const handleSave = () => {
+        config.$tx;
+      };
 
       return {
         handleTemperatureChange,

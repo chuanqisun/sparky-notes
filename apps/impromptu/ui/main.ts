@@ -36,13 +36,11 @@ const $chatProxy = $validToken.pipe(
 
 useAppMenu({ container: document.getElementById("app-menu") as HTMLDetailsElement, $isTokenValid });
 const { $selectedToolName } = useToolsMenu({ container: document.getElementById("tools-menu-container") as HTMLElement });
-$selectedToolName.subscribe(console.log);
 useActiveTool({
   $selectedToolName,
-  $tx,
   container: document.getElementById("active-tool-container")!,
   tools: {
-    chat: createChat({ $chatProxy, $state: createChatState() }),
+    chat: createChat({ $chatProxy, $state: createChatState(), $tx }),
     conceptSearch: createConceptSearch(),
     noTool: createNoTool(),
   },
