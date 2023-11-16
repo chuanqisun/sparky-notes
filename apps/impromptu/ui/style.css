@@ -32,3 +32,8 @@ summary {
   user-select: none;
   cursor: pointer;
 }
+
+input:invalid {
+  outline: 3px solid red;
+  outline-offset: -2px;
+}

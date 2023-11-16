@@ -1,10 +1,9 @@
 import { html } from "lit-html";
-import { of, type Subject } from "rxjs";
-import type { MessageFromUI } from "../../../types/message";
+import { of } from "rxjs";
 
-export const createConceptSearch = () => (props: { id: string; parsedBlob: any; $tx: Subject<MessageFromUI> }) => {
+export const createConceptSearch = () => (props: {}) => {
   return of(html`
     <input type="search" placeholder="Sidebar" /><button>Search</button>
-    <div>${JSON.stringify(props.parsedBlob)}</div>
+    <div>...</div>
   `);
 };

@@ -8,7 +8,7 @@ import { getFigmaProxy } from "./lib/figma-proxy";
 import { $focusOnce } from "./lib/focus-window";
 import { getH20Proxy } from "./lib/h20-proxy";
 import { useToolsMenu } from "./lib/tools-menu";
-import { createChat } from "./lib/tools/chat/chat";
+import { createChat, createChatState } from "./lib/tools/chat/chat";
 import { createConceptSearch } from "./lib/tools/concept-search";
 import { createNoTool } from "./lib/tools/no-tool";
 import "./style.css";
@@ -35,16 +35,15 @@ const $chatProxy = $validToken.pipe(
 );
 
 useAppMenu({ container: document.getElementById("app-menu") as HTMLDetailsElement, $isTokenValid });
-useToolsMenu({ $tx, container: document.getElementById("tools-menu-container") as HTMLElement });
+const { $selectedToolName } = useToolsMenu({ container: document.getElementById("tools-menu-container") as HTMLElement });
+$selectedToolName.subscribe(console.log);
 useActiveTool({
-  $rx,
+  $selectedToolName,
   $tx,
   container: document.getElementById("active-tool-container")!,
   tools: {
-    chat: createChat({ $chatProxy }),
+    chat: createChat({ $chatProxy, $state: createChatState() }),
     conceptSearch: createConceptSearch(),
     noTool: createNoTool(),
   },
 });
-
-// Communicate with Figma

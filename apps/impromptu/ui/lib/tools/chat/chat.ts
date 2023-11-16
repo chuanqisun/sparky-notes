@@ -1,7 +1,6 @@
 import { html } from "lit-html";
 import type { ChatMessage, ModelName, SimpleChatProxy } from "plexchat";
-import { Observable, firstValueFrom, of, type Subject } from "rxjs";
-import type { MessageFromUI } from "../../../../types/message";
+import { BehaviorSubject, Observable, Subject, combineLatestWith, firstValueFrom, map } from "rxjs";
 
 import "./chat.css";
 
@@ -20,81 +19,71 @@ const defaultTemperature = 0;
 const defaultTokenLimit = 200;
 const defaultModel = "gpt-3.5";
 
-export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy> }) => (props: { id: string; parsedBlob: any; $tx: Subject<MessageFromUI> }) => {
-  const currentMessages = (props.parsedBlob.messages as { role: string; content: string }[]) ?? defaultMessages;
+export interface ChatState {
+  messages: { role: string; content: string }[];
+  temperature: number;
+  tokenLimit: number;
+  model: string;
+}
 
-  const { temperature = defaultTemperature, tokenLimit = defaultTokenLimit, model = defaultModel } = props.parsedBlob;
+export const createChatState = () =>
+  new BehaviorSubject<ChatState>({
+    messages: [...defaultMessages],
+    temperature: defaultTemperature,
+    tokenLimit: defaultTokenLimit,
+    model: defaultModel,
+  });
 
-  const handleTempChange = (e: InputEvent) => {
-    const temp = parseFloat((e.target as HTMLInputElement).value);
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $state: Subject<ChatState> }) => (props: {}) => {
+  const $handlers = config.$state.pipe(
+    map((state) => {
+      const handleTemperatureChange = (e: InputEvent) => {
+        const temp = parseFloat((e.target as HTMLInputElement).value);
+        config.$state.next({
+          ...state,
           temperature: temp,
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleTokenLimitChange = (e: InputEvent) => {
-    const limit = parseInt((e.target as HTMLInputElement).value);
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+      const handleTokenLimitChange = (e: InputEvent) => {
+        const limit = parseInt((e.target as HTMLInputElement).value);
+        config.$state.next({
+          ...state,
           tokenLimit: limit,
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleModelChange = (e: InputEvent) => {
-    const model = (e.target as HTMLSelectElement).value;
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+      const handleModelChange = (e: InputEvent) => {
+        const model = (e.target as HTMLSelectElement).value;
+        config.$state.next({
+          ...state,
           model,
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleInput = (e: InputEvent, index: number) => {
-    const messageInput = (e.target as HTMLInputElement).value;
-    const updatedMessages = currentMessages.map((message, i) => (i === index ? { ...message, content: messageInput } : message));
+      const handleInput = (e: InputEvent, index: number) => {
+        const messageInput = (e.target as HTMLInputElement).value;
+        const updatedMessages = state.messages.map((message, i) => (i === index ? { ...message, content: messageInput } : message));
 
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+        config.$state.next({
+          ...state,
           messages: updatedMessages,
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleSubmit = async () => {
-    const chatProxy = await firstValueFrom(config.$chatProxy);
-    const messageOutput = await chatProxy({
-      messages: currentMessages as ChatMessage[],
-      temperature,
-      max_tokens: tokenLimit,
-      models: getModels(model),
-    }).then((output) => output.choices[0].message.content ?? "Error");
+      const handleSubmit = async () => {
+        const chatProxy = await firstValueFrom(config.$chatProxy);
+        const messageOutput = await chatProxy({
+          messages: state.messages as ChatMessage[],
+          temperature: state.temperature,
+          max_tokens: state.tokenLimit,
+          models: getModels(state.model),
+        }).then((output) => output.choices[0].message.content ?? "Error");
 
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+        config.$state.next({
+          ...state,
           messages: [
-            ...currentMessages,
+            ...state.messages,
             {
               role: "assistant",
               content: messageOutput,
@@ -104,77 +93,104 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy> }) 
               content: "",
             },
           ],
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleReset = () => {
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+      const handleReset = () => {
+        config.$state.next({
+          ...state,
           temperature: defaultTemperature,
           tokenLimit: defaultTokenLimit,
           messages: [...defaultMessages],
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleDelete = (index: number, length: number) => {
-    // remove items at index n and n + 1
-    let updatedMessages = currentMessages.filter((message, i) => i !== index && i !== index + 1);
+      const handleDelete = (index: number, length: number) => {
+        const lastMessageRole = state.messages[length - 1]?.role;
 
-    // if only 1 message left, insert default message
-    updatedMessages = updatedMessages.length === 1 ? [...updatedMessages, defaultMessages[1]] : updatedMessages;
+        // remove items at index n and n + 1
+        let updatedMessages = state.messages.filter((message, i) => i !== index && i !== index + 1);
 
-    // if last message is not user message, insert empty user message
-    updatedMessages = updatedMessages[updatedMessages.length - 1].role !== "user" ? [...updatedMessages, { role: "user", content: "" }] : updatedMessages;
+        // if only 1 message left, insert default message
+        updatedMessages = updatedMessages.length === 1 ? [...updatedMessages, defaultMessages[1]] : updatedMessages;
 
-    props.$tx.next({
-      setNodeBlob: {
-        id: props.id,
-        blob: JSON.stringify({
-          ...props.parsedBlob,
+        // if last message is not user message, insert empty user message
+        updatedMessages = updatedMessages[updatedMessages.length - 1].role !== "user" ? [...updatedMessages, { role: "user", content: "" }] : updatedMessages;
+
+        config.$state.next({
+          ...state,
           messages: updatedMessages,
-        }),
-      },
-    });
-  };
+        });
+      };
 
-  const handleSave = () => {};
+      const handleSave = () => {};
 
-  return of(html`
-    <label for="token-limit">Limit</label>
-    <input class="c-chat-config-input" id="token-limit" type="number" step="100" min="0" max="32000" .value=${tokenLimit} @input=${handleTokenLimitChange} />
-    <label for="temperature">Temp</label>
-    <input class="c-chat-config-input" id="temperature" type="number" step="0.1" min="0" max="1" .value=${temperature} @input=${handleTempChange} />
-    <label for="model">Model</label>
-    <select class="c-chat-config-select" id="model" .value=${model} @input=${handleModelChange}>
-      <option value="gpt-3.5">gpt-3.5</option>
-      <option value="gpt-4">gpt-4</option>
-    </select>
-    <div class="c-chat-list">
-      ${currentMessages.map(
-        (message, index) => html`
-          <div class="c-chat-entry">
-            <div>
-              <label for=${`chat-message-${index}`}><b>${message.role === "assistant" ? "┗╸" : ""}${message.role}</b></label
-              >${message.role === "user" ? html`<button @click=${() => handleDelete(index, currentMessages.length)}>Delete</button>` : ""}
-            </div>
-            <div class="u-auto-resize" data-resize-textarea-content=${message.content}>
-              <textarea id=${`chat-message-${index}`} .value=${message.content} @input=${(e: InputEvent) => handleInput(e, index)}></textarea>
-            </div>
+      return {
+        handleTemperatureChange,
+        handleTokenLimitChange,
+        handleModelChange,
+        handleInput,
+        handleSubmit,
+        handleReset,
+        handleDelete,
+        handleSave,
+      };
+    })
+  );
+
+  return config.$state.pipe(
+    combineLatestWith($handlers),
+    map(
+      ([state, handlers]) =>
+        html`
+          <label for="token-limit">Limit</label>
+          <input
+            class="c-chat-config-input"
+            id="token-limit"
+            type="number"
+            step="100"
+            min="0"
+            max="32000"
+            .value=${state.tokenLimit}
+            @input=${handlers.handleTokenLimitChange}
+          />
+          <label for="temperature">Temp</label>
+          <input
+            class="c-chat-config-input"
+            id="temperature"
+            type="number"
+            step="0.1"
+            min="0"
+            max="1"
+            .value=${state.temperature}
+            @input=${handlers.handleTemperatureChange}
+          />
+          <label for="model">Model</label>
+          <select class="c-chat-config-select" id="model" .value=${state.model} @input=${handlers.handleModelChange}>
+            <option value="gpt-3.5">gpt-3.5</option>
+            <option value="gpt-4">gpt-4</option>
+          </select>
+          <div class="c-chat-list">
+            ${state.messages.map(
+              (message, index) => html`
+                <div class="c-chat-entry">
+                  <div>
+                    <label for=${`chat-message-${index}`}><b>${message.role === "assistant" ? "┗╸" : ""}${message.role}</b></label
+                    >${message.role === "user" ? html`<button @click=${() => handlers.handleDelete(index, state.messages.length)}>Delete</button>` : ""}
+                  </div>
+                  <div class="u-auto-resize" data-resize-textarea-content=${message.content}>
+                    <textarea id=${`chat-message-${index}`} .value=${message.content} @input=${(e: InputEvent) => handlers.handleInput(e, index)}></textarea>
+                  </div>
+                </div>
+              `
+            )}
           </div>
+          <button @click=${handlers.handleSubmit}>Next</button>
+          <button @click=${handlers.handleReset}>Reset</button>
+          <button @click=${handlers.handleSave}>Save</button>
         `
-      )}
-    </div>
-    <button @click=${handleSubmit}>Next</button>
-    <button @click=${handleReset}>Reset</button>
-    <button @click=${handleSave}>Save</button>
-  `);
+    )
+  );
 };
 
 function getModels(model: string): ModelName[] {

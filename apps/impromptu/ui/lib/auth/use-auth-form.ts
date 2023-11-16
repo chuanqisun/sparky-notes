@@ -30,7 +30,7 @@ export function useAuthForm(props: { $rx: Observable<MessageFromFigma>; $tx: Sub
     .pipe(
       map(getMinutesLeft),
       map(getTokenStatusLabel),
-      combineLatestWith($tokenInput),
+      combineLatestWith($tokenInput, $isTokenValid),
       tap(([label, token]) => {
         render(
           html`
@@ -47,6 +47,9 @@ export function useAuthForm(props: { $rx: Observable<MessageFromFigma>; $tx: Sub
           `,
           props.container
         );
+      }),
+      tap(([_label, _token, valid]) => {
+        props.container.querySelector("input")?.setCustomValidity(valid === false ? "Missing valid token" : "");
       })
     )
     .subscribe();
