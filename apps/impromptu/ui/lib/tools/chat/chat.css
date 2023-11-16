@@ -34,3 +34,11 @@
     border-color: transparent;
   }
 }
+
+.c-chat-config-input {
+  width: 60px;
+}
+
+.c-chat-config-select {
+  width: 100px;
+}
