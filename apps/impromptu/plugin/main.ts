@@ -1,7 +1,7 @@
 import { handleAuthMssages } from "./handlers/handle-auth-messages";
+import { handleDataNode } from "./handlers/handle-data-node";
 import { handleGetSelectionSummary } from "./handlers/handle-get-selection-summary";
 import { getSelectionChangeHandler } from "./handlers/handle-selection-change";
-import { handleDataNodeAccess } from "./handlers/handle-shelf-access";
 import { getUINotifier } from "./lib/notify-ui";
 
 // perf optimization
@@ -14,7 +14,7 @@ const notifyUI = getUINotifier();
 
 const handleSelectionChange = getSelectionChangeHandler({ notifyUI });
 
-const handlers = [handleDataNodeAccess(), handleAuthMssages({ notifyUI }), handleGetSelectionSummary({ callback: handleSelectionChange })];
+const handlers = [handleDataNode(), handleAuthMssages({ notifyUI }), handleGetSelectionSummary({ callback: handleSelectionChange })];
 
 figma.ui.onmessage = (msg) => {
   console.log("[debug] message from ui", msg);

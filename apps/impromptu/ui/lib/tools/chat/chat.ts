@@ -123,7 +123,12 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $s
       };
 
       const handleSave = () => {
-        config.$tx;
+        config.$tx.next({
+          createDataNode: {
+            displayName: "Chat history",
+            blob: JSON.stringify(state.messages),
+          },
+        });
       };
 
       return {
