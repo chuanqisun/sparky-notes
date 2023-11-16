@@ -1,5 +1,6 @@
 import type { MessageFromUI } from "../../types/message";
 import { AutoLayout, Text } from "../lib/figma-nodes";
+import { moveToViewCenter } from "../lib/mutation";
 
 export const handleAddTool = () => async (msg: MessageFromUI) => {
   if (msg.addTool) {
@@ -13,5 +14,7 @@ export const handleAddTool = () => async (msg: MessageFromUI) => {
     node.setPluginData("blob", msg.addTool.blob);
     figma.currentPage.appendChild(node);
     figma.currentPage.selection = [node];
+
+    moveToViewCenter([node]);
   }
 };
