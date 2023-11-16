@@ -1,7 +1,7 @@
 import { html } from "lit-html";
 import type { ChatMessage, SimpleChatProxy } from "plexchat";
 import { Observable, firstValueFrom, of, type Subject } from "rxjs";
-import type { MessageFromUI } from "../../../types/message";
+import type { MessageFromUI } from "../../../../types/message";
 
 import "./chat.css";
 
@@ -73,19 +73,22 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy> }) 
     });
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = (index: number, length: number) => {
     // remove items at index n and n + 1
-    const updatedMessages = currentMessages.filter((message, i) => i !== index && i !== index + 1);
+    let updatedMessages = currentMessages.filter((message, i) => i !== index && i !== index + 1);
 
     // if only 1 message left, insert default message
-    const validMessages = updatedMessages.length === 1 ? [...updatedMessages, defaultMessages[1]] : updatedMessages;
+    updatedMessages = updatedMessages.length === 1 ? [...updatedMessages, defaultMessages[1]] : updatedMessages;
+
+    // if last message is not user message, insert empty user message
+    updatedMessages = updatedMessages[updatedMessages.length - 1].role !== "user" ? [...updatedMessages, { role: "user", content: "" }] : updatedMessages;
 
     props.$tx.next({
       setNodeBlob: {
         id: props.id,
         blob: JSON.stringify({
           ...props.parsedBlob,
-          messages: validMessages,
+          messages: updatedMessages,
         }),
       },
     });
@@ -98,8 +101,14 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy> }) 
       ${currentMessages.map(
         (message, index) => html`
           <div class="c-chat-entry">
-            <div><b>${message.role}</b>${message.role === "user" ? html`<button @click=${() => handleDelete(index)}>Delete</button>` : ""}</div>
-            <textarea .value=${message.content} @input=${(e: InputEvent) => handleInput(e, index)}></textarea>
+            <div>
+              <b>${message.role === "assistant" ? "┗╸" : ""}${message.role}</b>${message.role === "user"
+                ? html`<button @click=${() => handleDelete(index, currentMessages.length)}>Delete</button>`
+                : ""}
+            </div>
+            <div class="u-auto-resize" data-resize-textarea-content=${message.content}>
+              <textarea .value=${message.content} @input=${(e: InputEvent) => handleInput(e, index)}></textarea>
+            </div>
           </div>
         `
       )}

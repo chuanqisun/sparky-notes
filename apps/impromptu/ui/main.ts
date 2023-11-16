@@ -8,7 +8,7 @@ import { getFigmaProxy } from "./lib/figma-proxy";
 import { $focusOnce } from "./lib/focus-window";
 import { getH20Proxy } from "./lib/h20-proxy";
 import { useToolsMenu } from "./lib/tools-menu";
-import { createChat } from "./lib/tools/chat";
+import { createChat } from "./lib/tools/chat/chat";
 import { createConceptSearch } from "./lib/tools/concept-search";
 import { createNoTool } from "./lib/tools/no-tool";
 import "./style.css";
