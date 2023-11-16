@@ -2,7 +2,7 @@ import { html } from "lit-html";
 import type { ChatMessage, ModelName, SimpleChatProxy } from "plexchat";
 import { BehaviorSubject, Observable, Subject, combineLatestWith, firstValueFrom, map } from "rxjs";
 
-import type { MessageFromUI } from "../../../../types/message";
+import type { DataNode, MessageFromUI } from "../../../../types/message";
 import "./chat.css";
 
 const defaultMessages = [
@@ -35,7 +35,12 @@ export const createChatState = () =>
     model: defaultModel,
   });
 
-export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $state: Subject<ChatState>; $tx: Subject<MessageFromUI> }) => {
+export const createChat = (config: {
+  $currentDataNode: BehaviorSubject<DataNode | null>;
+  $chatProxy: Observable<SimpleChatProxy>;
+  $state: Subject<ChatState>;
+  $tx: Subject<MessageFromUI>;
+}) => {
   const $handlers = config.$state.pipe(
     map((state) => {
       const handleTemperatureChange = (e: InputEvent) => {
@@ -106,6 +111,13 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $s
         });
       };
 
+      const handleLoad = () => {
+        config.$state.next({
+          ...state,
+          messages: config.$currentDataNode.value === null ? [...defaultMessages] : JSON.parse(config.$currentDataNode.value.blob) ?? [...defaultMessages],
+        });
+      };
+
       const handleDelete = (index: number, length: number) => {
         // remove items at index n and n + 1
         let updatedMessages = state.messages.filter((_, i) => i !== index && i !== index + 1);
@@ -135,6 +147,7 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $s
         handleTemperatureChange,
         handleTokenLimitChange,
         handleModelChange,
+        handleLoad,
         handleInput,
         handleSubmit,
         handleReset,
@@ -194,6 +207,7 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $s
           <button @click=${handlers.handleSubmit}>Next</button>
           <button @click=${handlers.handleReset}>Reset</button>
           <button @click=${handlers.handleSave}>Save</button>
+          <button @click=${handlers.handleLoad}>Load</button>
         `
     )
   );

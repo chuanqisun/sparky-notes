@@ -1,6 +1,6 @@
 import { type ChatOutput, type SimpleChatInput, type SimpleChatProxy } from "plexchat";
-import { map, tap } from "rxjs";
-import type { MessageFromFigma, MessageFromUI } from "../types/message";
+import { BehaviorSubject, map, tap } from "rxjs";
+import type { DataNode, MessageFromFigma, MessageFromUI } from "../types/message";
 import { useActiveTool } from "./lib/active-tool";
 import { useAppMenu } from "./lib/app-menu";
 import { useAuthForm } from "./lib/auth/use-auth-form";
@@ -35,19 +35,27 @@ const $chatProxy = $validToken.pipe(
   })
 );
 
+const $currentDataNode = new BehaviorSubject<DataNode | null>(null);
+$rx.pipe(map((msg) => msg.selectionChange?.dataNodes?.at(0) ?? null)).subscribe($currentDataNode);
+
+const $dataNode = $currentDataNode.asObservable();
+
 useAppMenu({ container: document.getElementById("app-menu") as HTMLDetailsElement, $isTokenValid });
 const { $selectedToolName } = useToolsMenu({ container: document.getElementById("tools-menu-container") as HTMLElement });
 useActiveTool({
   $selectedToolName,
   container: document.getElementById("active-tool-container")!,
   tools: {
-    chat: createChat({ $chatProxy, $state: createChatState(), $tx }),
+    chat: createChat({
+      $currentDataNode,
+      $chatProxy,
+      $state: createChatState(),
+      $tx,
+    }),
     conceptSearch: createConceptSearch(),
     noTool: createNoTool(),
   },
 });
-
-const $dataNode = $rx.pipe(map((msg) => msg.selectionChange?.dataNodes?.at(0) ?? null));
 
 $dataNode.subscribe(console.log);
 
