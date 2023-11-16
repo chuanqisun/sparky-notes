@@ -12,7 +12,6 @@ export const plexChat: (chatProxy: SimpleChatProxy) => RequestHandler = (chatPro
     try {
       const body = req.body as SimpleChatInput;
       assert(Array.isArray(body.messages), "Messages must be an array");
-      assert(Array.isArray(body.models), "Models must be an array");
       const result = await chatProxy(body);
       res.json(result);
     } catch (e) {
