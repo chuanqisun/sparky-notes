@@ -106,10 +106,8 @@ export const createChat = (config: { $chatProxy: Observable<SimpleChatProxy>; $s
       };
 
       const handleDelete = (index: number, length: number) => {
-        const lastMessageRole = state.messages[length - 1]?.role;
-
         // remove items at index n and n + 1
-        let updatedMessages = state.messages.filter((message, i) => i !== index && i !== index + 1);
+        let updatedMessages = state.messages.filter((_, i) => i !== index && i !== index + 1);
 
         // if only 1 message left, insert default message
         updatedMessages = updatedMessages.length === 1 ? [...updatedMessages, defaultMessages[1]] : updatedMessages;
