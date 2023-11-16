@@ -1,5 +1,5 @@
 import { type ChatOutput, type SimpleChatInput, type SimpleChatProxy } from "plexchat";
-import { map, of, tap } from "rxjs";
+import { map, tap } from "rxjs";
 import type { MessageFromFigma, MessageFromUI } from "../types/message";
 import { useActiveTool } from "./lib/active-tool";
 import { useAppMenu } from "./lib/app-menu";
@@ -47,10 +47,11 @@ useActiveTool({
   },
 });
 
+const $dataNode = $rx.pipe(map((msg) => msg.selectionChange?.dataNodes?.at(0) ?? null));
+
+$dataNode.subscribe(console.log);
+
 useDataViewer({
-  $data: of([
-    { role: "user", content: "hello" },
-    { role: "assistant", content: "world" },
-  ]),
+  $data: $dataNode,
   container: document.getElementById("data-viewer-container")!,
 });

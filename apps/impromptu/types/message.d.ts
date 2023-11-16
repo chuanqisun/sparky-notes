@@ -12,10 +12,14 @@ export interface MessageFromFigma {
 }
 
 export interface SelectionSummary {
-  dataNodes: any[];
+  dataNodes: DataNode[];
 }
 
 export interface CreateDataNode {
   displayName: string;
+  blob: string;
+}
+
+export interface DataNode {
   blob: string;
 }

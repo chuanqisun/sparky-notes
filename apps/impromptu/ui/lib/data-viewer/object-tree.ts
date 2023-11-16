@@ -18,7 +18,7 @@ function renderObjectTreeNode({ data, level }: any): TemplateResult {
     ${Object.entries(data).map(([key, value], index) =>
       isPrimitive(value)
         ? html`<div key="${index}"><span class="c-object-viewer__key">${key}</span>: <span class="c-object-viewer__value">${value as any}</span></div>`
-        : html`<details data-level="${level}" key="${index}">
+        : html`<details data-level="${level}" key="${index}" open=${level < 2}>
             <summary>${key}</summary>
             <div class="c-object-viewer__details">${renderObjectTreeNode({ data: value, level: level + 1 })}</div>
           </details>`

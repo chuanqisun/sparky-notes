@@ -1,11 +1,13 @@
 import { render } from "lit-html";
-import { map, tap, type Observable } from "rxjs";
+import { distinctUntilChanged, map, tap, type Observable } from "rxjs";
+import type { DataNode } from "../../../types/message";
 import { renderObjectTree } from "./object-tree";
 
-export function useDataViewer(props: { $data: Observable<any>; container: HTMLElement }) {
+export function useDataViewer(props: { $data: Observable<DataNode | null>; container: HTMLElement }) {
   props.$data
     .pipe(
-      map((data) => renderObjectTree({ data })),
+      distinctUntilChanged(),
+      map((data) => renderObjectTree({ data: JSON.parse(data?.blob ?? "null") })),
       tap((template) => render(template, props.container))
     )
     .subscribe();

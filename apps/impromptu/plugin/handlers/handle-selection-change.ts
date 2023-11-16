@@ -19,7 +19,7 @@ export const getSelectionChangeHandler = (config: { notifyUI: NotifyUI }) => () 
     const type = node.getPluginData("type");
     switch (type) {
       case "data":
-        return mutableSummary.dataNodes.push({ id: node.id });
+        return mutableSummary.dataNodes.push({ blob: node.getPluginData("blob") });
     }
   });
 
