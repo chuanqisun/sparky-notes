@@ -1,0 +1,18 @@
+.c-object-viewer {
+  & details {
+    contain: content;
+  }
+
+  & summary {
+    contain: content;
+    font-weight: 600;
+  }
+
+  .c-object-viewer__key {
+    font-weight: 600;
+  }
+
+  .c-object-viewer__details {
+    padding-left: 16px;
+  }
+}

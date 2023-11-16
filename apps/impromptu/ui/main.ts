@@ -1,9 +1,10 @@
 import { type ChatOutput, type SimpleChatInput, type SimpleChatProxy } from "plexchat";
-import { map, tap } from "rxjs";
+import { map, of, tap } from "rxjs";
 import type { MessageFromFigma, MessageFromUI } from "../types/message";
 import { useActiveTool } from "./lib/active-tool";
 import { useAppMenu } from "./lib/app-menu";
 import { useAuthForm } from "./lib/auth/use-auth-form";
+import { useDataViewer } from "./lib/data-viewer/use-data-viewer";
 import { getFigmaProxy } from "./lib/figma-proxy";
 import { $focusOnce } from "./lib/focus-window";
 import { getH20Proxy } from "./lib/h20-proxy";
@@ -44,4 +45,12 @@ useActiveTool({
     conceptSearch: createConceptSearch(),
     noTool: createNoTool(),
   },
+});
+
+useDataViewer({
+  $data: of([
+    { role: "user", content: "hello" },
+    { role: "assistant", content: "world" },
+  ]),
+  container: document.getElementById("data-viewer-container")!,
 });
