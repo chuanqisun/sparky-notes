@@ -5,17 +5,14 @@
   "scripts": {
     "dev": "concurrently npm:dev:*",
     "assistant": "concurrently npm:dev:assistant-plugin npm:dev:assistant-web npm:dev:server",
-    "impromptu": "concurrently npm:dev:impromptu npm:dev:server",
     "dev:assistant-plugin": "npm run dev -w apps/assistant/plugin",
     "dev:assistant-web": "npm run dev -w apps/assistant/web",
     "dev:server": "npm run dev -w apps/server",
-    "dev:impromptu": "npm run dev -w apps/impromptu",
     "build": "concurrently npm:build:*",
     "build-assistant": "concurrently npm:build:assistant-plugin npm:build:assistant-web",
     "build:assistant-plugin": "npm run build -w apps/assistant/plugin",
     "build:assistant-web": "npm run build -w apps/assistant/web",
-    "build:server": "npm run build -w apps/server",
-    "build:impromptu": "npm run build -w apps/impromptu"
+    "build:server": "npm run build -w apps/server"
   },
   "repository": {
     "type": "git",
@@ -33,7 +30,6 @@
     "apps/assistant/plugin",
     "apps/assistant/types",
     "apps/server",
-    "apps/impromptu",
     "packages/*"
   ],
   "devDependencies": {
