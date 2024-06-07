@@ -1,4 +1,5 @@
-import type { FnCallProxy } from "../openai/proxy";
+import { ensureJsonResponse } from "../openai/ensure-json-response";
+import type { PlexChatProxy } from "../openai/proxy";
 
 export interface FilterOptions<T> {
   onAccept?: (item: T) => void;
@@ -12,7 +13,7 @@ export interface FilterResult<T> {
   errors: { item: T; error: any }[];
 }
 export async function filter<T>(
-  fnCallProxy: FnCallProxy,
+  chatProxy: PlexChatProxy,
   predicate: string,
   getItemText: (item: T) => string,
   items: T[],
@@ -27,44 +28,40 @@ export async function filter<T>(
   try {
     await Promise.all(
       items.map((item) =>
-        fnCallProxy(
-          [
-            {
-              role: "system",
-              content: `Check the provided data against this condition: "${predicate}". Respond true/false`,
+        chatProxy({
+          input: {
+            response_format: {
+              type: "json_object",
             },
-            {
-              role: "user",
-              content: getItemText(item),
-            },
-          ],
-          {
             max_tokens: 100,
-            function_call: { name: "respond_true_false" },
-            functions: [
+            messages: [
               {
-                name: "respond_true_false",
-                description: "",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    isTrue: {
-                      type: "boolean",
-                      description: `${predicate}`,
-                    },
-                  },
-                  required: ["isTrue"],
-                },
+                role: "system",
+                content: `
+Check the provided data against this condition: "${predicate}". Respond in JSON format like this:
+"""
+{"isTrue": <boolean>}
+"""
+                `.trim(),
+              },
+              {
+                role: "user",
+                content: getItemText(item),
               },
             ],
-          }
-        )
-          .then((result) => {
-            const parsedArgs = JSON.parse(result.arguments);
-            const conclusion = parsedArgs.isTrue as boolean;
-            if (typeof conclusion !== "boolean") {
-              throw new Error(`Expected boolean, got ${typeof conclusion}`);
-            }
+          },
+          context: {
+            models: ["gpt-4o"],
+          },
+        })
+          .then(async (result) => {
+            const conclusion = await ensureJsonResponse((rawResponse) => {
+              if (typeof rawResponse.isTrue !== "boolean") {
+                throw new Error(`Expected boolean, got ${typeof rawResponse.isTrue}`);
+              }
+
+              return rawResponse.isTrue as boolean;
+            }, result);
 
             if (conclusion) {
               options?.onAccept?.(item);

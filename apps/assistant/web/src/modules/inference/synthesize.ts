@@ -1,4 +1,5 @@
-import type { FnCallProxy } from "../openai/proxy";
+import { ensureJsonResponse } from "../openai/ensure-json-response";
+import type { PlexChatProxy } from "../openai/proxy";
 import { ensureTokenLimit } from "../openai/tokens";
 
 export interface NamedInsight<T> {
@@ -7,12 +8,8 @@ export interface NamedInsight<T> {
   items: T[];
 }
 
-interface RawResult {
-  findings: { name: string; description: string; evidence: number[] }[];
-}
-
 export async function synthesize<T>(
-  fnCallProxy: FnCallProxy,
+  chatProxy: PlexChatProxy,
   items: T[],
   itemType: string | undefined,
   onStringify: (item: T) => string
@@ -35,87 +32,92 @@ ${item.data}`.trim()
   if (maxTokens > 32_000) throw new Error("Content exceeds max token limit. Reduce the selection and retry.");
   console.log({ maxTokens, safeCount });
 
-  const result = await fnCallProxy(
-    [
-      {
-        role: "system",
-        content: `Synthesize findings from evidence items.${itemType ? ` Each item is ${itemType}.` : ""}
+  const result = await chatProxy({
+    input: {
+      max_tokens: maxTokens,
+      temperature: 0.5,
+      response_format: {
+        type: "json_object",
+      },
+      messages: [
+        {
+          role: "system",
+          content: `Synthesize findings from evidence items.${itemType ? ` Each item is ${itemType}.` : ""}
         
 Requirements:
 - **two or more** evidence items per finding
 - Provide name and a one-line description for each finding
-- Each evidence can appear in zero, one, or multiple findings
-- Discard unused evidence
-          `.trim(),
-      },
-      {
-        role: "user",
-        content: itemsYaml,
-      },
-    ],
+- Cite the evidence item's id number
+- Each evidence can appear in multiple findings
+
+Respond in JSON format like this:
+"""
+{
+  "findings": [
     {
-      max_tokens: maxTokens,
-      models: ["gpt-4", "gpt-4-32k"],
-      temperature: 0.5,
-      function_call: { name: "synthesize_findings" },
-      functions: [
+      "name": "<name of the finding>",
+      "description": "<description of the finding>",
+      "evidence": [<id number>, <id number>, ...]
+    },
+    ...
+  ]
+}
+"""
+          `.trim(),
+        },
         {
-          name: "synthesize_findings",
-          description: "",
-          parameters: {
-            type: "object",
-            properties: {
-              findings: {
-                type: "array",
-                description: `List of findings`,
-                items: {
-                  type: "object",
-                  properties: {
-                    name: {
-                      type: "string",
-                      description: `name of the finding`,
-                    },
-                    description: {
-                      type: "string",
-                      description: `description of the finding`,
-                    },
-                    evidence: {
-                      type: "array",
-                      description: `ids of evidence that support the finding`,
-                      minItems: 2,
-                      items: {
-                        type: "number",
-                      },
-                    },
-                  },
-                  required: ["name", "description", "evidence"],
-                },
-              },
-            },
-            required: ["findings"],
-          },
+          role: "user",
+          content: itemsYaml,
         },
       ],
-    }
+    },
+    context: {
+      models: ["gpt-4o"],
+    },
+  }).then((response) =>
+    ensureJsonResponse((rawResponse) => {
+      if (!Array.isArray(rawResponse?.findings)) throw new Error("Expected findings array");
+
+      const mappedResults = (rawResponse.findings as any[]).map((finding) => {
+        if (typeof finding.name !== "string") {
+          throw new Error("Expected name string in each finding");
+        }
+
+        if (typeof finding.description !== "string") {
+          throw new Error("Expected description string in each finding");
+        }
+
+        if (!Array.isArray(finding.evidence)) {
+          throw new Error("Expected evidence array in each finding");
+        }
+
+        return {
+          name: finding.name as string,
+          description: finding.description as string,
+          items: (finding.evidence as any[]).map((id) => {
+            if (typeof id !== "number") {
+              throw new Error("Expected number in evidence array");
+            }
+
+            return originalItems.find((item) => item.id === id)!.data;
+          }),
+        };
+      });
+
+      const unusedItems = originalItems.filter((item) => mappedResults.every((cateogry) => !cateogry.items.includes(item.data)));
+      if (unusedItems.length) {
+        mappedResults.push({
+          name: "Unused",
+          description: "Items not used in any insight",
+          items: unusedItems.map((item) => item.data),
+        });
+      }
+
+      console.log("synthesized", mappedResults);
+
+      return mappedResults;
+    }, response)
   );
 
-  const parsedResults = JSON.parse(result.arguments) as RawResult;
-  const mappedResults: NamedInsight<T>[] = parsedResults.findings.map((category) => ({
-    name: category.name,
-    description: category.description,
-    items: category.evidence.map((id) => originalItems.find((item) => item.id === id)!.data).filter(Boolean),
-  }));
-
-  const unusedItems = originalItems.filter((item) => parsedResults.findings.every((cateogry) => !cateogry.evidence.includes(item.id)));
-  if (unusedItems.length) {
-    mappedResults.push({
-      name: "Unused",
-      description: "Items not used in any insight",
-      items: unusedItems.map((item) => item.data),
-    });
-  }
-
-  console.log("synthesized", mappedResults);
-
-  return mappedResults;
+  return result;
 }

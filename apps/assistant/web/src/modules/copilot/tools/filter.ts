@@ -2,11 +2,11 @@ import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assista
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { filter } from "../../inference/filter";
 import { contentNodestoIdStickies, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
-import type { FnCallProxy } from "../../openai/proxy";
+import type { PlexChatProxy } from "../../openai/proxy";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function filterTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function filterTool(chatProxy: PlexChatProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.filter",
     displayName: "Filter",
@@ -45,7 +45,7 @@ export function filterTool(fnCallProxy: FnCallProxy, proxyToFigma: ProxyToFigma<
         const [acceptedContainer, rejectedContainer, errorsContaienr] = mutationResponse.createdSections;
 
         const filterResults = await filter(
-          fnCallProxy,
+          chatProxy,
           args["predicate"],
           getItemText,
           contentNodestoIdStickies(input).filter((node) => node.content.trim()),

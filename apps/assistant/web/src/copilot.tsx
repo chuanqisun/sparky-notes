@@ -9,7 +9,7 @@ import { synthesizeTool } from "./modules/copilot/tools/synthesize";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { contentNodesToObject } from "./modules/object-tree/content-nodes-to-objects";
 import { ObjectTree } from "./modules/object-tree/object-tree";
-import { getChatProxy, getFnCallProxy } from "./modules/openai/proxy";
+import { getChatProxy } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 
 const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -26,13 +26,9 @@ function App() {
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 
-  const { chatProxy, fnCallProxy } = useMemo(() => {
+  const chatProxy = useMemo(() => {
     const h20Proxy = getH20Proxy(accessToken);
-
-    return {
-      chatProxy: getChatProxy(h20Proxy),
-      fnCallProxy: getFnCallProxy(h20Proxy),
-    };
+    return getChatProxy(h20Proxy);
   }, [accessToken]);
 
   const [selection, setSelection] = useState<SelectionSummary | null>(null);
@@ -61,7 +57,7 @@ function App() {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [synthesizeTool(fnCallProxy, proxyToFigma), filterTool(fnCallProxy, proxyToFigma)], [fnCallProxy]);
+  const tools = useMemo(() => [synthesizeTool(chatProxy, proxyToFigma), filterTool(chatProxy, proxyToFigma)], [chatProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(

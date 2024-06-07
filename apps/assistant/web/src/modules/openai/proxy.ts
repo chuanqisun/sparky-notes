@@ -1,53 +1,16 @@
-import type { ChatInput, ChatMessage, ChatOutput, ModelName } from "@h20/server";
+import type { ChatInput, ChatModelName, ChatOutput } from "@h20/server";
+import type { PlexChatRequest } from "@h20/server/src/modules/openai/plexchat";
 import type { H20Proxy } from "../h20/proxy";
 
-export type ChatProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<string>;
-export type FnCallProxy = (messages: ChatMessage[], modelConfig?: SimpleModelConfig) => Promise<{ arguments: string; name: string }>;
+export type PlexChatProxy = (request: PlexChatRequest) => Promise<ChatOutput>;
 
 export interface SimpleModelConfig extends Partial<ChatInput> {
-  models?: ModelName[];
+  models?: ChatModelName[];
 }
 
-export function getChatProxy(h20Proxy: H20Proxy): ChatProxy {
-  const proxy: ChatProxy = async (messages, modelConfig) => {
-    const payload: ChatInput = {
-      temperature: 0,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      max_tokens: 60,
-      stop: null,
-      models: ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-textonly", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-32k"],
-      messages,
-      ...modelConfig,
-    };
-
-    const rawResult = await h20Proxy<ChatInput, ChatOutput>("/openai/plexchat", payload);
-
-    return rawResult.choices[0].message.content ?? "";
-  };
-
-  return proxy;
-}
-
-export function getFnCallProxy(h20Proxy: H20Proxy): FnCallProxy {
-  const proxy: FnCallProxy = async (messages, modelConfig) => {
-    const payload: ChatInput = {
-      temperature: 0,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      max_tokens: 60,
-      stop: null,
-      models: ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-32k"],
-      messages,
-      ...modelConfig,
-    };
-
-    const rawResult = await h20Proxy<ChatInput, ChatOutput>("/openai/plexchat", payload);
-    if (rawResult.choices[0].finish_reason !== "stop") throw new Error("Abnormal finish reason");
-
-    return rawResult.choices[0].message.function_call!;
+export function getChatProxy(h20Proxy: H20Proxy): PlexChatProxy {
+  const proxy: PlexChatProxy = async (request) => {
+    return h20Proxy<PlexChatRequest, ChatOutput>("/openai/plexchat", request);
   };
 
   return proxy;
