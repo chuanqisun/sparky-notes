@@ -35,9 +35,8 @@
   "devDependencies": {
     "@figma/plugin-typings": "^1.72.0",
     "@figma/widget-typings": "^1.5.0",
-    "@types/node": "^20.4.9",
-    "concurrently": "^8.2.0",
-    "dotenv": "^16.3.1",
+    "@types/node": "^20.14.2",
+    "concurrently": "^8.2.2",
     "esbuild": "^0.19.0",
     "tsx": "^4.1.2",
     "typescript": "^5.1.6",

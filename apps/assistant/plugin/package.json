@@ -4,8 +4,8 @@
   "description": "Your Figma Plugin",
   "main": "code.js",
   "scripts": {
-    "dev": "npm run build -- --dev",
-    "build": "node scripts/build.mjs"
+    "dev": "npm run build -- --dev --env-file=.env",
+    "build": "node --env-file=.env.production scripts/build.mjs"
   },
   "author": "HITS Engineering",
   "license": "",

@@ -1,10 +1,6 @@
-import dotenv from "dotenv";
 import esbuild from "esbuild";
-import path from "path";
 
 const isDev = process.argv.includes("--dev");
-const envName = isDev ? ".env" : ".env.production";
-dotenv.config({ path: path.join(process.cwd(), envName) });
 
 async function main() {
   const plugins = [

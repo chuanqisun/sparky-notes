@@ -1,5 +1,4 @@
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import { requireJwt } from "./modules/auth/require-jwt";
 import { hitsSearchIndex } from "./modules/hits/api";
@@ -13,8 +12,6 @@ import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { loadOpenAIProxies, plexChat } from "./modules/openai/plexchat";
 import { withGracefulShutdown } from "./utils/graceful-shutdown";
-
-dotenv.config();
 
 const port = process.env.PORT || 5201;
 const app = express();

@@ -5,7 +5,7 @@
   "main": "./dist/main.js",
   "types": "./src/interface.d.ts",
   "scripts": {
-    "dev": "tsx watch --clear-screen=false src/main.ts",
+    "dev": "tsx watch --env-file=.env --clear-screen=false src/main.ts",
     "start": "node dist/main.js",
     "build": "esbuild src/main.ts --platform=node --sourcemap --target=node18 --bundle --outdir=dist"
   },
