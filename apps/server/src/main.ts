@@ -1,7 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { arxivSearch } from "./modules/arxiv/search";
 import { requireJwt } from "./modules/auth/require-jwt";
 import { hitsSearchIndex } from "./modules/hits/api";
 import { hitsSignIn } from "./modules/hits/sign-in";
@@ -13,8 +12,6 @@ import { validateHitsToken } from "./modules/hits/validate-hits-token";
 import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
 import { loadOpenAIProxies, plexChat } from "./modules/openai/plexchat";
-import { webCrawl } from "./modules/web/crawl";
-import { webSearch } from "./modules/web/search";
 import { withGracefulShutdown } from "./utils/graceful-shutdown";
 
 dotenv.config();
@@ -32,11 +29,6 @@ app.use(express.json());
 app.post("/hits/api/search/index", [requireJwt, hitsSearchIndex]);
 
 app.post("/openai/plexchat", [validateHitsToken, plexChat(loadOpenAIProxies().chatProxy)]);
-
-app.post("/web/search", [validateHitsToken, webSearch]);
-app.post("/web/crawl", [validateHitsToken, webCrawl]);
-
-app.post("/arxiv/search", [validateHitsToken, arxivSearch]);
 
 app.post("/hits/token", hitsToken);
 app.post("/hits/signinstatus", hitsSignInStatus);
