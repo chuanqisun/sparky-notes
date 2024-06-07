@@ -16,7 +16,7 @@ export async function handleAddCards(
   const summary = message.addCards;
   const { figmaDropContext, webDragContext } = summary;
 
-  const cloneFromNode = getCloneFromNode(currentNodeId, widgetManifestId);
+  const cloneFromNode = await getCloneFromNode(currentNodeId, widgetManifestId);
   if (!cloneFromNode) {
     replaceNotification("Widget no longer exists", { error: true });
     return;
@@ -28,7 +28,7 @@ export async function handleAddCards(
   frame.x = figmaDropContext?.x ?? cloneFromNode.x;
   frame.y = figmaDropContext?.y ?? cloneFromNode.y;
 
-  const parentNode = figmaDropContext ? figma.getNodeById(figmaDropContext.parentNodeId) : figma.currentPage;
+  const parentNode = figmaDropContext ? await figma.getNodeByIdAsync(figmaDropContext.parentNodeId) : figma.currentPage;
   if (!Array.isArray((parentNode as ChildrenMixin)?.children)) {
     replaceNotification("This container cannot be used for dropping", { error: true });
     return;
@@ -78,8 +78,8 @@ export async function handleAddCards(
   proxyToWeb.notify({ addedCards: summary });
 }
 
-function getCloneFromNode(currentNodeId: string, widgetManifestId: string): WidgetNode | null {
-  let cloneFromNode = figma.getNodeById(currentNodeId) as WidgetNode | null;
+async function getCloneFromNode(currentNodeId: string, widgetManifestId: string): Promise<WidgetNode | null> {
+  let cloneFromNode = (await figma.getNodeByIdAsync(currentNodeId)) as WidgetNode | null;
 
   if (!cloneFromNode) {
     cloneFromNode = figma.currentPage

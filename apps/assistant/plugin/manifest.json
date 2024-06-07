@@ -3,6 +3,7 @@
   "id": "1169361201665902648",
   "api": "1.0.0",
   "main": "dist/main.js",
+  "documentAccess": "dynamic-page",
   "editorType": [
     "figma",
     "figjam"

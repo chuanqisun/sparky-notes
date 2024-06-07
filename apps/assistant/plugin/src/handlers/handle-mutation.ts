@@ -23,16 +23,20 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
     return section;
   });
 
-  const updatedSections = (message.mutationRequest.updateSections ?? [])
-    .map((updateSection) => {
-      const section = figma.getNodeById(updateSection.id) as SectionNode;
-      if (!section) return null;
-      if (updateSection.moveStickies) cloneStickiesToSection(section, updateSection.moveStickies);
-      return section;
-    })
-    .filter(isNotNull);
+  const updatedSections = (
+    await Promise.all(
+      (message.mutationRequest.updateSections ?? []).map(async (updateSection) => {
+        const section = (await figma.getNodeByIdAsync(updateSection.id)) as SectionNode;
+        if (!section) return null;
+        if (updateSection.moveStickies) cloneStickiesToSection(section, updateSection.moveStickies);
+        return section;
+      })
+    )
+  ).filter(isNotNull);
 
-  (message.mutationRequest.removeSections ?? []).map((removeSectionId) => figma.getNodeById(removeSectionId)?.remove());
+  await Promise.all(
+    (message.mutationRequest.removeSections ?? []).map((removeSectionId) => figma.getNodeByIdAsync(removeSectionId).then((node) => node?.remove()))
+  );
 
   appendAsTiles(layoutContainer, [...createdSections, ...updatedSections], getNextVerticalTilePosition.bind(null, { gap: 120 }));
 
@@ -70,12 +74,12 @@ function isNotNull<T>(value: T | null): value is T {
   return value !== null;
 }
 
-function cloneStickiesToSection(section: SectionNode, stickyTexts: string[]) {
-  const cloneStickyById = (id: string) => {
-    return (figma.getNodeById(id) as StickyNode)?.clone();
+async function cloneStickiesToSection(section: SectionNode, stickyTexts: string[]) {
+  const cloneStickyById = async (id: string) => {
+    return (figma.getNodeByIdAsync(id) as Promise<StickyNode | null>).then((node) => node?.clone());
   };
 
-  const existingStickies = stickyTexts.map(cloneStickyById).filter(Boolean) as StickyNode[];
+  const existingStickies = await Promise.all(stickyTexts.map(cloneStickyById)).then((results) => results.filter(Boolean) as StickyNode[]);
   appendAsTiles(
     section,
     existingStickies,

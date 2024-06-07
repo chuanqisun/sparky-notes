@@ -11,24 +11,25 @@ export interface LayoutDraft {
 }
 
 export function useLayoutDraft(cardData: null | CardData, widgetId: string) {
-  const [layoutDraft, sesLayoutDraft] = useSyncedState<null | LayoutDraft>("layoutDraft", null);
+  const [layoutDraft, setLayoutDraft] = useSyncedState<null | LayoutDraft>("layoutDraft", null);
 
   useEffect(() => {
     if (cardData && layoutDraft) {
-      const widgetNode = figma.getNodeById(widgetId) as WidgetNode;
-      if (!widgetNode) return;
+      (figma.getNodeByIdAsync(widgetId) as Promise<WidgetNode | null>).then((widgetNode) => {
+        if (!widgetNode) return;
 
-      console.log(layoutDraft);
+        console.log(layoutDraft);
 
-      const parentFrame = widgetNode.parent as FrameNode;
-      if (parentFrame?.type !== "FRAME") return;
+        const parentFrame = widgetNode.parent as FrameNode;
+        if (parentFrame?.type !== "FRAME") return;
 
-      parentFrame.x += widgetNode.width * (layoutDraft.xOffsetPercent ?? 0) + (layoutDraft.xOffset ?? 0);
-      parentFrame.y += widgetNode.height * (layoutDraft.yOffsetPercent ?? 0) + (layoutDraft.yOffset ?? 0);
+        parentFrame.x += widgetNode.width * (layoutDraft.xOffsetPercent ?? 0) + (layoutDraft.xOffset ?? 0);
+        parentFrame.y += widgetNode.height * (layoutDraft.yOffsetPercent ?? 0) + (layoutDraft.yOffset ?? 0);
 
-      finishLayoutDraftFrame(parentFrame);
+        finishLayoutDraftFrame(parentFrame);
 
-      sesLayoutDraft(null);
+        setLayoutDraft(null);
+      });
     }
   });
 }
