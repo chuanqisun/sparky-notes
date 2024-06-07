@@ -8,6 +8,7 @@ import { handleAddedCards } from "./modules/handlers/handle-added-cards";
 import { handleDropHtml } from "./modules/handlers/handle-drop-html";
 import { handleMarkCardAsAdded } from "./modules/handlers/handle-mark-card-as-added";
 import { HitsArticle } from "./modules/hits/article";
+import { EmptyMessage } from "./modules/hits/empty";
 import { ErrorMessage } from "./modules/hits/error";
 import { ReportViewer } from "./modules/hits/report-viewer";
 import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
@@ -73,6 +74,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     showBottomLoadingSpinner: false,
     showErrorMessage: false,
     shouldDetectBottom: false,
+    showEmptyState: false,
     nodes: [] as HitsDisplayNode[],
   });
 
@@ -138,6 +140,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
       showBottomLoadingSpinner,
       showErrorMessage: isSearchError,
       shouldDetectBottom,
+      showEmptyState: !isSearchPending && resultNodes.length === 0 && !isSearchError,
       nodes: isSearchPending ? prevState.nodes : resultNodes,
     }));
   }, [isConnected, isSearchPending, isLoadingMore, isSearchError, resultNodes]);
@@ -249,6 +252,11 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               />
             ))}
           </ul>
+        )}
+        {outputState.showEmptyState && (
+          <p class="c-welcome-mat">
+            <EmptyMessage searchTerm={inputState.effectiveQuery} />
+          </p>
         )}
         {outputState.showBottomLoadingSpinner && <div class="c-progress-bar c-progress-bar--inline" />}
         {outputState.shouldDetectBottom && <InfiniteScrollBottom />}
