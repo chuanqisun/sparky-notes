@@ -134,13 +134,14 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
     const showTopLoadingSpinner = isConnected === undefined || (isConnected && isSearchPending && !isLoadingMore);
     const showBottomLoadingSpinner = isLoadingMore;
     const shouldDetectBottom = !!isConnected && !isSearchPending && !isLoadingMore && resultNodes.length > 0;
+    const showEmptyState = !!isConnected && !isSearchPending && resultNodes.length === 0 && !isSearchError;
 
     setOutputState((prevState) => ({
       showTopLoadingSpinner,
       showBottomLoadingSpinner,
       showErrorMessage: isSearchError,
       shouldDetectBottom,
-      showEmptyState: !isSearchPending && resultNodes.length === 0 && !isSearchError,
+      showEmptyState,
       nodes: isSearchPending ? prevState.nodes : resultNodes,
     }));
   }, [isConnected, isSearchPending, isLoadingMore, isSearchError, resultNodes]);
