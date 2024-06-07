@@ -11,7 +11,7 @@ export interface PlexChatRequest {
   input: SimpleChatInput;
   context?: SimpleChatContext;
 }
-export const plexChat: (chatProxy: SimpleChatProxy) => RequestHandler = (chatProxy) => {
+export const chatRoute: (chatProxy: SimpleChatProxy) => RequestHandler = (chatProxy) => {
   return async (req, res, next) => {
     try {
       const body = req.body as PlexChatRequest;
@@ -22,6 +22,16 @@ export const plexChat: (chatProxy: SimpleChatProxy) => RequestHandler = (chatPro
       next(e);
     }
   };
+};
+
+export const chatAbortRoute: (aborter: (abortHandle: string) => void) => RequestHandler = (aborter) => async (req, res, next) => {
+  try {
+    const body = req.body as { abortHandle: string };
+    assert(typeof body?.abortHandle === "string", "abortHandle must be a string");
+    aborter(body.abortHandle);
+  } catch (e) {
+    next(e);
+  }
 };
 
 export function loadOpenAIProxies() {

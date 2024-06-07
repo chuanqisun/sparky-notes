@@ -10,7 +10,7 @@ import { hitsUATSearch } from "./modules/hits/uat-search";
 import { validateHitsToken } from "./modules/hits/validate-hits-token";
 import { logError } from "./modules/logging/log-error";
 import { logRoute } from "./modules/logging/log-route";
-import { loadOpenAIProxies, plexChat } from "./modules/openai/plexchat";
+import { chatAbortRoute, chatRoute, loadOpenAIProxies } from "./modules/openai/plexchat";
 import { withGracefulShutdown } from "./utils/graceful-shutdown";
 
 const port = process.env.PORT || 5201;
@@ -25,7 +25,8 @@ app.use("/hits/search/claims", [validateHitsToken, hitsUATSearch("/indexes/hits-
 app.use(express.json());
 app.post("/hits/api/search/index", [requireJwt, hitsSearchIndex]);
 
-app.post("/openai/plexchat", [validateHitsToken, plexChat(loadOpenAIProxies().chatProxy)]);
+app.post("/openai/plexchat", [validateHitsToken, chatRoute(loadOpenAIProxies().chatProxy)]);
+app.post("/openai/plexchat/abort", [validateHitsToken, chatAbortRoute(loadOpenAIProxies().abort)]);
 
 app.post("/hits/token", hitsToken);
 app.post("/hits/signinstatus", hitsSignInStatus);
