@@ -13,9 +13,9 @@ export function synthesizeTool(chat: Chat, abortChat: AbortChat, proxyToFigma: P
     displayName: "Synthesize",
     parameters: [
       {
-        displayName: "Each item is",
-        key: "itemType",
-        hint: "an interview note",
+        displayName: "Goal or instruction",
+        key: "goalOrInstruction",
+        hint: "Identify themes from texts",
         isOptional: true,
       },
     ],
@@ -35,7 +35,7 @@ export function synthesizeTool(chat: Chat, abortChat: AbortChat, proxyToFigma: P
         const response = await synthesize(
           chat,
           contentNodestoIdStickies(input).filter((input) => input.content.trim()),
-          args["itemType"],
+          args["goalOrInstruction"],
           getItemText,
           handle
         );

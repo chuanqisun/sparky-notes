@@ -11,7 +11,7 @@ export interface NamedInsight<T> {
 export async function synthesize<T>(
   chatProxy: Chat,
   items: T[],
-  itemType: string | undefined,
+  context: string | undefined,
   onStringify: (item: T) => string,
   abortHandle?: string
 ): Promise<NamedInsight<T>[]> {
@@ -21,8 +21,6 @@ export async function synthesize<T>(
   const itemsYaml = itemsWithIds
     .map((item) =>
       `
-Evidence list
-
 [id: ${item.id}]
 ${item.data}`.trim()
     )
@@ -42,13 +40,10 @@ ${item.data}`.trim()
       messages: [
         {
           role: "system",
-          content: `Synthesize findings from evidence items.${itemType ? ` Each item is ${itemType}.` : ""}
-        
-Requirements:
-- **two or more** evidence items per finding
-- Provide name and a one-line description for each finding
-- Cite the evidence item's id number
-- Each evidence can appear in multiple findings
+          content: `
+Synthesize findings from evidence items based on this user goal: ${context?.trim().length ? context : "Idenfity common themes across texts"}
+
+Cite *AS MANY AS POSSIBLE* evidence items id numbers to support each finding.
 
 Respond in JSON format like this:
 """
@@ -56,7 +51,7 @@ Respond in JSON format like this:
   "findings": [
     {
       "name": "<name of the finding>",
-      "description": "<description of the finding>",
+      "description": "<one sentence description of this finding>",
       "evidence": [<id number>, <id number>, ...]
     },
     ...
@@ -67,7 +62,11 @@ Respond in JSON format like this:
         },
         {
           role: "user",
-          content: itemsYaml,
+          content: `
+
+Evidence items:
+${itemsYaml}
+          `.trim(),
         },
       ],
     },
