@@ -44,7 +44,7 @@ function Widget() {
       handleDetectSelection(message, wrappedHandleSelectionChange);
       handleRenderObject(message);
       handleMutation(message, proxyToWeb);
-      handleShowNotification(message);
+      handleShowNotification(message, proxyToWeb);
       handleClearNotification(message);
     };
 

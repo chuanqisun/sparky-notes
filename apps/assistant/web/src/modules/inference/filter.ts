@@ -1,5 +1,5 @@
 import { ensureJsonResponse } from "../openai/ensure-json-response";
-import type { PlexChatProxy } from "../openai/proxy";
+import type { Chat } from "../openai/proxy";
 
 export interface FilterOptions<T> {
   onAccept?: (item: T) => void;
@@ -13,11 +13,12 @@ export interface FilterResult<T> {
   errors: { item: T; error: any }[];
 }
 export async function filter<T>(
-  chatProxy: PlexChatProxy,
+  chatProxy: Chat,
   predicate: string,
   getItemText: (item: T) => string,
   items: T[],
-  options?: FilterOptions<T>
+  options?: FilterOptions<T>,
+  abortHandle?: string
 ): Promise<FilterResult<T>> {
   const results = {
     accepted: [] as T[],
@@ -51,6 +52,7 @@ Check the provided data against this condition: "${predicate}". Respond in JSON 
             ],
           },
           context: {
+            abortHandle,
             models: ["gpt-4o"],
           },
         })

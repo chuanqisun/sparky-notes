@@ -1,5 +1,5 @@
 import { ensureJsonResponse } from "../openai/ensure-json-response";
-import type { PlexChatProxy } from "../openai/proxy";
+import type { Chat } from "../openai/proxy";
 import { ensureTokenLimit } from "../openai/tokens";
 
 export interface NamedInsight<T> {
@@ -9,10 +9,11 @@ export interface NamedInsight<T> {
 }
 
 export async function synthesize<T>(
-  chatProxy: PlexChatProxy,
+  chatProxy: Chat,
   items: T[],
   itemType: string | undefined,
-  onStringify: (item: T) => string
+  onStringify: (item: T) => string,
+  abortHandle?: string
 ): Promise<NamedInsight<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
@@ -73,6 +74,7 @@ Respond in JSON format like this:
     },
     context: {
       models: ["gpt-4o"],
+      abortHandle,
     },
   }).then((response) =>
     ensureJsonResponse((rawResponse) => {

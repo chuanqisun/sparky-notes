@@ -3,13 +3,14 @@ import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { abortTask } from "./modules/copilot/abort";
 import type { Tool } from "./modules/copilot/tool";
 import { filterTool } from "./modules/copilot/tools/filter";
 import { synthesizeTool } from "./modules/copilot/tools/synthesize";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { contentNodesToObject } from "./modules/object-tree/content-nodes-to-objects";
 import { ObjectTree } from "./modules/object-tree/object-tree";
-import { getChatProxy } from "./modules/openai/proxy";
+import { getAbortChat, getChat } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 
 const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
@@ -26,9 +27,11 @@ function App() {
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 
-  const chatProxy = useMemo(() => {
+  const [chatProxy, chatAbortProxy] = useMemo(() => {
     const h20Proxy = getH20Proxy(accessToken);
-    return getChatProxy(h20Proxy);
+    const chatProxy = getChat(h20Proxy);
+    const chatAbortProxy = getAbortChat(h20Proxy);
+    return [chatProxy, chatAbortProxy];
   }, [accessToken]);
 
   const [selection, setSelection] = useState<SelectionSummary | null>(null);
@@ -41,6 +44,10 @@ function App() {
 
       if (pluginMessage.selectionChanged) {
         setSelection(pluginMessage.selectionChanged);
+      }
+
+      if (pluginMessage.abortTask) {
+        abortTask(pluginMessage.abortTask);
       }
     };
 
@@ -57,7 +64,7 @@ function App() {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [synthesizeTool(chatProxy, proxyToFigma), filterTool(chatProxy, proxyToFigma)], [chatProxy]);
+  const tools = useMemo(() => [synthesizeTool(chatProxy, chatAbortProxy, proxyToFigma), filterTool(chatProxy, chatAbortProxy, proxyToFigma)], [chatProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(
@@ -78,6 +85,9 @@ function App() {
           args: activeTool.args,
         });
       } catch (e) {
+        // noop on abort error
+        if ((e as Error)?.name === "AbortError") return;
+
         proxyToFigma.notify({
           showNotification: {
             message: `${[(e as Error).name, (e as Error).message].filter(Boolean).join(" | ")}`,

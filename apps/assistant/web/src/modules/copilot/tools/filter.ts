@@ -2,11 +2,12 @@ import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assista
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { filter } from "../../inference/filter";
 import { contentNodestoIdStickies, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
-import type { PlexChatProxy } from "../../openai/proxy";
+import type { AbortChat, Chat } from "../../openai/proxy";
+import { createTask } from "../abort";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function filterTool(chatProxy: PlexChatProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function filterTool(chatProxy: Chat, chatAbortProxy: AbortChat, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.filter",
     displayName: "Filter",
@@ -20,7 +21,12 @@ export function filterTool(chatProxy: PlexChatProxy, proxyToFigma: ProxyToFigma<
     ],
     getActions: () => ["Run"],
     run: async ({ input, args }) => {
-      const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: notification }), "Filtering");
+      const { handle, abortController } = createTask();
+      const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }), "Filtering");
+      abortController.signal.addEventListener("abort", () => {
+        stopSpinner();
+        chatAbortProxy(handle);
+      });
 
       const predicate = args["predicate"];
 
@@ -84,7 +90,6 @@ export function filterTool(chatProxy: PlexChatProxy, proxyToFigma: ProxyToFigma<
                   ],
                 },
               }),
-
             onError: (item) =>
               proxyToFigma.request({
                 mutationRequest: {
@@ -102,7 +107,8 @@ export function filterTool(chatProxy: PlexChatProxy, proxyToFigma: ProxyToFigma<
                   ],
                 },
               }),
-          }
+          },
+          handle
         );
 
         if (!filterResults.errors.length) {

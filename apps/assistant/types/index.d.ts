@@ -1,4 +1,5 @@
 export interface MessageToWeb {
+  abortTask?: string;
   ping?: string;
   getSelectionRes?: SelectionSummary;
   selectionChanged?: SelectionSummary;
@@ -50,6 +51,10 @@ export interface FigmaNotification {
   config?: {
     timeout?: number;
     error?: boolean;
+  };
+  cancelButton?: {
+    label?: string;
+    handle: string;
   };
 }
 

@@ -7,14 +7,15 @@ let memoProxies: { chatProxy: SimpleChatProxy; embedProxy: SimpleEmbedProxy; abo
 
 export type { ChatInput, ChatMessage, ChatOutput } from "plexchat";
 
-export interface PlexChatRequest {
+export interface ChatRequest {
   input: SimpleChatInput;
   context?: SimpleChatContext;
+  signal?: AbortSignal;
 }
 export const chatRoute: (chatProxy: SimpleChatProxy) => RequestHandler = (chatProxy) => {
   return async (req, res, next) => {
     try {
-      const body = req.body as PlexChatRequest;
+      const body = req.body as ChatRequest;
       assert(Array.isArray(body?.input?.messages), "Messages must be an array");
       const result = await chatProxy(req.body.input, req.body.context);
       res.json(result);
@@ -26,9 +27,9 @@ export const chatRoute: (chatProxy: SimpleChatProxy) => RequestHandler = (chatPr
 
 export const chatAbortRoute: (aborter: (abortHandle: string) => void) => RequestHandler = (aborter) => async (req, res, next) => {
   try {
-    const body = req.body as { abortHandle: string };
-    assert(typeof body?.abortHandle === "string", "abortHandle must be a string");
-    aborter(body.abortHandle);
+    const body = req.body as { handle: string };
+    assert(typeof body?.handle === "string", "abortHandle must be a string");
+    aborter(body.handle);
   } catch (e) {
     next(e);
   }
