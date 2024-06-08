@@ -87,6 +87,9 @@ Respond in JSON format like this:
             return conclusion;
           })
           .catch((e) => {
+            // do not handle abort error
+            if ((e as Error)?.name === "AbortError") throw e;
+
             console.error(e);
             options?.onError?.(item, e);
             results.errors.push({ item, error: e });

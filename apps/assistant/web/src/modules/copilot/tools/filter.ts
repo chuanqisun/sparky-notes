@@ -22,7 +22,10 @@ export function filterTool(chatProxy: Chat, chatAbortProxy: AbortChat, proxyToFi
     getActions: () => ["Run"],
     run: async ({ input, args }) => {
       const { handle, abortController } = createTask();
-      const stopSpinner = setSpinner((notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }), "Filtering");
+      const stopSpinner = setSpinner(
+        (notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }),
+        "Filtering..."
+      );
       abortController.signal.addEventListener("abort", () => {
         stopSpinner();
         chatAbortProxy(handle);

@@ -29,12 +29,14 @@ export function synthesizeTool(chat: Chat, abortChat: AbortChat, proxyToFigma: P
 
       const stopSpinner = setSpinner(
         (notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }),
-        "Synthesizing"
+        "Synthesizing..."
       );
       try {
         const response = await synthesize(
           chat,
-          contentNodestoIdStickies(input).filter((input) => input.content.trim()),
+          contentNodestoIdStickies(input)
+            .filter((input) => input.content.trim())
+            .sort(() => Math.random() - 0.5),
           args["goalOrInstruction"],
           getItemText,
           handle
