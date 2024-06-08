@@ -1,5 +1,4 @@
 import type { RequestHandler } from "express";
-import assert from "node:assert";
 import { LogLevel, plexchat, type SimpleChatContext, type SimpleChatInput, type SimpleChatProxy, type SimpleEmbedProxy } from "plexchat";
 import { devChatEndpointManifest } from "./plexchat-config";
 
@@ -48,4 +47,8 @@ export function loadOpenAIProxies() {
 
   memoProxies = { chatProxy, embedProxy, abort };
   return memoProxies;
+}
+
+function assert(condition: any, message: string): asserts condition {
+  if (!condition) throw new Error(message);
 }
