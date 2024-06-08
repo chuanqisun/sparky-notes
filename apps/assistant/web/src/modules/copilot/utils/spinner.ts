@@ -4,14 +4,14 @@ export function setSpinner(proxy: (notification: FigmaNotification) => any, mess
   let currentIndex = 0;
 
   const brackets = [
-    ["⏳", " ⣾"],
-    ["⌛", " ⣽"],
-    ["⏳", " ⣻"],
-    ["⌛", " ⢿"],
-    ["⏳", " ⡿"],
-    ["⌛", " ⣟"],
-    ["⏳", " ⣯"],
     ["⌛", " ⣷"],
+    ["⏳", " ⣯"],
+    ["⌛", " ⣟"],
+    ["⏳", " ⡿"],
+    ["⌛", " ⢿"],
+    ["⏳", " ⣻"],
+    ["⌛", " ⣽"],
+    ["⏳", " ⣾"],
   ];
 
   const intervalId = setInterval(() => {
