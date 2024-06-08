@@ -11,6 +11,15 @@
   "permissions": [
     "fileusers"
   ],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://hitsassistantweb.z22.web.core.windows.net"
+    ],
+    "reasoning": "access remoted hosted UI",
+    "devAllowedDomains": [
+      "http://localhost:5200"
+    ]
+  },
   "containsWidget": true,
   "widgetApi": "1.0.0"
 }
