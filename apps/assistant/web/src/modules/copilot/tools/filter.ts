@@ -1,6 +1,6 @@
 import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
 import type { ProxyToFigma } from "@h20/figma-tools";
-import { filter } from "../../inference/filter";
+import { defaultCriteria, filter } from "../../inference/filter";
 import { contentNodestoIdStickies, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
 import type { AbortChat, Chat } from "../../openai/proxy";
 import { createTask } from "../abort";
@@ -13,9 +13,9 @@ export function filterTool(chatProxy: Chat, chatAbortProxy: AbortChat, proxyToFi
     displayName: "Filter",
     parameters: [
       {
-        displayName: "Condition",
+        displayName: "Goal or instruction",
         key: "predicate",
-        hint: "is a household object",
+        hint: defaultCriteria,
         isOptional: true,
       },
     ],
@@ -28,16 +28,14 @@ export function filterTool(chatProxy: Chat, chatAbortProxy: AbortChat, proxyToFi
         chatAbortProxy(handle);
       });
 
-      const predicate = args["predicate"];
-
       try {
         const mutationRequest: MutationRequest = {
           createSections: [
             {
-              name: `✅ True to "${predicate}"`,
+              name: `✅ Accepted`,
             },
             {
-              name: `❌ False to "${predicate}"`,
+              name: `❌ Rejected`,
             },
             {
               name: "Error",

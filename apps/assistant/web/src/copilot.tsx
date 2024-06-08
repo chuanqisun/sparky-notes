@@ -7,6 +7,7 @@ import { abortTask } from "./modules/copilot/abort";
 import type { Tool } from "./modules/copilot/tool";
 import { filterTool } from "./modules/copilot/tools/filter";
 import { synthesizeTool } from "./modules/copilot/tools/synthesize";
+import { ResizeTextarea } from "./modules/form/resize-textarea";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { contentNodesToObject } from "./modules/object-tree/content-nodes-to-objects";
 import { ObjectTree } from "./modules/object-tree/object-tree";
@@ -142,9 +143,8 @@ function App() {
                   {parameter.displayName}
                 </label>
                 <div class="c-field__value">
-                  <input
+                  <ResizeTextarea
                     id={`${activeTool.tool.id}-${parameter.key}-input`}
-                    type="text"
                     placeholder={parameter.hint}
                     required={!parameter.isOptional}
                     onChange={(e) =>

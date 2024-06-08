@@ -12,6 +12,9 @@ export interface FilterResult<T> {
   rejected: T[];
   errors: { item: T; error: any }[];
 }
+
+export const defaultCriteria = `Accept items that have a possitive meaning, reject the neutral or negative ones`;
+
 export async function filter<T>(
   chatProxy: Chat,
   predicate: string,
@@ -39,9 +42,17 @@ export async function filter<T>(
               {
                 role: "system",
                 content: `
-Check the provided data against this condition: "${predicate}". Respond in JSON format like this:
+Binary classify text based on the goal: "${predicate?.trim().length ? predicate : defaultCriteria}".
+
+First reason about whether the text meets the criteria implied by the goal. If so, respond "keep". Otherwise, respond "reject".
+
+
+Respond in JSON format like this:
 """
-{"isTrue": <boolean>}
+{
+  "reason": "<one sentence reason on whether the text meets to the criteria>",
+  "decision": <"keep" | "reject">
+}
 """
                 `.trim(),
               },
@@ -58,11 +69,11 @@ Check the provided data against this condition: "${predicate}". Respond in JSON 
         })
           .then(async (result) => {
             const conclusion = await ensureJsonResponse((rawResponse) => {
-              if (typeof rawResponse.isTrue !== "boolean") {
+              if (typeof rawResponse.decision !== "string") {
                 throw new Error(`Expected boolean, got ${typeof rawResponse.isTrue}`);
               }
 
-              return rawResponse.isTrue as boolean;
+              return (rawResponse.decision as string).toLocaleLowerCase() === "keep";
             }, result);
 
             if (conclusion) {

@@ -8,10 +8,12 @@ export interface NamedInsight<T> {
   items: T[];
 }
 
+export const defaultContext = `Identify common themes across texts`;
+
 export async function synthesize<T>(
   chatProxy: Chat,
   items: T[],
-  context: string | undefined,
+  goalOrInstruction: string | undefined,
   onStringify: (item: T) => string,
   abortHandle?: string
 ): Promise<NamedInsight<T>[]> {
@@ -41,7 +43,7 @@ ${item.data}`.trim()
         {
           role: "system",
           content: `
-Synthesize findings from evidence items based on this user goal: ${context?.trim().length ? context : "Idenfity common themes across texts"}
+Synthesize findings from evidence items based on this user goal: ${goalOrInstruction?.trim().length ? goalOrInstruction : defaultContext}
 
 Cite *AS MANY AS POSSIBLE* evidence items id numbers to support each finding.
 
