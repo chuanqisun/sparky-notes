@@ -29,8 +29,7 @@ ${item.data}`.trim()
     .join("\n\n");
 
   const safeCount = ensureTokenLimit(10_000, itemsYaml);
-  const maxTokens = 200 + Math.round(safeCount * 2); // assume 200 token overhead + 2X expansion from input
-  if (maxTokens > 32_000) throw new Error("Content exceeds max token limit. Reduce the selection and retry.");
+  const maxTokens = Math.min(4096, 200 + Math.round(safeCount * 2)); // assume 200 token overhead + 2X expansion from input
   console.log({ maxTokens, safeCount });
 
   const result = await chatProxy({

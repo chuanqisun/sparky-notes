@@ -1,4 +1,4 @@
-import type { FigmaNotification, MessageToFigma, MessageToWeb, SelectionSummary } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, SelectionSummary } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
@@ -54,10 +54,6 @@ function App() {
     window.addEventListener("message", handleMainMessage);
 
     return () => window.removeEventListener("message", handleMainMessage);
-  }, []);
-
-  const notify = useCallback((notification: FigmaNotification) => {
-    return proxyToFigma.notify({ showNotification: notification });
   }, []);
 
   useEffect(() => {

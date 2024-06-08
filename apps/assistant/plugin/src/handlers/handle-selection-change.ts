@@ -24,6 +24,15 @@ function getContentNodeInternal(node: SceneNode): ContentNode | null {
       type: "sticky",
       content: node.text.characters,
     };
+  } else if (node.type === "WIDGET" && node.widgetId === figma.widgetId) {
+    const title = (node as WidgetNode).widgetSyncedState?.cardData?.title;
+    if (!title?.trim()) return null;
+
+    return {
+      id: node.id,
+      type: "sticky",
+      content: title,
+    };
   } else if (node.type === "SECTION") {
     return {
       id: node.id,
