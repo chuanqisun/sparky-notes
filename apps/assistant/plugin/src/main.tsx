@@ -5,6 +5,7 @@ import { handleAddCards } from "./handlers/handle-add-cards";
 import { handleClearNotification } from "./handlers/handle-clear-notification";
 import { handleDetectSelection } from "./handlers/handle-detect-selection";
 import { handleDropLinks } from "./handlers/handle-drop-links";
+import { handleExportNode } from "./handlers/handle-export-node";
 import { handleMutation } from "./handlers/handle-mutation";
 import { handleRenderObject } from "./handlers/handle-render-object";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
@@ -14,12 +15,12 @@ import { useWidgetState } from "./widget/use-card";
 import { useLayoutDraft } from "./widget/use-layout-draft";
 
 const { widget } = figma;
-const { useEffect, AutoLayout, useWidgetId, SVG, Text } = widget;
+const { useEffect, AutoLayout, useWidgetNodeId, SVG, Text } = widget;
 
 const proxyToWeb = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
 function Widget() {
-  const widgetId = useWidgetId();
+  const widgetId = useWidgetNodeId();
 
   const { cardData } = useWidgetState({ openIndexPage });
 
@@ -42,6 +43,7 @@ function Widget() {
 
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleDetectSelection(message, wrappedHandleSelectionChange);
+      handleExportNode(message, proxyToWeb);
       handleRenderObject(message);
       handleMutation(message, proxyToWeb);
       handleShowNotification(message, proxyToWeb);

@@ -10,17 +10,29 @@ export interface MessageToWeb {
   };
   addedCards?: AddCards;
   mutationResponse?: MutationResponse;
+  exportedNodeResponse?: ExportNodeResponse;
 }
 
 export interface MessageToFigma {
   addCards?: AddCards;
   detectSelection?: boolean; // request plugin to notfiy selection
+  exportNode?: ExportNodeRequest; // request plugin to export a node by id
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
   renderObject?: any;
   showNotification?: FigmaNotification;
   clearNotification?: boolean;
   mutationRequest?: MutationRequest;
+}
+
+export interface ExportNodeRequest {
+  id: string;
+}
+
+export interface ExportNodeResponse {
+  id: string;
+  bytes: Uint8Array;
+  format: "PNG";
 }
 
 export interface MutationRequest {
@@ -64,7 +76,7 @@ export interface SelectionSummary {
 
 export interface ContentNode {
   id: string;
-  type: "sticky" | "section";
+  type: "sticky" | "section" | "generic";
   content: string;
   children?: ContentNode[];
 }
