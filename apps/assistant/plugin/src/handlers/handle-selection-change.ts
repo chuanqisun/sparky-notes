@@ -40,6 +40,12 @@ function getContentNodeInternal(node: SceneNode): ContentNode | null {
       content: node.name,
       children: node.children.map(getContentNodeInternal).filter(isNotNull),
     };
+  } else if (typeof node.exportAsync === "function") {
+    return {
+      id: node.id,
+      type: "visual",
+      content: node.name,
+    };
   } else {
     return null;
   }

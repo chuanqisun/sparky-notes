@@ -4,9 +4,6 @@ import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { abortTask } from "./modules/copilot/abort";
-import type { Tool } from "./modules/copilot/tool";
-import { filterTool } from "./modules/copilot/tools/filter";
-import { synthesizeTool } from "./modules/copilot/tools/synthesize";
 import { getH20Proxy } from "./modules/h20/proxy";
 import { getAbortChat, getChat } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
@@ -58,42 +55,27 @@ function App() {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [synthesizeTool(chatProxy, chatAbortProxy, proxyToFigma), filterTool(chatProxy, chatAbortProxy, proxyToFigma)], [chatProxy]);
-  const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
+  const handleScan = useCallback(async () => {
+    if (!selection) return;
 
-  const handleRun = useCallback(
-    async (action: string) => {
-      const input = selection?.contentNodes ?? [];
-      if (!input.length) {
-        proxyToFigma.notify({
-          showNotification: {
-            message: "No stickies were selected",
-          },
-        });
-        return;
-      }
-      try {
-        await activeTool.tool.run?.({
-          input,
-          action,
-          args: activeTool.args,
-        });
-      } catch (e) {
-        // noop on abort error
-        if ((e as Error)?.name === "AbortError") return;
+    const { exportedNodeResponse } = await proxyToFigma.request({
+      exportNode: {
+        id: selection.contentNodes[0].id,
+      },
+    });
 
-        proxyToFigma.notify({
-          showNotification: {
-            message: `${[(e as Error).name, (e as Error).message].filter(Boolean).join(" | ")}`,
-            config: {
-              error: true,
-            },
-          },
-        });
-      }
-    },
-    [selection, activeTool]
-  );
+    if (!exportedNodeResponse) return;
+    if (exportedNodeResponse.format !== "PNG") return;
+
+    const buffer = exportedNodeResponse.buffer;
+    const blob = new Blob([buffer], { type: "image/png" });
+    const dataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+    console.log({ dataUrl });
+  }, [selection]);
 
   return (
     <>
@@ -113,7 +95,9 @@ function App() {
           <nav class="c-nav-header">
             <a href="/index.html">← Back to search</a>
           </nav>
-          <h1>Welcome to HITS Pattern Guide</h1>
+          <div>
+            <button onClick={handleScan}>Scan</button>
+          </div>
         </div>
       )}
     </>

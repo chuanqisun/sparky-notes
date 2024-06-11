@@ -31,7 +31,7 @@ export interface ExportNodeRequest {
 
 export interface ExportNodeResponse {
   id: string;
-  bytes: Uint8Array;
+  buffer: Uint8Array;
   format: "PNG";
 }
 
@@ -76,7 +76,7 @@ export interface SelectionSummary {
 
 export interface ContentNode {
   id: string;
-  type: "sticky" | "section" | "generic";
+  type: "sticky" | "section" | "visual";
   content: string;
   children?: ContentNode[];
 }
