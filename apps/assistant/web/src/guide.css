@@ -11,14 +11,6 @@
 }
 
 @layer components {
-  fieldset {
-    padding: 4px 8px 8px 8px;
-    margin: 0;
-    display: grid;
-    border: none;
-    background: white;
-  }
-
   .c-nav-header {
     background-color: white;
     padding: 4px 8px 4px 8px;
@@ -46,85 +38,23 @@
     min-height: 0;
   }
 
-  .c-radio-group {
-    display: flex;
-    gap: 8px;
+  .u-uppercase {
+    text-transform: uppercase;
+    font-weight: bold;
   }
 
-  .c-radio-item {
-    display: flex;
-    gap: 4px;
-  }
-
-  .c-fieldset {
-    display: grid;
-    gap: 8px;
-    padding: 0;
-  }
-
-  .c-fieldset__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 4px 8px 8px 8px;
-  }
-
-  .c-fieldset__action {
-    width: 100%;
-  }
-
-  .c-field {
-    display: flex;
-    flex-direction: column;
-    font-size: 14px;
-    gap: 4px;
-  }
-
-  .c-field--scroll {
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .c-field__key {
+  b {
     font-weight: 600;
-    font-size: 14px;
-    padding: 4px 8px 0px 8px;
   }
 
-  .c-field__key--with-menu {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .c-field__value {
-    padding: 0 8px;
+  .c-list {
+    align-content: start;
     display: grid;
+    gap: var(--list-gap, 4px);
   }
 
-  .c-field__value--scroll {
-    overflow-y: auto;
-  }
-
-  .c-fieldset {
-    & :where(button, input) {
-      padding: 2px 4px;
-    }
-    & select {
-      padding: 2px 0px;
-    }
-  }
-
-  .c-overflow-menu {
-    display: inline;
-    position: relative;
-
-    .c-overflow-menu__actions {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      transform: translateY(100%);
-      width: max-content;
-      z-index: 100; /* HACK */
-    }
+  .c-scan-results {
+    background-color: white;
+    padding: 4px 8px;
   }
 }

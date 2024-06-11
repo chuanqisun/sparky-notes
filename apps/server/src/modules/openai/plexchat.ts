@@ -4,7 +4,7 @@ import { devChatEndpointManifest } from "./plexchat-config";
 
 let memoProxies: { chatProxy: SimpleChatProxy; embedProxy: SimpleEmbedProxy; abort: (abortHandle: string) => void } | null = null;
 
-export type { ChatInput, ChatMessage, ChatOutput } from "plexchat";
+export type { ChatInput, ChatInputMessage, ChatOutput } from "plexchat";
 
 export interface ChatRequest {
   input: SimpleChatInput;
