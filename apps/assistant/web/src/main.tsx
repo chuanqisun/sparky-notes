@@ -200,6 +200,9 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                   <button class="u-reset c-app-menu--btn" onClick={() => location.replace(`./copilot.html?t=${Date.now()}`)}>
                     Copilot
                   </button>
+                  <button class="u-reset c-app-menu--btn" onClick={() => location.replace(`./guide.html?t=${Date.now()}`)}>
+                    Guide
+                  </button>
                   <button class="u-reset c-app-menu--btn" onClick={signOut}>
                     Sign out
                   </button>
