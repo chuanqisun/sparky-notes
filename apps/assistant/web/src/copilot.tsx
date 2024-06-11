@@ -113,6 +113,9 @@ function App() {
       )}
       {isConnected === true && (
         <div class="c-module-stack">
+          <nav class="c-nav-header">
+            <a href="/index.html">← Back to search</a>
+          </nav>
           <fieldset class="c-fieldset">
             <div class="c-field">
               <label class="c-field__key" for="tool-select">

@@ -18,6 +18,16 @@
     background: white;
   }
 
+  .c-nav-header {
+    background-color: white;
+    padding: 4px 8px 4px 8px;
+    display: grid;
+
+    a {
+      color: inherit;
+    }
+  }
+
   .c-module-stack {
     background-color: #eee;
     display: flex;
