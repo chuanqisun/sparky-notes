@@ -11,6 +11,7 @@ import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
 import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { WorkerEvents, WorkerRoutes } from "./routes";
+import { ProgressBar } from "./styles/components/progress-bar";
 import { WorkerClient } from "./utils/worker-rpc";
 import WebWorker from "./worker?worker";
 
@@ -70,7 +71,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
 
   return (
     <>
-      {isConnected !== false && report === undefined && <div class="c-progress-bar" />}
+      {isConnected !== false && report === undefined && <ProgressBar />}
       {isConnected === false && (
         <section class="c-welcome-mat">
           <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>

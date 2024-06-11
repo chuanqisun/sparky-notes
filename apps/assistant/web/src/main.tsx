@@ -15,6 +15,8 @@ import { useHandleAddCards } from "./modules/hits/use-handle-add-cards";
 import { useReportDetails } from "./modules/hits/use-report-details";
 import { appInsights } from "./modules/telemetry/app-insights";
 import type { SearchRes, WorkerEvents, WorkerRoutes } from "./routes";
+import { ProgressBar } from "./styles/components/progress-bar";
+import { Welcome } from "./styles/components/welcome";
 import { debounce } from "./utils/debounce";
 import { getUniqueFilter } from "./utils/get-unique-filter";
 import { useConcurrentTasks } from "./utils/use-concurrent-tasks";
@@ -213,22 +215,13 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
         </header>
       )}
       <main class="c-app-layout__main u-scroll" ref={setScrollContainerRef}>
-        {outputState.showTopLoadingSpinner && <div class="c-progress-bar" />}
+        {outputState.showTopLoadingSpinner && <ProgressBar />}
         {outputState.showErrorMessage && (
           <section class="c-welcome-mat">
             <ErrorMessage />
           </section>
         )}
-        {isConnected === false && (
-          <section class="c-welcome-mat">
-            <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
-            <div class="c-welcome-action-group">
-              <button class="u-reset c-jumbo-button" onClick={signIn}>
-                Sign in
-              </button>
-            </div>
-          </section>
-        )}
+        {isConnected === false && <Welcome onSignIn={signIn} />}
         {selectedCard ? (
           <dialog id="report-viewer-dialog" class="c-app-layout c-report-viewer-overlay">
             <header class="c-app-header">
@@ -237,7 +230,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
               </button>
             </header>
             <div class="c-app-layout__main u-scroll">
-              {isReportDetailsLoading && <div class="c-progress-bar" />}
+              {isReportDetailsLoading && <ProgressBar />}
               {!isReportDetailsLoading && report && <ReportViewer report={report} onAddMultiple={handleAddCardsWithVisitTracking} onOpen={handleOpenCard} />}
             </div>
           </dialog>
@@ -262,7 +255,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
             <EmptyMessage searchTerm={inputState.effectiveQuery} />
           </p>
         )}
-        {outputState.showBottomLoadingSpinner && <div class="c-progress-bar c-progress-bar--inline" />}
+        {outputState.showBottomLoadingSpinner && <ProgressBar inline={true} />}
         {outputState.shouldDetectBottom && <InfiniteScrollBottom />}
       </main>
     </>

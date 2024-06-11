@@ -8,7 +8,6 @@
 @import url("./styles/components/body.css") layer(components);
 @import url("./styles/components/button.css") layer(components);
 @import url("./styles/components/list.css") layer(components);
-@import url("./styles/components/progress-bar.css") layer(components);
 @import url("./styles/components/report-viewer.css") layer(components);
 @import url("./styles/components/search.css") layer(components);
 @import url("./styles/components/welcome.css") layer(components);

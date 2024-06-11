@@ -5,8 +5,9 @@ import { render } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { abortTask } from "./modules/copilot/abort";
 import { getH20Proxy } from "./modules/h20/proxy";
-import { getAbortChat, getChat } from "./modules/openai/proxy";
+import { getChat } from "./modules/openai/proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
+import { ProgressBar } from "./styles/components/progress-bar";
 
 const proxyToFigma = getProxyToFigma<MessageToFigma, MessageToWeb>(import.meta.env.VITE_PLUGIN_ID);
 
@@ -22,11 +23,10 @@ function App() {
     webHost: import.meta.env.VITE_WEB_HOST,
   });
 
-  const [chatProxy, chatAbortProxy] = useMemo(() => {
+  const chatProxy = useMemo(() => {
     const h20Proxy = getH20Proxy(accessToken);
     const chatProxy = getChat(h20Proxy);
-    const chatAbortProxy = getAbortChat(h20Proxy);
-    return [chatProxy, chatAbortProxy];
+    return chatProxy;
   }, [accessToken]);
 
   const [selection, setSelection] = useState<SelectionSummary | null>(null);
@@ -79,7 +79,7 @@ function App() {
 
   return (
     <>
-      {isConnected === undefined && <div class="c-progress-bar" />}
+      {isConnected === undefined && <ProgressBar />}
       {isConnected === false && (
         <section class="c-welcome-mat">
           <h1 class="c-welcome-title">Welcome to HITS Assistant</h1>
