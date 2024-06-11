@@ -20,7 +20,3 @@ export function getChat(h20Proxy: H20Proxy): Chat {
 
   return proxy;
 }
-
-export function getAbortChat(h20Proxy: H20Proxy): AbortChat {
-  return (handle: string) => h20Proxy("/openai/plexchat/abort", { handle });
-}

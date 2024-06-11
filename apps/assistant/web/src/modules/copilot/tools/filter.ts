@@ -2,12 +2,12 @@ import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assista
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { defaultCriteria, filter } from "../../inference/filter";
 import { contentNodestoIdStickies, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
-import type { AbortChat, Chat } from "../../openai/proxy";
+import type { Chat } from "../../openai/proxy";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function filterTool(chatProxy: Chat, chatAbortProxy: AbortChat, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function filterTool(chatProxy: Chat,  proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.filter",
     displayName: "Filter",
@@ -26,10 +26,7 @@ export function filterTool(chatProxy: Chat, chatAbortProxy: AbortChat, proxyToFi
         (notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }),
         "Filtering..."
       );
-      abortController.signal.addEventListener("abort", () => {
-        stopSpinner();
-        chatAbortProxy(handle);
-      });
+      abortController.signal.addEventListener("abort", stopSpinner);
 
       try {
         const mutationRequest: MutationRequest = {

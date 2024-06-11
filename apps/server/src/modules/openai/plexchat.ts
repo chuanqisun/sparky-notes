@@ -11,27 +11,30 @@ export interface ChatRequest {
   context?: SimpleChatContext;
   signal?: AbortSignal;
 }
-export const chatRoute: (chatProxy: SimpleChatProxy) => RequestHandler = (chatProxy) => {
+export const chatRoute: (chatProxy: SimpleChatProxy, aborter: (abortHandle: string) => void) => RequestHandler = (chatProxy, aborter) => {
   return async (req, res, next) => {
     try {
+      const abortHandle = crypto.randomUUID();
       const body = req.body as ChatRequest;
       assert(Array.isArray(body?.input?.messages), "Messages must be an array");
-      const result = await chatProxy(req.body.input, req.body.context);
-      res.json(result);
+      const resultAsync = chatProxy(req.body.input, {
+        models: body.context?.models,
+        abortHandle,
+      });
+
+      req.socket.once("close", () => {
+        aborter(abortHandle);
+      });
+
+      req.once("close", () => {
+        aborter(abortHandle);
+      });
+
+      res.json(await resultAsync);
     } catch (e) {
       next(e);
     }
   };
-};
-
-export const chatAbortRoute: (aborter: (abortHandle: string) => void) => RequestHandler = (aborter) => async (req, res, next) => {
-  try {
-    const body = req.body as { handle: string };
-    assert(typeof body?.handle === "string", "abortHandle must be a string");
-    aborter(body.handle);
-  } catch (e) {
-    next(e);
-  }
 };
 
 export function loadOpenAIProxies() {

@@ -2,12 +2,12 @@ import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assista
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { synthesize } from "../../inference/synthesize";
 import { contentNodestoIdStickies, getItemId, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
-import type { AbortChat, Chat } from "../../openai/proxy";
+import type { Chat } from "../../openai/proxy";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function synthesizeTool(chat: Chat, abortChat: AbortChat, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function synthesizeTool(chat: Chat,proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.synthesize",
     displayName: "Synthesize",
@@ -22,15 +22,13 @@ export function synthesizeTool(chat: Chat, abortChat: AbortChat, proxyToFigma: P
     getActions: () => ["Run"],
     run: async ({ input, args, action }) => {
       const { handle, abortController } = createTask();
-      abortController.signal.addEventListener("abort", () => {
-        stopSpinner();
-        abortChat(handle);
-      });
 
       const stopSpinner = setSpinner(
         (notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }),
         "Synthesizing..."
       );
+      abortController.signal.addEventListener("abort", stopSpinner);
+
       try {
         const response = await synthesize(
           chat,
