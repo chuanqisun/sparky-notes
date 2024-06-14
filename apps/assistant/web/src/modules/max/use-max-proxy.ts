@@ -5,7 +5,8 @@ export type ChatCompletionProxy = (payload: SimpleChatInput, context?: Pick<Simp
 
 export type ChatCompletionStreamProxy = (
   payload: SimpleChatStreamInput,
-  context?: Pick<SimpleChatContext, "models">
+  context?: Pick<SimpleChatContext, "models">,
+  init?: Partial<RequestInit>
 ) => AsyncGenerator<ChatOutputStreamEvent, void, unknown>;
 
 export function useMaxProxy(options: { accessToken: string }) {
@@ -37,9 +38,13 @@ export function useMaxProxy(options: { accessToken: string }) {
 
   const chatCompletionsStream = useMemo<ChatCompletionStreamProxy>(
     () =>
-      async function* (payload: SimpleChatStreamInput, context?: Pick<SimpleChatContext, "models">) {
+      async function* (payload: SimpleChatStreamInput, context?: Pick<SimpleChatContext, "models">, init?: Partial<RequestInit>) {
         const stream = await proxy<SimpleChatStreamInput>("/chat/completions", payload, {
-          headers: context?.models ? { "mx-models": context?.models?.join(",") } : {},
+          ...init,
+          headers: {
+            ...init?.headers,
+            ...(context?.models ? { "mx-models": context?.models?.join(",") } : {}),
+          },
         });
 
         if (!stream.ok) {

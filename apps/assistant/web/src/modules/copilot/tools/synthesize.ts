@@ -1,6 +1,6 @@
 import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
 import type { ProxyToFigma } from "@h20/figma-tools";
-import { synthesize } from "../../inference/synthesize";
+import { synthesizeStream } from "../../inference/synthesize-stream";
 import type { ChatCompletionStreamProxy } from "../../max/use-max-proxy";
 import { contentNodestoIdStickies, getItemId, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
 import type { Chat } from "../../openai/proxy";
@@ -31,26 +31,16 @@ export function synthesizeTool(chat: Chat, chatStream: ChatCompletionStreamProxy
       abortController.signal.addEventListener("abort", stopSpinner);
 
       try {
-        // // TODO swap in v2 implementation
-        // await synthesizeV2(
-        //   chatStream,
-        //   contentNodestoIdStickies(input)
-        //     .filter((input) => input.content.trim())
-        //     .sort(() => Math.random() - 0.5),
-        //   args["goalOrInstruction"],
-        //   getItemText,
-        //   handle
-        // );
-
-        const response = await synthesize(
-          chat,
-          contentNodestoIdStickies(input)
+        const response = await synthesizeStream({
+          chatStreamProxy: chatStream,
+          items: contentNodestoIdStickies(input)
             .filter((input) => input.content.trim())
             .sort(() => Math.random() - 0.5),
-          args["goalOrInstruction"],
-          getItemText,
-          handle
-        );
+          goalOrInstruction: args["goalOrInstruction"],
+          onStringify: getItemText,
+          abortSignal: abortController.signal,
+          onFinding: (f) => console.log({ f }),
+        });
 
         const groupedIds = response.map((group) => ({
           ...group,
