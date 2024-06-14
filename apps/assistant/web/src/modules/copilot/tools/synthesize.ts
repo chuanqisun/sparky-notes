@@ -1,13 +1,14 @@
 import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { synthesize } from "../../inference/synthesize";
+import type { ChatCompletionStreamProxy } from "../../max/use-max-proxy";
 import { contentNodestoIdStickies, getItemId, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
 import type { Chat } from "../../openai/proxy";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function synthesizeTool(chat: Chat,proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function synthesizeTool(chat: Chat, chatStream: ChatCompletionStreamProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.synthesize",
     displayName: "Synthesize",
@@ -30,6 +31,17 @@ export function synthesizeTool(chat: Chat,proxyToFigma: ProxyToFigma<MessageToFi
       abortController.signal.addEventListener("abort", stopSpinner);
 
       try {
+        // // TODO swap in v2 implementation
+        // await synthesizeV2(
+        //   chatStream,
+        //   contentNodestoIdStickies(input)
+        //     .filter((input) => input.content.trim())
+        //     .sort(() => Math.random() - 0.5),
+        //   args["goalOrInstruction"],
+        //   getItemText,
+        //   handle
+        // );
+
         const response = await synthesize(
           chat,
           contentNodestoIdStickies(input)

@@ -9,6 +9,7 @@ import { filterTool } from "./modules/copilot/tools/filter";
 import { synthesizeTool } from "./modules/copilot/tools/synthesize";
 import { ResizeTextarea } from "./modules/form/resize-textarea";
 import { getH20Proxy } from "./modules/h20/proxy";
+import { useMaxProxy } from "./modules/max/use-max-proxy";
 import { contentNodesToObject } from "./modules/object-tree/content-nodes-to-objects";
 import { ObjectTree } from "./modules/object-tree/object-tree";
 import { getChat } from "./modules/openai/proxy";
@@ -62,7 +63,9 @@ function App() {
     proxyToFigma.notify({ detectSelection: true });
   }, []);
 
-  const tools = useMemo(() => [synthesizeTool(chatProxy, proxyToFigma), filterTool(chatProxy, proxyToFigma)], [chatProxy]);
+  const { chatCompletionsStream } = useMaxProxy({ accessToken });
+
+  const tools = useMemo(() => [synthesizeTool(chatProxy, chatCompletionsStream, proxyToFigma), filterTool(chatProxy, proxyToFigma)], [chatProxy]);
   const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
 
   const handleRun = useCallback(
