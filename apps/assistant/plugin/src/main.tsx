@@ -6,6 +6,7 @@ import { handleClearNotification } from "./handlers/handle-clear-notification";
 import { handleDetectSelection } from "./handlers/handle-detect-selection";
 import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleExportNode } from "./handlers/handle-export-node";
+import { handleGetViewport } from "./handlers/handle-get-viewport";
 import { handleMutation } from "./handlers/handle-mutation";
 import { handleRenderObject } from "./handlers/handle-render-object";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
@@ -44,6 +45,7 @@ function Widget() {
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleDetectSelection(message, wrappedHandleSelectionChange);
       handleExportNode(message, proxyToWeb);
+      handleGetViewport(message, proxyToWeb);
       handleRenderObject(message);
       handleMutation(message, proxyToWeb);
       handleShowNotification(message, proxyToWeb);

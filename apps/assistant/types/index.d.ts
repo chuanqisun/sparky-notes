@@ -44,9 +44,21 @@ export interface ExportNodeResponse {
 
 export interface MutationRequest {
   /**
-   * If not specificed, viewport center will be used
+   * If not specificed, result will be centered in the viewport
    */
-  position?: "center" | { x: number; y: number };
+  position?: {
+    viewportCenter?: {
+      /** Percentage: -1 to 1 */
+      horizontalOffset?: number;
+      /** Percentage: -1 to 1 */
+      verticalOffset?: number;
+    };
+    relativeToNodes?: {
+      ids: string[];
+      flowDirection?: "horizontal" | "vertical";
+      gap?: number;
+    };
+  };
   createSections?: CreateSectionMutation[];
   updateSections?: UpdateSectionMutation[];
   removeSections?: string[];

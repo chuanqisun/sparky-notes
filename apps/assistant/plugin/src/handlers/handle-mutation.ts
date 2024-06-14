@@ -1,6 +1,6 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { appendAsTiles, loadFonts, moveToViewCenter, replaceNotification, type LayoutFn, type ProxyToWeb } from "@h20/figma-tools";
-import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
+import { appendAsTiles, loadFonts, replaceNotification, type LayoutFn, type ProxyToWeb } from "@h20/figma-tools";
+import { getAbsoluteBoundingBox, getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
 import { setFillColor, stickyColors } from "../utils/color";
 
 export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
@@ -52,15 +52,21 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
     (message.mutationRequest.removeSections ?? []).map((removeSectionId) => figma.getNodeByIdAsync(removeSectionId).then((node) => node?.remove()))
   );
 
-  appendAsTiles(layoutContainer, [...createdSections, ...updatedSections], getNextVerticalTilePosition.bind(null, { gap: 120 }));
+  appendAsTiles(layoutContainer, [...createdSections, ...updatedSections], getNextVerticalTilePosition.bind(null, { padding: 0, gap: 120 }));
 
   const affectedNodes = layoutContainer.children;
 
-  if (message.mutationRequest.position !== "center") {
-    layoutContainer.x = message.mutationRequest.position?.x ?? figma.viewport.center.x;
-    layoutContainer.y = message.mutationRequest.position?.y ?? figma.viewport.center.y;
+  if (message.mutationRequest.position?.relativeToNodes) {
+    const nodes = (await Promise.all(message.mutationRequest.position.relativeToNodes.ids.map((id) => figma.getNodeByIdAsync(id))))
+      .filter(isNotNull)
+      .filter((node) => typeof (node as SceneNode).x === "number");
+    const box = getAbsoluteBoundingBox(nodes as SceneNode[]);
+    layoutContainer.x = box.x + box.width + 32;
+    layoutContainer.y = box.y;
   } else {
-    moveToViewCenter([layoutContainer]);
+    // const viewportCenter = message.mutationRequest.position?.viewportCenter;
+    layoutContainer.x = figma.viewport.center.x;
+    layoutContainer.y = figma.viewport.center.y;
   }
 
   figma.ungroup(layoutContainer);

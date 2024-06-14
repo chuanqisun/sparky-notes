@@ -1,8 +1,9 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
 import type { ProxyToFigma } from "@h20/figma-tools";
-import { synthesizeStream } from "../../inference/synthesize-stream";
+import { Subject, concatMap } from "rxjs";
+import { synthesizeStream, type SyntheticFinding } from "../../inference/synthesize-stream";
 import type { ChatCompletionStreamProxy } from "../../max/use-max-proxy";
-import { contentNodestoIdStickies, getItemId, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
+import { contentNodestoIdContentNode, getItemId, getItemText, type IdContentNode } from "../../object-tree/content-nodes-to-id-content-node";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 
@@ -22,54 +23,63 @@ export function synthesizeTool(chatStream: ChatCompletionStreamProxy, proxyToFig
     run: async ({ input, args, action }) => {
       const { handle, abortController } = createTask();
 
-      const { mutationResponse } = await proxyToFigma.request({ mutationRequest: { createSections: [{ name: "Container" }] } });
-      const containerId = mutationResponse?.createdSections[0];
-      if (!containerId) throw new Error("Failed to create results container");
-
+      let refNodeId: null | string = null;
       let progress = 0;
-      proxyToFigma.notify({ showNotification: { message: `Synthesizing...`, cancelButton: { handle } } });
+      proxyToFigma.notify({ showNotification: { message: `Synthesizing...`, config: { timeout: Infinity }, cancelButton: { handle } } });
 
-      const response = await synthesizeStream({
-        chatStreamProxy: chatStream,
-        items: contentNodestoIdStickies(input)
-          .filter((input) => input.content.trim())
-          .sort(() => Math.random() - 0.5),
-        goalOrInstruction: args["goalOrInstruction"],
-        onStringify: getItemText,
-        abortSignal: abortController.signal,
-        onFinding: async (finding) => {
-          const { mutationResponse } = await proxyToFigma.request({
-            mutationRequest: {
-              createSections: [
-                {
-                  name: finding.name,
-                  createSummary: finding.description,
-                  cloneNodes: finding.items.map(getItemId),
-                  flowDirection: "vertical",
-                },
-              ],
-            },
-          });
+      const $render = new Subject<SyntheticFinding<IdContentNode>>();
 
-          const sectionId = mutationResponse?.createdSections[0];
-          if (!sectionId) throw new Error("Failed to create section");
+      $render
+        .pipe(
+          concatMap(async (finding) => {
+            const { mutationResponse } = await proxyToFigma.request({
+              mutationRequest: {
+                position: refNodeId
+                  ? {
+                      relativeToNodes: {
+                        ids: [refNodeId],
+                      },
+                    }
+                  : {
+                      viewportCenter: {},
+                    },
+                createSections: [
+                  {
+                    name: finding.name,
+                    createSummary: finding.description,
+                    cloneNodes: finding.items.map(getItemId),
+                    flowDirection: "vertical",
+                  },
+                ],
+              },
+            });
 
-          proxyToFigma.notify({ showNotification: { message: `Synthesizing... ${++progress} findings`, cancelButton: { handle } } });
-          await proxyToFigma.request({
-            mutationRequest: {
-              updateSections: [
-                {
-                  id: containerId,
-                  moveNodes: [sectionId],
-                },
-              ],
-            },
-          });
-        },
-      });
+            const sectionId = mutationResponse?.createdSections[0];
+            if (!sectionId) throw new Error("Failed to create section");
+            refNodeId = sectionId;
 
-      // FIX ME: this does not render, race condition?
-      proxyToFigma.notify({ showNotification: { message: `✅ Synthesizing... done. ${response.length - 1} findings` } });
+            proxyToFigma.notify({
+              showNotification: { message: `Synthesizing... ${++progress} findings`, config: { timeout: Infinity }, cancelButton: { handle } },
+            });
+          })
+        )
+        .subscribe();
+
+      try {
+        const response = await synthesizeStream({
+          chatStreamProxy: chatStream,
+          items: contentNodestoIdContentNode(input)
+            .filter((input) => input.content.trim())
+            .sort(() => Math.random() - 0.5),
+          goalOrInstruction: args["goalOrInstruction"],
+          onStringify: getItemText,
+          abortSignal: abortController.signal,
+          onFinding: (finding) => $render.next(finding),
+        });
+        proxyToFigma.notify({ showNotification: { message: `✅ Synthesizing... done. ${response.length - 1} findings`, config: { timeout: Infinity } } });
+      } finally {
+        $render.complete();
+      }
     },
   };
 }

@@ -2,7 +2,7 @@ import type { CreateSectionMutation, MessageToFigma, MessageToWeb, MutationReque
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { defaultCriteria, filter } from "../../inference/filter";
 import type { ChatCompletionProxy } from "../../max/use-max-proxy";
-import { contentNodestoIdStickies, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
+import { contentNodestoIdContentNode, getItemText } from "../../object-tree/content-nodes-to-id-content-node";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
@@ -52,7 +52,7 @@ export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyTo
           chatProxy,
           predicate: args["predicate"],
           getItemText,
-          items: contentNodestoIdStickies(input).filter((node) => node.content.trim()),
+          items: contentNodestoIdContentNode(input).filter((node) => node.content.trim()),
           abortSignal: abortController.signal,
           onAccept: (item) =>
             proxyToFigma.request({
