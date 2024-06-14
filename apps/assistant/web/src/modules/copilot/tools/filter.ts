@@ -1,13 +1,13 @@
-import type { MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
+import type { CreateSectionMutation, MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
 import type { ProxyToFigma } from "@h20/figma-tools";
 import { defaultCriteria, filter } from "../../inference/filter";
+import type { ChatCompletionProxy } from "../../max/use-max-proxy";
 import { contentNodestoIdStickies, getItemText } from "../../object-tree/content-nodes-to-id-stickies";
-import type { Chat } from "../../openai/proxy";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 import { setSpinner } from "../utils/spinner";
 
-export function filterTool(chatProxy: Chat,  proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.filter",
     displayName: "Filter",
@@ -40,7 +40,7 @@ export function filterTool(chatProxy: Chat,  proxyToFigma: ProxyToFigma<MessageT
             {
               name: "Error",
             },
-          ],
+          ] as CreateSectionMutation[],
         };
 
         const { mutationResponse } = await proxyToFigma.request({ mutationRequest });
@@ -48,66 +48,64 @@ export function filterTool(chatProxy: Chat,  proxyToFigma: ProxyToFigma<MessageT
 
         const [acceptedContainer, rejectedContainer, errorsContaienr] = mutationResponse.createdSections;
 
-        const filterResults = await filter(
+        const filterResults = await filter({
           chatProxy,
-          args["predicate"],
+          predicate: args["predicate"],
           getItemText,
-          contentNodestoIdStickies(input).filter((node) => node.content.trim()),
-          {
-            onAccept: (item) =>
-              proxyToFigma.request({
-                mutationRequest: {
-                  updateSections: [
-                    {
-                      id: acceptedContainer,
-                      moveStickies: [item.id],
-                    },
-                    {
-                      id: rejectedContainer,
-                    },
-                    {
-                      id: errorsContaienr,
-                    },
-                  ],
-                },
-              }),
-            onReject: (item) =>
-              proxyToFigma.request({
-                mutationRequest: {
-                  updateSections: [
-                    {
-                      id: acceptedContainer,
-                    },
-                    {
-                      id: rejectedContainer,
-                      moveStickies: [item.id],
-                    },
-                    {
-                      id: errorsContaienr,
-                    },
-                  ],
-                },
-              }),
-            onError: (item) =>
-              proxyToFigma.request({
-                mutationRequest: {
-                  updateSections: [
-                    {
-                      id: acceptedContainer,
-                    },
-                    {
-                      id: rejectedContainer,
-                    },
-                    {
-                      id: errorsContaienr,
-                      moveStickies: [item.id],
-                    },
-                  ],
-                },
-              }),
-          },
-          handle
-        );
+          items: contentNodestoIdStickies(input).filter((node) => node.content.trim()),
+          abortSignal: abortController.signal,
+          onAccept: (item) =>
+            proxyToFigma.request({
+              mutationRequest: {
+                updateSections: [
+                  {
+                    id: acceptedContainer,
+                    cloneNodes: [item.id],
+                  },
+                  {
+                    id: rejectedContainer,
+                  },
+                  {
+                    id: errorsContaienr,
+                  },
+                ],
+              },
+            }),
+          onReject: (item) =>
+            proxyToFigma.request({
+              mutationRequest: {
+                updateSections: [
+                  {
+                    id: acceptedContainer,
+                  },
+                  {
+                    id: rejectedContainer,
+                    cloneNodes: [item.id],
+                  },
+                  {
+                    id: errorsContaienr,
+                  },
+                ],
+              },
+            }),
+          onError: (item) =>
+            proxyToFigma.request({
+              mutationRequest: {
+                updateSections: [
+                  {
+                    id: acceptedContainer,
+                  },
+                  {
+                    id: rejectedContainer,
+                  },
+                  {
+                    id: errorsContaienr,
+                    cloneNodes: [item.id],
+                  },
+                ],
+              },
+            }),
+        });
 
         if (!filterResults.errors.length) {
           // empty mutation just to align the items

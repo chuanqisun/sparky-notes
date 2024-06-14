@@ -2,6 +2,7 @@ export interface MessageToWeb {
   abortTask?: string;
   ping?: string;
   getSelectionRes?: SelectionSummary;
+  getViewportResponse?: Viewport;
   selectionChanged?: SelectionSummary;
   parseDropHtml?: {
     items: string[];
@@ -17,12 +18,18 @@ export interface MessageToFigma {
   addCards?: AddCards;
   detectSelection?: boolean; // request plugin to notfiy selection
   exportNode?: ExportNodeRequest; // request plugin to export a node by id
+  getViewport?: boolean;
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
   renderObject?: any;
   showNotification?: FigmaNotification;
   clearNotification?: boolean;
   mutationRequest?: MutationRequest;
+}
+
+export interface Viewport {
+  center: { x: number; y: number };
+  bounds: { x: number; y: number; width: number; height: number };
 }
 
 export interface ExportNodeRequest {
@@ -36,6 +43,10 @@ export interface ExportNodeResponse {
 }
 
 export interface MutationRequest {
+  /**
+   * If not specificed, viewport center will be used
+   */
+  position?: "center" | { x: number; y: number };
   createSections?: CreateSectionMutation[];
   updateSections?: UpdateSectionMutation[];
   removeSections?: string[];
@@ -49,13 +60,23 @@ export interface MutationResponse {
 
 export interface CreateSectionMutation {
   name: string;
+  /** @default horizontal */
+  flowDirection?: "horizontal" | "vertical";
+  /** @default 32 */
+  gap?: number;
   createSummary?: string;
-  moveStickies?: string[]; // move by ids
+  cloneNodes?: string[]; // ids
+  moveNodes?: string[]; // ids
 }
 
 export interface UpdateSectionMutation {
   id: string;
-  moveStickies?: string[]; // move by ids
+  /** @default horizontal */
+  flowDirection?: "horizontal" | "vertical";
+  /** @default 32 */
+  gap?: number;
+  cloneNodes?: string[]; // ids
+  moveNodes?: string[]; // ids
 }
 
 export interface FigmaNotification {

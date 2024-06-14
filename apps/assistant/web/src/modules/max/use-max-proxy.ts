@@ -1,7 +1,7 @@
 import type { ChatOutput, ChatOutputStreamEvent, SimpleChatContext, SimpleChatInput, SimpleChatStreamInput } from "plexchat";
 import { useCallback, useMemo } from "preact/hooks";
 
-export type ChatCompletionProxy = (payload: SimpleChatInput, context?: Pick<SimpleChatContext, "models">) => Promise<ChatOutput>;
+export type ChatCompletionProxy = (payload: SimpleChatInput, context?: Pick<SimpleChatContext, "models">, init?: Partial<RequestInit>) => Promise<ChatOutput>;
 
 export type ChatCompletionStreamProxy = (
   payload: SimpleChatStreamInput,
@@ -29,9 +29,13 @@ export function useMaxProxy(options: { accessToken: string }) {
   );
 
   const chatCompletions = useMemo<ChatCompletionProxy>(
-    () => (payload: SimpleChatInput, context?: Pick<SimpleChatContext, "models">) =>
+    () => (payload: SimpleChatInput, context?: Pick<SimpleChatContext, "models">, init?: Partial<RequestInit>) =>
       proxy<SimpleChatInput>("/chat/completions", payload, {
-        headers: context?.models ? { "mx-models": context?.models?.join(",") } : {},
+        ...init,
+        headers: {
+          ...init?.headers,
+          ...(context?.models ? { "mx-models": context?.models?.join(",") } : {}),
+        },
       }).then((res) => res.json() as Promise<ChatOutput>),
     [proxy]
   );

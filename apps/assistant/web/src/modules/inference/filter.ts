@@ -1,11 +1,5 @@
+import type { ChatCompletionProxy } from "../max/use-max-proxy";
 import { ensureJsonResponse } from "../openai/ensure-json-response";
-import type { Chat } from "../openai/proxy";
-
-export interface FilterOptions<T> {
-  onAccept?: (item: T) => void;
-  onReject?: (item: T) => void;
-  onError?: (item: T, error: any) => void;
-}
 
 export interface FilterResult<T> {
   accepted: T[];
@@ -15,14 +9,26 @@ export interface FilterResult<T> {
 
 export const defaultCriteria = `Accept items that have a possitive meaning, reject the neutral or negative ones`;
 
-export async function filter<T>(
-  chatProxy: Chat,
-  predicate: string,
-  getItemText: (item: T) => string,
-  items: T[],
-  options?: FilterOptions<T>,
-  abortHandle?: string
-): Promise<FilterResult<T>> {
+export interface FilterOptions<T> {
+  chatProxy: ChatCompletionProxy;
+  predicate: string;
+  getItemText: (item: T) => string;
+  items: T[];
+  onAccept?: (item: T) => void;
+  onReject?: (item: T) => void;
+  onError?: (item: T, error: any) => void;
+  abortSignal?: AbortSignal;
+}
+export async function filter<T>({
+  chatProxy,
+  predicate,
+  getItemText,
+  items,
+  onAccept,
+  onReject,
+  onError,
+  abortSignal,
+}: FilterOptions<T>): Promise<FilterResult<T>> {
   const results = {
     accepted: [] as T[],
     rejected: [] as T[],
@@ -32,8 +38,8 @@ export async function filter<T>(
   try {
     await Promise.all(
       items.map((item) =>
-        chatProxy({
-          input: {
+        chatProxy(
+          {
             response_format: {
               type: "json_object",
             },
@@ -62,11 +68,13 @@ Respond in JSON format like this:
               },
             ],
           },
-          context: {
-            abortHandle,
+          {
             models: ["gpt-4o"],
           },
-        })
+          {
+            signal: abortSignal,
+          }
+        )
           .then(async (result) => {
             const conclusion = await ensureJsonResponse((rawResponse) => {
               if (typeof rawResponse.decision !== "string") {
@@ -77,10 +85,10 @@ Respond in JSON format like this:
             }, result);
 
             if (conclusion) {
-              options?.onAccept?.(item);
+              onAccept?.(item);
               results.accepted.push(item);
             } else {
-              options?.onReject?.(item);
+              onReject?.(item);
               results.rejected.push(item);
             }
 
@@ -91,7 +99,7 @@ Respond in JSON format like this:
             if ((e as Error)?.name === "AbortError") throw e;
 
             console.error(e);
-            options?.onError?.(item, e);
+            onError?.(item, e);
             results.errors.push({ item, error: e });
             return true; // conservative
           })

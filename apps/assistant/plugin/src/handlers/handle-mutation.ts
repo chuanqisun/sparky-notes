@@ -1,5 +1,5 @@
 import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { appendAsTiles, loadFonts, moveToViewCenter, replaceNotification, type ProxyToWeb } from "@h20/figma-tools";
+import { appendAsTiles, loadFonts, moveToViewCenter, replaceNotification, type LayoutFn, type ProxyToWeb } from "@h20/figma-tools";
 import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
 import { setFillColor, stickyColors } from "../utils/color";
 
@@ -13,22 +13,36 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
 
   const isWideWidth = message.mutationRequest.createSections?.some((createSection) => (createSection.createSummary?.split(" ").length ?? 0) > 40) ?? false;
 
-  const createdSections = (message.mutationRequest.createSections ?? []).map((createSection) => {
-    // create section, then clone stickies into the section
-    const section = figma.createSection();
-    section.name = createSection.name;
-    if (createSection.createSummary) createSectionSummary(section, isWideWidth, createSection.name, createSection.createSummary);
-    if (createSection.moveStickies) cloneStickiesToSection(section, createSection.moveStickies);
+  const getLayoutFn = (flowDirection: "horizontal" | "vertical" = "horizontal", gap = 32) =>
+    flowDirection === "horizontal" ? getNextHorizontalTilePosition.bind(null, { gap }) : getNextVerticalTilePosition.bind(null, { gap });
 
-    return section;
-  });
+  const createdSections = await Promise.all(
+    (message.mutationRequest.createSections ?? []).map(async (createSection) => {
+      // create section, then clone or move nodes into the section
+      const section = figma.createSection();
+      section.name = createSection.name;
+      if (createSection.createSummary)
+        createSectionSummary(
+          getLayoutFn(createSection.flowDirection, createSection.gap),
+          section,
+          isWideWidth,
+          createSection.name,
+          createSection.createSummary
+        );
+      if (createSection.cloneNodes) await cloneNodeToSection(getLayoutFn(createSection.flowDirection, createSection.gap), section, createSection.cloneNodes);
+      if (createSection.moveNodes) await moveNodeToSection(getLayoutFn(createSection.flowDirection, createSection.gap), section, createSection.moveNodes);
+
+      return section;
+    })
+  );
 
   const updatedSections = (
     await Promise.all(
       (message.mutationRequest.updateSections ?? []).map(async (updateSection) => {
         const section = (await figma.getNodeByIdAsync(updateSection.id)) as SectionNode;
         if (!section) return null;
-        if (updateSection.moveStickies) cloneStickiesToSection(section, updateSection.moveStickies);
+        if (updateSection.cloneNodes) await cloneNodeToSection(getLayoutFn(updateSection.flowDirection, updateSection.gap), section, updateSection.cloneNodes);
+        if (updateSection.moveNodes) await moveNodeToSection(getLayoutFn(updateSection.flowDirection, updateSection.gap), section, updateSection.moveNodes);
         return section;
       })
     )
@@ -42,7 +56,12 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
 
   const affectedNodes = layoutContainer.children;
 
-  moveToViewCenter([layoutContainer]);
+  if (message.mutationRequest.position !== "center") {
+    layoutContainer.x = message.mutationRequest.position?.x ?? figma.viewport.center.x;
+    layoutContainer.y = message.mutationRequest.position?.y ?? figma.viewport.center.y;
+  } else {
+    moveToViewCenter([layoutContainer]);
+  }
 
   figma.ungroup(layoutContainer);
   figma.currentPage.selection = affectedNodes;
@@ -74,22 +93,28 @@ function isNotNull<T>(value: T | null): value is T {
   return value !== null;
 }
 
-async function cloneStickiesToSection(section: SectionNode, stickyTexts: string[]) {
-  const cloneStickyById = async (id: string) => {
-    return (figma.getNodeByIdAsync(id) as Promise<StickyNode | null>).then((node) => node?.clone());
+async function cloneNodeToSection(layoutFn: LayoutFn, section: SectionNode, sourceIds: string[]) {
+  const cloneNodeById = async (id: string) => {
+    return (figma.getNodeByIdAsync(id) as Promise<SceneNode | null>).then((node) => node?.clone());
   };
 
-  const existingStickies = await Promise.all(stickyTexts.map(cloneStickyById)).then((results) => results.filter(Boolean) as StickyNode[]);
-  appendAsTiles(
+  const clonedNodes = await Promise.all(sourceIds.map(cloneNodeById)).then((results) => results.filter(Boolean) as SceneNode[]);
+  await moveNodeToSection(
+    layoutFn,
     section,
-    existingStickies,
-    getNextHorizontalTilePosition.bind(null, {
-      gap: 32,
-    })
+    clonedNodes.map((node) => node.id)
   );
 }
 
-function createSectionSummary(section: SectionNode, isWideWidth: boolean, name: string, summary: string) {
+async function moveNodeToSection(layoutFn: LayoutFn, section: SectionNode, sourceIds: string[]) {
+  appendAsTiles(
+    section,
+    await Promise.all(sourceIds.map((id) => figma.getNodeByIdAsync(id))).then((nodes) => nodes.filter(isNotNull) as SceneNode[]),
+    layoutFn
+  );
+}
+
+function createSectionSummary(layoutFn: LayoutFn, section: SectionNode, isWideWidth: boolean, name: string, summary: string) {
   const summarySticky = figma.createSticky();
   summarySticky.text.fontSize = 16;
   summarySticky.text.fontName = { family: "Inter", style: "Medium" };
@@ -98,11 +123,5 @@ function createSectionSummary(section: SectionNode, isWideWidth: boolean, name: 
   setFillColor(stickyColors.LightGray, summarySticky);
   summarySticky.isWideWidth = isWideWidth;
 
-  appendAsTiles(
-    section,
-    [summarySticky],
-    getNextHorizontalTilePosition.bind(null, {
-      gap: 32,
-    })
-  );
+  appendAsTiles(section, [summarySticky], layoutFn);
 }
