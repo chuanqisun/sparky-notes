@@ -54,9 +54,9 @@ ${item.data}`.trim()
         {
           role: "system",
           content: `
-Synthesize findings from evidence items based on this user goal: ${goalOrInstruction?.trim().length ? goalOrInstruction : defaultContext}
-
-Cite *AS MANY AS POSSIBLE* evidence items id numbers to support each finding.
+Synthesize findings from evidence items based on user's goal or instruction.
+Each finding should represent single cohesive concept emerged from multiple evidence items.
+Support each finding with *2 or more* evidence items id numbers
 
 Respond in JSON format like this:
 """
@@ -76,6 +76,7 @@ Respond in JSON format like this:
         {
           role: "user",
           content: `
+${goalOrInstruction?.trim().length ? goalOrInstruction : defaultContext}
 
 Evidence items:
 ${itemsYaml}
@@ -113,11 +114,14 @@ ${itemsYaml}
   parser.onEnd = () => {
     const unusedItems = originalItems.filter((item) => !usedIds.has(item.id));
     if (unusedItems.length) {
-      onFinding?.({
+      const unusedFinding = {
         name: "Unused",
         description: "Items not referenced in any finding",
         items: unusedItems.map((item) => item.data),
-      });
+      };
+
+      findings.push(unusedFinding);
+      onFinding?.(unusedFinding);
     }
 
     parsingTask.resolve(findings);
