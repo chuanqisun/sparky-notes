@@ -75,6 +75,7 @@ function App() {
         return;
       }
       try {
+        appInsights.trackEvent({ name: "tool-run", properties: { tool: activeTool.tool.id } });
         await activeTool.tool.run?.({
           input,
           action,
