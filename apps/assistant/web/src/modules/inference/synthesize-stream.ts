@@ -125,6 +125,7 @@ ${itemsYaml}
     }
 
     parsingTask.resolve(findings);
+    console.log("parser ended");
   };
 
   for await (const response of result) {

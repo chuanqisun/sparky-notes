@@ -10,6 +10,7 @@ import { handleGetViewport } from "./handlers/handle-get-viewport";
 import { handleMutation } from "./handlers/handle-mutation";
 import { handleRenderObject } from "./handlers/handle-render-object";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
+import { handleSetSelection } from "./handlers/handle-set-selection";
 import { handleShowNotification } from "./handlers/handle-show-notification";
 import { openCardPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
@@ -43,13 +44,14 @@ function Widget() {
       console.log(message);
 
       handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
+      handleClearNotification(message);
       handleDetectSelection(message, wrappedHandleSelectionChange);
       handleExportNode(message, proxyToWeb);
       handleGetViewport(message, proxyToWeb);
-      handleRenderObject(message);
       handleMutation(message, proxyToWeb);
+      handleRenderObject(message);
+      handleSetSelection(message, proxyToWeb);
       handleShowNotification(message, proxyToWeb);
-      handleClearNotification(message);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;

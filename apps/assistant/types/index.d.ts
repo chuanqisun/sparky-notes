@@ -12,6 +12,7 @@ export interface MessageToWeb {
   addedCards?: AddCards;
   mutationResponse?: MutationResponse;
   exportedNodeResponse?: ExportNodeResponse;
+  setSelectionResponse?: string[];
 }
 
 export interface MessageToFigma {
@@ -25,6 +26,7 @@ export interface MessageToFigma {
   showNotification?: FigmaNotification;
   clearNotification?: boolean;
   mutationRequest?: MutationRequest;
+  setSelection?: string[];
 }
 
 export interface Viewport {
@@ -100,6 +102,10 @@ export interface FigmaNotification {
   cancelButton?: {
     label?: string;
     handle: string;
+  };
+  locateButton?: {
+    label?: string;
+    ids: string[];
   };
 }
 

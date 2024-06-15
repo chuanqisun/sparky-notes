@@ -17,10 +17,10 @@ export function contentNodestoIdContentNode(nodes: ContentNode[]): IdContentNode
   });
 }
 
-export function getItemText(sticky: IdContentNode): string {
-  return sticky.content;
+export function getItemText(node: IdContentNode): string {
+  return node.content;
 }
 
-export function getItemId(sticky: IdContentNode): string {
-  return sticky.id;
+export function getItemId(node: IdContentNode): string {
+  return node.id;
 }
