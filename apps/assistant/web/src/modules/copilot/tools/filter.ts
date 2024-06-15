@@ -5,7 +5,6 @@ import type { ChatCompletionProxy } from "../../max/use-max-proxy";
 import { contentNodestoIdContentNode, getItemText } from "../../object-tree/content-nodes-to-id-content-node";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
-import { setSpinner } from "../utils/spinner";
 
 export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
@@ -22,31 +21,30 @@ export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyTo
     getActions: () => ["Run"],
     run: async ({ input, args }) => {
       const { handle, abortController } = createTask();
-      const stopSpinner = setSpinner(
-        (notification) => proxyToFigma.notify({ showNotification: { ...notification, cancelButton: { handle } } }),
-        "Filtering..."
-      );
-      abortController.signal.addEventListener("abort", stopSpinner);
 
+      proxyToFigma.notify({ showNotification: { message: `Filtering...`, config: { timeout: Infinity }, cancelButton: { handle } } });
+
+      const mutationRequest: MutationRequest = {
+        createSections: [
+          {
+            name: `✅ Accepted`,
+          },
+          {
+            name: `❌ Rejected`,
+          },
+          {
+            name: "Error",
+          },
+        ] as CreateSectionMutation[],
+      };
+
+      const resultContainers = [] as string[];
       try {
-        const mutationRequest: MutationRequest = {
-          createSections: [
-            {
-              name: `✅ Accepted`,
-            },
-            {
-              name: `❌ Rejected`,
-            },
-            {
-              name: "Error",
-            },
-          ] as CreateSectionMutation[],
-        };
-
         const { mutationResponse } = await proxyToFigma.request({ mutationRequest });
         if (mutationResponse?.createdSections.length !== 3) return;
 
         const [acceptedContainer, rejectedContainer, errorsContaienr] = mutationResponse.createdSections;
+        resultContainers.push(acceptedContainer, rejectedContainer, errorsContaienr);
 
         const filterResults = await filter({
           chatProxy,
@@ -123,10 +121,18 @@ export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyTo
             },
           });
         }
-
-        stopSpinner();
       } finally {
-        stopSpinner();
+        proxyToFigma.notify({ showNotification: { message: `Filtering...`, config: { timeout: Infinity }, cancelButton: { handle } } });
+
+        proxyToFigma.notify({
+          showNotification: {
+            message: `✅ Filtering... done`,
+            config: { timeout: Infinity },
+            locateButton: {
+              ids: resultContainers,
+            },
+          },
+        });
       }
     },
   };

@@ -6,7 +6,7 @@ export async function handleShowNotification(message: MessageToFigma, proxyToWeb
 
   const buttons: { text: string; action: () => void }[] = [];
 
-  if (message.showNotification.cancelButton) {
+  if (message.showNotification.cancelButton?.handle) {
     buttons.push({
       text: message.showNotification.cancelButton.label ?? "Cancel",
       action: () => {
@@ -15,7 +15,7 @@ export async function handleShowNotification(message: MessageToFigma, proxyToWeb
         }
       },
     });
-  } else if (message.showNotification.locateButton) {
+  } else if (message.showNotification.locateButton?.ids.length) {
     buttons.push({
       text: message.showNotification.locateButton.label ?? "Locate",
       action: () => {
