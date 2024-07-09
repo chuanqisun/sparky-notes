@@ -38,90 +38,24 @@
     }
   }
 
-  .c-module-stack__scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  .c-radio-group {
-    display: flex;
-    gap: 8px;
-  }
-
-  .c-radio-item {
-    display: flex;
-    gap: 4px;
-  }
-
-  .c-fieldset {
+  .c-module-stack__section {
+    background-color: white;
+    padding: 8px;
     display: grid;
-    gap: 8px;
-    padding: 0;
-  }
-
-  .c-fieldset__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 4px 8px 8px 8px;
-  }
-
-  .c-fieldset__action {
-    width: 100%;
-  }
-
-  .c-field {
-    display: flex;
-    flex-direction: column;
-    font-size: 14px;
     gap: 4px;
   }
 
-  .c-field--scroll {
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .c-field__key {
+  h2 {
     font-weight: 600;
-    font-size: 14px;
-    padding: 4px 8px 0px 8px;
+    font-size: 16px;
   }
 
-  .c-field__key--with-menu {
-    display: flex;
-    justify-content: space-between;
+  button {
+    padding: 2px 4px;
   }
 
-  .c-field__value {
-    padding: 0 8px;
-    display: grid;
-  }
-
-  .c-field__value--scroll {
-    overflow-y: auto;
-  }
-
-  .c-fieldset {
-    & :where(button, input) {
-      padding: 2px 4px;
-    }
-    & select {
-      padding: 2px 0px;
-    }
-  }
-
-  .c-overflow-menu {
-    display: inline;
-    position: relative;
-
-    .c-overflow-menu__actions {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      transform: translateY(100%);
-      width: max-content;
-      z-index: 100; /* HACK */
-    }
+  textarea {
+    resize: vertical;
+    padding: 2px 4px;
   }
 }

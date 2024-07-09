@@ -8,6 +8,7 @@ import { handleDropLinks } from "./handlers/handle-drop-links";
 import { handleExportNode } from "./handlers/handle-export-node";
 import { handleGetViewport } from "./handlers/handle-get-viewport";
 import { handleMutation } from "./handlers/handle-mutation";
+import { handleRenderAutoLayoutItem } from "./handlers/handle-render-auto-layout-item";
 import { handleRenderObject } from "./handlers/handle-render-object";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { handleSetSelection } from "./handlers/handle-set-selection";
@@ -50,6 +51,7 @@ function Widget() {
       handleGetViewport(message, proxyToWeb);
       handleMutation(message, proxyToWeb);
       handleRenderObject(message);
+      handleRenderAutoLayoutItem(message);
       handleSetSelection(message, proxyToWeb);
       handleShowNotification(message, proxyToWeb);
     };

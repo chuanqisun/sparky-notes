@@ -1,12 +1,9 @@
-import type { MessageToFigma, MessageToWeb, SelectionSummary } from "@h20/assistant-types";
+import type { MessageToFigma, MessageToWeb, RenderAutoLayoutItem, SelectionSummary } from "@h20/assistant-types";
 import { useAuth } from "@h20/auth/preact-hooks";
 import { getProxyToFigma } from "@h20/figma-tools";
 import { render } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { abortTask } from "./modules/copilot/abort";
-import type { Tool } from "./modules/copilot/tool";
-import { filterTool } from "./modules/copilot/tools/filter";
-import { synthesizeTool } from "./modules/copilot/tools/synthesize";
 import { useMaxProxy } from "./modules/max/use-max-proxy";
 import { appInsights } from "./modules/telemetry/app-insights";
 import { ProgressBar } from "./styles/components/progress-bar";
@@ -54,46 +51,9 @@ function App() {
 
   const { chatCompletions, chatCompletionsStream } = useMaxProxy({ accessToken });
 
-  const tools = useMemo(
-    () => [synthesizeTool(chatCompletionsStream, proxyToFigma), filterTool(chatCompletions, proxyToFigma)],
-    [chatCompletions, chatCompletionsStream]
-  );
-  const [activeTool, setActiveTool] = useState<{ tool: Tool; args: Record<string, string> }>({ tool: tools[0], args: {} });
-
-  const handleRun = useCallback(
-    async (action: string) => {
-      const input = selection?.contentNodes ?? [];
-      if (!input.length) {
-        proxyToFigma.notify({
-          showNotification: {
-            message: "No stickies were selected",
-          },
-        });
-        return;
-      }
-      try {
-        appInsights.trackEvent({ name: "tool-run", properties: { tool: activeTool.tool.id } });
-        await activeTool.tool.run?.({
-          input,
-          action,
-          args: activeTool.args,
-        });
-      } catch (e) {
-        // noop on abort error
-        if ((e as Error)?.name === "AbortError") return;
-
-        proxyToFigma.notify({
-          showNotification: {
-            message: `${[(e as Error).name, (e as Error).message].filter(Boolean).join(" | ")}`,
-            config: {
-              error: true,
-            },
-          },
-        });
-      }
-    },
-    [selection, activeTool]
-  );
+  const handleRenderItem = (request: RenderAutoLayoutItem) => {
+    proxyToFigma.notify({ renderAutoLayoutItem: request });
+  };
 
   return (
     <>
@@ -104,11 +64,46 @@ function App() {
           <nav class="c-nav-header">
             <a href="/index.html">← Back to search</a>
           </nav>
-          <section class="c-module-stack__scroll">
+          <section class="c-module-stack__section">
             <h2>Utils</h2>
+            <menu>
+              <button>Show spinner</button>
+              <button onClick={() => handleRenderItem({ containerName: "@thread", clear: true })}>Reset chat</button>
+            </menu>
           </section>
-          <section class="c-module-stack__scroll">
+          <section class="c-module-stack__section">
             <h2>User message</h2>
+            <textarea rows={6}></textarea>
+            <button
+              onClick={() =>
+                handleRenderItem({
+                  containerName: "@thread",
+                  templateName: "@user-message-template",
+                  replacements: {
+                    content: "Hello, world!",
+                  },
+                })
+              }
+            >
+              Append
+            </button>
+          </section>
+          <section class="c-module-stack__section">
+            <h2>Assistant message</h2>
+            <textarea rows={6}></textarea>
+            <button
+              onClick={() =>
+                handleRenderItem({
+                  containerName: "@thread",
+                  templateName: "@assistant-message-template",
+                  replacements: {
+                    content: "How may I assist you?",
+                  },
+                })
+              }
+            >
+              Append
+            </button>
           </section>
         </div>
       )}

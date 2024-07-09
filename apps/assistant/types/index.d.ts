@@ -1,37 +1,45 @@
 export interface MessageToWeb {
   abortTask?: string;
-  ping?: string;
+  addedCards?: AddCards;
+  exportedNodeResponse?: ExportNodeResponse;
   getSelectionRes?: SelectionSummary;
   getViewportResponse?: Viewport;
-  selectionChanged?: SelectionSummary;
+  mutationResponse?: MutationResponse;
   parseDropHtml?: {
     items: string[];
     figmaDropContext: FigmaDropContext;
     webDragContext?: WebDragContext;
   };
-  addedCards?: AddCards;
-  mutationResponse?: MutationResponse;
-  exportedNodeResponse?: ExportNodeResponse;
+  ping?: string;
+  selectionChanged?: SelectionSummary;
   setSelectionResponse?: string[];
 }
 
 export interface MessageToFigma {
   addCards?: AddCards;
+  clearNotification?: boolean;
   detectSelection?: boolean; // request plugin to notfiy selection
   exportNode?: ExportNodeRequest; // request plugin to export a node by id
   getViewport?: boolean;
+  mutationRequest?: MutationRequest;
   parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
+  renderAutoLayoutItem?: RenderAutoLayoutItem;
   renderObject?: any;
-  showNotification?: FigmaNotification;
-  clearNotification?: boolean;
-  mutationRequest?: MutationRequest;
   setSelection?: string[];
+  showNotification?: FigmaNotification;
 }
 
 export interface Viewport {
   center: { x: number; y: number };
   bounds: { x: number; y: number; width: number; height: number };
+}
+
+export interface RenderAutoLayoutItem {
+  containerName: string;
+  clear?: boolean;
+  templateName?: string;
+  replacements?: { [key: string]: string };
 }
 
 export interface ExportNodeRequest {
