@@ -75,26 +75,37 @@ function App() {
           <section class="c-module-stack__section">
             <h2>Utils</h2>
             <menu>
-              <button>Show spinner</button>
               <button onClick={() => handleRenderItem({ containerName: "@thread", clear: true })}>Reset chat</button>
             </menu>
           </section>
           <section class="c-module-stack__section">
             <h2>User message</h2>
             <textarea rows={6} ref={userMessageTextAreaRef}></textarea>
-            <button
-              onClick={() =>
-                handleRenderItem({
-                  containerName: "@thread",
-                  templateName: "@user-message-template",
-                  replacements: {
-                    content: userMessageTextAreaRef.current?.value ?? "",
-                  },
-                }).then(() => clearTextAreaElement(userMessageTextAreaRef.current))
-              }
-            >
-              Append
-            </button>
+            <menu>
+              <button
+                onClick={() =>
+                  handleRenderItem({
+                    containerName: "@thread",
+                    templateName: "@user-message-template",
+                    replacements: {
+                      content: userMessageTextAreaRef.current?.value ?? "",
+                    },
+                  }).then(() => clearTextAreaElement(userMessageTextAreaRef.current))
+                }
+              >
+                Append
+              </button>
+              <button
+                onClick={() =>
+                  handleRenderItem({
+                    containerName: "@thread",
+                    templateName: "@spinner-template",
+                  })
+                }
+              >
+                Show spinner
+              </button>
+            </menu>
           </section>
           <section class="c-module-stack__section">
             <h2>Assistant message</h2>
@@ -104,6 +115,7 @@ function App() {
                 handleRenderItem({
                   containerName: "@thread",
                   templateName: "@assistant-message-template",
+                  clear: "@spinner-instance",
                   replacements: {
                     content: assistantMesageTextAreaRef.current?.value ?? "",
                   },

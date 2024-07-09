@@ -16,10 +16,15 @@ export async function handleRenderAutoLayoutItem(message: MessageToFigma) {
     return;
   }
 
-  if (message.renderAutoLayoutItem.clear) {
+  if (message.renderAutoLayoutItem.clear === true) {
     (container as ComponentNode | FrameNode).children?.forEach((child) => {
       child.remove();
     });
+  }
+
+  if (typeof message.renderAutoLayoutItem.clear === "string") {
+    const toRemove = (container as ComponentNode | FrameNode).findAll((child) => child.name === message.renderAutoLayoutItem!.clear);
+    toRemove.forEach((child) => child.remove());
   }
 
   const template = message.renderAutoLayoutItem.templateName

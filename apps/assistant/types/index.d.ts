@@ -37,7 +37,7 @@ export interface Viewport {
 
 export interface RenderAutoLayoutItem {
   containerName: string;
-  clear?: boolean;
+  clear?: boolean | string;
   templateName?: string;
   replacements?: { [key: string]: string };
 }
