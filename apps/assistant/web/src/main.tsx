@@ -203,7 +203,7 @@ function App(props: { worker: WorkerClient<WorkerRoutes, WorkerEvents> }) {
                     Copilot
                   </button>
                   <button class="u-reset c-app-menu--btn" onClick={() => location.replace(`./wizard.html?t=${Date.now()}`)}>
-                    Wizard of Oz
+                    Wizard
                   </button>
                   {/* <button class="u-reset c-app-menu--btn" onClick={() => location.replace(`./guide.html?t=${Date.now()}`)}>
                     Guide
