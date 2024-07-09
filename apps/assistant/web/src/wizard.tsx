@@ -126,6 +126,28 @@ function App() {
               Append
             </button>
           </section>
+
+          <section class="c-module-stack__section">
+            <h2>Special components</h2>
+            <table>
+              <tr>
+                <td>Thread container</td>
+                <td>❖@thread</td>
+              </tr>
+              <tr>
+                <td>User message</td>
+                <td>❖@user-message-template</td>
+              </tr>
+              <tr>
+                <td>Assistant message</td>
+                <td>❖@assistant-message-template</td>
+              </tr>
+              <tr>
+                <td>Spinner</td>
+                <td>❖@spinner-template</td>
+              </tr>
+            </table>
+          </section>
         </div>
       )}
     </>
