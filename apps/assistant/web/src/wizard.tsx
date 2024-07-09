@@ -100,6 +100,7 @@ function App() {
                   handleRenderItem({
                     containerName: "@thread",
                     templateName: "@spinner-template",
+                    clear: "@spinner-instance",
                   })
                 }
               >

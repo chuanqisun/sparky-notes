@@ -42,23 +42,38 @@ export async function handleRenderAutoLayoutItem(message: MessageToFigma) {
   }
 
   const instance = template?.type === "COMPONENT" ? template.createInstance() : template?.type === "FRAME" ? template.clone() : null;
-  if (!instance) return;
+  if (instance) {
+    instance.name = instance.name.replace("template", "instance");
 
-  instance.name = instance.name.replace("template", "instance");
+    if (message.renderAutoLayoutItem.replacements) {
+      const allTextNodes = instance.findAllWithCriteria({ types: ["TEXT"] });
+      const loadFont = allTextNodes[0].fontName as FontName;
+      if (loadFont) {
+        await figma.loadFontAsync(loadFont);
+      }
 
-  if (message.renderAutoLayoutItem.replacements) {
-    const allTextNodes = instance.findAllWithCriteria({ types: ["TEXT"] });
-    const loadFont = allTextNodes[0].fontName as FontName;
-    if (loadFont) {
-      await figma.loadFontAsync(loadFont);
+      allTextNodes.forEach((textNode) => {
+        Object.entries(message.renderAutoLayoutItem!.replacements!).forEach(([key, value]) => {
+          textNode.characters = textNode.characters.replace(`{{${key}}}`, value);
+        });
+      });
     }
 
-    allTextNodes.forEach((textNode) => {
-      Object.entries(message.renderAutoLayoutItem!.replacements!).forEach(([key, value]) => {
-        textNode.characters = textNode.characters.replace(`{{${key}}}`, value);
-      });
-    });
+    container.appendChild(instance);
   }
 
-  container.appendChild(instance);
+  // if height overflows, change constraints to align with bottom, otherwise, aligh with top
+  // when there is no instance, we use 0 height
+  const childrenY = container.children.flatMap((child) => [child.y, child.y + child.height]);
+  const childMaxY = Math.max(...childrenY);
+  const childMinY = Math.min(...childrenY);
+  const isOverflow = childMaxY > container.height || childMinY < 0;
+
+  if (isOverflow) {
+    console.log({ overflow: true, childMaxY, childMinY });
+    container.primaryAxisAlignItems = "MAX";
+  } else {
+    console.log({ overflow: false, childMaxY, childMinY });
+    container.primaryAxisAlignItems = "MIN";
+  }
 }
