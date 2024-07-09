@@ -8,7 +8,7 @@
       margin: 16px;
       display: grid;
       grid-template-rows: auto 1fr;
-      grid-template-columns: auto auto;
+      grid-template-columns: auto auto auto auto;
       justify-content: start;
       gap: 16px;
     }
@@ -29,16 +29,8 @@
 
     iframe {
       border: none;
-    }
-
-    #iframe-main {
       width: 420px;
       height: 800px;
-    }
-
-    #iframe-card {
-      width: 420px;
-      height: 600px;
     }
   </style>
 </head>
@@ -52,5 +44,7 @@
   </div>
   <iframe id="iframe-main"></iframe>
   <iframe id="iframe-card"></iframe>
+  <iframe id="iframe-copilot"></iframe>
+  <iframe id="iframe-wizard"></iframe>
   <script type="module" src="./src/dev-shim.ts"></script>
 </body>

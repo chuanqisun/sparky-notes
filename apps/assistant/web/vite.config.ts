@@ -17,6 +17,7 @@ export default defineConfig({
         debug: resolve(__dirname, "debug.html"),
         signIn: resolve(__dirname, "sign-in.html"),
         authRedirect: resolve(__dirname, "auth-redirect.html"),
+        wizard: resolve(__dirname, "wizard.html"),
       },
     },
   },

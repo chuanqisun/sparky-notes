@@ -5,11 +5,15 @@ console.log("[debug-shim] ready");
 
 const mainIframe = document.querySelector<HTMLIFrameElement>("#iframe-main")!;
 const cardIframe = document.querySelector<HTMLIFrameElement>("#iframe-card")!;
+const copilotIframe = document.querySelector<HTMLIFrameElement>("#iframe-copilot")!;
+const wizardIframe = document.querySelector<HTMLIFrameElement>("#iframe-wizard")!;
 const typePreview = document.querySelector<HTMLInputElement>(`[data-preview="type"]`)!;
 const idPreview = document.querySelector<HTMLInputElement>(`[data-preview="id"]`)!;
 
 mainIframe.src = import.meta.env.VITE_WEB_HOST;
 cardIframe.src = import.meta.env.VITE_WEB_HOST + "/card.html";
+copilotIframe.src = import.meta.env.VITE_WEB_HOST + "/copilot.html";
+wizardIframe.src = import.meta.env.VITE_WEB_HOST + "/wizard.html";
 
 window.addEventListener("message", (e) => {
   const message = e.data?.pluginMessage as MessageToFigma;
