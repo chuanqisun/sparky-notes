@@ -7,7 +7,11 @@ export default defineConfig({
   clearScreen: false,
   base: "",
   plugins: [preact()],
+  server: {
+    open: "debug.html",
+  },
   build: {
+    outDir: "../../server/dist/static",
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
