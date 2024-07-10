@@ -13,9 +13,9 @@
   ],
   "networkAccess": {
     "allowedDomains": [
-      "https://hitsassistantweb.z22.web.core.windows.net"
+      "https://h20-server.azurewebsites.net"
     ],
-    "reasoning": "access remoted hosted UI",
+    "reasoning": "access remote hosted UI",
     "devAllowedDomains": [
       "http://localhost:5200"
     ]
