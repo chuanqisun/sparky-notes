@@ -27,7 +27,6 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      # Ref for storage: https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-static-site-github-actions?tabs=userlevel
       # Ref for app service: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions
       # Service principal: gh-action-deployment-bot
       - name: azure login
@@ -41,13 +40,6 @@ jobs:
           app-name: "h20-server"
           slot-name: "Production"
           package: ./apps/server
-
-      - name: "Deploy assistant web frontend"
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            az storage blob delete-batch --account-name hitsassistantweb  --auth-mode key --source '$web'
-            az storage blob upload-batch --account-name hitsassistantweb  --auth-mode key -d '$web' -s ./apps/assistant/web/dist
 
       - name: azure logout
         run: az logout
