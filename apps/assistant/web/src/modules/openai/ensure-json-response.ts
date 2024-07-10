@@ -1,4 +1,4 @@
-import { type ChatOutput } from "@h20/server/src/modules/openai/plexchat";
+import type { ChatOutput } from "@h20/server";
 
 export function ensureJsonResponse<T>(formatResponse: (parsed: any) => T, response: ChatOutput) {
   if (response.choices[0]?.finish_reason !== "stop" || !response.choices[0]?.message.content) throw new Error("Incomplete response");
