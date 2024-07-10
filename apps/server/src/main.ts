@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import path from "node:path";
 import { requireJwt } from "./modules/auth/require-jwt";
 import { hitsSearchIndex } from "./modules/hits/api";
 import { hitsSignIn } from "./modules/hits/sign-in";
@@ -19,6 +20,11 @@ app.use(cors());
 // ref: https://github.com/chimurai/http-proxy-middleware/issues/320
 
 app.use(express.json());
+
+const staticDir = path.join(__dirname, "../dist/static");
+console.log({ staticDir });
+app.use(express.static(staticDir));
+
 app.post("/hits/api/search/index", [requireJwt, hitsSearchIndex]);
 
 app.post("/hits/token", hitsToken);

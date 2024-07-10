@@ -26,7 +26,6 @@ appInsights.trackPageView();
 function App() {
   const { isConnected, signIn, accessToken } = useAuth({
     serverHost: import.meta.env.VITE_H20_SERVER_HOST,
-    webHost: import.meta.env.VITE_WEB_HOST,
   });
 
   const [selection, setSelection] = useState<SelectionSummary | null>(null);

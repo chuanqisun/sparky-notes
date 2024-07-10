@@ -26,7 +26,6 @@ export interface AuthContextProviderProps {
 export const AuthContextProvider = (props: AuthContextProviderProps) => {
   const authProps = useAuth({
     serverHost: props.serverHost,
-    webHost: props.webHost,
   });
 
   return <AuthContext.Provider value={authProps}>{props.children}</AuthContext.Provider>;
