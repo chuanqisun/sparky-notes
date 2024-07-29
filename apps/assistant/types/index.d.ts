@@ -11,6 +11,7 @@ export interface MessageToWeb {
     webDragContext?: WebDragContext;
   };
   ping?: string;
+  searchNodesByNamePattern?: SearchNodeResult[];
   selectionChanged?: SelectionSummary;
   setSelectionResponse?: string[];
 }
@@ -26,8 +27,10 @@ export interface MessageToFigma {
   ping?: string;
   renderAutoLayoutItem?: RenderAutoLayoutItem;
   renderObject?: any;
+  searchNodesByNamePattern?: string;
   setSelection?: string[];
   showNotification?: FigmaNotification;
+  zoomIntoViewByNames?: string[];
 }
 
 export interface Viewport {
@@ -115,6 +118,11 @@ export interface FigmaNotification {
     label?: string;
     ids: string[];
   };
+}
+
+export interface SearchNodeResult {
+  id: string;
+  name: string;
 }
 
 export interface SelectionSummary {

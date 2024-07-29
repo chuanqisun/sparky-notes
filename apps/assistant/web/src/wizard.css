@@ -45,6 +45,10 @@
     gap: 4px;
   }
 
+  .c-module-stack__no-padding {
+    padding: 0;
+  }
+
   h2 {
     font-weight: 600;
     font-size: 16px;

@@ -10,9 +10,11 @@ import { handleGetViewport } from "./handlers/handle-get-viewport";
 import { handleMutation } from "./handlers/handle-mutation";
 import { handleRenderAutoLayoutItem } from "./handlers/handle-render-auto-layout-item";
 import { handleRenderObject } from "./handlers/handle-render-object";
+import { handleSearchNodesByNamePattern } from "./handlers/handle-search-nodes-by-name-pattern";
 import { handleSelectionChange } from "./handlers/handle-selection-change";
 import { handleSetSelection } from "./handlers/handle-set-selection";
 import { handleShowNotification } from "./handlers/handle-show-notification";
+import { handleZoomIntoViewByNames } from "./handlers/handle-zoom-into-view-by-names";
 import { openCardPage, openIndexPage } from "./router/router";
 import { useWidgetState } from "./widget/use-card";
 import { useLayoutDraft } from "./widget/use-layout-draft";
@@ -52,8 +54,10 @@ function Widget() {
       handleMutation(message, proxyToWeb);
       handleRenderObject(message);
       handleRenderAutoLayoutItem(message);
+      handleSearchNodesByNamePattern(message, proxyToWeb);
       handleSetSelection(message, proxyToWeb);
       handleShowNotification(message, proxyToWeb);
+      handleZoomIntoViewByNames(message);
     };
 
     figma.ui.onmessage = handleMessageFromWeb;
