@@ -104,6 +104,22 @@ function App() {
   const userMessageTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const copilotMessageVariableValueRef = useRef<HTMLTextAreaElement>(null);
 
+  const TemplateLocator = (options: { templateNames: string[]; componentNamePattern: string }) => {
+    return options.templateNames?.length ? (
+      <a href="javascript:void(0)" onClick={() => handleLocateNodeByNames(options.templateNames)} title="Click to locate">
+        ❖{options.componentNamePattern}
+      </a>
+    ) : (
+      <a
+        href="javascript:void(0)"
+        onClick={() => handleLocateNodeByNames(options.templateNames)}
+        title={`Component or Frame named "${options.componentNamePattern}" not found. Click to re-scan`}
+      >
+        ❖{options.componentNamePattern} ⚠️
+      </a>
+    );
+  };
+
   return (
     <>
       {isConnected === undefined && <ProgressBar />}
@@ -117,48 +133,25 @@ function App() {
             <header class="c-split-header">
               <h2>Thread</h2>
               <span>
-                {templateLibrary.threadTemplates?.length ? (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.threadTemplates.map((t) => t.name))}
-                    title="Click to locate"
-                  >
-                    ❖@thread
-                  </a>
-                ) : (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.threadTemplates.map((t) => t.name))}
-                    title={`Component or Frame named "@thread" not found. Click to re-scan`}
-                  >
-                    ❖@thread ⚠️
-                  </a>
-                )}
+                <TemplateLocator templateNames={templateLibrary.threadTemplates.map((t) => t.name)} componentNamePattern="@thread" />
               </span>
             </header>
-            <button onClick={() => handleRenderItem({ containerName: "@thread", clear: true })}>Clear</button>
+            <menu class="c-columns">
+              <button
+                onClick={() => {
+                  /* tbd */
+                }}
+              >
+                Undo
+              </button>
+              <button onClick={() => handleRenderItem({ containerName: "@thread", clear: true })}>Clear</button>
+            </menu>
           </section>
           <section class="c-module-stack__section">
             <header class="c-split-header">
               <h2>User message</h2>
               <span>
-                {templateLibrary.userTemplates ? (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.userTemplates.map((t) => t.name))}
-                    title="Click to locate"
-                  >
-                    ❖@user-template
-                  </a>
-                ) : (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.userTemplates.map((t) => t.name))}
-                    title={`Component or Frame named "@user-template" not found. Click to re-scan`}
-                  >
-                    ❖@user-template ⚠️
-                  </a>
-                )}
+                <TemplateLocator templateNames={templateLibrary.userTemplates.map((t) => t.name)} componentNamePattern="@user-template" />
               </span>
             </header>
             <textarea rows={6} ref={userMessageTextAreaRef}></textarea>
@@ -181,23 +174,7 @@ function App() {
             <header class="c-split-header">
               <h2>Spinner</h2>
               <span>
-                {templateLibrary.spinnerTemplates.length ? (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.spinnerTemplates.map((t) => t.name))}
-                    title="Click to locate"
-                  >
-                    ❖@spinner-template
-                  </a>
-                ) : (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.spinnerTemplates.map((t) => t.name))}
-                    title={`Component or Frame named "@spinner-template" not found. Click to re-scan`}
-                  >
-                    ❖@spinner-template ⚠️
-                  </a>
-                )}
+                <TemplateLocator templateNames={templateLibrary.spinnerTemplates.map((t) => t.name)} componentNamePattern="@spinner-template" />
               </span>
             </header>
             <button
@@ -217,23 +194,7 @@ function App() {
             <div class="c-split-header">
               <h2>Copilot message</h2>
               <span>
-                {templateLibrary.copilotTemplates.length ? (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.copilotTemplates.map((t) => t.name))}
-                    title="Click to locate"
-                  >
-                    ❖@copilot-template/*
-                  </a>
-                ) : (
-                  <a
-                    href="javascript:void(0)"
-                    onClick={() => handleLocateNodeByNames(templateLibrary.copilotTemplates.map((t) => t.name))}
-                    title={`Components or Frames named "@copilot-template/<replace_with_real_name>" not found. Click to re-scan`}
-                  >
-                    ❖@copilot-template/* ⚠️
-                  </a>
-                )}
+                <TemplateLocator templateNames={templateLibrary.copilotTemplates.map((t) => t.name)} componentNamePattern="@copilot-template/*" />
               </span>
             </div>
             {templateLibrary.copilotTemplates.map((template) => (

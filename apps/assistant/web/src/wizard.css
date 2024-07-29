@@ -57,6 +57,11 @@
     justify-content: space-between;
   }
 
+  .c-columns {
+    display: grid;
+    grid-auto-flow: column;
+  }
+
   h2 {
     font-weight: 600;
     font-size: 16px;
