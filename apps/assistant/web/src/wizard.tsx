@@ -229,7 +229,7 @@ function App() {
                   <a
                     href="javascript:void(0)"
                     onClick={() => handleLocateNodeByNames(templateLibrary.copilotTemplates.map((t) => t.name))}
-                    title={`Components or Frames named "@copilot-template/<replace_with_real_name>" not found. Click to reload`}
+                    title={`Components or Frames named "@copilot-template/<replace_with_real_name>" not found. Click to re-scan`}
                   >
                     ❖@copilot-template/* ⚠️
                   </a>
