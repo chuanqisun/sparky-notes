@@ -53,7 +53,7 @@ const handleEcho: WorkerRoutes["echo"] = async ({ req }) => ({ message: req.mess
 const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
   const config = req.config;
   const db = getDb();
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const accessToken = await getAccessToken({ ...config, idToken: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
 
   const lastSync = await getLastSyncRecord(await db);
@@ -130,7 +130,7 @@ const handleIncSync: WorkerRoutes["incSync"] = async ({ req, emit }) => {
 const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
   const config = req.config;
   const db = getDb();
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const accessToken = await getAccessToken({ ...config, idToken: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
   const draftIndex = createFtsIndex();
 
@@ -172,7 +172,7 @@ const handleFullSync: WorkerRoutes["fullSync"] = async ({ req, emit }) => {
 
 const handleGetCardData: WorkerRoutes["getCardData"] = async ({ req }) => {
   const config = req.config;
-  const accessToken = await getAccessToken({ ...config, id_token: config.idToken });
+  const accessToken = await getAccessToken({ ...config, idToken: config.idToken });
   const proxy = getAuthenticatedProxy(accessToken);
 
   performance.mark("start");

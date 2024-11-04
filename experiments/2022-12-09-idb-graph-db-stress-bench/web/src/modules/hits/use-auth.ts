@@ -10,7 +10,7 @@ export function useAuth() {
   useEffect(() => {
     if (!hitsConfig.value.email || !hitsConfig.value.idToken) return;
 
-    getAccessToken({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId })
+    getAccessToken({ email: hitsConfig.value.email, idToken: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId })
       .then(() => setIsConnected(true))
       .catch(() => setIsConnected(false));
   }, [hitsConfig.value.idToken]);
@@ -18,13 +18,13 @@ export function useAuth() {
   const signIn = useCallback(() => {
     setIsConnected(undefined);
     embeddedSignIn().then((result) => {
-      hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
+      hitsConfig.update({ ...hitsConfig.value, email: result.email, idToken: result.idToken, userClientId: result.userClientId });
       location.reload();
     });
   }, []);
 
   const signOut = useCallback(() => {
-    signOutRemote({ email: hitsConfig.value.email, id_token: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId }).then(() => {
+    signOutRemote({ email: hitsConfig.value.email, idToken: hitsConfig.value.idToken, userClientId: hitsConfig.value.userClientId }).then(() => {
       hitsConfig.reset();
     });
   }, [hitsConfig.value]);

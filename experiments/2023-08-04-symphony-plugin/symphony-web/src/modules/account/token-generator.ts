@@ -10,13 +10,13 @@ export function getTokenGenerator() {
   const hitsConfig = getJson<HitsConfig>(CONFIG_CACHE_KEY) ?? getInitialConfig();
 
   const start = async () => {
-    await getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
+    await getAccessToken({ email: hitsConfig.email, idToken: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
       .then((res) => res.token)
       .then(emitToken)
       .catch(() => events.dispatchEvent(new CustomEvent("signed-out")));
 
     setInterval(() => {
-      getAccessToken({ email: hitsConfig.email, id_token: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
+      getAccessToken({ email: hitsConfig.email, idToken: hitsConfig.idToken, userClientId: hitsConfig.userClientId })
         .then((res) => res.token)
         .then(emitToken);
     }, 5 * 60 * 1000); // HACK: 5 min token refresh interval is just magic number. Should use token expire_in
@@ -24,7 +24,7 @@ export function getTokenGenerator() {
 
   const signIn = () =>
     embeddedSignIn().then((result) => {
-      setJson(CONFIG_CACHE_KEY, { ...hitsConfig, email: result.email, idToken: result.id_token, userClientId: result.userClientId });
+      setJson(CONFIG_CACHE_KEY, { ...hitsConfig, email: result.email, idToken: result.idToken, userClientId: result.userClientId });
       location.reload();
     });
 

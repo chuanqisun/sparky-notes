@@ -14,7 +14,7 @@ export const hitsSignOut: RequestHandler = async (req, res, next) => {
 
 export interface SignOutInput {
   email: string;
-  id_token: string;
+  idToken: string;
   userClientId: string;
 }
 
@@ -24,7 +24,7 @@ export async function signOut(req: Request): AsyncResponse<SignOutOutput> {
   const input: SignOutInput = req.body;
 
   const users = bufferedUserTable.read();
-  const user = users.find((user) => user.email === input.email && user.id_token === input.id_token && user.userClientId === input.userClientId);
+  const user = users.find((user) => user.email === input.email && user.idToken === input.idToken && user.userClientId === input.userClientId);
 
   if (!user) {
     return {

@@ -19,7 +19,7 @@ export interface GetSignInStatusInput {
 
 export interface SignInStatusOutput {
   email: string;
-  id_token: string;
+  idToken: string;
   userClientId: string;
 }
 
@@ -45,7 +45,7 @@ export async function getInteractiveSignInStatus(req: Request): AsyncResponse<Si
           status: 200,
           data: {
             email: user.email,
-            id_token: user.id_token,
+            idToken: user.idToken,
             userClientId: user.userClientId,
           },
         });

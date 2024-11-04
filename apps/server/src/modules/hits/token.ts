@@ -1,13 +1,22 @@
 import assert from "assert";
-import axios from "axios";
+import { ManagedIdentityCredential, ClientAssertionCredential, ClientSecretCredential } from "@azure/identity";
+import type { TokenCredential } from "@azure/identity";
 import type { Request, RequestHandler } from "express";
 import type { AsyncResponse } from "./_async-response";
+import { ClientAssertion, ConfidentialClientApplication } from "@azure/msal-node";
 import { bufferedUserTable, updateUserInTable } from "./_user-table";
+
+const AUDIENCE = process.env.OAUTH_SCOPES || "";
+const RESOURCE_TENANT_ID = process.env.AAD_TENANT_ID || "";
+const APP_CLIENT_ID = process.env.AAD_CLIENT_ID || "";
+const APP_CLIENT_SECRET = process.env.AAD_CLIENT_SECRET || "";
+const MANAGED_IDENTITY_ID = process.env.AAD_MANAGED_IDENTITY_ID || "";
+const MANAGED_IDENTITY_AUDIENCE = process.env.AAD_MANAGED_IDENTITY_AUDIENCE ? [process.env.AAD_MANAGED_IDENTITY_AUDIENCE] : [];
 
 export interface GetTokenInput {
   email: string;
   userClientId: string;
-  id_token: string;
+  idToken: string;
 }
 
 export type GetTokenOutput = {
@@ -26,15 +35,16 @@ export const hitsToken: RequestHandler = async (req, res, next) => {
   }
 };
 
+//handle request from user to get an access token
 export async function getToken(req: Request): AsyncResponse<GetTokenOutput | string> {
   const input: GetTokenInput = req.body;
 
-  assert(typeof input.id_token === "string");
+  assert(typeof input.idToken === "string");
   assert(typeof input.email === "string");
   assert(typeof input.userClientId === "string");
 
   const users = bufferedUserTable.read();
-  const user = users.find((user) => user.email === input.email && user.id_token === input.id_token && user.userClientId === input.userClientId);
+  const user = users.find((user) => user.email === input.email && user.idToken === input.idToken && user.userClientId === input.userClientId);
 
   if (!user) {
     return {
@@ -43,45 +53,49 @@ export async function getToken(req: Request): AsyncResponse<GetTokenOutput | str
     };
   }
 
-  assert(typeof process.env.AAD_CLIENT_ID === "string");
-  assert(typeof process.env.OAUTH_SCOPES === "string");
-  assert(typeof process.env.AAD_CLIENT_SECRET === "string");
-
-  // try get access token
-  const params = new URLSearchParams({
-    client_id: process.env.AAD_CLIENT_ID as string,
-    scope: process.env.OAUTH_SCOPES as string,
-    refresh_token: user.refresh_token,
-    grant_type: "refresh_token",
-    client_secret: process.env.AAD_CLIENT_SECRET as string,
-  });
-
-  const response = await axios({
-    method: "post",
-    url: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}/oauth2/v2.0/token`,
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Host: "" },
-    data: params.toString(),
-  });
-
-  if (!response.data?.access_token) {
-    return {
-      status: response.status,
-      data: response.statusText ?? "error referesh token",
-    };
+  async function getManagedIdentityAccessToken(credential: TokenCredential, audience: string[]): Promise<string> {
+    const accessToken = await credential.getToken(audience);
+    const token = accessToken?.token;
+    if (!token) throw new Error(`Failed to obtain token for managed identity, received ${token}`);
+    return token;
   }
+
+  const msalConfig = {
+    auth: {
+      clientId: APP_CLIENT_ID,
+      authority: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}`,
+      clientAssertion: async () => {
+        const credential = new ManagedIdentityCredential(MANAGED_IDENTITY_ID);
+        return getManagedIdentityAccessToken(credential, MANAGED_IDENTITY_AUDIENCE);
+      },
+    },
+  };
+
+  const cca = new ConfidentialClientApplication(msalConfig);
+
+  const response = await cca.acquireTokenByRefreshToken({
+    refreshToken: user.refreshToken,
+    scopes: AUDIENCE.split(" "),
+  });
 
   // HACK: read user table again to reduce chance of race condition
   const users2 = bufferedUserTable.read();
-  // roll the refresh token, but keep the old email and id_token
-  const updatedUsers = updateUserInTable(users2, { ...response.data, email: input.email, id_token: input.id_token, userClientId: input.userClientId });
+  // roll the refresh token, but keep the old email and idToken
+  const updatedUsers = updateUserInTable(users2, {
+    ...response,
+    email: input.email,
+    idToken: input.idToken,
+    userClientId: input.userClientId,
+    refreshToken: user.refreshToken,
+  });
   bufferedUserTable.write(updatedUsers);
 
   return {
-    status: response.status,
+    status: 200,
     data: {
-      token: response.data.access_token,
-      expireIn: response.data.expires_in,
-      expireAt: response.data.expires_in * 1000 + Date.now(),
+      token: response?.accessToken || "",
+      expireIn: response?.expiresOn ? response.expiresOn.getTime() - Date.now() : 0,
+      expireAt: response?.expiresOn?.getTime() || 0,
     },
   };
 }

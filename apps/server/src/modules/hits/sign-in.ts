@@ -5,6 +5,15 @@ import type { Request, RequestHandler } from "express";
 import { parseJwtBody } from "../../utils/jwt";
 import type { AsyncResponse } from "./_async-response";
 import { bufferedUserTable, updateUserInTable } from "./_user-table";
+import { ClientAssertionCredential, ManagedIdentityCredential, type TokenCredential } from "@azure/identity";
+import { ClientAssertion, ConfidentialClientApplication } from "@azure/msal-node";
+
+const AUDIENCE = process.env.OAUTH_SCOPES?.split(" ") || [];
+const RESOURCE_TENANT_ID = process.env.AAD_TENANT_ID || "";
+const APP_CLIENT_ID = process.env.AAD_CLIENT_ID || "";
+const APP_CLIENT_SECRET = process.env.AAD_CLIENT_SECRET || "";
+const MANAGED_IDENTITY_ID = process.env.AAD_MANAGED_IDENTITY_ID || "";
+const MANAGED_IDENTITY_AUDIENCE = process.env.AAD_MANAGED_IDENTITY_AUDIENCE ? [process.env.AAD_MANAGED_IDENTITY_AUDIENCE] : [];
 
 export const hitsSignIn: RequestHandler = async (req, res, next) => {
   try {
@@ -24,57 +33,66 @@ export interface SignInInput {
 export interface SignInOutput {
   email: string;
   userClientId: string;
-  id_token: string;
+  idToken: string;
 }
 
 export async function signIn(req: Request): AsyncResponse<SignInOutput> {
   const input: SignInInput = req.body;
   const redirectHost = req.get("origin");
 
-  assert(typeof input.code === "string");
-  assert(typeof input.code_verifier === "string");
-
   const { code, code_verifier } = input;
 
-  assert(typeof process.env.AAD_CLIENT_ID === "string");
-  assert(typeof process.env.OAUTH_SCOPES === "string");
-  assert(typeof process.env.AAD_CLIENT_SECRET === "string");
+  async function getManagedIdentityAccessToken(credential: TokenCredential, audience: string[]): Promise<string> {
+    const accessToken = await credential.getToken(audience);
+    const token = accessToken?.token;
+    if (!token) throw new Error(`Failed to obtain token for managed identity, received ${token}`);
+    return token;
+  }
+  const msalConfig = {
+    auth: {
+      clientId: APP_CLIENT_ID,
+      authority: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}`,
+      clientAssertion: async () => {
+        const credential = new ManagedIdentityCredential(MANAGED_IDENTITY_ID);
+        return getManagedIdentityAccessToken(credential, MANAGED_IDENTITY_AUDIENCE);
+      },
+    },
+  };
 
-  const params = new URLSearchParams({
-    client_id: process.env.AAD_CLIENT_ID as string,
-    scope: process.env.OAUTH_SCOPES as string,
-    code: code as string,
-    redirect_uri: `${redirectHost}/auth-redirect.html`,
-    grant_type: "authorization_code",
-    code_verifier: code_verifier as string,
-    client_secret: process.env.AAD_CLIENT_SECRET as string,
+  const cca = new ConfidentialClientApplication(msalConfig);
+
+  const response = await cca.acquireTokenByCode({
+    code,
+    redirectUri: `${redirectHost}/auth-redirect.html`,
+    scopes: AUDIENCE,
+    codeVerifier: code_verifier,
   });
 
-  const response = await axios({
-    method: "post",
-    url: `https://login.microsoftonline.com/${process.env.AAD_TENANT_ID}/oauth2/v2.0/token`,
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Host: "" },
-    data: params.toString(),
-  });
-
-  assert(typeof response?.data?.id_token === "string");
-  const jwt = parseJwtBody(response.data.id_token);
-  const { email } = jwt;
+  assert(typeof response?.idToken === "string");
+  const jwt = parseJwtBody(response.idToken);
+  const { email, idToken, oid } = jwt;
   assert(typeof email === "string");
 
-  const userClientId = crypto.randomUUID();
+  const refreshToken = () => {
+    const tokenCache = cca.getTokenCache().serialize();
+    const refreshTokenObject = JSON.parse(tokenCache).RefreshToken;
+    const refreshToken = refreshTokenObject[Object.keys(refreshTokenObject)[0]].secret;
+    return refreshToken;
+  };
+
+  const userClientId = oid;
 
   const users = bufferedUserTable.read();
-  const updatedUsers = updateUserInTable(users, { ...response.data, email, code_verifier, userClientId });
+  const updatedUsers = updateUserInTable(users, { ...response, email, code_verifier, userClientId, refreshToken: refreshToken() });
   bufferedUserTable.write(updatedUsers);
 
   console.log("[signin] sign in success");
   return {
-    status: response.status,
+    status: 200,
     data: {
       email,
       userClientId,
-      id_token: response.data.id_token,
+      idToken: idToken,
     },
   };
 }
