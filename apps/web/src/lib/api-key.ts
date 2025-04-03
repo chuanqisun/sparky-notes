@@ -1,3 +1,5 @@
+import { proxyToFigma } from "./proxy";
+
 export function useApiKeyInput(input: HTMLInputElement) {
   // init with value from localStorage item "sticky-plus:openai-api-key"
   input.value = localStorage.getItem("sticky-plus:openai-api-key") ?? "";
@@ -10,7 +12,21 @@ export function useApiKeyInput(input: HTMLInputElement) {
 }
 
 export function getApiKey() {
-  const key = localStorage.getItem("sticky-plus:openai-api-key");
-  if (!key) throw new Error("API key is not set");
+  const key = localStorage.getItem("sticky-plus:openai-api-key") ?? "";
+
+  return key;
+}
+
+export function ensureApiKey(key?: string) {
+  if (!key) {
+    proxyToFigma.notify({
+      showNotification: {
+        message: "Please set your OpenAI API key in the settings.",
+        config: { error: true },
+      },
+    });
+    throw new Error("API key is required");
+  }
+
   return key;
 }

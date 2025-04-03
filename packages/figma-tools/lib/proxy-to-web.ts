@@ -1,13 +1,17 @@
 export interface ProxyToWeb<MessageToWeb, MessageToFigma> {
+  listen(listener: (message: MessageToFigma) => any): void;
   notify(message: MessageToWeb): void;
   request(request: MessageToWeb): Promise<MessageToFigma>;
   respond(request: MessageToFigma, response: MessageToWeb): void;
 }
 
 export function getProxyToWeb<MessageToWeb, MessageToFigma>(): ProxyToWeb<MessageToWeb, MessageToFigma> {
-  function notify(message: MessageToWeb) {
-    figma.ui.postMessage(message);
-  }
+  const notify = (message: MessageToWeb) => figma.ui.postMessage(message);
+  const listeners = new Set<(message: MessageToFigma) => any>();
+
+  figma.ui.on("message", (msg) => {
+    listeners.forEach((listener) => listener(msg as MessageToFigma));
+  });
 
   function respond(request: MessageToFigma, response: MessageToWeb) {
     figma.ui.postMessage({ ...response, _id: (request as any)._id });
@@ -32,6 +36,10 @@ export function getProxyToWeb<MessageToWeb, MessageToFigma>(): ProxyToWeb<Messag
     });
   }
 
+  function listen(listener: (message: MessageToFigma) => any) {
+    listeners.add(listener);
+  }
+
   function getNextNounce(nounce: number) {
     nounce++;
     if (nounce > Number.MAX_SAFE_INTEGER) {
@@ -42,6 +50,7 @@ export function getProxyToWeb<MessageToWeb, MessageToFigma>(): ProxyToWeb<Messag
   }
 
   return {
+    listen,
     request,
     respond,
     notify,

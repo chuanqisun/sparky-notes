@@ -1,11 +1,8 @@
 import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
 import { getProxyToWeb, type ProxyToWeb } from "@sticky-plus/figma-tools";
 import WidgetLogo from "./assets/Prompt.svg";
-import { handleAddCards } from "./handlers/handle-add-cards";
 import { handleClearNotification } from "./handlers/handle-clear-notification";
 import { handleDetectSelection } from "./handlers/handle-detect-selection";
-import { handleDropLinks } from "./handlers/handle-drop-links";
-import { handleExportNode } from "./handlers/handle-export-node";
 import { handleGetViewport } from "./handlers/handle-get-viewport";
 import { handleMutation } from "./handlers/handle-mutation";
 import { handleRenderAutoLayoutItem } from "./handlers/handle-render-auto-layout-item";
@@ -18,34 +15,22 @@ import { handleZoomIntoViewByNames } from "./handlers/handle-zoom-into-view-by-n
 import { openIndexPage } from "./router/router";
 
 const { widget } = figma;
-const { useEffect, useWidgetNodeId, SVG } = widget;
+const { useEffect, SVG } = widget;
 
 const proxyToWeb = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
 function Widget() {
-  const widgetId = useWidgetNodeId();
-
-
 
   useEffect(() => {
     const wrappedHandleSelectionChange = () => {
       handleSelectionChange(proxyToWeb);
     };
 
-    const wrappedHandleDrop = (event: DropEvent) => {
-      console.log(event);
-      handleDropLinks(event, proxyToWeb);
-
-      return false;
-    };
-
     const handleMessageFromWeb = async (message: MessageToFigma) => {
       console.log(message);
 
-      handleAddCards(message, proxyToWeb, widgetId, process.env.VITE_WIDGET_MANIFEST_ID);
       handleClearNotification(message);
       handleDetectSelection(message, wrappedHandleSelectionChange);
-      handleExportNode(message, proxyToWeb);
       handleGetViewport(message, proxyToWeb);
       handleMutation(message, proxyToWeb);
       handleRenderObject(message);
@@ -59,11 +44,9 @@ function Widget() {
     figma.ui.onmessage = handleMessageFromWeb;
 
     figma.on("selectionchange", wrappedHandleSelectionChange);
-    figma.on("drop", wrappedHandleDrop);
 
     return () => {
       figma.off("selectionchange", wrappedHandleSelectionChange);
-      figma.off("drop", wrappedHandleDrop);
     };
   });
 

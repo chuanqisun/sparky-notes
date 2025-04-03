@@ -101,7 +101,7 @@ function isNotNull<T>(value: T | null): value is T {
 
 async function cloneNodeToSection(layoutFn: LayoutFn, section: SectionNode, sourceIds: string[]) {
   const cloneNodeById = async (id: string) => {
-    return (figma.getNodeByIdAsync(id) as Promise<SceneNode | null>).then((node) => node?.clone());
+    return (figma.getNodeByIdAsync(id) as Promise<SceneNode | null>).then((node) => (node as FrameNode)?.clone());
   };
 
   const clonedNodes = await Promise.all(sourceIds.map(cloneNodeById)).then((results) => results.filter(Boolean) as SceneNode[]);

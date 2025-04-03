@@ -11,7 +11,7 @@
       <summary>Settings</summary>
       <fieldset>
         <legend>OpenAI</legend>
-        <form>
+        <form name="auth">
           <input name="openai-api-key" type="password" placeholder="OpenAI API Key" />
         </form>
       </fieldset>
@@ -19,35 +19,26 @@
 
     <details>
       <summary>Input</summary>
-      <div>...</div>
+      <pre><code id="selection-json"></code></pre>
     </details>
 
     <details>
       <summary>Tools</summary>
 
-      <form>
+      <form name="itemize">
         <fieldset>
           <legend>Itemize</legend>
-          <label>Instruction</label>
-          <textarea></textarea>
+          <label>Instruction (optional)</label>
+          <textarea name="itemize-instruction"></textarea>
           <button>Run</button>
         </fieldset>
       </form>
 
-      <form>
+      <form name="group">
         <fieldset>
-          <legend>Filter</legend>
-          <label>Instruction</label>
-          <textarea></textarea>
-          <button>Run</button>
-        </fieldset>
-      </form>
-
-      <form>
-        <fieldset>
-          <legend>Synthesize</legend>
-          <label>Instruction</label>
-          <textarea></textarea>
+          <legend>Group</legend>
+          <label>Instruction (optional)</label>
+          <textarea name="group-instruction"></textarea>
           <button>Run</button>
         </fieldset>
       </form>

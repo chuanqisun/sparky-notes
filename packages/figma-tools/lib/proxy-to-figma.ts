@@ -1,4 +1,5 @@
 export interface ProxyToFigma<MessageToFigma, MessageToWeb> {
+  listen(listener: (message: MessageToWeb) => any): void;
   notify(message: MessageToFigma): void;
   request(request: MessageToFigma): Promise<MessageToWeb>;
   respond(request: MessageToWeb, response: MessageToFigma): void;
@@ -6,6 +7,13 @@ export interface ProxyToFigma<MessageToFigma, MessageToWeb> {
 
 export function getProxyToFigma<MessageToFigma, MessageToWeb>(pluginId: string): ProxyToFigma<MessageToFigma, MessageToWeb> {
   const notify = (message: MessageToFigma) => sendMessage(pluginId, message);
+  const listeners = new Set<(message: MessageToWeb) => any>();
+
+  window.addEventListener("message", (e) => {
+    const { pluginMessage } = e.data;
+    if (!pluginMessage) return;
+    listeners.forEach((listener) => listener(pluginMessage as MessageToWeb));
+  });
 
   async function request(message: MessageToFigma) {
     const _sourceId = crypto.randomUUID();
@@ -27,7 +35,12 @@ export function getProxyToFigma<MessageToFigma, MessageToWeb>(pluginId: string):
     notify({ ...response, _id: (request as any)._id } as any);
   }
 
+  function listen(listener: (message: MessageToWeb) => any) {
+    listeners.add(listener);
+  }
+
   return {
+    listen,
     notify,
     request,
     respond,

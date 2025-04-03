@@ -1,15 +1,8 @@
 export interface MessageToWeb {
   abortTask?: string;
-  addedCards?: AddCards;
-  exportedNodeResponse?: ExportNodeResponse;
   getSelectionRes?: SelectionSummary;
   getViewportResponse?: Viewport;
   mutationResponse?: MutationResponse;
-  parseDropHtml?: {
-    items: string[];
-    figmaDropContext: FigmaDropContext;
-    webDragContext?: WebDragContext;
-  };
   ping?: string;
   searchNodesByNamePattern?: SearchNodeResult[];
   selectionChanged?: SelectionSummary;
@@ -17,13 +10,10 @@ export interface MessageToWeb {
 }
 
 export interface MessageToFigma {
-  addCards?: AddCards;
   clearNotification?: boolean;
   detectSelection?: boolean; // request plugin to notfiy selection
-  exportNode?: ExportNodeRequest; // request plugin to export a node by id
   getViewport?: boolean;
   mutationRequest?: MutationRequest;
-  parseHtmlLinksRes?: ParsedLink[];
   ping?: string;
   renderAutoLayoutItem?: RenderAutoLayoutItem;
   renderObject?: any;
@@ -134,39 +124,4 @@ export interface ContentNode {
   type: "sticky" | "section" | "visual";
   content: string;
   children?: ContentNode[];
-}
-
-export interface CardData {
-  category: string;
-  title: string;
-  entityId: string;
-  entityType: number;
-  url: string;
-  backgroundColor: string;
-}
-
-export interface AddCards {
-  cards: CardData[];
-  webDragContext?: WebDragContext;
-  figmaDropContext?: FigmaDropContext;
-}
-
-export interface ParsedLink {
-  title: string;
-  url: string;
-}
-
-export interface WebDragContext {
-  offsetX: number;
-  offsetY: number;
-  nodeWidth: number;
-  nodeHeight: number;
-}
-
-export interface FigmaDropContext {
-  parentNodeId: string;
-  x: number;
-  y: number;
-  absoluteX: number;
-  absoluteY: number;
 }
