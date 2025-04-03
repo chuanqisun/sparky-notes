@@ -1,21 +1,15 @@
 {
-  "name": "@sticky-plus/assistant-web",
+  "name": "web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port 5200",
     "build": "tsc && vite build",
-    "preview": "vite preview --port 5200"
-  },
-  "dependencies": {
-    "@streamparser/json": "^0.0.21",
-    "gpt-tokenizer": "^2.1.2",
-    "preact": "^10.22.1",
-    "rxjs": "^7.8.1"
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.8.3",
-    "plexchat": "^1.1.5"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.5"
   }
 }
