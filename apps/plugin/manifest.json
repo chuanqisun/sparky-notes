@@ -1,6 +1,6 @@
 {
-  "name": "HITS Assistant (beta)",
-  "id": "1169361201665902648",
+  "name": "Stikcy Plus",
+  "id": "1489741501098538877",
   "api": "1.0.0",
   "main": "dist/main.js",
   "documentAccess": "dynamic-page",
@@ -8,12 +8,9 @@
     "figma",
     "figjam"
   ],
-  "permissions": [
-    "fileusers"
-  ],
   "networkAccess": {
     "allowedDomains": [
-      "https://h20-server.azurewebsites.net"
+      "https://chuanqisun.github.io/"
     ],
     "reasoning": "access remote hosted UI",
     "devAllowedDomains": [
