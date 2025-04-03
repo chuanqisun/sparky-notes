@@ -1,10 +1,10 @@
-import { ContentNode } from "@sticky-plus/figma-ipc-types";
+import type { ContentNode } from "@sticky-plus/figma-ipc-types";
 import { BehaviorSubject } from "rxjs";
 import { proxyToFigma } from "./proxy";
 
-export function useSelection() {
-  const selection$ = new BehaviorSubject<ContentNode[]>([]);
+export const selection$ = new BehaviorSubject<ContentNode[]>([]);
 
+export function useSelection() {
   proxyToFigma.listen((msg) => {
     if (!msg.selectionChanged) return;
     selection$.next(msg.selectionChanged.contentNodes);
@@ -18,4 +18,18 @@ export function useSelection() {
 
 export function setSelection(data: any) {
   document.querySelector("#selection-json")!.textContent = JSON.stringify(data, null, 2);
+}
+
+export function ensureSelection(selection: ContentNode[]) {
+  if (!selection.length) {
+    proxyToFigma.notify({
+      showNotification: {
+        message: "Please select at least one node.",
+        config: { error: true },
+      },
+    });
+    throw new Error("Selection is required");
+  }
+
+  return selection;
 }

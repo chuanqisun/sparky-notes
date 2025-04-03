@@ -1,5 +1,5 @@
 import { useApiKeyInput } from "./lib/api-key";
-import { runItemize } from "./lib/itemize";
+import { runGroup } from "./lib/itemize";
 import { useSelection } from "./lib/selection";
 import { useTaskControl } from "./lib/task";
 import "./style.css";
@@ -14,10 +14,10 @@ window.addEventListener("submit", (event) => {
   const formName = form.name;
   switch (formName) {
     case "itemize": {
-      runItemize();
       break;
     }
-    case "summarize": {
+    case "group": {
+      runGroup();
       break;
     }
   }
