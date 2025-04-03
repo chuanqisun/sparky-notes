@@ -1,5 +1,5 @@
 import { useApiKeyInput } from "./lib/api-key";
-import { runGroup } from "./lib/itemize";
+import { runGroup } from "./lib/group";
 import { useSelection } from "./lib/selection";
 import { useTaskControl } from "./lib/task";
 import "./style.css";
