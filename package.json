@@ -4,28 +4,15 @@
   "description": "",
   "scripts": {
     "dev": "concurrently npm:dev:*",
-    "assistant": "concurrently npm:dev:assistant-plugin npm:dev:assistant-web npm:dev:server",
-    "dev:assistant-plugin": "npm run dev -w apps/assistant/plugin",
-    "dev:assistant-web": "npm run dev -w apps/assistant/web",
-    "dev:server": "npm run dev -w apps/server",
-    "build": "npm run clean:server && concurrently npm:build:*",
-    "build-assistant": "concurrently npm:build:assistant-plugin npm:build:assistant-web",
-    "build:assistant-plugin": "npm run build -w apps/assistant/plugin",
-    "build:assistant-web": "npm run build -w apps/assistant/web",
-    "build:server": "npm run build -w apps/server",
-    "clean:server": "npm run clean -w apps/server"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hits-open/hits-assistant-for-figma.git"
+    "dev:plugin": "npm run dev -w apps/plugin",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "concurrently npm:build:*",
+    "build:plugin": "npm run build -w apps/plugin",
+    "build:web": "npm run build -w apps/web"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/hits-open/hits-assistant-for-figma/issues"
-  },
-  "homepage": "https://github.com/hits-open/hits-assistant-for-figma#readme",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -40,8 +27,5 @@
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   },
-  "dependencies": {
-    "@azure/identity": "^4.4.1",
-    "@azure/msal-node": "^2.13.1"
-  }
+  "dependencies": {}
 }

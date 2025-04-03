@@ -1,6 +1,6 @@
-import type { MessageToFigma } from "@h20/assistant-types";
-import { appendAsTiles, loadFonts, moveToViewCenter } from "@h20/figma-tools";
-import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@h20/figma-tools/lib/query";
+import type { MessageToFigma } from "@sticky-plus/figma-ipc-types";
+import { appendAsTiles, loadFonts, moveToViewCenter } from "@sticky-plus/figma-tools";
+import { getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@sticky-plus/figma-tools/lib/query";
 
 export async function handleRenderObject(message: MessageToFigma) {
   if (!message.renderObject) return;

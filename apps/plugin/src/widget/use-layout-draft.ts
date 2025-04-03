@@ -1,4 +1,4 @@
-import type { CardData } from "@h20/assistant-types";
+import type { CardData } from "@sticky-plus/figma-ipc-types";
 import { finishLayoutDraftFrame } from "../utils/layout";
 
 const { useEffect, useSyncedState } = figma.widget;

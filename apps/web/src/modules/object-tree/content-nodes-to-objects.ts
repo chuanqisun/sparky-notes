@@ -1,4 +1,4 @@
-import type { ContentNode } from "@h20/assistant-types";
+import type { ContentNode } from "@sticky-plus/figma-ipc-types";
 
 export function contentNodesToObject(contentNodes: ContentNode[] | null): any {
   if (contentNodes === null) {

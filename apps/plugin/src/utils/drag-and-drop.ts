@@ -1,4 +1,4 @@
-import type { FigmaDropContext, WebDragContext } from "@h20/assistant-types";
+import type { FigmaDropContext, WebDragContext } from "@sticky-plus/figma-ipc-types";
 
 export function getFigmaDropContext(dropEvent: DropEvent): FigmaDropContext {
   return {

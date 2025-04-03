@@ -1,13 +1,12 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import type { ProxyToFigma } from "@h20/figma-tools";
+import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
+import type { ProxyToFigma } from "@sticky-plus/figma-tools";
 import { Subject, last, mergeScan, tap } from "rxjs";
-import { synthesizeStream, type SyntheticFinding } from "../../inference/synthesize-stream";
-import type { ChatCompletionStreamProxy } from "../../max/use-max-proxy";
-import { contentNodestoIdContentNode, getItemId, getItemText, type IdContentNode } from "../../object-tree/content-nodes-to-id-content-node";
+import { type SyntheticFinding } from "../../inference/synthesize-stream";
+import { getItemId, type IdContentNode } from "../../object-tree/content-nodes-to-id-content-node";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 
-export function synthesizeTool(chatStream: ChatCompletionStreamProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function synthesizeTool(proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.synthesize",
     displayName: "Synthesize",
@@ -85,16 +84,16 @@ export function synthesizeTool(chatStream: ChatCompletionStreamProxy, proxyToFig
         .subscribe();
 
       try {
-        await synthesizeStream({
-          chatStreamProxy: chatStream,
-          items: contentNodestoIdContentNode(input)
-            .filter((input) => input.content.trim())
-            .sort(() => Math.random() - 0.5),
-          goalOrInstruction: args["goalOrInstruction"],
-          onStringify: getItemText,
-          abortSignal: abortController.signal,
-          onFinding: (finding) => $render.next(finding),
-        });
+        // await synthesizeStream({
+        //   chatStreamProxy: chatStream,
+        //   items: contentNodestoIdContentNode(input)
+        //     .filter((input) => input.content.trim())
+        //     .sort(() => Math.random() - 0.5),
+        //   goalOrInstruction: args["goalOrInstruction"],
+        //   onStringify: getItemText,
+        //   abortSignal: abortController.signal,
+        //   onFinding: (finding) => $render.next(finding),
+        // });
       } finally {
         $render.complete();
       }

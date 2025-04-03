@@ -1,4 +1,4 @@
-import type { MessageToFigma } from "@h20/assistant-types";
+import type { MessageToFigma } from "@sticky-plus/figma-ipc-types";
 
 export async function handleRenderAutoLayoutItem(message: MessageToFigma) {
   if (!message.renderAutoLayoutItem) return;

@@ -1,5 +1,5 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { loadFonts, replaceNotification, type ProxyToWeb } from "@h20/figma-tools";
+import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
+import { loadFonts, replaceNotification, type ProxyToWeb } from "@sticky-plus/figma-tools";
 import { startLayoutDraftFrame } from "../utils/layout";
 import type { LayoutDraft } from "../widget/use-layout-draft";
 

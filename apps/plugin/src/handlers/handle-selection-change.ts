@@ -1,5 +1,5 @@
-import type { ContentNode, MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { type ProxyToWeb } from "@h20/figma-tools";
+import type { ContentNode, MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
+import { type ProxyToWeb } from "@sticky-plus/figma-tools";
 
 export function handleSelectionChange(proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
   proxyToWeb.notify({ selectionChanged: getCurrentSelection() });

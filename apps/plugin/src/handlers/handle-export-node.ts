@@ -1,5 +1,5 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { replaceNotification, type ProxyToWeb } from "@h20/figma-tools";
+import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
+import { replaceNotification, type ProxyToWeb } from "@sticky-plus/figma-tools";
 
 export async function handleExportNode(message: MessageToFigma, proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
   if (!message.exportNode) return;

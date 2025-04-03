@@ -1,4 +1,4 @@
-import type { CardData } from "@h20/assistant-types";
+import type { CardData } from "@sticky-plus/figma-ipc-types";
 import Plus from "../assets/FigmaPlus.svg";
 import figmaPalette from "../assets/figma-palette.json";
 

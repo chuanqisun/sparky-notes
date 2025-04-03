@@ -1,12 +1,11 @@
-import type { CreateSectionMutation, MessageToFigma, MessageToWeb, MutationRequest } from "@h20/assistant-types";
-import type { ProxyToFigma } from "@h20/figma-tools";
+import type { CreateSectionMutation, MessageToFigma, MessageToWeb, MutationRequest } from "@sticky-plus/figma-ipc-types";
+import type { ProxyToFigma } from "@sticky-plus/figma-tools";
 import { defaultCriteria, filter } from "../../inference/filter";
-import type { ChatCompletionProxy } from "../../max/use-max-proxy";
 import { contentNodestoIdContentNode, getItemText } from "../../object-tree/content-nodes-to-id-content-node";
 import { createTask } from "../abort";
 import type { Tool } from "../tool";
 
-export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
+export function filterTool(proxyToFigma: ProxyToFigma<MessageToFigma, MessageToWeb>): Tool {
   return {
     id: "core.filter",
     displayName: "Filter",
@@ -47,7 +46,6 @@ export function filterTool(chatProxy: ChatCompletionProxy, proxyToFigma: ProxyTo
         resultContainers.push(acceptedContainer, rejectedContainer, errorsContaienr);
 
         const filterResults = await filter({
-          chatProxy,
           predicate: args["predicate"],
           getItemText,
           items: contentNodestoIdContentNode(input).filter((node) => node.content.trim()),

@@ -1,4 +1,4 @@
-import type { WebDragContext } from "@h20/assistant-types";
+import type { WebDragContext } from "@sticky-plus/figma-ipc-types";
 import { isNative } from "./agent";
 
 export function getDragContext(e: DragEvent): WebDragContext {

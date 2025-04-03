@@ -1,5 +1,5 @@
-import type { MessageToFigma, MessageToWeb } from "@h20/assistant-types";
-import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@h20/figma-tools";
+import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
+import { cssPadding, getProxyToWeb, type ProxyToWeb } from "@sticky-plus/figma-tools";
 import BadgeLightSvg from "./assets/BadgeLight.svg";
 import { handleAddCards } from "./handlers/handle-add-cards";
 import { handleClearNotification } from "./handlers/handle-clear-notification";
