@@ -7,7 +7,52 @@
     <title>Vite + TS</title>
   </head>
   <body>
-    <div id="app">Hello figma</div>
+    <details>
+      <summary>Settings</summary>
+      <fieldset>
+        <legend>OpenAI</legend>
+        <form>
+          <input name="openai-api-key" type="password" placeholder="OpenAI API Key" />
+        </form>
+      </fieldset>
+    </details>
+
+    <details>
+      <summary>Input</summary>
+      <div>...</div>
+    </details>
+
+    <details>
+      <summary>Tools</summary>
+
+      <form>
+        <fieldset>
+          <legend>Itemize</legend>
+          <label>Instruction</label>
+          <textarea></textarea>
+          <button>Run</button>
+        </fieldset>
+      </form>
+
+      <form>
+        <fieldset>
+          <legend>Filter</legend>
+          <label>Instruction</label>
+          <textarea></textarea>
+          <button>Run</button>
+        </fieldset>
+      </form>
+
+      <form>
+        <fieldset>
+          <legend>Synthesize</legend>
+          <label>Instruction</label>
+          <textarea></textarea>
+          <button>Run</button>
+        </fieldset>
+      </form>
+    </details>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
