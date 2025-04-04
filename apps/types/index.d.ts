@@ -82,6 +82,10 @@ export interface CreateSectionMutation {
   createSummary?: string;
   cloneNodes?: string[]; // ids
   moveNodes?: string[]; // ids
+  cloneAndUpdateNodes?: {
+    id: string;
+    content: string;
+  }[];
 }
 
 export interface UpdateSectionMutation {
@@ -92,6 +96,10 @@ export interface UpdateSectionMutation {
   gap?: number;
   cloneNodes?: string[]; // ids
   moveNodes?: string[]; // ids
+  cloneAndUpdateNodes?: {
+    id: string;
+    content: string;
+  }[];
 }
 
 export interface FigmaNotification {

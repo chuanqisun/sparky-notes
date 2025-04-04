@@ -26,6 +26,9 @@ export async function runItemize() {
   // create the initial group container
   const { mutationResponse } = await proxyToFigma.request({
     mutationRequest: {
+      position: {
+        viewportCenter: {},
+      },
       createSections: [
         {
           name: `Itemized ${defaultItemsOf}`,
@@ -44,23 +47,18 @@ export async function runItemize() {
   $render
     .pipe(
       mergeScan(
-        async (previousIds, finding) => {
-          const previousId = previousIds.at(-1);
+        async (_prev, finding) => {
           await proxyToFigma.request({
             mutationRequest: {
-              position: previousId
-                ? {
-                    relativeToNodes: {
-                      ids: [previousId],
-                    },
-                  }
-                : {
-                    viewportCenter: {},
-                  },
               updateSections: [
                 {
                   id: outputSectionId,
-                  cloneNodes: [getItemId(finding.source)],
+                  cloneAndUpdateNodes: [
+                    {
+                      id: getItemId(finding.source),
+                      content: finding.text,
+                    },
+                  ],
                   flowDirection: "vertical",
                 },
               ],
@@ -71,15 +69,13 @@ export async function runItemize() {
             showNotification: { message: `Itemizing... ${++progress} items`, config: { timeout: Infinity }, cancelButton: { handle } },
           });
 
-          return [...previousIds];
+          return _prev;
         },
         [] as string[],
         1
       ),
       last(),
-      tap((allIds) => {
-        // TODO render unused items
-
+      tap(async (allIds) => {
         proxyToFigma.notify({
           showNotification: {
             message: `✅ Itemizing... done. ${allIds.length - 1} items`,
@@ -105,6 +101,25 @@ export async function runItemize() {
       onStringify: getItemText,
       abortSignal: abortController.signal,
       onItem: (finding) => $render.next(finding),
+      onUnused: async (unusedItems) => {
+        // TODO render unused items
+        await proxyToFigma.request({
+          mutationRequest: {
+            position: {
+              relativeToNodes: {
+                ids: [outputSectionId],
+              },
+            },
+            createSections: [
+              {
+                name: "Unused",
+                cloneNodes: unusedItems.map(getItemId),
+                flowDirection: "vertical",
+              },
+            ],
+          },
+        });
+      },
     });
   } finally {
     $render.complete();
@@ -125,9 +140,18 @@ export interface ItemizeStreamOptions<T> {
   onStringify: (item: T) => string;
   abortSignal?: AbortSignal;
   onItem?: (item: SyntheticItem<T>) => any;
+  onUnused?: (items: T[]) => any;
 }
 
-export async function itemizeStream<T>({ openai, items, itemsOf, onStringify, abortSignal, onItem }: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
+export async function itemizeStream<T>({
+  openai,
+  items,
+  itemsOf,
+  onStringify,
+  abortSignal,
+  onItem,
+  onUnused,
+}: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -204,14 +228,9 @@ ${itemsYaml}
   parser.onEnd = () => {
     const unusedItems = originalItems.filter((item) => !usedIds.has(item.id));
     if (unusedItems.length) {
-      const unusedFinding = {
-        name: "Unused",
-        description: "Items not referenced in any finding",
-        items: unusedItems.map((item) => item.data),
-      };
-
       // TODO render unused items
-      console.log("Unused items:", unusedFinding);
+      onUnused?.(unusedItems.map((item) => item.data));
+      console.log("Unused items:", unusedItems);
     }
 
     parsingTask.resolve(syntheticItems);

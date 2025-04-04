@@ -31,6 +31,8 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
         );
       if (createSection.cloneNodes) await cloneNodeToSection(getLayoutFn(createSection.flowDirection, createSection.gap), section, createSection.cloneNodes);
       if (createSection.moveNodes) await moveNodeToSection(getLayoutFn(createSection.flowDirection, createSection.gap), section, createSection.moveNodes);
+      if (createSection.cloneAndUpdateNodes)
+        await cloneAndUpdateNodeToSection(getLayoutFn(createSection.flowDirection, createSection.gap), section, createSection.cloneAndUpdateNodes);
 
       return section;
     })
@@ -43,6 +45,9 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
         if (!section) return null;
         if (updateSection.cloneNodes) await cloneNodeToSection(getLayoutFn(updateSection.flowDirection, updateSection.gap), section, updateSection.cloneNodes);
         if (updateSection.moveNodes) await moveNodeToSection(getLayoutFn(updateSection.flowDirection, updateSection.gap), section, updateSection.moveNodes);
+        if (updateSection.cloneAndUpdateNodes)
+          await cloneAndUpdateNodeToSection(getLayoutFn(updateSection.flowDirection, updateSection.gap), section, updateSection.cloneAndUpdateNodes);
+
         return section;
       })
     )
@@ -105,6 +110,29 @@ async function cloneNodeToSection(layoutFn: LayoutFn, section: SectionNode, sour
   };
 
   const clonedNodes = await Promise.all(sourceIds.map(cloneNodeById)).then((results) => results.filter(Boolean) as SceneNode[]);
+  await moveNodeToSection(
+    layoutFn,
+    section,
+    clonedNodes.map((node) => node.id)
+  );
+}
+
+async function cloneAndUpdateNodeToSection(layoutFn: LayoutFn, section: SectionNode, sources: { id: string; content: string }[]) {
+  const cloneNodeById = async (source: { id: string; content: string }) => {
+    return (figma.getNodeByIdAsync(source.id) as Promise<SceneNode | null>).then((node) => {
+      if (!node) return null;
+      const clone = (node as StickyNode).clone();
+      if (clone.type === "STICKY") {
+        clone.text.fontSize = 16;
+        clone.text.fontName = { family: "Inter", style: "Medium" };
+        clone.text.characters = source.content;
+        clone.isWideWidth = false;
+      }
+      return clone;
+    });
+  };
+
+  const clonedNodes = await Promise.all(sources.map(cloneNodeById)).then((results) => results.filter(Boolean) as SceneNode[]);
   await moveNodeToSection(
     layoutFn,
     section,
