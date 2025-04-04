@@ -14,8 +14,8 @@ export async function runItemize() {
   const itemsOfInput = document.querySelector<HTMLTextAreaElement>(`[name="itemize-instruction"]`);
   const itemsOf = [itemsOfInput?.value, itemsOfInput?.placeholder].filter(Boolean).at(0);
   if (!itemsOf) {
-    proxyToFigma.notify({ showNotification: { message: "Item of is missing value", config: { error: true } } });
-    throw new Error("Item of is missing value");
+    proxyToFigma.notify({ showNotification: { message: "Itemization is missing objective", config: { error: true } } });
+    throw new Error("Itemization is missing objective");
   }
 
   const openai = new OpenAI({
@@ -152,6 +152,7 @@ ${item.data}`.trim()
       stream: true,
       model: "gpt-4o",
       text: { format: { type: "json_object" } },
+      temperature: 0.2,
       input: [
         {
           role: "system",

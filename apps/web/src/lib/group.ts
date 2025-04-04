@@ -11,6 +11,12 @@ import { ensureTokenLimit } from "./tokenizer";
 export async function runGroup() {
   const apiKey = ensureApiKey(getApiKey());
   const selection = ensureSelection(selection$.value);
+  const groupingGoalInput = document.querySelector<HTMLTextAreaElement>(`[name="group-instruction"]`);
+  const groupingGoal = [groupingGoalInput?.value, groupingGoalInput?.placeholder].filter(Boolean).at(0);
+  if (!groupingGoal) {
+    proxyToFigma.notify({ showNotification: { message: "Group goal is missing value", config: { error: true } } });
+    throw new Error("Group goal is missing value");
+  }
 
   const openai = new OpenAI({
     dangerouslyAllowBrowser: true,
@@ -53,7 +59,7 @@ export async function runGroup() {
           if (!sectionId) throw new Error("Failed to create section");
 
           proxyToFigma.notify({
-            showNotification: { message: `Synthesizing... ${++progress} findings`, config: { timeout: Infinity }, cancelButton: { handle } },
+            showNotification: { message: `Grouping... ${++progress} groups`, config: { timeout: Infinity }, cancelButton: { handle } },
           });
 
           return [...previousIds, sectionId];
@@ -65,7 +71,7 @@ export async function runGroup() {
       tap((allIds) => {
         proxyToFigma.notify({
           showNotification: {
-            message: `✅ Synthesizing... done. ${allIds.length - 1} findings`,
+            message: `✅ Grouping... done. ${allIds.length - 1} groups`,
             config: { timeout: Infinity },
             locateButton: {
               ids: allIds,
@@ -84,7 +90,7 @@ export async function runGroup() {
       items: contentNodesToIdContentNode(selection)
         .filter((input) => input.content.trim())
         .sort(() => Math.random() - 0.5),
-      goalOrInstruction: defaultContext, // TODO wireup with UI input
+      groupingGoal: groupingGoal,
       onStringify: getItemText,
       abortSignal: abortController.signal,
       onFinding: (finding) => $render.next(finding),
@@ -107,7 +113,7 @@ export interface SyntheticFinding<T> {
 export interface SynthesizeStreamOptions<T> {
   openai: OpenAI;
   items: T[];
-  goalOrInstruction: string | undefined;
+  groupingGoal: string;
   onStringify: (item: T) => string;
   abortSignal?: AbortSignal;
   onFinding?: (finding: SyntheticFinding<T>) => any;
@@ -116,7 +122,7 @@ export interface SynthesizeStreamOptions<T> {
 export async function synthesizeStream<T>({
   openai,
   items,
-  goalOrInstruction,
+  groupingGoal,
   onStringify,
   abortSignal,
   onFinding,
@@ -139,36 +145,31 @@ ${item.data}`.trim()
     {
       stream: true,
       model: "gpt-4o",
+      temperature: 0.5,
       text: { format: { type: "json_object" } },
       input: [
         {
           role: "system",
           content: `
-Synthesize findings from evidence items based on user's goal or instruction.
-Each finding should represent single cohesive concept emerged from multiple evidence items.
-Support each finding with *2 or more* evidence items id numbers
+Affinitize sticky notes into groups. The goal is to discover and synthesize ${groupingGoal}
+Each group should represent a single cohesive concept emerged from multiple sticky notes.
+Ensure *2 or more* sticky notes per group
 
-Respond in JSON format like this:
-"""
-{
-  "findings": [
-    {
-      "name": "<name of the finding>",
-      "description": "<one sentence description of this finding>",
-      "evidence": [<id number>, <id number>, ...]
-    },
-    ...
-  ]
+Respond in JSON format of this type
+
+type Response = {
+  groups: {
+    name: string; // name of the group
+    description: string; // one sentence description 
+    stickyNoteIds: number[]; // ids of the sticky notes that contributed to this group
+  }[]
 }
-"""
           `.trim(),
         },
         {
           role: "user",
           content: `
-${goalOrInstruction?.trim().length ? goalOrInstruction : defaultContext}
-
-Evidence items:
+Discover and synthesize ${groupingGoal} from the following sticky notes:
 ${itemsYaml}
           `.trim(),
         },
@@ -187,7 +188,7 @@ ${itemsYaml}
   parser.onValue = (v) => {
     const syntheticFinding = parseFinding(v?.value);
     if (syntheticFinding) {
-      const sourceItems = syntheticFinding.evidence.map((id) => {
+      const sourceItems = syntheticFinding.stickyNoteIds.map((id) => {
         usedIds.add(id);
         return originalItems.find((item) => item.id === id)!.data;
       });
@@ -228,23 +229,23 @@ ${itemsYaml}
 interface ParsedFinding {
   name: string;
   description: string;
-  evidence: number[];
+  stickyNoteIds: number[];
 }
 function parseFinding(value?: any): ParsedFinding | null {
   if (
     Object.getOwnPropertyNames(value as {})
       .sort()
-      .join(",") === "description,evidence,name"
+      .join(",") === "description,name,stickyNoteIds"
   ) {
     if (typeof value.name !== "string") throw new Error("Expected name string in finding");
     if (typeof value.description !== "string") throw new Error("Expected description string in finding");
-    if (!Array.isArray(value.evidence)) throw new Error("Expected evidence array in finding");
-    if (!value.evidence.every((id: any) => typeof id === "number")) throw new Error("Expected number in evidence array");
+    if (!Array.isArray(value.stickyNoteIds)) throw new Error("Expected stickyNoteIds array in finding");
+    if (!value.stickyNoteIds.every((id: any) => typeof id === "number")) throw new Error("Expected number in stickyNoteIds array");
 
     return {
       name: value.name as string,
       description: value.description as string,
-      evidence: value.evidence as number[],
+      stickyNoteIds: value.stickyNoteIds as number[],
     };
   } else {
     return null;
