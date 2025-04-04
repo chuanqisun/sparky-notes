@@ -57,6 +57,11 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
     (message.mutationRequest.removeSections ?? []).map((removeSectionId) => figma.getNodeByIdAsync(removeSectionId).then((node) => node?.remove()))
   );
 
+  let updatedSectionBoundingBox: Rect | undefined;
+  if (updatedSections.length) {
+    updatedSectionBoundingBox = getAbsoluteBoundingBox(updatedSections);
+  }
+
   appendAsTiles(layoutContainer, [...createdSections, ...updatedSections], getNextVerticalTilePosition.bind(null, { padding: 0, gap: 120 }));
 
   const affectedNodes = layoutContainer.children;
@@ -71,6 +76,10 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
   } else if (message.mutationRequest.position?.viewportCenter) {
     layoutContainer.x = figma.viewport.center.x;
     layoutContainer.y = figma.viewport.center.y;
+  } else if (updatedSectionBoundingBox) {
+    // use the updatedSectionBoundingBox as the position
+    layoutContainer.x = updatedSectionBoundingBox.x;
+    layoutContainer.y = updatedSectionBoundingBox.y;
   }
 
   figma.ungroup(layoutContainer);

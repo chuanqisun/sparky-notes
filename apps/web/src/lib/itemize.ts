@@ -78,7 +78,7 @@ export async function runItemize() {
       tap(async (allIds) => {
         proxyToFigma.notify({
           showNotification: {
-            message: `✅ Itemizing... done. ${allIds.length - 1} items`,
+            message: `✅ Itemizing... done. ${progress} items`,
             config: { timeout: Infinity },
             locateButton: {
               ids: allIds,
@@ -102,7 +102,6 @@ export async function runItemize() {
       abortSignal: abortController.signal,
       onItem: (finding) => $render.next(finding),
       onUnused: async (unusedItems) => {
-        // TODO render unused items
         await proxyToFigma.request({
           mutationRequest: {
             position: {
