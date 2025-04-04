@@ -11,13 +11,17 @@ import { ensureTokenLimit } from "./tokenizer";
 export async function runItemize() {
   const apiKey = ensureApiKey(getApiKey());
   const selection = ensureSelection(selection$.value);
+  const itemsOfInput = document.querySelector<HTMLTextAreaElement>(`[name="itemize-instruction"]`);
+  const itemsOf = [itemsOfInput?.value, itemsOfInput?.placeholder].filter(Boolean).at(0);
+  if (!itemsOf) {
+    proxyToFigma.notify({ showNotification: { message: "Item of is missing value", config: { error: true } } });
+    throw new Error("Item of is missing value");
+  }
 
   const openai = new OpenAI({
     dangerouslyAllowBrowser: true,
     apiKey,
   });
-
-  const defaultItemsOf = "key points";
 
   const { handle, abortController } = createTask();
   let progress = 0;
@@ -31,7 +35,7 @@ export async function runItemize() {
       },
       createSections: [
         {
-          name: `Itemized ${defaultItemsOf}`,
+          name: `Itemized ${itemsOf}`,
         },
       ],
     },
@@ -53,12 +57,18 @@ export async function runItemize() {
               updateSections: [
                 {
                   id: outputSectionId,
-                  cloneAndUpdateNodes: [
-                    {
-                      id: getItemId(finding.source),
-                      content: finding.text,
-                    },
-                  ],
+                  ...(finding.sectionName === "Unused"
+                    ? {
+                        cloneNodes: [getItemId(finding.source)],
+                      }
+                    : {
+                        cloneAndUpdateNodes: [
+                          {
+                            id: getItemId(finding.source),
+                            content: finding.text,
+                          },
+                        ],
+                      }),
                   flowDirection: "vertical",
                 },
               ],
@@ -97,7 +107,7 @@ export async function runItemize() {
       items: contentNodesToIdContentNode(selection)
         .filter((input) => input.content.trim())
         .sort(() => Math.random() - 0.5),
-      itemsOf: defaultItemsOf, // TODO wireup with UI input
+      itemsOf,
       onStringify: getItemText,
       abortSignal: abortController.signal,
       onItem: (finding) => $render.next(finding),
@@ -128,6 +138,7 @@ export async function runItemize() {
 }
 
 export interface SyntheticItem<T> {
+  sectionName: string;
   text: string;
   source: T;
 }
@@ -135,22 +146,14 @@ export interface SyntheticItem<T> {
 export interface ItemizeStreamOptions<T> {
   openai: OpenAI;
   items: T[];
-  itemsOf: string | undefined;
+  itemsOf: string;
   onStringify: (item: T) => string;
   abortSignal?: AbortSignal;
   onItem?: (item: SyntheticItem<T>) => any;
   onUnused?: (items: T[]) => any;
 }
 
-export async function itemizeStream<T>({
-  openai,
-  items,
-  itemsOf,
-  onStringify,
-  abortSignal,
-  onItem,
-  onUnused,
-}: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
+export async function itemizeStream<T>({ openai, items, itemsOf, onStringify, abortSignal, onItem }: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -174,28 +177,22 @@ ${item.data}`.trim()
         {
           role: "system",
           content: `
-Itemize the ${itemsOf} from the input. Each source may have 0, 1, or multiple items.
+Itemize the ${itemsOf} in the provided sticky notes. Each sticky note may have 0, 1, or multiple items.
 
-Respond in JSON format like this:
-"""
-{
-  "items": [
-    {
-      "text": "<one sentence description of this item>",
-      "source": <id_number>
-    },
-    ...
-  ]
+Respond in JSON format of this type
+
+type Response = {
+  results: {
+    stickyNoteId: number, // id of the sticky note
+    items: string[], // itemized ${itemsOf} from the sticky note, may be empty
+  }[]
 }
-"""
           `.trim(),
         },
         {
           role: "user",
           content: `
-${itemsOf?.trim().length ? itemsOf : "Key points"}
-
-Source:
+Itemize ${itemsOf} from the following sticky notes:
 ${itemsYaml}
           `.trim(),
         },
@@ -213,24 +210,28 @@ ${itemsYaml}
 
   parser.onValue = (v) => {
     const syntheticItem = parseItem(v?.value);
-    if (syntheticItem && syntheticItem.source) {
-      usedIds.add(syntheticItem.source);
-      const sourceItem = originalItems.find((item) => item.id === syntheticItem.source);
+    if (syntheticItem && syntheticItem.stickyNoteId && syntheticItem.items.length) {
+      usedIds.add(syntheticItem.stickyNoteId);
+      const sourceItem = originalItems.find((item) => item.id === syntheticItem.stickyNoteId);
       if (sourceItem) {
-        const mappedItem = { text: syntheticItem.text, source: sourceItem.data };
-        syntheticItems.push(mappedItem);
-        onItem?.(mappedItem);
+        const mappedItems = syntheticItem.items.map((item) => ({ sectionName: itemsOf, text: item, source: sourceItem.data }));
+        syntheticItems.push(...mappedItems);
+        mappedItems.forEach((item) => onItem?.(item));
       }
     }
   };
 
   parser.onEnd = () => {
-    const unusedItems = originalItems.filter((item) => !usedIds.has(item.id));
-    if (unusedItems.length) {
-      // TODO render unused items
-      onUnused?.(unusedItems.map((item) => item.data));
-      console.log("Unused items:", unusedItems);
-    }
+    const unusedItems = originalItems
+      .filter((item) => !usedIds.has(item.id))
+      .map((item) => ({
+        sectionName: "Unused",
+        text: "",
+        source: item.data,
+      }));
+
+    unusedItems.forEach((item) => onItem?.(item));
+    console.log("Unused items:", unusedItems);
 
     parsingTask.resolve(syntheticItems);
     console.log("parser ended");
@@ -247,21 +248,22 @@ ${itemsYaml}
 }
 
 interface ParsedItem {
-  text: string;
-  source: number;
+  stickyNoteId: number;
+  items: string[];
 }
 function parseItem(value?: any): ParsedItem | null {
   if (
     Object.getOwnPropertyNames(value as {})
       .sort()
-      .join(",") === "source,text"
+      .join(",") === "items,stickyNoteId"
   ) {
-    if (typeof value.text !== "string") throw new Error("Expected text string in finding");
-    if (typeof value.source !== "number") throw new Error("Expected source number in finding");
+    if (typeof value.stickyNoteId !== "number") throw new Error("Expected sticky note id to be number");
+    if (!Array.isArray(value.items)) throw new Error("Expected items to be an array");
+    if (!value.items.every((item: any) => typeof item === "string")) throw new Error("Expected items to be an array of strings");
 
     return {
-      text: value.text as string,
-      source: value.source as number,
+      stickyNoteId: value.stickyNoteId as number,
+      items: value.items as string[],
     };
   } else {
     return null;
