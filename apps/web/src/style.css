@@ -12,3 +12,30 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+label:has(+ :where(textarea, input[type="text"], input[type="password"])) {
+  display: block;
+}
+
+textarea {
+  width: 100%;
+  field-sizing: content;
+  resize: none;
+  padding: 4px;
+}
+
+input {
+  width: 100%;
+  padding: 4px;
+}
+
+button {
+  padding: 4px 8px;
+  width: 100%;
+}
