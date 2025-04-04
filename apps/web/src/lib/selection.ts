@@ -18,6 +18,7 @@ export function useSelection() {
 
 export function setSelection(data: any) {
   document.querySelector("#selection-json")!.textContent = JSON.stringify(data, null, 2);
+  document.querySelector("#selection-count")!.textContent = `(${data.length ? data.length : "empty"})`;
 }
 
 export function ensureSelection(selection: ContentNode[]) {

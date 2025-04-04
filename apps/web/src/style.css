@@ -19,6 +19,11 @@
   box-sizing: border-box;
 }
 
+body {
+  display: grid;
+  gap: 8px;
+}
+
 label:has(+ :where(textarea, input[type="text"], input[type="password"])) {
   display: block;
 }
@@ -27,15 +32,30 @@ textarea {
   width: 100%;
   field-sizing: content;
   resize: none;
-  padding: 4px;
+  padding: 8px;
 }
 
 input {
   width: 100%;
-  padding: 4px;
+  padding: 8px;
 }
 
 button {
   padding: 4px 8px;
   width: 100%;
+}
+
+summary {
+  text-transform: uppercase;
+  opacity: 0.625;
+}
+
+legend {
+  font-weight: bold;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
