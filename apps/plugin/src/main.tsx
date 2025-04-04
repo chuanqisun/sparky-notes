@@ -1,6 +1,6 @@
-import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
-import { getProxyToWeb, type ProxyToWeb } from "@sticky-plus/figma-tools";
-import WidgetLogo from "./assets/Prompt.svg";
+import type { MessageToFigma, MessageToWeb } from "@sparky-notes/figma-ipc-types";
+import { getProxyToWeb, type ProxyToWeb } from "@sparky-notes/figma-tools";
+import WidgetLogo from "./assets/Logo.svg";
 import { handleClearNotification } from "./handlers/handle-clear-notification";
 import { handleDetectSelection } from "./handlers/handle-detect-selection";
 import { handleGetViewport } from "./handlers/handle-get-viewport";
@@ -51,7 +51,7 @@ function Widget() {
   });
 
   return (
-    <SVG src={WidgetLogo} width={436} height={436} onClick={() => new Promise((_resolve) => openIndexPage())} />
+    <SVG src={WidgetLogo} width={320} height={320} onClick={() => new Promise((_resolve) => openIndexPage())} />
   );
 }
 

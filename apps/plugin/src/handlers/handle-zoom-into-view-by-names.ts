@@ -1,4 +1,4 @@
-import type { MessageToFigma } from "@sticky-plus/figma-ipc-types";
+import type { MessageToFigma } from "@sparky-notes/figma-ipc-types";
 
 export async function handleZoomIntoViewByNames(message: MessageToFigma) {
   if (!message.zoomIntoViewByNames) return;

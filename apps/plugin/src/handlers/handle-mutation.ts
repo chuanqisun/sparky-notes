@@ -1,6 +1,6 @@
-import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
-import { appendAsTiles, loadFonts, replaceNotification, type LayoutFn, type ProxyToWeb } from "@sticky-plus/figma-tools";
-import { getAbsoluteBoundingBox, getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@sticky-plus/figma-tools/lib/query";
+import type { MessageToFigma, MessageToWeb } from "@sparky-notes/figma-ipc-types";
+import { appendAsTiles, loadFonts, replaceNotification, type LayoutFn, type ProxyToWeb } from "@sparky-notes/figma-tools";
+import { getAbsoluteBoundingBox, getNextHorizontalTilePosition, getNextVerticalTilePosition } from "@sparky-notes/figma-tools/lib/query";
 import { setFillColor, stickyColors } from "../utils/color";
 
 export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {

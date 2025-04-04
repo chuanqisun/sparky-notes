@@ -1,1 +1,3 @@
-# Sticky Plus
+# Sparky Notes
+
+Sticky notes sparkled with AI magic.

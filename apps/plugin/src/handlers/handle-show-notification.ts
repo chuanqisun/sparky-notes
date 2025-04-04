@@ -1,5 +1,5 @@
-import type { MessageToFigma, MessageToWeb } from "@sticky-plus/figma-ipc-types";
-import { replaceNotification, type ProxyToWeb } from "@sticky-plus/figma-tools";
+import type { MessageToFigma, MessageToWeb } from "@sparky-notes/figma-ipc-types";
+import { replaceNotification, type ProxyToWeb } from "@sparky-notes/figma-tools";
 
 export async function handleShowNotification(message: MessageToFigma, proxyToWeb: ProxyToWeb<MessageToWeb, MessageToFigma>) {
   if (!message.showNotification) return;

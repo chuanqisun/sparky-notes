@@ -1,18 +1,18 @@
 import { proxyToFigma } from "./proxy";
 
 export function useApiKeyInput(input: HTMLInputElement) {
-  // init with value from localStorage item "sticky-plus:openai-api-key"
-  input.value = localStorage.getItem("sticky-plus:openai-api-key") ?? "";
+  // init with value from localStorage item "sparky-notes:openai-api-key"
+  input.value = localStorage.getItem("sparky-notes:openai-api-key") ?? "";
 
   // when user chages the input, save to localStorage
   input.addEventListener("input", (event) => {
     const target = event.target as HTMLInputElement;
-    localStorage.setItem("sticky-plus:openai-api-key", target.value);
+    localStorage.setItem("sparky-notes:openai-api-key", target.value);
   });
 }
 
 export function getApiKey() {
-  const key = localStorage.getItem("sticky-plus:openai-api-key") ?? "";
+  const key = localStorage.getItem("sparky-notes:openai-api-key") ?? "";
 
   return key;
 }

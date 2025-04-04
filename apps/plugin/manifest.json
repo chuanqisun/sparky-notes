@@ -1,5 +1,5 @@
 {
-  "name": "Stikcy Plus",
+  "name": "Sparky Notes",
   "id": "1489741501098538877",
   "api": "1.0.0",
   "main": "dist/main.js",
@@ -12,7 +12,7 @@
     "allowedDomains": [
       "https://chuanqisun.github.io/"
     ],
-    "reasoning": "access remote hosted UI",
+    "reasoning": "access web hosted UI",
     "devAllowedDomains": [
       "http://localhost:5200"
     ]

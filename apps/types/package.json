@@ -1,5 +1,5 @@
 {
-  "name": "@sticky-plus/figma-ipc-types",
+  "name": "@sparky-notes/figma-ipc-types",
   "version": "1.0.0",
   "description": "",
   "main": "index.d.ts",

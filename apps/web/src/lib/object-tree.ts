@@ -1,4 +1,4 @@
-import type { ContentNode } from "@sticky-plus/figma-ipc-types";
+import type { ContentNode } from "@sparky-notes/figma-ipc-types";
 
 export interface IdContentNode {
   id: string;
