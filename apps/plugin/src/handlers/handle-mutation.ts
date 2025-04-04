@@ -68,8 +68,7 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
     const box = getAbsoluteBoundingBox(nodes as SceneNode[]);
     layoutContainer.x = box.x + box.width + 32;
     layoutContainer.y = box.y;
-  } else {
-    // const viewportCenter = message.mutationRequest.position?.viewportCenter;
+  } else if (message.mutationRequest.position?.viewportCenter) {
     layoutContainer.x = figma.viewport.center.x;
     layoutContainer.y = figma.viewport.center.y;
   }
