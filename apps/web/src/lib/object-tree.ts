@@ -5,12 +5,12 @@ export interface IdContentNode {
   content: string;
 }
 
-export function contentNodestoIdContentNode(nodes: ContentNode[]): IdContentNode[] {
+export function contentNodesToIdContentNode(nodes: ContentNode[]): IdContentNode[] {
   return nodes.flatMap((node) => {
     if (node.type === "sticky") {
       return [{ id: node.id, content: node.content }];
     } else if (node.type === "section") {
-      return contentNodestoIdContentNode(node.children ?? []);
+      return contentNodesToIdContentNode(node.children ?? []);
     } else {
       return [];
     }

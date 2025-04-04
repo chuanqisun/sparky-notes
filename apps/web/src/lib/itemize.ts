@@ -8,7 +8,7 @@ import { ensureSelection, selection$ } from "./selection";
 import { createTask } from "./task";
 import { ensureTokenLimit } from "./tokenizer";
 
-export async function runGroup() {
+export async function runItemize() {
   const apiKey = ensureApiKey(getApiKey());
   const selection = ensureSelection(selection$.value);
 
@@ -17,17 +17,36 @@ export async function runGroup() {
     apiKey,
   });
 
+  const defaultItemsOf = "key points";
+
   const { handle, abortController } = createTask();
   let progress = 0;
-  proxyToFigma.notify({ showNotification: { message: `Grouping...`, config: { timeout: Infinity }, cancelButton: { handle } } });
+  proxyToFigma.notify({ showNotification: { message: `Itemizing...`, config: { timeout: Infinity }, cancelButton: { handle } } });
 
-  const $render = new Subject<SyntheticFinding<IdContentNode>>();
+  // create the initial group container
+  const { mutationResponse } = await proxyToFigma.request({
+    mutationRequest: {
+      createSections: [
+        {
+          name: `Itemized ${defaultItemsOf}`,
+        },
+      ],
+    },
+  });
+
+  const outputSectionId = mutationResponse?.createdSections[0];
+  if (!outputSectionId) {
+    proxyToFigma.notify({ showNotification: { message: "Failed to create section", config: { error: true } } });
+    throw new Error("Failed to create section");
+  }
+
+  const $render = new Subject<SyntheticItem<IdContentNode>>();
   $render
     .pipe(
       mergeScan(
         async (previousIds, finding) => {
           const previousId = previousIds.at(-1);
-          const { mutationResponse } = await proxyToFigma.request({
+          await proxyToFigma.request({
             mutationRequest: {
               position: previousId
                 ? {
@@ -38,34 +57,32 @@ export async function runGroup() {
                 : {
                     viewportCenter: {},
                   },
-              createSections: [
+              updateSections: [
                 {
-                  name: finding.name,
-                  createSummary: finding.description,
-                  cloneNodes: finding.items.map(getItemId),
+                  id: outputSectionId,
+                  cloneNodes: [getItemId(finding.source)],
                   flowDirection: "vertical",
                 },
               ],
             },
           });
 
-          const sectionId = mutationResponse?.createdSections[0];
-          if (!sectionId) throw new Error("Failed to create section");
-
           proxyToFigma.notify({
-            showNotification: { message: `Synthesizing... ${++progress} findings`, config: { timeout: Infinity }, cancelButton: { handle } },
+            showNotification: { message: `Itemizing... ${++progress} items`, config: { timeout: Infinity }, cancelButton: { handle } },
           });
 
-          return [...previousIds, sectionId];
+          return [...previousIds];
         },
         [] as string[],
         1
       ),
       last(),
       tap((allIds) => {
+        // TODO render unused items
+
         proxyToFigma.notify({
           showNotification: {
-            message: `✅ Synthesizing... done. ${allIds.length - 1} findings`,
+            message: `✅ Itemizing... done. ${allIds.length - 1} items`,
             config: { timeout: Infinity },
             locateButton: {
               ids: allIds,
@@ -79,15 +96,15 @@ export async function runGroup() {
     .subscribe();
 
   try {
-    await synthesizeStream({
+    await itemizeStream({
       openai,
       items: contentNodesToIdContentNode(selection)
         .filter((input) => input.content.trim())
         .sort(() => Math.random() - 0.5),
-      goalOrInstruction: defaultContext, // TODO wireup with UI input
+      itemsOf: defaultItemsOf, // TODO wireup with UI input
       onStringify: getItemText,
       abortSignal: abortController.signal,
-      onFinding: (finding) => $render.next(finding),
+      onItem: (finding) => $render.next(finding),
     });
   } finally {
     $render.complete();
@@ -96,31 +113,21 @@ export async function runGroup() {
   return;
 }
 
-export const defaultContext = `Identify common themes across texts`;
-
-export interface SyntheticFinding<T> {
-  name: string;
-  description: string;
-  items: T[];
+export interface SyntheticItem<T> {
+  text: string;
+  source: T;
 }
 
-export interface SynthesizeStreamOptions<T> {
+export interface ItemizeStreamOptions<T> {
   openai: OpenAI;
   items: T[];
-  goalOrInstruction: string | undefined;
+  itemsOf: string | undefined;
   onStringify: (item: T) => string;
   abortSignal?: AbortSignal;
-  onFinding?: (finding: SyntheticFinding<T>) => any;
+  onItem?: (item: SyntheticItem<T>) => any;
 }
 
-export async function synthesizeStream<T>({
-  openai,
-  items,
-  goalOrInstruction,
-  onStringify,
-  abortSignal,
-  onFinding,
-}: SynthesizeStreamOptions<T>): Promise<SyntheticFinding<T>[]> {
+export async function itemizeStream<T>({ openai, items, itemsOf, onStringify, abortSignal, onItem }: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -144,18 +151,15 @@ ${item.data}`.trim()
         {
           role: "system",
           content: `
-Synthesize findings from evidence items based on user's goal or instruction.
-Each finding should represent single cohesive concept emerged from multiple evidence items.
-Support each finding with *2 or more* evidence items id numbers
+Itemize the ${itemsOf} from the input. Each source may have 0, 1, or multiple items.
 
 Respond in JSON format like this:
 """
 {
-  "findings": [
+  "items": [
     {
-      "name": "<name of the finding>",
-      "description": "<one sentence description of this finding>",
-      "evidence": [<id number>, <id number>, ...]
+      "text": "<one sentence description of this item>",
+      "source": <id_number>
     },
     ...
   ]
@@ -166,9 +170,9 @@ Respond in JSON format like this:
         {
           role: "user",
           content: `
-${goalOrInstruction?.trim().length ? goalOrInstruction : defaultContext}
+${itemsOf?.trim().length ? itemsOf : "Key points"}
 
-Evidence items:
+Source:
 ${itemsYaml}
           `.trim(),
         },
@@ -181,20 +185,19 @@ ${itemsYaml}
 
   const parser = new JSONParser();
   const usedIds = new Set<number>();
-  const parsingTask = Promise.withResolvers<SyntheticFinding<T>[]>();
-  const syntheticFindings: SyntheticFinding<T>[] = [];
+  const parsingTask = Promise.withResolvers<SyntheticItem<T>[]>();
+  const syntheticItems: SyntheticItem<T>[] = [];
 
   parser.onValue = (v) => {
-    const syntheticFinding = parseFinding(v?.value);
-    if (syntheticFinding) {
-      const sourceItems = syntheticFinding.evidence.map((id) => {
-        usedIds.add(id);
-        return originalItems.find((item) => item.id === id)!.data;
-      });
-
-      const mappedFinding = { name: syntheticFinding.name, description: syntheticFinding.description, items: sourceItems };
-      syntheticFindings.push(mappedFinding);
-      onFinding?.(mappedFinding);
+    const syntheticItem = parseItem(v?.value);
+    if (syntheticItem && syntheticItem.source) {
+      usedIds.add(syntheticItem.source);
+      const sourceItem = originalItems.find((item) => item.id === syntheticItem.source);
+      if (sourceItem) {
+        const mappedItem = { text: syntheticItem.text, source: sourceItem.data };
+        syntheticItems.push(mappedItem);
+        onItem?.(mappedItem);
+      }
     }
   };
 
@@ -207,11 +210,11 @@ ${itemsYaml}
         items: unusedItems.map((item) => item.data),
       };
 
-      syntheticFindings.push(unusedFinding);
-      onFinding?.(unusedFinding);
+      // TODO render unused items
+      console.log("Unused items:", unusedFinding);
     }
 
-    parsingTask.resolve(syntheticFindings);
+    parsingTask.resolve(syntheticItems);
     console.log("parser ended");
   };
 
@@ -225,26 +228,22 @@ ${itemsYaml}
   return await parsingTask.promise;
 }
 
-interface ParsedFinding {
-  name: string;
-  description: string;
-  evidence: number[];
+interface ParsedItem {
+  text: string;
+  source: number;
 }
-function parseFinding(value?: any): ParsedFinding | null {
+function parseItem(value?: any): ParsedItem | null {
   if (
     Object.getOwnPropertyNames(value as {})
       .sort()
-      .join(",") === "description,evidence,name"
+      .join(",") === "source,text"
   ) {
-    if (typeof value.name !== "string") throw new Error("Expected name string in finding");
-    if (typeof value.description !== "string") throw new Error("Expected description string in finding");
-    if (!Array.isArray(value.evidence)) throw new Error("Expected evidence array in finding");
-    if (!value.evidence.every((id: any) => typeof id === "number")) throw new Error("Expected number in evidence array");
+    if (typeof value.text !== "string") throw new Error("Expected text string in finding");
+    if (typeof value.source !== "number") throw new Error("Expected source number in finding");
 
     return {
-      name: value.name as string,
-      description: value.description as string,
-      evidence: value.evidence as number[],
+      text: value.text as string,
+      source: value.source as number,
     };
   } else {
     return null;
