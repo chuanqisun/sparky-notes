@@ -131,7 +131,7 @@ export interface Layout {
   gap?: number;
 }
 
-export function getNextHorizontalTilePosition(layout: Layout = {}, container: SectionNode, tile: SceneNode): { x: number; y: number } {
+export function getNextHorizontalTilePosition(layout: Layout = {}, container: SectionNode, _tile: SceneNode): { x: number; y: number } {
   const epsilon = 5;
   const { gap = 16, padding = 40 } = layout;
 
@@ -147,7 +147,7 @@ export function getNextHorizontalTilePosition(layout: Layout = {}, container: Se
   };
 }
 
-export function getNextVerticalTilePosition(layout: Layout = {}, container: SectionNode, tile: SceneNode): { x: number; y: number } {
+export function getNextVerticalTilePosition(layout: Layout = {}, container: SectionNode, _tile: SceneNode): { x: number; y: number } {
   const { gap = 16, padding = 40 } = layout;
 
   const maxChildY = Math.max(...container.children.map((child) => child.y + child.height), 0 - gap + padding);
