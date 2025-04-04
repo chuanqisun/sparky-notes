@@ -26,23 +26,25 @@
     <details open>
       <summary>Tools</summary>
 
-      <form name="itemize">
-        <fieldset>
-          <legend>Itemize</legend>
-          <label for="itemize-instruction">Itemize all the…</label>
-          <textarea id="itemize-instruction" name="itemize-instruction" placeholder="key points"></textarea>
-          <button>Run</button>
-        </fieldset>
-      </form>
+      <div class="fieldset-list">
+        <form name="itemize">
+          <fieldset>
+            <legend>Itemize</legend>
+            <label for="itemize-instruction">Itemize all the…</label>
+            <textarea id="itemize-instruction" name="itemize-instruction" placeholder="key points"></textarea>
+            <button>Run</button>
+          </fieldset>
+        </form>
 
-      <form name="group">
-        <fieldset>
-          <legend>Group</legend>
-          <label for="group-instruction">Group the items to discover… </label>
-          <textarea id="group-instruction" name="group-instruction" placeholder="common themes"></textarea>
-          <button>Run</button>
-        </fieldset>
-      </form>
+        <form name="group">
+          <fieldset>
+            <legend>Group</legend>
+            <label for="group-instruction">Group the items to discover… </label>
+            <textarea id="group-instruction" name="group-instruction" placeholder="common themes"></textarea>
+            <button>Run</button>
+          </fieldset>
+        </form>
+      </div>
     </details>
 
     <script type="module" src="/src/main.ts"></script>

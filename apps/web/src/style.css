@@ -5,7 +5,7 @@
 
   color-scheme: dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #222;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,21 +28,31 @@ label:has(+ :where(textarea, input[type="text"], input[type="password"])) {
   display: block;
 }
 
+fieldset {
+  background-color: #333;
+}
+
 textarea {
   width: 100%;
   field-sizing: content;
   resize: none;
   padding: 8px;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 input {
   width: 100%;
   padding: 8px;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 button {
-  padding: 4px 8px;
+  padding: 8px;
   width: 100%;
+  font-size: inherit;
+  cursor: pointer;
 }
 
 summary {
@@ -58,4 +68,9 @@ pre {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+.fieldset-list {
+  display: grid;
+  gap: 8px;
 }
