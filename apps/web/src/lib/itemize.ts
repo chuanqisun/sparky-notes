@@ -27,36 +27,35 @@ export async function runItemize() {
   let progress = 0;
   proxyToFigma.notify({ showNotification: { message: `Itemizing...`, config: { timeout: Infinity }, cancelButton: { handle } } });
 
-  // create the initial group container
-  const { mutationResponse } = await proxyToFigma.request({
-    mutationRequest: {
-      position: {
-        viewportCenter: {},
-      },
-      createSections: [
-        {
-          name: `Itemized ${itemsOf}`,
-        },
-      ],
-    },
-  });
-
-  const outputSectionId = mutationResponse?.createdSections[0];
-  if (!outputSectionId) {
-    proxyToFigma.notify({ showNotification: { message: "Failed to create section", config: { error: true } } });
-    throw new Error("Failed to create section");
-  }
+  const createdSections: { id: string; name: string }[] = [];
 
   const $render = new Subject<SyntheticItem<IdContentNode>>();
   $render
     .pipe(
       mergeScan(
         async (_prev, finding) => {
+          const existingSection = createdSections.find((section) => section.name === finding.sectionName)?.id;
+          if (!existingSection) {
+            const { mutationResponse } = await proxyToFigma.request({
+              mutationRequest: {
+                position: createdSections.length ? { relativeToNodes: { ids: [createdSections.at(-1)!.id] } } : { viewportCenter: {} },
+                createSections: [{ name: finding.sectionName }],
+              },
+            });
+
+            const sectionId = mutationResponse?.createdSections[0];
+            if (!sectionId) throw new Error("Failed to create section");
+            createdSections.push({ id: sectionId, name: finding.sectionName });
+          }
+
+          // Now we can guarantee that the section exists
+          const existingSectionId = createdSections.find((section) => section.name === finding.sectionName)!.id;
+
           await proxyToFigma.request({
             mutationRequest: {
               updateSections: [
                 {
-                  id: outputSectionId,
+                  id: existingSectionId,
                   ...(finding.sectionName === "Unused"
                     ? {
                         cloneNodes: [getItemId(finding.source)],
@@ -104,31 +103,11 @@ export async function runItemize() {
   try {
     await itemizeStream({
       openai,
-      items: contentNodesToIdContentNode(selection)
-        .filter((input) => input.content.trim())
-        .sort(() => Math.random() - 0.5),
+      items: contentNodesToIdContentNode(selection).filter((input) => input.content.trim()),
       itemsOf,
       onStringify: getItemText,
       abortSignal: abortController.signal,
       onItem: (finding) => $render.next(finding),
-      onUnused: async (unusedItems) => {
-        await proxyToFigma.request({
-          mutationRequest: {
-            position: {
-              relativeToNodes: {
-                ids: [outputSectionId],
-              },
-            },
-            createSections: [
-              {
-                name: "Unused",
-                cloneNodes: unusedItems.map(getItemId),
-                flowDirection: "vertical",
-              },
-            ],
-          },
-        });
-      },
     });
   } finally {
     $render.complete();
