@@ -46,9 +46,6 @@ export interface ExportNodeResponse {
 }
 
 export interface MutationRequest {
-  /**
-   * If not specificed, result will be centered in the viewport
-   */
   position?: {
     viewportCenter?: {
       /** Percentage: -1 to 1 */
