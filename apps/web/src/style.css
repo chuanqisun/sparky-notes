@@ -26,6 +26,7 @@ body {
 
 label:has(+ :where(textarea, input[type="text"], input[type="password"])) {
   display: block;
+  padding-bottom: 4px;
 }
 
 fieldset {
@@ -48,6 +49,12 @@ input {
   font-size: inherit;
 }
 
+:where(textarea, input) {
+  &:focus {
+    background-color: #222;
+  }
+}
+
 button {
   padding: 8px;
   width: 100%;
@@ -58,6 +65,11 @@ button {
 summary {
   text-transform: uppercase;
   opacity: 0.625;
+  cursor: pointer;
+
+  &:where(:hover, :focus-visible) {
+    opacity: 1;
+  }
 }
 
 legend {
