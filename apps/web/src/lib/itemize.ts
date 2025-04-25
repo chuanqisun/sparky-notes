@@ -145,6 +145,7 @@ ${item.data}`.trim()
     .join("\n\n");
 
   const safeCount = ensureTokenLimit(10_000, itemsYaml);
+  if (safeCount === 0) throw new Error("No input detected");
   console.log({ safeCount });
 
   const result = await openai.responses.create(
