@@ -18,36 +18,38 @@ function getContentNodes(selection: readonly SceneNode[]): ContentNode[] {
 }
 
 function getContentNodeInternal(node: SceneNode): ContentNode | null {
-  if (node.type === "STICKY") {
-    return {
-      id: node.id,
-      type: "sticky",
-      content: node.text.characters,
-    };
-  } else if (node.type === "WIDGET" && node.widgetId === figma.widgetId) {
-    const title = (node as WidgetNode).widgetSyncedState?.cardData?.title;
-    if (!title?.trim()) return null;
-
-    return {
-      id: node.id,
-      type: "sticky",
-      content: title,
-    };
-  } else if (node.type === "SECTION") {
-    return {
-      id: node.id,
-      type: "section",
-      content: node.name,
-      children: node.children.map(getContentNodeInternal).filter(isNotNull),
-    };
-  } else if (typeof node.exportAsync === "function") {
-    return {
-      id: node.id,
-      type: "visual",
-      content: node.name,
-    };
-  } else {
-    return null;
+  switch (node.type) {
+    case "STICKY":
+      return {
+        id: node.id,
+        type: "sticky",
+        content: node.text.characters,
+      };
+    case "TEXT":
+      return {
+        id: node.id,
+        type: "text",
+        content: node.characters,
+      };
+    case "FRAME":
+    case "INSTANCE":
+    case "GROUP":
+    case "SECTION":
+      return {
+        id: node.id,
+        type: "section",
+        content: node.name,
+        children: node.children.map(getContentNodeInternal).filter(isNotNull),
+      };
+    default:
+      if (typeof node.exportAsync === "function") {
+        return {
+          id: node.id,
+          type: "visual",
+          content: node.name,
+        };
+      }
+      return null;
   }
 }
 

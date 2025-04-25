@@ -51,23 +51,25 @@ export async function runItemize() {
           // Now we can guarantee that the section exists
           const existingSectionId = createdSections.find((section) => section.name === finding.sectionName)!.id;
 
+          const sourceNodeType = selection.find((node) => node.id === finding.source.id)?.type;
+          const canClone = sourceNodeType === "sticky";
+
+          const cloneNodes = canClone ? (finding.sectionName === "Unused" ? [getItemId(finding.source)] : undefined) : undefined;
+          const cloneAndUpdateNodes = canClone
+            ? finding.sectionName !== "Unused"
+              ? [{ id: getItemId(finding.source), content: finding.text }]
+              : undefined
+            : undefined;
+          const createNodes = canClone ? undefined : [finding.text];
+
           await proxyToFigma.request({
             mutationRequest: {
               updateSections: [
                 {
                   id: existingSectionId,
-                  ...(finding.sectionName === "Unused"
-                    ? {
-                        cloneNodes: [getItemId(finding.source)],
-                      }
-                    : {
-                        cloneAndUpdateNodes: [
-                          {
-                            id: getItemId(finding.source),
-                            content: finding.text,
-                          },
-                        ],
-                      }),
+                  ...(cloneNodes ? { cloneNodes } : {}),
+                  ...(cloneAndUpdateNodes ? { cloneAndUpdateNodes } : {}),
+                  ...(createNodes ? { createNodes } : {}),
                   flowDirection: "vertical",
                 },
               ],

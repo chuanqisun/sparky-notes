@@ -7,7 +7,7 @@ export interface IdContentNode {
 
 export function contentNodesToIdContentNode(nodes: ContentNode[]): IdContentNode[] {
   return nodes.flatMap((node) => {
-    if (node.type === "sticky") {
+    if (node.type === "sticky" || node.type === "text") {
       return [{ id: node.id, content: node.content }];
     } else if (node.type === "section") {
       return contentNodesToIdContentNode(node.children ?? []);

@@ -48,6 +48,23 @@ export async function handleMutation(message: MessageToFigma, proxyToWeb: ProxyT
         if (updateSection.cloneAndUpdateNodes)
           await cloneAndUpdateNodeToSection(getLayoutFn(updateSection.flowDirection, updateSection.gap), section, updateSection.cloneAndUpdateNodes);
 
+        if (updateSection.createNodes) {
+          // create stickies and move nodes to section
+          const createdNodes = await Promise.all(
+            updateSection.createNodes.map(async (nodeContent) => {
+              const stickyNode = figma.createSticky();
+              stickyNode.text.characters = nodeContent;
+              return stickyNode;
+            })
+          );
+
+          await moveNodeToSection(
+            getLayoutFn(updateSection.flowDirection, updateSection.gap),
+            section,
+            createdNodes.map((node) => node.id)
+          );
+        }
+
         return section;
       })
     )

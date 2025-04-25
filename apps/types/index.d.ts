@@ -97,6 +97,7 @@ export interface UpdateSectionMutation {
     id: string;
     content: string;
   }[];
+  createNodes?: string[]; // contents
 }
 
 export interface FigmaNotification {
@@ -126,7 +127,7 @@ export interface SelectionSummary {
 
 export interface ContentNode {
   id: string;
-  type: "sticky" | "section" | "visual";
+  type: "sticky" | "section" | "text" | "visual";
   content: string;
   children?: ContentNode[];
 }
