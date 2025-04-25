@@ -31,6 +31,23 @@ function getContentNodeInternal(node: SceneNode): ContentNode | null {
         type: "text",
         content: node.characters,
       };
+    case "RECTANGLE": {
+      const fills = node.fills;
+      const imagePaint = (fills as Paint[]).find((paint) => paint.type === "IMAGE");
+      if (imagePaint)
+        return {
+          id: node.id,
+          type: "image",
+          content: imagePaint.imageHash!,
+        };
+      else {
+        return {
+          id: node.id,
+          type: "visual",
+          content: node.name,
+        };
+      }
+    }
     case "FRAME":
     case "INSTANCE":
     case "GROUP":

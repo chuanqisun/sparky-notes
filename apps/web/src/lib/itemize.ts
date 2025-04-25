@@ -105,7 +105,7 @@ export async function runItemize() {
   try {
     await itemizeStream({
       openai,
-      items: contentNodesToIdContentNode(selection).filter((input) => input.content.trim()),
+      items: (await contentNodesToIdContentNode(selection)).filter((input) => input.content.trim()),
       itemsOf,
       onStringify: getItemText,
       abortSignal: abortController.signal,

@@ -87,9 +87,7 @@ export async function runGroup() {
   try {
     await synthesizeStream({
       openai,
-      items: contentNodesToIdContentNode(selection)
-        .filter((input) => input.content.trim())
-        .sort(() => Math.random() - 0.5),
+      items: (await contentNodesToIdContentNode(selection)).filter((input) => input.content.trim()).sort(() => Math.random() - 0.5),
       groupingGoal: groupingGoal,
       onStringify: getItemText,
       abortSignal: abortController.signal,

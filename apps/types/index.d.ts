@@ -127,7 +127,7 @@ export interface SelectionSummary {
 
 export interface ContentNode {
   id: string;
-  type: "sticky" | "section" | "text" | "visual";
+  type: "sticky" | "section" | "text" | "visual" | "image";
   content: string;
   children?: ContentNode[];
 }
