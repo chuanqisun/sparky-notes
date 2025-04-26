@@ -27,12 +27,55 @@
       <summary>Tools</summary>
 
       <div class="fieldset-list">
+        <form name="generate">
+          <fieldset>
+            <legend>Generate</legend>
+            <label for="generate-instruction">Generate stickies notes of… </label>
+            <textarea id="generate-instruction" name="generate-instruction" placeholder="10 timeless design principles"></textarea>
+            <button type="submit">Run</button>
+            <details>
+              <summary><small>Examples</small></summary>
+              <div class="usage-list">
+                <small
+                  ><b>Ideation</b>: Generate stickies notes of
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">product names for a fitness app</button></small
+                >
+                <small
+                  ><b>Annotation</b>: Generate stickies notes of
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">key product features from the provided UI</button></small
+                >
+                <small
+                  ><b>Translation</b>: Generate stickies notes of
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">selected items translated into Japanese</button></small
+                >
+              </div>
+            </details>
+          </fieldset>
+        </form>
+
         <form name="itemize">
           <fieldset>
             <legend>Itemize</legend>
             <label for="itemize-instruction">Itemize all the…</label>
             <textarea id="itemize-instruction" name="itemize-instruction" placeholder="key points"></textarea>
-            <button>Run</button>
+            <button type="submit">Run</button>
+            <details>
+              <summary><small>Examples</small></summary>
+              <div class="usage-list">
+                <small
+                  ><b>Photo-to-Figma</b>: Itemize all the
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">stickies notes in the photo</button></small
+                >
+                <small
+                  ><b>Filtering</b>: Itemize all the
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">positive feedback from users</button></small
+                >
+                <small
+                  ><b>Itemization</b>: Itemize all the
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">key points from this long article</button></small
+                >
+              </div>
+            </details>
           </fieldset>
         </form>
 
@@ -41,7 +84,20 @@
             <legend>Group</legend>
             <label for="group-instruction">Group the items to discover… </label>
             <textarea id="group-instruction" name="group-instruction" placeholder="common themes"></textarea>
-            <button>Run</button>
+            <button type="submit">Run</button>
+            <details>
+              <summary><small>Examples</small></summary>
+              <div class="usage-list">
+                <small
+                  ><b>Group by topic</b>: Group the items to discover
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">common topics</button></small
+                >
+                <small
+                  ><b>Synthesize insights</b>: Group the items to discover
+                  <button class="inline-suggestion" type="button" data-action="auto-fill">insights</button></small
+                >
+              </div>
+            </details>
           </fieldset>
         </form>
       </div>

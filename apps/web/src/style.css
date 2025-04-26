@@ -86,3 +86,18 @@ pre {
   display: grid;
   gap: 8px;
 }
+
+.inline-suggestion {
+  display: inline;
+  background: none;
+  border: none;
+  width: auto;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.usage-list {
+  display: grid;
+  line-height: 1.25;
+  gap: 8px;
+}
