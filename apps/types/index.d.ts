@@ -1,5 +1,7 @@
 export interface MessageToWeb {
   abortTask?: string;
+  exportNodesResponse?: ExportNodesResponse[];
+  getImage?: ImageSummary;
   getSelectionRes?: SelectionSummary;
   getViewportResponse?: Viewport;
   mutationResponse?: MutationResponse;
@@ -12,7 +14,9 @@ export interface MessageToWeb {
 export interface MessageToFigma {
   clearNotification?: boolean;
   detectSelection?: boolean; // request plugin to notfiy selection
+  getImage?: string;
   getViewport?: boolean;
+  exportNodes?: ExportNodesRequest;
   mutationRequest?: MutationRequest;
   ping?: string;
   renderAutoLayoutItem?: RenderAutoLayoutItem;
@@ -35,14 +39,14 @@ export interface RenderAutoLayoutItem {
   replacements?: { [key: string]: string };
 }
 
-export interface ExportNodeRequest {
-  id: string;
+export interface ExportNodesRequest {
+  ids: string[];
 }
 
-export interface ExportNodeResponse {
+export interface ExportNodesResponse {
   id: string;
   buffer: Uint8Array;
-  format: "PNG";
+  mimeType: string;
 }
 
 export interface MutationRequest {

@@ -3,6 +3,7 @@ import { getProxyToWeb, type ProxyToWeb } from "@sparky-notes/figma-tools";
 import WidgetLogo from "./assets/Logo.svg";
 import { handleClearNotification } from "./handlers/handle-clear-notification";
 import { handleDetectSelection } from "./handlers/handle-detect-selection";
+import { handleExportNode } from "./handlers/handle-export-node";
 import { handleGetViewport } from "./handlers/handle-get-viewport";
 import { handleMutation } from "./handlers/handle-mutation";
 import { handleRenderAutoLayoutItem } from "./handlers/handle-render-auto-layout-item";
@@ -20,7 +21,6 @@ const { useEffect, SVG } = widget;
 const proxyToWeb = getProxyToWeb<MessageToWeb, MessageToFigma>();
 
 function Widget() {
-
   useEffect(() => {
     const wrappedHandleSelectionChange = () => {
       handleSelectionChange(proxyToWeb);
@@ -31,6 +31,7 @@ function Widget() {
 
       handleClearNotification(message);
       handleDetectSelection(message, wrappedHandleSelectionChange);
+      handleExportNode(message, proxyToWeb);
       handleGetViewport(message, proxyToWeb);
       handleMutation(message, proxyToWeb);
       handleRenderObject(message);
@@ -50,9 +51,7 @@ function Widget() {
     };
   });
 
-  return (
-    <SVG src={WidgetLogo} width={320} height={320} onClick={() => new Promise((_resolve) => openIndexPage())} />
-  );
+  return <SVG src={WidgetLogo} width={320} height={320} onClick={() => new Promise((_resolve) => openIndexPage())} />;
 }
 
 widget.register(Widget);

@@ -1,5 +1,6 @@
 import { JSONParser } from "@streamparser/json";
 import OpenAI from "openai";
+import type { ResponseInputImage } from "openai/resources/responses/responses.mjs";
 import { last, mergeScan, Subject, tap } from "rxjs";
 import { ensureApiKey, getApiKey } from "./api-key";
 import { contentNodesToIdContentNode, getItemId, getItemText, type IdContentNode } from "./object-tree";
@@ -103,11 +104,13 @@ export async function runItemize() {
     .subscribe();
 
   try {
+    const items = await contentNodesToIdContentNode(selection);
     await itemizeStream({
       openai,
-      items: (await contentNodesToIdContentNode(selection)).filter((input) => input.content.trim()),
+      items: items.filter((input) => input.content.trim()),
       itemsOf,
       onStringify: getItemText,
+      attachments: items.flatMap((item) => item.attachments ?? []),
       abortSignal: abortController.signal,
       onItem: (finding) => $render.next(finding),
     });
@@ -127,6 +130,10 @@ export interface SyntheticItem<T> {
 export interface ItemizeStreamOptions<T> {
   openai: OpenAI;
   items: T[];
+  attachments?: {
+    mimeType: string;
+    dataUrl: string;
+  }[];
   itemsOf: string;
   onStringify: (item: T) => string;
   abortSignal?: AbortSignal;
@@ -134,7 +141,15 @@ export interface ItemizeStreamOptions<T> {
   onUnused?: (items: T[]) => any;
 }
 
-export async function itemizeStream<T>({ openai, items, itemsOf, onStringify, abortSignal, onItem }: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
+export async function itemizeStream<T>({
+  openai,
+  items,
+  attachments,
+  itemsOf,
+  onStringify,
+  abortSignal,
+  onItem,
+}: ItemizeStreamOptions<T>): Promise<SyntheticItem<T>[]> {
   const itemsWithIds = items.map((item, index) => ({ id: index + 1, data: onStringify(item) }));
   const originalItems = items.map((item, index) => ({ id: index + 1, data: item }));
 
@@ -147,13 +162,12 @@ ${item.data}`.trim()
     .join("\n\n");
 
   const safeCount = ensureTokenLimit(10_000, itemsYaml);
-  if (safeCount === 0) throw new Error("No input detected");
   console.log({ safeCount });
 
   const result = await openai.responses.create(
     {
       stream: true,
-      model: "gpt-4o",
+      model: "gpt-4.1",
       text: { format: { type: "json_object" } },
       temperature: 0.2,
       input: [
@@ -174,10 +188,28 @@ type Response = {
         },
         {
           role: "user",
-          content: `
+          content: [
+            {
+              type: "input_text",
+              text: `
 Itemize ${itemsOf} from the following sticky notes:
 ${itemsYaml}
           `.trim(),
+            },
+
+            ...(attachments?.length
+              ? attachments
+                  .filter((attachment) => attachment.mimeType.startsWith("image/"))
+                  .map(
+                    (attachment) =>
+                      ({
+                        detail: "auto" as const,
+                        type: "input_image" as const,
+                        image_url: attachment.dataUrl,
+                      } satisfies ResponseInputImage)
+                  )
+              : []),
+          ],
         },
       ],
     },
