@@ -10,6 +10,15 @@ export interface IdContentNode {
   }[];
 }
 
+export function getFlatNodes(nodes: ContentNode[]): ContentNode[] {
+  return nodes.flatMap((node) => {
+    if (node.type === "section" && node.children) {
+      return getFlatNodes(node.children);
+    }
+    return [node];
+  });
+}
+
 export async function contentNodesToIdContentNode(nodes: ContentNode[]): Promise<IdContentNode[]> {
   const imageDataMap = new Map<string, { dataUrl: string; mimeType: string }>();
   const imageIds = getImageNodeIds(nodes);

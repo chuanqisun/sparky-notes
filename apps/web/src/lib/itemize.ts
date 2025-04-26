@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import type { ResponseInputImage } from "openai/resources/responses/responses.mjs";
 import { last, mergeScan, Subject, tap } from "rxjs";
 import { ensureApiKey, getApiKey } from "./api-key";
-import { contentNodesToIdContentNode, getItemId, getItemText, type IdContentNode } from "./object-tree";
+import { contentNodesToIdContentNode, getFlatNodes, getItemId, getItemText, type IdContentNode } from "./object-tree";
 import { proxyToFigma } from "./proxy";
 import { ensureSelection, selection$ } from "./selection";
 import { createTask } from "./task";
@@ -52,7 +52,7 @@ export async function runItemize() {
           // Now we can guarantee that the section exists
           const existingSectionId = createdSections.find((section) => section.name === finding.sectionName)!.id;
 
-          const sourceNodeType = selection.find((node) => node.id === finding.source.id)?.type;
+          const sourceNodeType = getFlatNodes(selection).find((node) => node.id === finding.source.id)?.type;
           const canClone = sourceNodeType === "sticky";
 
           const cloneNodes = canClone ? (finding.sectionName === "Unused" ? [getItemId(finding.source)] : undefined) : undefined;
