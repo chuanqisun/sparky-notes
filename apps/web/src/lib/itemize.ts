@@ -174,14 +174,14 @@ ${item.data}`.trim()
         {
           role: "system",
           content: `
-Itemize the ${itemsOf} in the provided sticky notes. Each sticky note may have 0, 1, or multiple items.
+Find the ${itemsOf} in the provided objects. Each object may have 0, 1, or multiple findings.
 
 Respond in JSON format of this type
 
 type Response = {
   results: {
-    stickyNoteId: number, // id of the sticky note
-    items: string[], // itemized ${itemsOf} from the sticky note, may be empty
+    sourceId: number, // id of the sticky note
+    findings: string[], // find the ${itemsOf} in the source, may be empty
   }[]
 }
           `.trim(),
@@ -192,7 +192,7 @@ type Response = {
             {
               type: "input_text",
               text: `
-Itemize ${itemsOf} from the following sticky notes:
+Find ${itemsOf} from the following objects:
 ${itemsYaml}
           `.trim(),
             },
@@ -225,9 +225,9 @@ ${itemsYaml}
 
   parser.onValue = (v) => {
     const syntheticItem = parseItem(v?.value);
-    if (syntheticItem && syntheticItem.stickyNoteId && syntheticItem.items.length) {
-      usedIds.add(syntheticItem.stickyNoteId);
-      const sourceItem = originalItems.find((item) => item.id === syntheticItem.stickyNoteId);
+    if (syntheticItem && syntheticItem.sourceId && syntheticItem.items.length) {
+      usedIds.add(syntheticItem.sourceId);
+      const sourceItem = originalItems.find((item) => item.id === syntheticItem.sourceId);
       if (sourceItem) {
         const mappedItems = syntheticItem.items.map((item) => ({ sectionName: itemsOf, text: item, source: sourceItem.data }));
         syntheticItems.push(...mappedItems);
@@ -263,22 +263,22 @@ ${itemsYaml}
 }
 
 interface ParsedItem {
-  stickyNoteId: number;
+  sourceId: number;
   items: string[];
 }
 function parseItem(value?: any): ParsedItem | null {
   if (
     Object.getOwnPropertyNames(value as {})
       .sort()
-      .join(",") === "items,stickyNoteId"
+      .join(",") === "findings,sourceId"
   ) {
-    if (typeof value.stickyNoteId !== "number") throw new Error("Expected sticky note id to be number");
-    if (!Array.isArray(value.items)) throw new Error("Expected items to be an array");
-    if (!value.items.every((item: any) => typeof item === "string")) throw new Error("Expected items to be an array of strings");
+    if (typeof value.sourceId !== "number") throw new Error("Expected sticky note id to be number");
+    if (!Array.isArray(value.findings)) throw new Error("Expected findings to be an array");
+    if (!value.findings.every((item: any) => typeof item === "string")) throw new Error("Expected findings to be an array of strings");
 
     return {
-      stickyNoteId: value.stickyNoteId as number,
-      items: value.items as string[],
+      sourceId: value.sourceId as number,
+      items: value.findings as string[],
     };
   } else {
     return null;
